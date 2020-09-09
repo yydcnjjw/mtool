@@ -1,0 +1,17 @@
+[package]
+name = "my-tool"
+version = "0.1.0"
+authors = ["yydcnjjw <yydcnjjw@gmail.com>"]
+edition = "2018"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+tokio = {version = "*", features = ["full"]}
+soup = "*"
+reqwest = "*"
+clap = "*"
+html5ever = "*"
+regex = "*"
+text_io = "*"
+colored = "*"
