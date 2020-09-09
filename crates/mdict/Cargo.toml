@@ -1,0 +1,16 @@
+[package]
+name = "mdict"
+version = "0.1.0"
+edition = "2018"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+flate2 = { version = "*", features = ["zlib"], default-features = false }
+minilzo-rs = "*"
+ripemd128 = "*"
+byteorder = "*"
+thiserror = "*"
+serde = { version = "*", features = [ "derive" ] }
+quick-xml = { version = "*", features = [ "serialize" ] }
+nom = "*"
