@@ -572,8 +572,9 @@ dependencies = [
  "html5ever",
  "regex",
  "reqwest",
+ "serde",
+ "serde_json",
  "soup",
- "text_io",
  "tokio",
 ]
 
@@ -999,6 +1000,7 @@ dependencies = [
  "percent-encoding",
  "pin-project-lite",
  "serde",
+ "serde_json",
  "serde_urlencoded",
  "tokio",
  "tokio-tls",
@@ -1053,6 +1055,9 @@ name = "serde"
 version = "1.0.115"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "e54c9a88f2da7238af84b5101443f0c0d0a3bbdc455e34a5c9497b1903ed55d5"
+dependencies = [
+ "serde_derive",
+]
 
 [[package]]
 name = "serde_derive"
@@ -1218,12 +1223,6 @@ dependencies = [
  "mac",
  "utf-8",
 ]
-
-[[package]]
-name = "text_io"
-version = "0.1.8"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "6cb170b4f47dc48835fbc56259c12d8963e542b05a24be2e3a1f5a6c320fd2d4"
 
 [[package]]
 name = "textwrap"

@@ -1,5 +1,5 @@
-#![feature(option_zip, iterator_fold_self)]
-
+use crate::anki_api::AnkiNote;
+use crate::anki_api::AnkiNoteOptions;
 use colored::Colorize;
 use html5ever::rcdom::Handle;
 use reqwest;
@@ -95,6 +95,130 @@ impl WordInfo {
     }
 }
 
+pub trait OutputFormat {
+    fn to_cli(&self) -> String;
+    fn to_html(&self) -> String;
+}
+
+pub trait SimpleFormat {
+    fn fmt_simple(&self) -> String;
+}
+
+pub trait DetailFormat {
+    fn fmt_detail(&self) -> String;
+}
+
+impl SimpleFormat for Vec<WordSimple> {
+    fn fmt_simple(&self) -> String {
+        self.to_html()
+    }
+}
+
+impl SimpleFormat for Vec<WordDetail> {
+    fn fmt_simple(&self) -> String {
+        let mut result = String::new();
+        result += "<dl>\n";
+        self.iter().for_each(|v| {
+            result += &format!("<dt>{}</dt>\n", v.mean_type);
+            result += "<dd>\n";
+            result += "<ul>\n";
+            v.means
+                .iter()
+                .for_each(|v| result += &format!("<li><span>{}</span></li>\n", v.cn_mean));
+            result += "</ul>\n";
+            result += "</dd>\n";
+        });
+        result += "</dl>\n";
+        return result;
+    }
+}
+
+impl DetailFormat for Vec<WordDetail> {
+    fn fmt_detail(&self) -> String {
+        self.to_html()
+    }
+}
+
+impl OutputFormat for WordSimple {
+    fn to_cli(&self) -> String {
+        let mut result = String::new();
+        result += &format!("{}\n", self.mean_type);
+        self.means
+            .iter()
+            .for_each(|v| result += &format!("  - {}\n", v.red()));
+        return result;
+    }
+    fn to_html(&self) -> String {
+        let mut result = String::new();
+        result += &format!("<dt>{}</dt>\n", self.mean_type);
+        result += "<dd>\n";
+        result += "<ul>\n";
+        self.means.iter().for_each(|v| {
+            result += &format!("<li><span>{}</span></li>\n", v);
+        });
+        result += "</ul>\n";
+        result += "</dd>\n";
+        return result;
+    }
+}
+
+impl OutputFormat for WordDetail {
+    fn to_cli(&self) -> std::string::String {
+        let mut result = String::new();
+        result += &format!("{}\n", self.mean_type);
+        self.means.iter().for_each(|v| {
+            result += &format!("  - {}", v.cn_mean.red());
+            result += &format!("    {}\n", v.jp_mean);
+            v.sentence
+                .iter()
+                .for_each(|v| result += &format!("    - {}    {}\n", v.sentence_jp, v.sentence_cn))
+        });
+        return result;
+    }
+    fn to_html(&self) -> std::string::String {
+        let mut result = String::new();
+        result += &format!("<dt>{}</dt>\n", self.mean_type);
+        result += "<dd>\n";
+        result += "<ul>\n";
+        self.means.iter().for_each(|v| {
+            result += "<li>\n";
+            result += &format!("<span>{}</span>/<span>{}</span>\n", v.cn_mean, v.jp_mean);
+            result += "<ul>\n";
+            v.sentence.iter().for_each(|v| {
+                result += "<li>\n";
+                result += &format!(
+                    "{} \\ {} [sound:{}]\n",
+                    v.sentence_jp, v.sentence_cn, v.sentence_audio
+                );
+                result += "</li>\n";
+            });
+            result += "</ul>\n";
+            result += "</li>\n";
+        });
+        result += "</ul>\n";
+        result += "</dd>\n";
+        return result;
+    }
+}
+
+impl<T> OutputFormat for Vec<T>
+where
+    T: OutputFormat,
+{
+    fn to_cli(&self) -> String {
+        self.iter().fold(String::new(), |r, v| r + &v.to_cli())
+    }
+    fn to_html(&self) -> String {
+        let mut result = String::new();
+        result += "<dl>\n";
+        self.iter().for_each(|v| {
+            result += &v.to_html();
+        });
+        result += "</dl>\n";
+        return result;
+    }
+}
+
 // not found page: div.word-notfound-inner
 fn is_not_found_page(doc: &Soup) -> bool {
     doc.tag("div").class("word-notfound-inner").find().is_some()
@@ -116,6 +240,7 @@ fn word_suggestions(doc: &Soup) -> Option<Vec<String>> {
 }
 
 // match multi word: header.word-details-header > ul > li
+#[allow(dead_code)]
 fn multi_word(doc: &Soup) -> Option<Vec<(String, String)>> {
     doc.tag("header")
         .class("word-details-header")
@@ -373,12 +498,7 @@ pub fn to_cli_str(word_info: &WordInfo) -> String {
             result += "No simple\n"
         } else {
             result += "Simple:\n";
-            simples.iter().for_each(|v| {
-                result += &format!("{}\n", v.mean_type);
-                v.means
-                    .iter()
-                    .for_each(|v| result += &format!("  - {}\n", v.red()));
-            })
+            result += &simples.to_cli();
         }
     }
     {
@@ -386,16 +506,33 @@ pub fn to_cli_str(word_info: &WordInfo) -> String {
         if !details.is_empty() {
             result += "Details:\n"
         }
-        details.iter().for_each(|v| {
-            result += &format!("{}\n", v.mean_type);
-            v.means.iter().for_each(|v| {
-                result += &format!("  - {}", v.cn_mean.red());
-                result += &format!("    {}\n", v.jp_mean);
-                v.sentence.iter().for_each(|v| {
-                    result += &format!("    - {}    {}\n", v.sentence_jp, v.sentence_cn)
-                })
-            })
-        })
+
+        result += &details.to_cli();
     }
     return result.bold().to_string();
+}
+
+impl AnkiNote {
+    pub fn new(word_info: &WordInfo, options: Option<AnkiNoteOptions>) -> AnkiNote {
+        AnkiNote {
+            deck_name: "Japanese_Word".to_string(),
+            model_name: "japanese(dict)".to_string(),
+            fields: serde_json::json!({
+                        "expression": word_info.expression,
+                        "pronounce": word_info.pronounce.pronounce,
+                        "kata": word_info.pronounce.kata,
+                        "tone": word_info.pronounce.tone,
+                        "audio": format!("[sound:{}]", word_info.pronounce.audio),
+                        "simple": if word_info.simples.is_empty() {
+                            word_info.details.to_html()
+                        } else {
+                            word_info.simples.to_html()
+                        } ,
+                        "sentence": word_info.details.to_html()
+
+            }),
+            tags: vec!["japanese(dict)".to_string()],
+            options,
+        }
+    }
 }

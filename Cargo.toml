@@ -9,9 +9,10 @@ edition = "2018"
 [dependencies]
 tokio = {version = "*", features = ["full"]}
 soup = "*"
-reqwest = "*"
+reqwest = {version = "*", features = ["json"]}
 clap = "*"
 html5ever = "*"
 regex = "*"
-text_io = "*"
 colored = "*"
+serde_json = "*"
+serde = {version = "*", features = ["derive"]}
