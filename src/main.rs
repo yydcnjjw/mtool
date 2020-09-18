@@ -121,7 +121,7 @@ async fn main() {
         .about("my tool")
         .arg(
             clap::Arg::with_name("input")
-                .help("input jp")
+                .about("input jp")
                 .required(true)
                 .index(1),
         )
