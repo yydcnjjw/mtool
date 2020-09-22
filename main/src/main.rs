@@ -1,9 +1,5 @@
 #![feature(option_zip, iterator_fold_self)]
 
-mod anki_api;
-mod cli_op;
-mod hj_jp_dict;
-
 use crate::anki_api::AnkiNote;
 use crate::anki_api::AnkiNoteOptions;
 use clap;

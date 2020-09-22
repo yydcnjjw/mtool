@@ -20,7 +20,7 @@ const COOKIE: &str = "HJ_UID=0f406091-be97-6b64-f1fc-f7b2470883e9; \
 const API_URL: &str = "https://www.hjdict.com/jp/jc/";
 
 #[derive(Debug)]
-pub struct WordInfo {
+pub struct JPWord {
     pub expression: String,
     pub pronounce: WordPronounce,
     pub simples: Vec<WordSimple>,
@@ -88,14 +88,46 @@ impl From<reqwest::Error> for Error {
 
 type Result<T> = std::result::Result<T, Error>;
 
-impl WordInfo {
-    fn new(doc: &Handle) -> Option<WordInfo> {
-        Some(WordInfo {
+impl JPWord {
+    fn new(doc: &Handle) -> Option<JPWord> {
+        Some(JPWord {
             expression: word_expression(doc)?,
             pronounce: word_pronounce(doc)?,
             simples: word_simples(doc)?,
             details: word_details(doc)?,
         })
+    }
+
+    pub fn to_cli_str(&self) -> String {
+        let mut result = String::new();
+        {
+            result += &format!("{}\n", self.expression);
+        }
+        {
+            let pronounce = &self.pronounce;
+            result += &format!(
+                "[{}] [{}] {}\n",
+                pronounce.pronounce, pronounce.kata, pronounce.tone
+            );
+        }
+        {
+            let simples = &self.simples;
+            if simples.is_empty() {
+                result += "No simple\n"
+            } else {
+                result += "Simple:\n";
+                result += &simples.to_cli();
+            }
+        }
+        {
+            let details = &self.details;
+            if !details.is_empty() {
+                result += "Details:\n"
+            }
+
+            result += &details.to_cli();
+        }
+        return result.bold().to_string();
     }
 }
 
@@ -449,7 +481,7 @@ fn word_details(doc: &Handle) -> Option<Vec<WordDetail>> {
 
 // match all word info:
 // section.word-details-content > div.word-details-pane
-fn get_all_word_info(doc: &Soup) -> Vec<WordInfo> {
+fn get_all_word_info(doc: &Soup) -> Vec<JPWord> {
     doc.tag("section")
         .class("word-details-content")
         .find()
@@ -457,11 +489,11 @@ fn get_all_word_info(doc: &Soup) -> Vec<WordInfo> {
         .tag("div")
         .class("word-details-pane")
         .find_all()
-        .filter_map(|v| WordInfo::new(&v))
+        .filter_map(|v| JPWord::new(&v))
         .collect()
 }
 
-pub async fn get_dict(input: &str) -> Result<Vec<WordInfo>> {
+pub async fn get_jp_dict(input: &str) -> Result<Vec<JPWord>> {
     let resp = reqwest::Client::new()
         .get(&format!("{}{}", API_URL, input))
         .header(reqwest::header::USER_AGENT, USER_AGENT)
@@ -484,78 +516,8 @@ pub async fn get_dict(input: &str) -> Result<Vec<WordInfo>> {
     Result::Ok(get_all_word_info(&doc))
 }
 
-pub fn query_dict<'a>(query: &'a str) -> BoxFuture<'a, Result<WordInfo>> {
-    async move {
-        match get_dict(query).await {
-            Ok(mut word_infos) => {
-                let mut i = 0;
-                if word_infos.len() > 1 {
-                    i = cli_op::read_choice(
-                        "multi words",
-                        &word_infos
-                            .iter()
-                            .map(|v| format!("{}[{}]", v.expression, v.pronounce.pronounce))
-                            .collect(),
-                    );
-                }
-
-                let mut word_info = word_infos.remove(i);
-
-                if word_info.expression == query || word_info.pronounce.pronounce == query {
-                    word_info.expression = format!(
-                        "{}[{}]",
-                        word_info.expression, word_info.pronounce.pronounce
-                    );
-                }
-
-                Ok(word_info)
-            }
-            Err(e) => match e {
-                Error::WordSuggestion(v) => {
-                    let i = cli_op::read_choice("word suggestions: ", &v);
-                    query_dict(v.get(i).unwrap()).await
-                }
-                _ => Err(e.into()),
-            },
-        }
-    }
-    .boxed()
-}
-
-pub fn to_cli_str(word_info: &WordInfo) -> String {
-    let mut result = String::new();
-    {
-        result += &format!("{}\n", word_info.expression);
-    }
-    {
-        let pronounce = &word_info.pronounce;
-        result += &format!(
-            "[{}] [{}] {}\n",
-            pronounce.pronounce, pronounce.kata, pronounce.tone
-        );
-    }
-    {
-        let simples = &word_info.simples;
-        if simples.is_empty() {
-            result += "No simple\n"
-        } else {
-            result += "Simple:\n";
-            result += &simples.to_cli();
-        }
-    }
-    {
-        let details = &word_info.details;
-        if !details.is_empty() {
-            result += "Details:\n"
-        }
-
-        result += &details.to_cli();
-    }
-    return result.bold().to_string();
-}
-
 impl AnkiNote {
-    pub fn new(word_info: &WordInfo, options: Option<AnkiNoteOptions>) -> AnkiNote {
+    pub fn new(word_info: &JPWord, options: Option<AnkiNoteOptions>) -> AnkiNote {
         AnkiNote {
             deck_name: "Japanese_Word".to_string(),
             model_name: "japanese(dict)".to_string(),
@@ -576,5 +538,13 @@ impl AnkiNote {
             tags: vec!["japanese(dict)".to_string()],
             options,
         }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    #[test]
+    fn it_works() {
+        assert_eq!(2 + 2, 4);
     }
 }
