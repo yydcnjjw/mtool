@@ -12,6 +12,12 @@ dependencies = [
 [[package]]
 name = "anki"
 version = "0.1.0"
+dependencies = [
+ "reqwest",
+ "serde",
+ "serde_json",
+ "tokio",
+]
 
 [[package]]
 name = "ansi_term"
@@ -352,6 +358,14 @@ dependencies = [
 [[package]]
 name = "hjdict"
 version = "0.1.0"
+dependencies = [
+ "colored",
+ "html5ever",
+ "regex",
+ "reqwest",
+ "soup",
+ "tokio",
+]
 
 [[package]]
 name = "html5ever"
@@ -632,14 +646,7 @@ name = "my-tool"
 version = "0.1.0"
 dependencies = [
  "clap",
- "colored",
  "futures",
- "html5ever",
- "regex",
- "reqwest",
- "serde",
- "serde_json",
- "soup",
  "tokio",
 ]
 

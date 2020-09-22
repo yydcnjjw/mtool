@@ -1,7 +1,7 @@
 #![feature(option_zip, iterator_fold_self)]
 
-use crate::anki_api::AnkiNote;
-use crate::anki_api::AnkiNoteOptions;
+use crate::anki::AnkiNote;
+use crate::anki::AnkiNoteOptions;
 use clap;
 
 async fn save_dict(word_info: &hj_jp_dict::WordInfo) -> Result<(), Box<dyn std::error::Error>> {

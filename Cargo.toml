@@ -13,8 +13,12 @@ publish = false
 
 [workspace]
 members = [
-"main"
 "crates/anki",
 "crates/hjdict",
 ]
+
+[dependencies]
+tokio = {version = "0.2.22", features = ["full"]}
+futures = "0.3"
+clap = "2.33.3"
 
