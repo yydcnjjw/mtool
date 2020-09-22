@@ -1,8 +1,5 @@
-use crate::anki_api::AnkiNote;
-use crate::anki_api::AnkiNoteOptions;
-use crate::cli_op;
+#![feature(option_zip, iterator_fold_self)]
 use colored::Colorize;
-use futures::future::{BoxFuture, FutureExt};
 use html5ever::rcdom::Handle;
 use reqwest;
 use soup::prelude::{NodeExt, QueryBuilderExt, Soup};
@@ -514,31 +511,6 @@ pub async fn get_jp_dict(input: &str) -> Result<Vec<JPWord>> {
     }
 
     Result::Ok(get_all_word_info(&doc))
-}
-
-impl AnkiNote {
-    pub fn new(word_info: &JPWord, options: Option<AnkiNoteOptions>) -> AnkiNote {
-        AnkiNote {
-            deck_name: "Japanese_Word".to_string(),
-            model_name: "japanese(dict)".to_string(),
-            fields: serde_json::json!({
-                        "expression": word_info.expression,
-                        "pronounce": word_info.pronounce.pronounce,
-                        "kata": word_info.pronounce.kata,
-                        "tone": word_info.pronounce.tone,
-                        "audio": format!("[sound:{}]", word_info.pronounce.audio),
-                        "simple": if word_info.simples.is_empty() {
-                            word_info.details.to_html()
-                        } else {
-                            word_info.simples.to_html()
-                        } ,
-                        "sentence": word_info.details.to_html()
-
-            }),
-            tags: vec!["japanese(dict)".to_string()],
-            options,
-        }
-    }
 }
 
 #[cfg(test)]

@@ -18,6 +18,8 @@ members = [
 ]
 
 [dependencies]
+anki = {version = "0.1.0", path = "crates/anki"}
+hjdict = {version = "0.1.0", path = "crates/hjdict"}
 tokio = {version = "0.2.22", features = ["full"]}
 futures = "0.3"
 clap = "2.33.3"

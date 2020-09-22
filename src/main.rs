@@ -1,26 +1,6 @@
-#![feature(option_zip, iterator_fold_self)]
-
-use crate::anki::AnkiNote;
-use crate::anki::AnkiNoteOptions;
+mod command;
+mod util;
 use clap;
-
-async fn save_dict(word_info: &hj_jp_dict::WordInfo) -> Result<(), Box<dyn std::error::Error>> {
-    if !cli_op::read_y_or_n("add note[Y/n]") {
-        return Ok(());
-    }
-
-    let mut note = AnkiNote::new(&word_info, Option::None);
-    if !anki_api::can_add_note(&note).await? {
-        println!("{}: duplicate!", word_info.expression);
-        return Ok(());
-    }
-    note.options = Some(AnkiNoteOptions {
-        allow_duplicate: false,
-        duplicate_scope: "deck".to_string(),
-    });
-    anki_api::add_note(&note).await?;
-    Ok(println!("success!"))
-}
 
 #[tokio::main]
 async fn main() {
@@ -47,8 +27,8 @@ async fn main() {
 
     if let Some(matches) = matches.subcommand_matches("jp") {
         if let Some(query) = matches.value_of("query") {
-            match hj_jp_dict::query_dict(query).await {
-                Ok(word) => println!("{}", hj_jp_dict::to_cli_str(&word)),
+            match command::jp::query(query).await {
+                Ok(word) => println!("{}", &word.to_cli_str()),
                 Err(e) => println!("{}", e),
             }
         }

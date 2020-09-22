@@ -1,6 +1,30 @@
-pub fn query<'a>(query: &'a str) -> BoxFuture<'a, Result<WordInfo>> {
+use crate::util::cli_op;
+use anki::AnkiNote;
+use anki::AnkiNoteOptions;
+use futures::future::{BoxFuture, FutureExt};
+use hjdict::JPWord;
+
+async fn save(word_info: &JPWord) -> Result<(), Box<dyn std::error::Error>> {
+    if !cli_op::read_y_or_n("add note[Y/n]") {
+        return Ok(());
+    }
+
+    let mut note = AnkiNote::new(&word_info, Option::None);
+    if !anki::can_add_note(&note).await? {
+        println!("{}: duplicate!", word_info.expression);
+        return Ok(());
+    }
+    note.options = Some(AnkiNoteOptions {
+        allow_duplicate: false,
+        duplicate_scope: "deck".to_string(),
+    });
+    anki::add_note(&note).await?;
+    Ok(println!("success!"))
+}
+
+pub fn query<'a>(query_text: &'a str) -> BoxFuture<'a, Result<JPWord, Box<dyn std::error::Error>>> {
     async move {
-        match get_dict(query).await {
+        match hjdict::get_jp_dict(query_text).await {
             Ok(mut word_infos) => {
                 let mut i = 0;
                 if word_infos.len() > 1 {
@@ -15,7 +39,8 @@ pub fn query<'a>(query: &'a str) -> BoxFuture<'a, Result<WordInfo>> {
 
                 let mut word_info = word_infos.remove(i);
 
-                if word_info.expression == query || word_info.pronounce.pronounce == query {
+                if word_info.expression == query_text || word_info.pronounce.pronounce == query_text
+                {
                     word_info.expression = format!(
                         "{}[{}]",
                         word_info.expression, word_info.pronounce.pronounce
@@ -25,9 +50,9 @@ pub fn query<'a>(query: &'a str) -> BoxFuture<'a, Result<WordInfo>> {
                 Ok(word_info)
             }
             Err(e) => match e {
-                Error::WordSuggestion(v) => {
+                hjdict::Error::WordSuggestion(v) => {
                     let i = cli_op::read_choice("word suggestions: ", &v);
-                    query_dict(v.get(i).unwrap()).await
+                    query(v.get(i).unwrap()).await
                 }
                 _ => Err(e.into()),
             },

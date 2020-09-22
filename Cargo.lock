@@ -13,6 +13,7 @@ dependencies = [
 name = "anki"
 version = "0.1.0"
 dependencies = [
+ "hjdict",
  "reqwest",
  "serde",
  "serde_json",
@@ -645,8 +646,10 @@ dependencies = [
 name = "my-tool"
 version = "0.1.0"
 dependencies = [
+ "anki",
  "clap",
  "futures",
+ "hjdict",
  "tokio",
 ]
 
