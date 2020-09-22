@@ -1,6 +1,8 @@
 use crate::anki_api::AnkiNote;
 use crate::anki_api::AnkiNoteOptions;
+use crate::cli_op;
 use colored::Colorize;
+use futures::future::{BoxFuture, FutureExt};
 use html5ever::rcdom::Handle;
 use reqwest;
 use soup::prelude::{NodeExt, QueryBuilderExt, Soup};
@@ -75,6 +77,8 @@ impl fmt::Display for Error {
         }
     }
 }
+
+impl std::error::Error for Error {}
 
 impl From<reqwest::Error> for Error {
     fn from(e: reqwest::Error) -> Error {
@@ -478,6 +482,44 @@ pub async fn get_dict(input: &str) -> Result<Vec<WordInfo>> {
     }
 
     Result::Ok(get_all_word_info(&doc))
+}
+
+pub fn query_dict<'a>(query: &'a str) -> BoxFuture<'a, Result<WordInfo>> {
+    async move {
+        match get_dict(query).await {
+            Ok(mut word_infos) => {
+                let mut i = 0;
+                if word_infos.len() > 1 {
+                    i = cli_op::read_choice(
+                        "multi words",
+                        &word_infos
+                            .iter()
+                            .map(|v| format!("{}[{}]", v.expression, v.pronounce.pronounce))
+                            .collect(),
+                    );
+                }
+
+                let mut word_info = word_infos.remove(i);
+
+                if word_info.expression == query || word_info.pronounce.pronounce == query {
+                    word_info.expression = format!(
+                        "{}[{}]",
+                        word_info.expression, word_info.pronounce.pronounce
+                    );
+                }
+
+                Ok(word_info)
+            }
+            Err(e) => match e {
+                Error::WordSuggestion(v) => {
+                    let i = cli_op::read_choice("word suggestions: ", &v);
+                    query_dict(v.get(i).unwrap()).await
+                }
+                _ => Err(e.into()),
+            },
+        }
+    }
+    .boxed()
 }
 
 pub fn to_cli_str(word_info: &WordInfo) -> String {
