@@ -4,7 +4,7 @@ use anki::AnkiNoteOptions;
 use futures::future::{BoxFuture, FutureExt};
 use hjdict::JPWord;
 
-async fn save(word_info: &JPWord) -> Result<(), Box<dyn std::error::Error>> {
+pub async fn save(word_info: &JPWord) -> Result<(), Box<dyn std::error::Error>> {
     if !cli_op::read_y_or_n("add note[Y/n]") {
         return Ok(());
     }
@@ -19,7 +19,7 @@ async fn save(word_info: &JPWord) -> Result<(), Box<dyn std::error::Error>> {
         duplicate_scope: "deck".to_string(),
     });
     anki::add_note(&note).await?;
-    Ok(println!("success!"))
+    Ok(())
 }
 
 pub fn query<'a>(query_text: &'a str) -> BoxFuture<'a, Result<JPWord, Box<dyn std::error::Error>>> {

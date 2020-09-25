@@ -118,15 +118,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "clap_generate"
-version = "3.0.0-beta.2"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "adf420f8b687b628d2915ccfd43a660c437a170432e3fbcb66944e8717a0d68f"
-dependencies = [
- "clap",
-]
-
-[[package]]
 name = "cloudabi"
 version = "0.0.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -674,7 +665,6 @@ version = "0.1.0"
 dependencies = [
  "anki",
  "clap",
- "clap_generate",
  "futures",
  "hjdict",
  "tokio",
@@ -1501,6 +1491,10 @@ checksum = "4f0e00789804e99b20f12bc7003ca416309d28a6f495d6af58d1e2c2842461b5"
 dependencies = [
  "lazy_static",
 ]
+
+[[package]]
+name = "translate"
+version = "0.1.0"
 
 [[package]]
 name = "try-lock"

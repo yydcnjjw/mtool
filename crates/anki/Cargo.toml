@@ -7,7 +7,7 @@ edition = "2018"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-hjdict = {version = "0.1.0", path = "../hjdict"}
+hjdict = {path = "../hjdict"}
 tokio = {version = "0.2.22", features = ["full"]}
 serde_json = "1.0.57"
 serde = {version = "1.0.116", features = ["derive"]}
