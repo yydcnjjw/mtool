@@ -1,6 +1,6 @@
 use clap::Clap;
 
-pub mod jp;
+mod jp;
 
 #[derive(Clap, PartialEq, Debug)]
 pub enum Lang {

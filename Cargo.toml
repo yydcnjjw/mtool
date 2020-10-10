@@ -21,6 +21,7 @@ members = [
 [dependencies]
 anki = {path = "crates/anki"}
 hjdict = {path = "crates/hjdict"}
+translate = {path = "crates/translate"}
 tokio = {version = "0.2.22", features = ["full"]}
 futures = "0.3"
 clap = "3.0.0-beta.2"

@@ -9,6 +9,6 @@ async fn main() {
     let opts = Opts::parse();
     match opts.subcmd {
         SubCommand::Dict(dict) => dict.do_query().await,
-        SubCommand::Translate(_) => println!("translate"),
+        SubCommand::Translate(translate) => translate.do_query().await,
     }
 }

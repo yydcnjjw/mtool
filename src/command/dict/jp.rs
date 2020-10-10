@@ -27,6 +27,7 @@ pub fn query<'a>(query_text: &'a str) -> BoxFuture<'a, Result<JPWord, Box<dyn st
         match hjdict::get_jp_dict(query_text).await {
             Ok(mut word_infos) => {
                 let mut i = 0;
+
                 if word_infos.len() > 1 {
                     i = cli_op::read_choice(
                         "multi words",
@@ -35,19 +36,18 @@ pub fn query<'a>(query_text: &'a str) -> BoxFuture<'a, Result<JPWord, Box<dyn st
                             .map(|v| format!("{}[{}]", v.expression, v.pronounce.pronounce))
                             .collect(),
                     );
+                    let word_info = word_infos.get_mut(i).unwrap();
+                    if word_info.expression == query_text
+                        || word_info.pronounce.pronounce != query_text
+                    {
+                        word_info.expression = format!(
+                            "{}[{}]",
+                            word_info.expression, word_info.pronounce.pronounce
+                        );
+                    }
                 }
 
-                let mut word_info = word_infos.remove(i);
-
-                if word_info.expression == query_text || word_info.pronounce.pronounce == query_text
-                {
-                    word_info.expression = format!(
-                        "{}[{}]",
-                        word_info.expression, word_info.pronounce.pronounce
-                    );
-                }
-
-                Ok(word_info)
+                Ok(word_infos.remove(i))
             }
             Err(e) => match e {
                 hjdict::Error::WordSuggestion(v) => {

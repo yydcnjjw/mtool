@@ -3,7 +3,7 @@ use colored::Colorize;
 use html5ever::rcdom::Handle;
 use reqwest;
 use soup::prelude::{NodeExt, QueryBuilderExt, Soup};
-use std::fmt;
+use thiserror::Error;
 
 const USER_AGENT: &str = "Mozilla/5.0 (X11; Linux x86_64) \
                           AppleWebKit/537.36 (KHTML, like Gecko) \
@@ -58,29 +58,14 @@ pub struct WordDetail {
     pub means: Vec<WordDetailMean>,
 }
 
-#[derive(Debug)]
+#[derive(Error, Debug)]
 pub enum Error {
-    NetRequest(reqwest::Error),
+    #[error("{0}")]
+    NetRequest(#[from] reqwest::Error),
+    #[error("HJ dict not found: {0}")]
     NotFound(String),
+    #[error("HJ dict word suggestion: {0:?}")]
     WordSuggestion(Vec<String>),
-}
-
-impl fmt::Display for Error {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        match &*self {
-            Error::NetRequest(e) => e.fmt(f),
-            Error::NotFound(s) => write!(f, "HJ dict not found: {}", s),
-            Error::WordSuggestion(v) => write!(f, "HJ dict word suggestion: {:?}", v),
-        }
-    }
-}
-
-impl std::error::Error for Error {}
-
-impl From<reqwest::Error> for Error {
-    fn from(e: reqwest::Error) -> Error {
-        Error::NetRequest(e)
-    }
 }
 
 type Result<T> = std::result::Result<T, Error>;
@@ -503,11 +488,11 @@ pub async fn get_jp_dict(input: &str) -> Result<Vec<JPWord>> {
     let doc = Soup::new(&text);
 
     if is_not_found_page(&doc) {
-        return Err(Error::NotFound(input.to_string()));
+        return Err(Error::NotFound(input.to_string()).into());
     }
 
     if let Some(v) = word_suggestions(&doc) {
-        return Err(Error::WordSuggestion(v));
+        return Err(Error::WordSuggestion(v).into());
     }
 
     Result::Ok(get_all_word_info(&doc))

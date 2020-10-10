@@ -1,6 +1,6 @@
 use clap::Clap;
 use dict::Dict;
-use translate::Translate;
+use crate::command::translate::Translate;
 
 pub mod dict;
 pub mod translate;

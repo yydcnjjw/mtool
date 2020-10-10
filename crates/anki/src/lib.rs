@@ -1,7 +1,7 @@
-use hjdict::OutputFormat;
 use hjdict::JPWord;
+use hjdict::OutputFormat;
 use serde::{Deserialize, Serialize};
-use std::fmt;
+use thiserror::Error;
 
 #[derive(Serialize, Deserialize, Debug)]
 struct AnkiRequest<T> {
@@ -73,30 +73,15 @@ impl AnkiNote {
 
 const API_URL: &str = "http://localhost:8765";
 
-#[derive(Debug)]
+#[derive(Error, Debug)]
 pub enum Error {
-    NetRequest(reqwest::Error),
+    #[error("anki response: {0}")]
     AnkiResponse(String),
+    #[error("{0}")]
+    NetRequest(#[from] reqwest::Error)
 }
 
 type Result<T> = std::result::Result<T, Error>;
-
-impl fmt::Display for Error {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        match &*self {
-            Error::NetRequest(e) => e.fmt(f),
-            Error::AnkiResponse(s) => write!(f, "anki response: {}", s),
-        }
-    }
-}
-
-impl std::error::Error for Error {}
-
-impl From<reqwest::Error> for Error {
-    fn from(e: reqwest::Error) -> Error {
-        Error::NetRequest(e)
-    }
-}
 
 async fn api_request<T>(request: &AnkiRequest<T>) -> Result<AnkiResponse>
 where
