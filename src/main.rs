@@ -3,7 +3,8 @@ mod util;
 
 use clap::Clap;
 use command::{Opts, SubCommand};
-
+use gio::prelude::*;
+use gtk::prelude::*;
 #[tokio::main]
 async fn main() {
     let opts = Opts::parse();

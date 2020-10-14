@@ -47,8 +47,7 @@ fn wr(mut a: usize, b: &str) -> usize {
     let mut i = 0;
     while i < b.len() - 2 {
         let c = b[i + 2];
-        let mut d = 0;
-        d = if 'a' as usize <= c {
+        let mut d = if 'a' as usize <= c {
             c - 87
         } else {
             c - '0' as usize
