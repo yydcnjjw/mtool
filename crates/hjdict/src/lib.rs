@@ -14,7 +14,7 @@ const COOKIE: &str = "HJ_UID=0f406091-be97-6b64-f1fc-f7b2470883e9; \
                       _REF=; HJ_SSID_3=4a460f19-c0ae-12a7-8e86-6e360f69ec9b; \
                       _SREF_3=; HJ_CMATCH=1";
 
-const API_URL: &str = "https://www.hjdict.com/jp/jc/";
+const API_URL: &str = "https://dict.hjenglish.com/jp/jc/";
 
 #[derive(Debug)]
 pub struct JPWord {
