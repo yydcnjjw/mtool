@@ -25,7 +25,12 @@ translate = {path = "crates/translate"}
 tokio = {version = "0.2.22", features = ["full"]}
 futures = "0.3"
 clap = "3.0.0-beta.2"
-gio = "0.9.1"
-gtk = "0.9.2"
-
 # clap_generate = "3.0.0-beta.2"
+cpp_core = "0.6.0"
+qt_core = "0.5.0"
+qt_gui = "0.5.0"                                                                       
+qt_qml = "0.5.0"
+qt_widgets = "0.5.0"
+
+[build-dependencies]                                                                            
+qt_ritual_build = "0.5.0"
