@@ -22,7 +22,7 @@ pub struct Dict {
 }
 
 impl Dict {
-    pub async fn do_query(&self) {
+    pub async fn run(&self) {
         match self.lang {
             Lang::JP => match jp::query(&self.query).await {
                 Ok(word) => {

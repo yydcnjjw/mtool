@@ -1,7 +1,7 @@
 use thiserror::Error;
 
-const GOOGLE_TRANSLATE_ROOT_URL: &str = "https://translate.google.cn/";
-const GOOGLE_TRANSLATE_API_URL: &str = "https://translate.google.cn/translate_a/single";
+const GOOGLE_TRANSLATE_ROOT_URL: &str = "https://translate.google.com/";
+const GOOGLE_TRANSLATE_API_URL: &str = "https://translate.google.com/translate_a/single";
 const USER_AGENT: &str = "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, \
                           like Gecko) Chrome/84.0.4147.89 Safari/537.36";
 type TKK = (usize, usize);
@@ -96,7 +96,8 @@ async fn tk(s: &str) -> Result<String> {
         i += 1;
     }
 
-    let tkk = tkk().await?;
+    let tkk = tkk().await.unwrap_or((427116, 3269864724));
+
     let b = tkk.0;
     let mut a = b;
 

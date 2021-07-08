@@ -1,4 +1,3 @@
-#![feature(option_zip, iterator_fold_self)]
 use colored::Colorize;
 use html5ever::rcdom::Handle;
 use reqwest;

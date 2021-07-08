@@ -13,19 +13,17 @@ publish = false
 
 [workspace]
 members = [
-"crates/anki",
-"crates/hjdict",
-"crates/translate"
+"crates/*",
 ]
 
 [dependencies]
+syn = "=1.0.57"
 anki = {path = "crates/anki"}
 hjdict = {path = "crates/hjdict"}
 translate = {path = "crates/translate"}
-tokio = {version = "0.2.22", features = ["full"]}
-futures = "0.3"
+search = {path = "crates/search"}
+tokio = {version = "*", features = ["full"]}
+futures = "*"
 clap = "3.0.0-beta.2"
-gio = "0.9.1"
-gtk = "0.9.2"
 
 # clap_generate = "3.0.0-beta.2"

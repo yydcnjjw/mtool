@@ -1,9 +1,12 @@
-use clap::Clap;
-use dict::Dict;
+pub mod dict;
+pub mod search;
+pub mod translate;
+
+use crate::command::dict::Dict;
+use crate::command::search::Search;
 use crate::command::translate::Translate;
 
-pub mod dict;
-pub mod translate;
+use clap::Clap;
 
 /// my tool
 #[derive(Clap)]
@@ -19,6 +22,9 @@ pub enum SubCommand {
     #[clap(version("0.1.0"), author("yydcnjjw <yydcnjjw@gmail.com>"))]
     Dict(Dict),
     /// translate
-    #[clap(version("0.1.0"), author("yydcnjjw <yydcnjjw@gmail.com>"))]    
+    #[clap(version("0.1.0"), author("yydcnjjw <yydcnjjw@gmail.com>"))]
     Translate(Translate),
+    /// search
+    #[clap(version("0.1.0"), author("yydcnjjw <yydcnjjw@gmail.com>"))]
+    Search(Search),
 }

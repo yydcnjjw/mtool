@@ -23,6 +23,7 @@ pub fn read_choice(msg: &str, options: &Vec<String>) -> usize {
     return read_line().unwrap();
 }
 
+#[allow(dead_code)]
 pub fn read_choice_cb<F>(msg: &str, options: &Vec<String>, f: F)
 where
     F: Fn(usize),

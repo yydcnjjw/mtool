@@ -40,7 +40,7 @@ pub struct Translate {
 }
 
 impl Translate {
-    pub async fn do_query(&self) {
+    pub async fn run(&self) {
         let result = match self.backend {
             Backend::Google => google::query(&self.query, &self.from, &self.to).await,
         };
