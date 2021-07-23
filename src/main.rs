@@ -7,9 +7,9 @@ use SubCommand::Dict;
 use SubCommand::Translate;
 use SubCommand::Search;
 
-use qt_core::{q_init_resource, qs};
-use qt_qml::QQmlApplicationEngine;
-use qt_widgets::QApplication;
+// use qt_core::{q_init_resource, qs};
+// use qt_qml::QQmlApplicationEngine;
+// use qt_widgets::QApplication;
 
 #[tokio::main]
 async fn main() {

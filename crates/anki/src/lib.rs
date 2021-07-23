@@ -78,7 +78,7 @@ pub enum Error {
     #[error("anki response: {0}")]
     AnkiResponse(String),
     #[error("{0}")]
-    NetRequest(#[from] reqwest::Error)
+    NetRequest(#[from] reqwest::Error),
 }
 
 type Result<T> = std::result::Result<T, Error>;
