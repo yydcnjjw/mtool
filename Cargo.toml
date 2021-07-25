@@ -17,15 +17,18 @@ members = [
 ]
 
 [dependencies]
-syn = "=1.0.57"
 anki = {path = "crates/anki"}
 hjdict = {path = "crates/hjdict"}
 translate = {path = "crates/translate"}
 search = {path = "crates/search"}
+ocr = {path = "crates/ocr"}
+
+syn = "=1.0.57"
 tokio = {version = "*", features = ["full"]}
 futures = "*"
 clap = "3.0.0-beta.2"
 # clap_generate = "3.0.0-beta.2"
+
 cpp_core = "0.6.0"
 qt_core = "0.5.0"
 qt_gui = "0.5.0"                                                                       

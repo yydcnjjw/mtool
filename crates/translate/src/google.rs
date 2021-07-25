@@ -171,6 +171,7 @@ pub async fn query(q: &str, from: &str, to: &str) -> Result<String> {
 #[cfg(test)]
 mod tests {
     use crate::google;
+
     #[tokio::test]
     async fn test() -> google::Result<String> {
         google::query("english", "auto", "zh-CN").await

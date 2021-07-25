@@ -1,10 +1,9 @@
 pub mod dict;
+pub mod ocr;
 pub mod search;
 pub mod translate;
 
-use crate::command::dict::Dict;
-use crate::command::search::Search;
-use crate::command::translate::Translate;
+use self::{dict::Dict, ocr::Ocr, search::Search, translate::Translate};
 
 use clap::Clap;
 
@@ -27,4 +26,7 @@ pub enum SubCommand {
     /// search
     #[clap(version("0.1.0"), author("yydcnjjw <yydcnjjw@gmail.com>"))]
     Search(Search),
+    /// ocr
+    #[clap(version("0.1.0"), author("yydcnjjw <yydcnjjw@gmail.com>"))]
+    Ocr(Ocr),
 }

@@ -12,3 +12,4 @@ serde = {version = "*", features = ["derive"]}
 reqwest = {version = "*", features = ["json"]}
 regex = "*"
 thiserror = "*"
+tokio = {version = "*", features = ["full"]}

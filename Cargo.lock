@@ -787,6 +787,7 @@ dependencies = [
  "cpp_core",
  "futures",
  "hjdict",
+ "ocr",
  "qt_core",
  "qt_gui",
  "qt_qml",
@@ -849,6 +850,10 @@ checksum = "a38f2be3697a57b4060074ff41b44c16870d916ad7877c17696e063257482bc7"
 dependencies = [
  "memchr",
 ]
+
+[[package]]
+name = "ocr"
+version = "0.1.0"
 
 [[package]]
 name = "once_cell"
@@ -1879,6 +1884,7 @@ dependencies = [
  "serde",
  "serde_json",
  "thiserror",
+ "tokio",
 ]
 
 [[package]]
