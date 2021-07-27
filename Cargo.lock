@@ -792,7 +792,6 @@ dependencies = [
  "qt_gui",
  "qt_qml",
  "qt_ritual_build",
- "qt_widgets",
  "search",
  "syn 1.0.57",
  "tokio",
