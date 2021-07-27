@@ -10,7 +10,7 @@ use qt_qml::QQmlApplicationEngine;
 pub struct Ocr {}
 
 impl Ocr {
-    pub async fn run(&self) {
+    pub async fn run(&self) {       
         QGuiApplication::init(|_| unsafe {
             q_init_resource!("screenshot");
             let _engine = QQmlApplicationEngine::from_q_string(&qs("qrc:/screenshot.qml"));
