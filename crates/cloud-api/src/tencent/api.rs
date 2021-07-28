@@ -1,14 +1,14 @@
 use chrono::{DateTime, Utc};
+use crypto::{digest::Digest, hmac::Hmac, mac::Mac, sha2::Sha256};
 use reqwest::header::{CONTENT_TYPE, HOST};
 use serde::{Deserialize, Serialize};
-use crypto::{digest::Digest, hmac::Hmac, mac::Mac, sha2::Sha256};
 
 use super::credential::Credential;
 
 #[derive(Deserialize, Debug)]
 pub struct HttpResponse<T> {
     #[serde(rename = "Response")]
-    response: T,
+    pub response: T,
 }
 
 pub trait HttpRequest {
@@ -18,7 +18,10 @@ pub trait HttpRequest {
     fn version() -> String;
 }
 
-pub fn make_client<T: HttpRequest + Serialize>(req: T, cred: Credential) -> reqwest::RequestBuilder {
+pub fn make_client<T: HttpRequest + Serialize>(
+    req: T,
+    cred: Credential,
+) -> reqwest::RequestBuilder {
     let secret_id = cred.secret_id;
     let secret_key = cred.secret_key;
     let algorithm = cred.algorithm;

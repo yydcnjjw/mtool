@@ -1,4 +1,4 @@
-mod tencent;
+pub mod tencent;
 
 #[cfg(test)]
 mod tests {

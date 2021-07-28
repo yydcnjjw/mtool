@@ -14,6 +14,7 @@ async fn main() {
         Dict(dict) => dict.run().await,
         Translate(translate) => translate.run().await,
         Search(search) => search.run().await,
-        Ocr(ocr) => ocr.run().await,
+        Ocr(ocr) => ocr.run(),
     }
 }
+

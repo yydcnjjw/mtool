@@ -3,6 +3,7 @@ use serde::{Deserialize, Serialize};
 use super::api::HttpRequest;
 
 #[derive(Serialize, Debug)]
+#[allow(dead_code)]
 pub enum OCRImage {
     #[serde(rename = "ImageBase64")]
     Base64(String),
@@ -12,6 +13,7 @@ pub enum OCRImage {
 
 #[derive(Serialize, Debug)]
 #[serde(rename_all = "lowercase")]
+#[allow(dead_code)]
 pub enum OCRLanguageType {
     Zh,
     Auto,
@@ -81,64 +83,51 @@ impl GeneralBasicOCRRequest {
 }
 
 #[derive(Deserialize, Debug)]
-struct Coord {
-    #[serde(rename = "X")]
-    x: i32,
-    #[serde(rename = "Y")]
-    y: i32,
+#[serde(rename_all = "PascalCase")]
+pub struct Coord {
+    pub x: i32,
+    pub y: i32,
 }
 
 #[derive(Deserialize, Debug)]
-struct ItemCoord {
+#[serde(rename_all = "PascalCase")]
+pub struct ItemCoord {
     #[serde(flatten)]
-    coord: Coord,
-    #[serde(rename = "Width")]
-    width: i32,
-    #[serde(rename = "Height")]
-    height: i32,
+    pub coord: Coord,
+    pub width: i32,
+    pub height: i32,
 }
 #[derive(Deserialize, Debug)]
-struct DetectedWords {
-    #[serde(rename = "Confidence")]
-    confidence: i32,
-    #[serde(rename = "Character")]
-    character: String,
+#[serde(rename_all = "PascalCase")]
+pub struct DetectedWords {
+    pub confidence: i32,
+    pub character: String,
 }
 
 #[derive(Deserialize, Debug)]
-struct DetectedWordCoordPoint {
-    #[serde(rename = "WordCoordinate")]
-    word_coordinate: (Coord, Coord, Coord, Coord),
+#[serde(rename_all = "PascalCase")]
+pub struct DetectedWordCoordPoint {
+    pub word_coordinate: (Coord, Coord, Coord, Coord),
 }
 
 #[derive(Deserialize, Debug)]
-struct TextDetection {
-    #[serde(rename = "DetectedText")]
-    detected_text: String,
-    #[serde(rename = "Confidence")]
-    confidence: i32,
-    #[serde(rename = "Polygon")]
-    polygon: Vec<Coord>,
-    #[serde(rename = "AdvancedInfo")]
-    advanced_info: String,
-    #[serde(rename = "ItemPolygon")]
-    item_polygon: ItemCoord,
-    #[serde(rename = "Words")]
-    words: Vec<DetectedWords>,
-    #[serde(rename = "WordCoordPoint")]
-    wrod_coord_point: Vec<DetectedWordCoordPoint>,
+#[serde(rename_all = "PascalCase")]
+pub struct TextDetection {
+    pub detected_text: String,
+    pub confidence: i32,
+    pub polygon: Vec<Coord>,
+    pub advanced_info: String,
+    pub item_polygon: ItemCoord,
+    pub words: Vec<DetectedWords>,
+    pub wrod_coord_point: Option<Vec<DetectedWordCoordPoint>>,
 }
 
 #[derive(Deserialize, Debug)]
+#[serde(rename_all = "PascalCase")]
 pub struct GeneralBasicOCRResponse {
-    #[serde(rename = "TextDetections")]
-    text_detections: Vec<TextDetection>,
-    #[serde(rename = "Language")]
-    language: String,
-    #[serde(rename = "Angel")]
-    angle: f32,
-    #[serde(rename = "PdfPageSize")]
-    pdf_page_size: i32,
-    #[serde(rename = "RequestId")]
-    request_id: String,
+    pub text_detections: Vec<TextDetection>,
+    pub language: String,
+    pub angle: Option<f32>,
+    pub pdf_page_size: i32,
+    pub request_id: String,
 }

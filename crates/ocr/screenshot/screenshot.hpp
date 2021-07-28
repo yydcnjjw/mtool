@@ -1,11 +1,7 @@
 #pragma once
 
-#ifdef __cplusplus
-extern "C" {
-#endif
+#include <rust/cxx.h>
+#include <memory>
 
-int qt_run(int argc, char *argv[]);
-
-#ifdef __cplusplus
-}
-#endif
+using rust_callback = rust::Fn<void(std::unique_ptr<std::vector<uint8_t>>)>;
+int qt_run(int argc, char **argv, rust_callback);

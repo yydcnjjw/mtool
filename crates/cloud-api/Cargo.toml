@@ -12,6 +12,6 @@ serde = { version = "*", features = ["derive"] }
 serde_json = "*"
 hex = "*"
 base64 = "*"
-reqwest = { version = "*", features = ["json"] }
+reqwest = { version = "*", features = ["blocking", "json"] }
 chrono = "*"
 rust-crypto = "*"

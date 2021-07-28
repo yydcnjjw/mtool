@@ -1,11 +1,10 @@
-#include <screenshot.hpp>
 #include <message.hpp>
+#include <screenshot.hpp>
 
 #include <QGuiApplication>
 #include <QQmlApplicationEngine>
 #include <QQuickImageProvider>
 #include <QScreen>
-
 
 class ScreenImageProvider : public QQuickImageProvider {
 public:
@@ -24,7 +23,7 @@ public:
   }
 };
 
-int qt_run(int argc, char *argv[]) {
+int qt_run(int argc, char **argv, rust_callback cb) {
   QCoreApplication::setAttribute(Qt::AA_EnableHighDpiScaling);
 
   QGuiApplication app(argc, argv);
@@ -41,10 +40,8 @@ int qt_run(int argc, char *argv[]) {
 
   engine.addImageProvider(QLatin1String("screen"), new ScreenImageProvider);
 
-
-  auto msg = std::make_shared<Message>();
+  auto msg = std::make_shared<Message>(cb);
   qmlRegisterSingletonInstance("demo", 1, 0, "Message", msg.get());
-
 
   engine.load(url);
 
