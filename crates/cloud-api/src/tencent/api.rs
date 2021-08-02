@@ -6,9 +6,31 @@ use serde::{Deserialize, Serialize};
 use super::credential::Credential;
 
 #[derive(Deserialize, Debug)]
+#[serde(rename_all = "PascalCase")]
+pub struct ApiError {
+    pub code: String,
+    pub message: String,
+}
+
+#[derive(Deserialize, Debug)]
+#[serde(rename_all = "PascalCase")]
+pub struct ErrorResponse {
+    pub error: ApiError,
+    pub request_id: String,
+}
+
+#[derive(Deserialize, Debug)]
+#[serde(untagged)]
+#[serde(rename_all = "PascalCase")]
+pub enum ResponseType<T> {
+    Ok(T),
+    Err(ErrorResponse),
+}
+
+#[derive(Deserialize, Debug)]
+#[serde(rename_all = "PascalCase")]
 pub struct HttpResponse<T> {
-    #[serde(rename = "Response")]
-    pub response: T,
+    pub response: ResponseType<T>,
 }
 
 pub trait HttpRequest {

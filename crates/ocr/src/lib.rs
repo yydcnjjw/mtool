@@ -1,16 +1,22 @@
+use std::io::Write;
 use std::os::unix::ffi::OsStrExt;
+use std::process::{Command, Stdio};
 use std::{
     ffi::CString,
     os::raw::{c_char, c_int},
     ptr,
 };
 
+use cxx::{CxxVector, UniquePtr};
+
 #[cxx::bridge]
 mod ffi {
     unsafe extern "C++" {
         include!("ocr/screenshot/screenshot.hpp");
 
-        unsafe fn qt_run(argc: i32, argv: *mut *mut c_char, f: fn(UniquePtr<CxxVector<u8>>)) -> i32;
+        unsafe fn qt_run(argc: i32, argv: *mut *mut c_char, f: fn(UniquePtr<CxxVector<u8>>))
+            -> i32;
+        fn qt_quit();
     }
 }
 
@@ -35,12 +41,35 @@ pub fn run() {
     argv.push(ptr::null_mut()); // Nul terminator.
 
     unsafe {
-        ffi::qt_run(argc as i32, argv.as_mut_ptr(), |img| {
-            println!("{:?} test", img.len());
-            // tokio::spawn(async move {
-            //     cloud_api::tencent::run(size, data).await.unwrap();
-            // });
-        });
+        ffi::qt_run(
+            argc as i32,
+            argv.as_mut_ptr(),
+            |img: UniquePtr<CxxVector<u8>>| {
+                tokio::spawn(async move {
+                    let text = cloud_api::tencent::run(img.as_slice())
+                        .await
+                        .unwrap()
+                        .concat();
+
+                    println!("{}", text);
+                    
+                    let mut child = Command::new("xclip")
+                        .arg("-selection")
+                        .arg("clipboard")
+                        .stdin(Stdio::piped())
+                        .spawn()
+                        .expect("Failed to spawn child process");
+
+                    let mut stdin = child.stdin.take().expect("Failed to open stdin");
+                    std::thread::spawn(move || {
+                        stdin
+                            .write_all(text.as_bytes())
+                            .expect("Failed to write to stdin");
+                    });
+                    ffi::qt_quit();
+                });
+            },
+        );
     }
 }
 

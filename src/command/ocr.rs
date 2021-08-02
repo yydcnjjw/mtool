@@ -5,7 +5,7 @@ pub struct Ocr {}
 
 
 impl Ocr {
-    pub fn run(&self) {
+    pub async fn run(&self) {
         ocr::run()
     }
 }

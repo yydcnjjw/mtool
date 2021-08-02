@@ -1,10 +1,13 @@
 #include <message.hpp>
 #include <screenshot.hpp>
 
+#include <QClipboard>
 #include <QGuiApplication>
 #include <QQmlApplicationEngine>
 #include <QQuickImageProvider>
 #include <QScreen>
+
+#include <iostream>
 
 class ScreenImageProvider : public QQuickImageProvider {
 public:
@@ -47,3 +50,5 @@ int qt_run(int argc, char **argv, rust_callback cb) {
 
   return app.exec();
 }
+
+void qt_quit() { QCoreApplication::quit(); }

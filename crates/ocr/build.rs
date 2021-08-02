@@ -1,6 +1,5 @@
 fn main() {
-    cxx_build::bridge("src/lib.rs")
-        .compile("screen");
+    cxx_build::bridge("src/lib.rs").compile("screen");
 
     let dst = cmake::build("screenshot");
 
