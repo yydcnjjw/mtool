@@ -1,7 +1,7 @@
 import QtQuick 2.12
 import QtQuick.Window 2.12
 import QtQuick.Shapes 1.12
-import demo 1.0
+// import demo 1.0
 
 Window {
     visible: true
@@ -97,7 +97,7 @@ Window {
 
             onDoubleClicked: {
                 screenshot.grabToImage(function(result){
-                    Message.call(result.image)
+                    // Message.call(result.image)
                 })
             }
         }

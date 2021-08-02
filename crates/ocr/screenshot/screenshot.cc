@@ -6,25 +6,26 @@
 #include <QQmlApplicationEngine>
 #include <QQuickImageProvider>
 #include <QScreen>
-
 #include <iostream>
 
-class ScreenImageProvider : public QQuickImageProvider {
-public:
-  ScreenImageProvider() : QQuickImageProvider(QQuickImageProvider::Pixmap) {}
+ScreenImageProvider::ScreenImageProvider()
+    : QQuickImageProvider(QQuickImageProvider::Pixmap) {}
 
-  QPixmap requestPixmap(const QString &id, QSize *size,
-                        const QSize &requestedSize) override {
+QPixmap ScreenImageProvider::requestPixmap(const QString &id, QSize *size,
+                                           const QSize &requestedSize) {
 
-    auto screen = QGuiApplication::primaryScreen();
+  auto screen = QGuiApplication::primaryScreen();
 
-    if (!screen) {
-      return QPixmap();
-    }
-
-    return screen->grabWindow(0);
+  if (!screen) {
+    return QPixmap();
   }
-};
+
+  return screen->grabWindow(0);
+}
+
+std::unique_ptr<QQmlImageProviderBase> new_screen_image_provider() {
+  return std::make_unique<ScreenImageProvider>();
+}
 
 int qt_run(int argc, char **argv, rust_callback cb) {
   QCoreApplication::setAttribute(Qt::AA_EnableHighDpiScaling);

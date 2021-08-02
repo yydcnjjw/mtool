@@ -1198,8 +1198,13 @@ dependencies = [
  "arboard",
  "cloud-api",
  "cmake",
+ "cpp_core",
  "cxx",
  "cxx-build",
+ "qt_core",
+ "qt_gui",
+ "qt_qml",
+ "qt_ritual_build",
  "tokio",
 ]
 
@@ -1452,6 +1457,18 @@ dependencies = [
  "proc-macro2 1.0.28",
  "quote 1.0.9",
  "syn 1.0.57",
+]
+
+[[package]]
+name = "qt_qml"
+version = "0.5.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "0960891ac8412b2ca1e2db8ddf069bda2728cafbad4cd05bb0061305fa171753"
+dependencies = [
+ "cpp_core",
+ "qt_core",
+ "qt_gui",
+ "qt_ritual_build",
 ]
 
 [[package]]

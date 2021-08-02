@@ -12,6 +12,12 @@ cxx = "*"
 tokio = { version = "*", features = ["full"] }
 arboard = "*"
 
+cpp_core = "*"
+qt_core = "*"
+qt_qml = "*"
+qt_gui = "*"
+
 [build-dependencies]
 cmake = "*"
 cxx-build = "*"
+qt_ritual_build = "*"
