@@ -22,11 +22,13 @@ hjdict = { path = "crates/hjdict" }
 translate = { path = "crates/translate" }
 # search = {path = "crates/search"}
 ocr = { path = "crates/ocr" }
+mdict = { path = "crates/mdict" }
 
 syn = "=1.0.57"
 tokio = { version = "*", features = ["full"] }
 futures = "*"
 clap = "3.0.0-beta.2"
 # clap_generate = "3.0.0-beta.2"
+html2text = "*"
 
 [build-dependencies]
