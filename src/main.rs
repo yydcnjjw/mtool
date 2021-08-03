@@ -7,6 +7,7 @@ use SubCommand::Dict;
 use SubCommand::Ocr;
 use SubCommand::Search;
 use SubCommand::Translate;
+use SubCommand::Mdict;
 
 #[tokio::main]
 async fn main() {
@@ -15,5 +16,6 @@ async fn main() {
         Translate(translate) => translate.run().await,
         Search(search) => search.run().await,
         Ocr(ocr) => ocr.run().await,
+        Mdict(mdict) => mdict.run().await,
     }
 }

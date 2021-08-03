@@ -1,9 +1,10 @@
 pub mod dict;
+pub mod mdict;
 pub mod ocr;
 pub mod search;
 pub mod translate;
 
-use self::{dict::Dict, ocr::Ocr, search::Search, translate::Translate};
+use self::{dict::Dict, mdict::Mdict, ocr::Ocr, search::Search, translate::Translate};
 
 use clap::Clap;
 
@@ -29,4 +30,7 @@ pub enum SubCommand {
     /// ocr
     #[clap(version("0.1.0"), author("yydcnjjw <yydcnjjw@gmail.com>"))]
     Ocr(Ocr),
+    /// mdict
+    #[clap(version("0.1.0"), author("yydcnjjw <yydcnjjw@gmail.com>"))]
+    Mdict(Mdict),
 }
