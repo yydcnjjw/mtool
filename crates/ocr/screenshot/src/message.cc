@@ -4,8 +4,9 @@
 #include <rust/cxx.h>
 
 #include <QBuffer>
-#include <QImage>
 #include <QDebug>
+#include <QGuiApplication>
+#include <QImage>
 #include <QQmlEngine>
 
 namespace rust {
@@ -25,9 +26,7 @@ void Message::call(QImage const &img) {
 }
 
 void qml_register_message() {
-  
-  qDebug() << "register message";
-  
+
   qmlRegisterSingletonType<Message>(
       "demo", 1, 0, "Message",
       [](QQmlEngine *engine, QJSEngine *scriptEngine) -> QObject * {
@@ -37,5 +36,7 @@ void qml_register_message() {
         return new Message;
       });
 }
+
+void qt_quit() { QGuiApplication::quit(); }
 
 } // namespace rust

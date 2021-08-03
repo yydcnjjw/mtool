@@ -21,15 +21,20 @@ mod ffi {
         fn new_screen_image_provider() -> *const ScreenImageProvider;
 
         fn qml_register_message();
+        fn qt_quit();
     }
 }
 
 fn ocr_test(img: UniquePtr<CxxVector<u8>>) {
     tokio::spawn(async move {
-        let text = cloud_api::tencent::run(img.as_slice())
-            .await
-            .unwrap()
-            .concat();
+        let text = cloud_api::tencent::run(img.as_slice()).await;
+
+        if let Err(e) = text {
+            println!("{}", e);
+            return ffi::qt_quit()
+        };
+
+        let text = text.unwrap().concat();
 
         println!("{}", text);
 
@@ -45,6 +50,7 @@ fn ocr_test(img: UniquePtr<CxxVector<u8>>) {
             stdin
                 .write_all(text.as_bytes())
                 .expect("Failed to write to stdin");
+            ffi::qt_quit();
         });
     });
 }
@@ -64,9 +70,9 @@ pub fn run() {
                 ffi::new_screen_image_provider() as *const QQmlImageProviderBase,
             );
 
-            engine.load_q_string(&qs("qrc:/main.qml"));
-
             ffi::qml_register_message();
+
+            engine.load_q_string(&qs("qrc:/main.qml"));
 
             QGuiApplication::exec()
         }
