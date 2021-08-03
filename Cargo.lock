@@ -1201,6 +1201,7 @@ dependencies = [
  "cpp_core",
  "cxx",
  "cxx-build",
+ "pkg-config",
  "qt_core",
  "qt_gui",
  "qt_qml",

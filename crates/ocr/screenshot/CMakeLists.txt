@@ -15,12 +15,11 @@ find_package(Qt5 COMPONENTS Core Quick REQUIRED)
 find_package(KF5GlobalAccel REQUIRED)
 
 set(PROJECT_SOURCES
-  screenshot.cc
-  message.cc
-  qml.qrc
+  src/screen_image_provider.cc
+  src/message.cc
 )
 
-add_library(screenshot SHARED
+add_library(screenshot STATIC
   ${PROJECT_SOURCES}
   )
 
@@ -31,28 +30,7 @@ target_link_libraries(screenshot
 
 target_include_directories(screenshot SYSTEM
   PUBLIC
+  ${CMAKE_CURRENT_SOURCE_DIR}/../../
   ${CMAKE_CURRENT_SOURCE_DIR}/../../../target/cxxbridge)
-
-
-add_library(screenshot-static STATIC
-  ${PROJECT_SOURCES}
-  )
-
-target_link_libraries(screenshot-static
-  PUBLIC
-  Qt5::Core
-  Qt5::Quick)
-
-target_include_directories(screenshot-static SYSTEM
-  PUBLIC
-  ${CMAKE_CURRENT_SOURCE_DIR}/../../../target/cxxbridge)
-
-add_executable(screenshot_main
-  main.cc
-  )
-target_link_libraries(screenshot_main
-  PRIVATE screenshot
-  )
 
 install(TARGETS screenshot DESTINATION .)
-install(TARGETS screenshot-static DESTINATION .)
