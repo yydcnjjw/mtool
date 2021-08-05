@@ -34,15 +34,15 @@ pub struct DictMeta {
     #[serde(rename = "CreationDate")]
     creation_date: Option<String>,
     #[serde(rename = "Compact")]
-    compact: String,
+    compact: Option<String>,
     #[serde(rename = "Compat")]
-    compat: String,
+    compat: Option<String>,
     #[serde(rename = "Left2Right")]
-    left2right: String,
+    left2right: Option<String>,
     #[serde(rename = "DataSourceFormat")]
-    data_source_format: String,
+    data_source_format: Option<String>,
     #[serde(rename = "StyleSheet")]
-    style_sheet: String,
+    style_sheet: Option<String>,
 }
 
 impl DictMeta {
@@ -56,6 +56,8 @@ pub fn dict_meta(in_: &[u8]) -> NomResult<&[u8], DictMeta> {
         tuple((length_count(map(be_u32, |i| i / 2), le_u16), le_u32))(in_)?;
     
     nom_return!(in_, DictMeta, {
-        quick_xml::de::from_str::<DictMeta>(&String::from_utf16(&dict_meta)?)?
+        let meta = quick_xml::de::from_str::<DictMeta>(&String::from_utf16(&dict_meta)?)?;
+        println!("{:?}", meta);
+        meta
     })
 }

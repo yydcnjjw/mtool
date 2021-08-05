@@ -1,7 +1,4 @@
-use std::{
-    fs::File,
-    io::{Cursor, Read},
-};
+use std::{fs::File, io::{Cursor, Read, Write}};
 
 use clap::Clap;
 
@@ -26,17 +23,14 @@ impl Mdict {
         match mdx {
             Ok((_, mdx)) => {
                 println!("query: {}", self.query);
+                let mut file = File::create("test.html").unwrap();
                 mdx.search(self.query.clone())
                     .iter()
-                    .map(|item| {
-                        (
-                            item.0.clone(),
-                            html2text::from_read(Cursor::new(&item.1), 100),
-                        )
-                    })
+                    .map(|item| (item.0.clone(), format!("{} <div></div>", item.1)))
                     .for_each(|item| {
-                        println!("{}", item.1);
-                    })
+                        file.write(item.1.as_bytes()).unwrap();
+                    });
+                file.flush().unwrap();
             }
             Err(e) => println!("{:?}", e),
         }

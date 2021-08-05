@@ -148,6 +148,8 @@ fn key_block<'a>(in_: &'a [u8], meta: &DictMeta) -> NomResult<&'a [u8], KeyMap> 
         })
     }
 
+    println!("{:?}", keymap.iter().take(4).collect::<Vec<_>>());
+
     Ok((in_, keymap))
 }
 
