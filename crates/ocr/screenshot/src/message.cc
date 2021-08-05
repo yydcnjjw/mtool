@@ -18,7 +18,7 @@ void Message::call(QImage const &img) {
 
   if (img.save(&buffer, "PNG")) {
 
-    ocr_test(std::make_unique<std::vector<uint8_t>>(ba.begin(), ba.end()));
+    ocr(std::make_unique<std::vector<uint8_t>>(ba.begin(), ba.end()));
 
   } else {
     qDebug() << "Image save failure";

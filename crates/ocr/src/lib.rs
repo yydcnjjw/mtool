@@ -3,6 +3,7 @@ use std::{
     process::{Command, Stdio},
 };
 
+use cloud_api::tencent;
 use cxx::{CxxVector, UniquePtr};
 use qt_core::{q_init_resource, qs, ApplicationAttribute, QCoreApplication};
 use qt_gui::QGuiApplication;
@@ -11,7 +12,7 @@ use qt_qml::{QQmlApplicationEngine, QQmlImageProviderBase};
 #[cxx::bridge(namespace = "rust")]
 mod ffi {
     extern "Rust" {
-        fn ocr_test(img: UniquePtr<CxxVector<u8>>);
+        fn ocr(img: UniquePtr<CxxVector<u8>>);
     }
 
     unsafe extern "C++" {
@@ -25,33 +26,53 @@ mod ffi {
     }
 }
 
-fn ocr_test(img: UniquePtr<CxxVector<u8>>) {
-    tokio::spawn(async move {
-        let text = cloud_api::tencent::run(img.as_slice()).await;
+async fn do_ocr(img: &[u8]) -> cloud_api::tencent::Result<()> {
+    let base64img = base64::encode(img);
+    let req = tencent::ocr::GeneralBasicOCRRequest::new(
+        tencent::ocr::OCRImage::Base64(base64img),
+        tencent::ocr::OCRLanguageType::Auto,
+    );
 
-        if let Err(e) = text {
+    let cred = tencent::credential::Credential::new(
+        String::from("AKIDoRoukKdfQv96mCLDo8CyThfLkskLfiV1"),
+        String::from("FDuLVOzKQFn44nFQM1PWMvCCwPaU7UaP"),
+    );
+
+    let resp = tencent::api::post::<
+        tencent::ocr::GeneralBasicOCRRequest,
+        tencent::ocr::GeneralBasicOCRResponse,
+    >(&req, &cred)
+    .await?;
+
+    let text = resp
+        .text_detections
+        .iter()
+        .map(|td| &td.detected_text)
+        .fold(String::new(), |lhs, rhs| lhs + rhs + "\n");
+
+    println!("{}", text);
+
+    let mut child = Command::new("xclip")
+        .arg("-selection")
+        .arg("clipboard")
+        .stdin(Stdio::piped())
+        .spawn()
+        .expect("Failed to spawn child process");
+    let mut stdin = child.stdin.take().expect("Failed to open stdin");
+    stdin
+        .write_all(text.as_bytes())
+        .expect("Failed to write to stdin");
+
+    Ok(())
+}
+
+fn ocr(img: UniquePtr<CxxVector<u8>>) {
+    tokio::spawn(async move {
+        if let Err(e) = do_ocr(img.as_slice()).await {
             println!("{}", e);
-            return ffi::qt_quit()
         };
 
-        let text = text.unwrap().concat();
-
-        println!("{}", text);
-
-        let mut child = Command::new("xclip")
-            .arg("-selection")
-            .arg("clipboard")
-            .stdin(Stdio::piped())
-            .spawn()
-            .expect("Failed to spawn child process");
-
-        let mut stdin = child.stdin.take().expect("Failed to open stdin");
-        std::thread::spawn(move || {
-            stdin
-                .write_all(text.as_bytes())
-                .expect("Failed to write to stdin");
-            ffi::qt_quit();
-        });
+        ffi::qt_quit();
     });
 }
 

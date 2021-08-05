@@ -1,4 +1,4 @@
-use std::{fs::File, io::{Cursor, Read, Write}};
+use std::{fs::File, io::{Read, Write}};
 
 use clap::Clap;
 

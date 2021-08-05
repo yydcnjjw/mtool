@@ -6,11 +6,12 @@ pub mod translate;
 
 use self::{dict::Dict, mdict::Mdict, ocr::Ocr, search::Search, translate::Translate};
 
-use clap::Clap;
+use clap::{Clap, AppSettings};
 
 /// my tool
 #[derive(Clap)]
 #[clap(version("0.1.0"), author("yydcnjjw <yydcnjjw@gmail.com>"))]
+#[clap(setting = AppSettings::ColoredHelp)]
 pub struct Opts {
     #[clap(subcommand)]
     pub subcmd: SubCommand,

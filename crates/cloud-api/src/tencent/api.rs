@@ -1,9 +1,11 @@
 use chrono::{DateTime, Utc};
 use crypto::{digest::Digest, hmac::Hmac, mac::Mac, sha2::Sha256};
 use reqwest::header::{CONTENT_TYPE, HOST};
+use serde::de::DeserializeOwned;
 use serde::{Deserialize, Serialize};
 
 use super::credential::Credential;
+use super::{Error, Result};
 
 #[derive(Deserialize, Debug)]
 #[serde(rename_all = "PascalCase")]
@@ -40,12 +42,12 @@ pub trait HttpRequest {
     fn version() -> String;
 }
 
-pub fn make_client<T: HttpRequest + Serialize>(
-    req: T,
-    cred: Credential,
-) -> reqwest::RequestBuilder {
-    let secret_id = cred.secret_id;
-    let secret_key = cred.secret_key;
+fn make_client<T>(req: &T, cred: &Credential) -> reqwest::RequestBuilder
+where
+    T: HttpRequest + Serialize,
+{
+    let secret_id = &cred.secret_id;
+    let secret_key = &cred.secret_key;
     let algorithm = cred.algorithm;
 
     let service = T::service();
@@ -121,4 +123,23 @@ pub fn make_client<T: HttpRequest + Serialize>(
         .header("X-TC-Region", "ap-shanghai")
         .header("Authorization", authorization)
         .body(payload)
+}
+
+pub async fn post<Request, Response>(req: &Request, cred: &Credential) -> Result<Response>
+where
+    Request: HttpRequest + Serialize,
+    Response: DeserializeOwned,
+{
+    let cli = make_client(req, cred);
+
+    match cli
+        .send()
+        .await?
+        .json::<HttpResponse<Response>>()
+        .await?
+        .response
+    {
+        ResponseType::Ok(resp) => Ok(resp),
+        ResponseType::Err(e) => Err(Error::Api(e.error)),
+    }
 }

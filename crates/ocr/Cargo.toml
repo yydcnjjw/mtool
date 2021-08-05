@@ -11,6 +11,9 @@ cloud-api = { path = "../cloud-api" }
 cxx = "*"
 tokio = { version = "*", features = ["full"] }
 arboard = "*"
+serde = "*"
+serde_yaml = "*"
+base64 = "*"
 
 cpp_core = "*"
 qt_core = "*"

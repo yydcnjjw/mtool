@@ -1,15 +1,10 @@
-use std::convert::AsRef;
 use thiserror::Error;
 
-use self::{
-    api::{make_client, ApiError, HttpResponse},
-    credential::Credential,
-    ocr::{GeneralBasicOCRResponse, OCRImage, OCRLanguageType},
-};
+use self::api::ApiError;
 
-mod api;
-mod credential;
-mod ocr;
+pub mod api;
+pub mod credential;
+pub mod ocr;
 
 #[derive(Error, Debug)]
 pub enum Error {
@@ -19,35 +14,7 @@ pub enum Error {
     NetRequest(#[from] reqwest::Error),
 }
 
-type Result<T> = std::result::Result<T, Error>;
-
-pub async fn run<T>(img: T) -> Result<Vec<String>>
-where
-    T: AsRef<[u8]>,
-{
-    let base64img = base64::encode(img);
-    let req = ocr::GeneralBasicOCRRequest::new(OCRImage::Base64(base64img), OCRLanguageType::Auto);
-    let cred = Credential::new(
-        String::from("AKIDoRoukKdfQv96mCLDo8CyThfLkskLfiV1"),
-        String::from("FDuLVOzKQFn44nFQM1PWMvCCwPaU7UaP"),
-    );
-    let cli = make_client(req, cred);
-
-    match cli
-        .send()
-        .await?
-        .json::<HttpResponse<GeneralBasicOCRResponse>>()
-        .await?
-        .response
-    {
-        api::ResponseType::Ok(resp) => Ok(resp
-            .text_detections
-            .iter()
-            .map(|td| td.detected_text.clone())
-            .collect::<Vec<String>>()),
-        api::ResponseType::Err(e) => Err(Error::Api(e.error)),
-    }
-}
+pub type Result<T> = std::result::Result<T, Error>;
 
 #[cfg(test)]
 mod tests {
