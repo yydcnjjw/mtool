@@ -1,10 +1,14 @@
 mod common;
 pub mod dict_meta;
+mod key_block;
 pub mod mdx;
+mod content_block;
+mod record_block;
+mod mdd;
 
 use std::{io, result, string::FromUtf16Error};
 
-use nom::error::{ErrorKind, ParseError};
+use nom::error::{ErrorKind, FromExternalError, ParseError};
 use thiserror::Error;
 
 #[derive(Error, Debug)]
@@ -31,5 +35,11 @@ impl<I> ParseError<I> for Error {
     }
 }
 
+impl<I, E> FromExternalError<I, E> for Error {
+    fn from_external_error(_: I, kind: ErrorKind, _: E) -> Self {
+        Error::Nom(kind)
+    }
+}
+
 type Result<T> = result::Result<T, Error>;
-type NomResult<I, O> = nom::IResult<I, O, Error>;
+type NomResult<I, O, E = Error> = nom::IResult<I, O, E>;

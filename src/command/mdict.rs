@@ -1,4 +1,7 @@
-use std::{fs::File, io::{Read, Write}};
+use std::{
+    fs::File,
+    io::{Read, Write},
+};
 
 use clap::Clap;
 
@@ -18,7 +21,7 @@ impl Mdict {
         let mut buf = Vec::new();
         file.read_to_end(&mut buf).unwrap();
 
-        let mdx = mdict::mdx::parse(&buf);
+        let mdx = mdict::mdx::parse(buf.as_slice());
 
         match mdx {
             Ok((_, mdx)) => {

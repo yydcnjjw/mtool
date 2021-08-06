@@ -1,13 +1,16 @@
+use std::ops::RangeFrom;
+
 use nom::{
     combinator::map,
     multi::length_count,
     number::streaming::{be_u32, le_u16, le_u32},
     sequence::tuple,
+    InputIter, InputLength, Slice,
 };
 
 use serde::Deserialize;
 
-use super::{NomResult, nom_return};
+use crate::{nom_return, NomResult};
 
 #[derive(Debug, Deserialize, PartialEq)]
 pub struct DictMeta {
@@ -51,10 +54,13 @@ impl DictMeta {
     }
 }
 
-pub fn dict_meta(in_: &[u8]) -> NomResult<&[u8], DictMeta> {
+pub fn parse<I>(in_: I) -> NomResult<I, DictMeta>
+where
+    I: Clone + Slice<RangeFrom<usize>> + InputIter<Item = u8> + InputLength,
+{
     let (in_, (dict_meta, _checksum)) =
         tuple((length_count(map(be_u32, |i| i / 2), le_u16), le_u32))(in_)?;
-    
+
     nom_return!(in_, DictMeta, {
         let meta = quick_xml::de::from_str::<DictMeta>(&String::from_utf16(&dict_meta)?)?;
         println!("{:?}", meta);
