@@ -28,7 +28,7 @@ struct ContentBlock {
     data: Vec<u8>,
 }
 
-pub fn parse<I>(in_: I, nb_compressed: u64, nb_decompressed: u64) -> NomResult<I, Vec<u8>>
+pub fn parse<I>(in_: I, nb_compressed: usize, nb_decompressed: usize) -> NomResult<I, Vec<u8>>
 where
     I: Clone + PartialEq + Slice<RangeFrom<usize>> + InputIter<Item = u8> + InputLength,
 {

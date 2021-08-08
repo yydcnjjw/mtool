@@ -9,16 +9,16 @@ use crate::{common::mdict_number, content_block, dict_meta::DictMeta, NomResult}
 
 #[derive(Debug)]
 struct RecordBlockHeader {
-    n_blocks: u64,
-    n_entries: u64,
-    nb_block_info: u64,
-    nb_blocks: u64,
+    n_blocks: usize,
+    n_entries: usize,
+    nb_block_info: usize,
+    nb_blocks: usize,
 }
 
 #[derive(Debug)]
 struct RecordBlockInfo {
-    nb_compressed: u64,
-    nb_decompressed: u64,
+    nb_compressed: usize,
+    nb_decompressed: usize,
 }
 
 #[derive(Debug)]
@@ -94,6 +94,6 @@ where
                 nb_decompressed,
             },
         ),
-        header.n_blocks as usize,
+        header.n_blocks,
     )
 }

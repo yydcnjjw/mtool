@@ -1,35 +1,32 @@
-use std::ops::RangeFrom;
-
-use nom::{InputIter, InputLength, Slice};
+use std::path::Path;
 
 use crate::{
-    dict_meta::{self, DictMeta},
-    key_block::{self, KeyBlock},
-    record_block::{self, RecordBlock},
-    NomResult,
+    common::{read_file_to_buf, MdResource},
+    mdict::{self, Mdict},
+    mdsearch::MdSearch,
+    Result,
 };
 
 #[derive(Debug)]
 pub struct Mdd {
-    pub meta: DictMeta,
-    key_block: KeyBlock,
-    record_block: RecordBlock,
+    mdict: Mdict,
 }
 
-pub fn parse<I>(in_: I) -> NomResult<I, Mdd>
-where
-    I: Clone + PartialEq + Slice<RangeFrom<usize>> + InputIter<Item = u8> + InputLength,
-{
-    let (in_, meta) = dict_meta::parse(in_)?;
-    let (in_, key_block) = key_block::parse(in_, &meta)?;
-    let (in_, record_block) = record_block::parse(in_, &meta)?;
+impl MdSearch for Mdd {
+    fn search(&self, text: String) -> Vec<(String, MdResource)> {
+        self.mdict
+            .search(text)
+            .iter()
+            .map(|(key, index)| (key.clone(), MdResource::Raw(index.get(&self.mdict))))
+            .collect::<_>()
+    }
+}
 
-    Ok((
-        in_,
-        Mdd {
-            meta,
-            key_block,
-            record_block,
-        },
-    ))
+impl Mdd {
+    pub fn parse(path: &Path) -> Result<Mdd> {
+        let buf = read_file_to_buf(path);
+        let mdict = mdict::parse_result(buf.as_slice())?;
+
+        Ok(Mdd { mdict })
+    }
 }

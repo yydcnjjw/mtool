@@ -1,4 +1,4 @@
-use std::ops::RangeFrom;
+use std::{fs::File, io::Read, ops::RangeFrom, path::Path};
 
 use nom::{
     bytes::streaming::tag,
@@ -39,12 +39,16 @@ where
     }
 }
 
-pub fn mdict_number<I, E>(meta: &DictMeta) -> impl FnMut(I) -> IResult<I, u64, E>
+pub fn mdict_number<I, E>(meta: &DictMeta) -> impl FnMut(I) -> IResult<I, usize, E>
 where
     I: Slice<RangeFrom<usize>> + InputIter<Item = u8> + InputLength,
     E: ParseError<I>,
 {
-    cond_if(meta.is_ver2(), be_u64, map(be_u32, |v| v as u64))
+    cond_if(
+        meta.is_ver2(),
+        map(be_u64, |v| v as usize),
+        map(be_u32, |v| v as usize),
+    )
 }
 
 const U8NULL: &'static [u8] = &[0u8];
@@ -70,4 +74,17 @@ where
             String::from_utf16(&v).unwrap_or_default()
         }),
     )
+}
+
+#[derive(Debug)]
+pub enum MdResource<'a> {
+    Text(String),
+    Raw(&'a [u8]),
+}
+
+pub fn read_file_to_buf(path: &Path) -> Vec<u8> {
+    let mut file = File::open(path).unwrap();
+    let mut buf = Vec::new();
+    file.read_to_end(&mut buf).unwrap();
+    buf
 }

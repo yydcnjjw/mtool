@@ -1,9 +1,7 @@
-use std::{
-    fs::File,
-    io::{Read, Write},
-};
+use std::{fs::File, io::Write};
 
 use clap::Clap;
+use mdict::{mdsearch::MdSearch, mdx::Mdx};
 
 #[derive(Clap)]
 pub struct Mdict {
@@ -17,21 +15,16 @@ pub struct Mdict {
 
 impl Mdict {
     pub async fn run(&self) {
-        let mut file = File::open(&self.dict_path).unwrap();
-        let mut buf = Vec::new();
-        file.read_to_end(&mut buf).unwrap();
-
-        let mdx = mdict::mdx::parse(buf.as_slice());
+        let mdx = Mdx::parse(&self.dict_path.into());
 
         match mdx {
             Ok((_, mdx)) => {
-                println!("query: {}", self.query);
                 let mut file = File::create("test.html").unwrap();
                 mdx.search(self.query.clone())
                     .iter()
-                    .map(|item| (item.0.clone(), format!("{} <div></div>", item.1)))
+                    .map(|item| (item.0.clone(), format!("{:?} <div></div>", item.1)))
                     .for_each(|item| {
-                        file.write(item.1.as_bytes()).unwrap();
+                        println!("{:?}", item);
                     });
                 file.flush().unwrap();
             }

@@ -1,10 +1,12 @@
 mod common;
 pub mod dict_meta;
 mod key_block;
-pub mod mdx;
 mod content_block;
 mod record_block;
-mod mdd;
+mod mdict;
+pub mod mdsearch;
+pub mod mdd;
+pub mod mdx;
 
 use std::{io, result, string::FromUtf16Error};
 

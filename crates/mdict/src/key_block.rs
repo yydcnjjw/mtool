@@ -10,7 +10,6 @@ use nom::{
 };
 use ripemd128::{Digest, Ripemd128};
 use std::{
-    collections::HashMap,
     io::{Cursor, Read},
     ops::RangeFrom,
 };
@@ -23,12 +22,12 @@ use crate::{
 };
 
 #[derive(Debug)]
-struct KeyBlockHeader {
-    n_blocks: u64,
-    n_entries: u64,
+pub struct KeyBlockHeader {
+    n_blocks: usize,
+    n_entries: usize,
     nb_decompressed: Option<u64>,
-    nb_block_info: u64,
-    nb_blocks: u64,
+    nb_block_info: usize,
+    nb_blocks: usize,
     checksum: Option<u32>,
 }
 
@@ -60,12 +59,12 @@ where
 }
 
 #[derive(Debug)]
-struct KeyBlockInfo {
-    n_entries: u64,
-    head: String,
-    tail: String,
-    nb_compressed: u64,
-    nb_decompressed: u64,
+pub struct KeyBlockInfo {
+    n_entries: usize,
+    pub head: String,
+    pub tail: String,
+    nb_compressed: usize,
+    nb_decompressed: usize,
 }
 
 fn info_unzip(in_: Vec<u8>, checksum: u32) -> Result<Vec<u8>> {
@@ -168,13 +167,7 @@ where
                 mdict_number(meta),
                 mdict_number(meta),
             )),
-            |(n_entries, head, tail, nb_compressed, nb_decompressed): (
-                u64,
-                String,
-                String,
-                u64,
-                u64,
-            )| KeyBlockInfo {
+            |(n_entries, head, tail, nb_compressed, nb_decompressed)| KeyBlockInfo {
                 n_entries,
                 head,
                 tail,
@@ -183,7 +176,7 @@ where
                 nb_decompressed,
             },
         ),
-        header.n_blocks as usize,
+        header.n_blocks,
     )
 }
 
@@ -197,7 +190,7 @@ where
 {
     if meta.is_ver2() {
         let (in_, (_, checksum)) = tuple((le_u32, le_u32))(in_)?;
-        let (in_, data) = map_res(count(le_u8, header.nb_block_info as usize - 8), |data| {
+        let (in_, data) = map_res(count(le_u8, header.nb_block_info - 8), |data| {
             info_unzip(data, checksum)
         })(in_)?;
 
@@ -208,42 +201,43 @@ where
     }
 }
 
-type KeyMap = HashMap<String, u64>;
+#[derive(Debug)]
+pub struct KeyIndex {
+    pub pos: usize,
+    pub key: String,
+}
 
-fn key_map<I>(
+fn key_blocks<I>(
     mut in_: I,
     meta: &DictMeta,
-    header: &KeyBlockHeader,
     infos: &Vec<KeyBlockInfo>,
-) -> NomResult<I, KeyMap>
+) -> NomResult<I, Vec<Vec<KeyIndex>>>
 where
     I: Clone + PartialEq + Slice<RangeFrom<usize>> + InputIter<Item = u8> + InputLength,
 {
-    let mut keymap = KeyMap::with_capacity(header.n_entries as usize);
-
+    let mut vec = Vec::new();
     for item in infos {
         let (i_, data) = content_block::parse(in_, item.nb_compressed, item.nb_decompressed)?;
         in_ = i_;
 
         let (_, entries) = count(
-            tuple((mdict_number(meta), mdict_string(meta))),
-            item.n_entries as usize,
+            map(
+                tuple((mdict_number(meta), mdict_string(meta))),
+                |(pos, key)| KeyIndex { pos, key },
+            ),
+            item.n_entries,
         )(data.as_bytes())?;
-
-        entries.iter().for_each(|entry| {
-            keymap.insert(entry.1.clone(), entry.0);
-        })
+        vec.push(entries);
     }
 
-    println!("{:?}", keymap.iter().take(4).collect::<Vec<_>>());
-    Ok((in_, keymap))
+    Ok((in_, vec))
 }
 
 #[derive(Debug)]
 pub struct KeyBlock {
-    header: KeyBlockHeader,
-    infos: Vec<KeyBlockInfo>,
-    pub keymap: KeyMap,
+    pub header: KeyBlockHeader,
+    pub infos: Vec<KeyBlockInfo>,
+    pub blocks: Vec<Vec<KeyIndex>>,
 }
 
 pub fn parse<I>(in_: I, meta: &DictMeta) -> NomResult<I, KeyBlock>
@@ -255,14 +249,14 @@ where
 
     let (in_, infos) = key_block_info(in_, meta, &header)?;
 
-    let (in_, keymap) = key_map(in_, meta, &header, &infos)?;
+    let (in_, blocks) = key_blocks(in_, meta, &infos)?;
 
     Ok((
         in_,
         KeyBlock {
             header,
             infos,
-            keymap,
+            blocks,
         },
     ))
 }
