@@ -171,8 +171,7 @@ where
                 n_entries,
                 head,
                 tail,
-                // 不包含 type 和 checksum
-                nb_compressed: nb_compressed - 8,
+                nb_compressed,
                 nb_decompressed,
             },
         ),
@@ -208,17 +207,20 @@ pub struct KeyIndex {
 }
 
 fn key_blocks<I>(
-    mut in_: I,
+    in_: I,
     meta: &DictMeta,
     infos: &Vec<KeyBlockInfo>,
 ) -> NomResult<I, Vec<Vec<KeyIndex>>>
 where
     I: Clone + PartialEq + Slice<RangeFrom<usize>> + InputIter<Item = u8> + InputLength,
 {
+    let mut input = in_.clone();
+
     let mut vec = Vec::new();
     for item in infos {
-        let (i_, data) = content_block::parse(in_, item.nb_compressed, item.nb_decompressed)?;
-        in_ = i_;
+        let input_ = input.clone();
+        let (i_, data) = content_block::parse(input_, item.nb_compressed, item.nb_decompressed)?;
+        input = i_;
 
         let (_, entries) = count(
             map(
@@ -230,7 +232,7 @@ where
         vec.push(entries);
     }
 
-    Ok((in_, vec))
+    Ok((input, vec))
 }
 
 #[derive(Debug)]

@@ -43,7 +43,7 @@ where
                 }
             }),
             le_u32,
-            count(le_u8, nb_compressed as usize),
+            count(le_u8, nb_compressed - 8),
         )),
         |(block_type, checksum, data)| ContentBlock {
             block_type,
@@ -55,7 +55,7 @@ where
     nom_return!(in_, Vec<u8>, {
         match block.block_type {
             ContentBlockType::Zlib => {
-                let mut output = Vec::with_capacity(nb_decompressed as usize);
+                let mut output = Vec::with_capacity(nb_decompressed);
                 let mut decoder = ZlibDecoder::new(Cursor::new(block.data));
                 decoder.read_to_end(&mut output)?;
                 output
@@ -64,7 +64,7 @@ where
             ContentBlockType::LZO => {
                 let lzo = minilzo_rs::LZO::init()?;
 
-                lzo.decompress(&block.data, nb_decompressed as usize)?
+                lzo.decompress(&block.data, nb_decompressed)?
             }
         }
     })

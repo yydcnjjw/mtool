@@ -9,6 +9,8 @@ use nom::{
     Compare, IResult, InputIter, InputLength, InputTake, Parser, Slice,
 };
 
+use crate::{Error, Result};
+
 use super::dict_meta::DictMeta;
 
 #[macro_export]
@@ -80,6 +82,19 @@ where
 pub enum MdResource<'a> {
     Text(String),
     Raw(&'a [u8]),
+}
+
+impl<'a> MdResource<'a> {
+    pub fn new(key: &String, data: &'a [u8], meta: &DictMeta) -> Result<MdResource<'a>> {
+        if key.ends_with(".png") {
+            Ok(MdResource::Raw(data))
+        } else {
+            match mdict_string::<_, Error>(meta)(data) {
+                Ok((_, text)) => Ok(MdResource::Text(text)),
+                Err(e) => Err(Error::Nom(e.to_string())),
+            }
+        }
+    }
 }
 
 pub fn read_file_to_buf(path: &Path) -> Vec<u8> {

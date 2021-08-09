@@ -1,7 +1,6 @@
-use std::{fs::File, io::Write};
+use std::path::Path;
 
 use clap::Clap;
-use mdict::{mdsearch::MdSearch, mdx::Mdx};
 
 #[derive(Clap)]
 pub struct Mdict {
@@ -15,18 +14,14 @@ pub struct Mdict {
 
 impl Mdict {
     pub async fn run(&self) {
-        let mdx = Mdx::parse(&self.dict_path.into());
-
-        match mdx {
-            Ok((_, mdx)) => {
-                let mut file = File::create("test.html").unwrap();
-                mdx.search(self.query.clone())
+        match mdict::parse(&Path::new(&self.dict_path)) {
+            Ok(mut mdx) => {
+                mdx.search(&self.query)
                     .iter()
                     .map(|item| (item.0.clone(), format!("{:?} <div></div>", item.1)))
                     .for_each(|item| {
                         println!("{:?}", item);
                     });
-                file.flush().unwrap();
             }
             Err(e) => println!("{:?}", e),
         }
