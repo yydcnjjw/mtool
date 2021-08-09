@@ -15,8 +15,8 @@ pub struct Mdict {
 impl Mdict {
     pub async fn run(&self) {
         match mdict::parse(&Path::new(&self.dict_path)) {
-            Ok(mut mdx) => {
-                mdx.search(&self.query)
+            Ok(mut md) => {
+                md.search(&self.query)
                     .iter()
                     .map(|item| (item.0.clone(), format!("{:?} <div></div>", item.1)))
                     .for_each(|item| {
