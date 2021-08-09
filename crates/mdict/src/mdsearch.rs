@@ -14,7 +14,7 @@ impl Mdict {
     }
 
     pub fn search<'a>(&'a mut self, text: &String) -> Vec<(String, MdResource<'a>)> {
-        let search_indexs = self.search_index(text);
+        let search_indexs = self.search_index(|key| key == text);
 
         if let Err(_) = self.record_block.unzip_blocks(
             &search_indexs
@@ -80,7 +80,10 @@ impl Mdict {
         }
     }
 
-    fn search_index(&self, text: &String) -> Vec<(String, RecordIndex)> {
+    fn search_index<F>(&self, pred: F) -> Vec<(String, RecordIndex)>
+    where
+        F: Fn(&String) -> bool,
+    {
         self.key_block
             .infos
             .iter()
@@ -92,7 +95,7 @@ impl Mdict {
                     .unwrap()
                     .iter()
                     .enumerate()
-                    .filter(|(_, keyindex)| keyindex.key.contains(text))
+                    .filter(|(_, keyindex)| pred(&keyindex.key))
                     .map(|(i, keyindex)| {
                         (
                             keyindex.key.clone(),

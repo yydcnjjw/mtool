@@ -72,18 +72,20 @@ where
     I: Clone + PartialEq + Slice<RangeFrom<usize>> + InputIter<Item = u8> + InputLength,
 {
     let (in_, header) = record_block_header(meta)(in_)?;
-    let (mut in_, infos) = record_block_info(meta, &header)(in_)?;
-    println!("{:?}", header);
+    let (in_, infos) = record_block_info(meta, &header)(in_)?;
 
+    let mut input = in_.clone();
+    
     let mut blocks = Vec::new();
     for info in infos.iter() {
-        let (i_, block) = count(le_u8, info.nb_compressed)(in_)?;
-        in_ = i_;
+        let input_ = input.clone();
+        let (i_, block) = count(le_u8, info.nb_compressed)(input_)?;
+        input = i_;
         blocks.push(block);
     }
 
     Ok((
-        in_,
+        input,
         RecordBlock {
             header,
             infos,

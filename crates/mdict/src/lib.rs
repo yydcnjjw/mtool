@@ -1,4 +1,4 @@
-mod common;
+pub mod common;
 mod content_block;
 mod key_block;
 mod record_block;

@@ -62,8 +62,6 @@ where
         tuple((length_count(map(be_u32, |i| i / 2), le_u16), le_u32))(in_)?;
 
     nom_return!(in_, DictMeta, {
-        let meta = quick_xml::de::from_str::<DictMeta>(&String::from_utf16(&dict_meta)?)?;
-        println!("{:?}", meta);
-        meta
+        quick_xml::de::from_str::<DictMeta>(&String::from_utf16(&dict_meta)?)?
     })
 }

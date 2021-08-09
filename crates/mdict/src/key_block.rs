@@ -247,10 +247,7 @@ where
     I: Clone + PartialEq + Slice<RangeFrom<usize>> + InputIter<Item = u8> + InputLength,
 {
     let (in_, header) = key_block_header(meta)(in_)?;
-    println!("{:?}", header);
-
     let (in_, infos) = key_block_info(in_, meta, &header)?;
-
     let (in_, blocks) = key_blocks(in_, meta, &infos)?;
 
     Ok((

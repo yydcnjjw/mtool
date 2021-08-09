@@ -1,6 +1,8 @@
-use std::path::Path;
+use std::{io::Cursor, path::Path};
 
 use clap::Clap;
+
+use mdict::common::MdResource;
 
 #[derive(Clap)]
 pub struct Mdict {
@@ -18,9 +20,17 @@ impl Mdict {
             Ok(mut md) => {
                 md.search(&self.query)
                     .iter()
-                    .map(|item| (item.0.clone(), format!("{:?} <div></div>", item.1)))
+                    .filter_map(|item| {
+                        let text = match &item.1 {
+                            MdResource::Text(text) => text,
+                            _ => {
+                                return None;
+                            }
+                        };
+                        Some((item.0.clone(), format!("<div>{} ----------</div>{}", item.0, text)))
+                    })
                     .for_each(|item| {
-                        println!("{:?}", item);
+                        println!("{}", html2text::from_read(Cursor::new(&item.1), 100));
                     });
             }
             Err(e) => println!("{:?}", e),
