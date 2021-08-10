@@ -1,7 +1,8 @@
 // use anki::AnkiNote;
 // use anki::AnkiNoteOptions;
 // use futures::future::{BoxFuture, FutureExt};
-use super::{DictCap, DictQuery, Lang};
+use super::{Dict, DictCap, DictQuery, Lang};
+use async_trait::async_trait;
 
 // pub async fn save(word_info: &JPWord) -> Result<(), Box<dyn std::error::Error>> {
 //     if !cli_op::read_y_or_n("add note[Y/n]") {
@@ -23,11 +24,14 @@ use super::{DictCap, DictQuery, Lang};
 
 pub struct HJDict {}
 
+impl Dict for HJDict {}
+
+#[async_trait]
 impl DictQuery for HJDict {
     async fn query(&self, text: &String) -> Vec<String> {
         hjdict::api::query_jp_dict(text)
             .await
-            .map(|result| result.iter().map(|word| word.to_cli_str()))
+            .map(|result| result.iter().map(|word| word.to_cli_str()).collect())
             .unwrap_or_default()
     }
 }

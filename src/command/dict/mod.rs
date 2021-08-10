@@ -1,5 +1,3 @@
-#![feature(trait_alias)]
-
 use clap::Clap;
 
 mod hjdict;
@@ -29,7 +27,6 @@ pub struct DictOpt {
     save: bool,
 }
 
-
 #[async_trait]
 trait DictQuery {
     async fn query(&self, text: &String) -> Vec<String>;
@@ -43,23 +40,25 @@ trait DictCap {
     }
 }
 
-trait Dict = DictQuery + DictCap;
+trait Dict: DictQuery + DictCap {}
 
 impl DictOpt {
-    async fn available_dicts(&self) -> Vec<dyn Dict> {
-        vec![HJDict {}]
+    async fn available_dicts(&self) -> Vec<Box<dyn Dict>> {
+        vec![Box::new(HJDict {})]
     }
 
     pub async fn run(&self) {
-        self.available_dicts()
+        for result in self
+            .available_dicts()
             .await
             .iter()
-            .filter(|dict| dict.queryable(self.lang))
-            .map(|dict| dict.query(self.query))
-            .for_each(|result| {
-                result.iter().for_each(|item| {
-                    println!("{}", item);
-                })
+            .filter(|dict| dict.queryable(&self.lang))
+            .map(|dict| dict.query(&self.query))
+        {
+            //TODO: parallel
+            result.await.iter().for_each(|item| {
+                println!("{}", item);
             });
+        }
     }
 }

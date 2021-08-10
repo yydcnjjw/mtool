@@ -27,7 +27,10 @@ impl Mdict {
                                 return None;
                             }
                         };
-                        Some((item.0.clone(), format!("<div>{} ----------</div>{}", item.0, text)))
+                        Some((
+                            item.0.clone(),
+                            format!("<div>{} ----------</div>{}", item.0, text),
+                        ))
                     })
                     .for_each(|item| {
                         println!("{}", html2text::from_read(Cursor::new(&item.1), 100));
