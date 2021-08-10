@@ -13,7 +13,7 @@ publish = false
 
 [workspace]
 members = [
-"crates/*",
+  "crates/*",
 ]
 
 [dependencies]
@@ -28,6 +28,7 @@ syn = "=1.0.57"
 tokio = { version = "*", features = ["full"] }
 futures = "*"
 clap = "3.0.0-beta.2"
+async-trait = "*"
 # clap_generate = "3.0.0-beta.2"
 html2text = "*"
 html2md = "*"

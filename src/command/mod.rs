@@ -4,7 +4,7 @@ pub mod ocr;
 pub mod search;
 pub mod translate;
 
-use self::{dict::Dict, mdict::Mdict, ocr::Ocr, search::Search, translate::Translate};
+use self::{dict::DictOpt, mdict::Mdict, ocr::Ocr, search::Search, translate::Translate};
 
 use clap::{Clap, AppSettings};
 
@@ -21,7 +21,7 @@ pub struct Opts {
 pub enum SubCommand {
     /// dict
     #[clap(version("0.1.0"), author("yydcnjjw <yydcnjjw@gmail.com>"))]
-    Dict(Dict),
+    Dict(DictOpt),
     /// translate
     #[clap(version("0.1.0"), author("yydcnjjw <yydcnjjw@gmail.com>"))]
     Translate(Translate),

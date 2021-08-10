@@ -1,5 +1,6 @@
-use hjdict::JPWord;
-use hjdict::OutputFormat;
+use hjdict::parser::JPWord;
+use hjdict::parser::OutputFormat;
+
 use serde::{Deserialize, Serialize};
 use thiserror::Error;
 
