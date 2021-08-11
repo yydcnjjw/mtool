@@ -16,12 +16,12 @@ impl App {
     }
 
     pub async fn run(&self) -> Result<()> {
-        match &self.opts.subcmd {
-            Dict(dict) => dict.run().await,
-            Translate(translate) => translate.run().await,
-            Search(search) => search.run().await,
-            Ocr(ocr) => ocr.run(self).await,
-            Mdict(mdict) => mdict.run(self).await,
-        }
+        Ok(match &self.opts.subcmd {
+            Dict(dict) => dict.run().await?,
+            Translate(translate) => translate.run().await?,
+            Search(search) => search.run().await?,
+            Ocr(ocr) => ocr.run(self).await?,
+            Mdict(mdict) => mdict.run(self).await?,
+        })
     }
 }

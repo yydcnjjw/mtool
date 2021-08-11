@@ -103,7 +103,4 @@ impl App {
             }
         })
     }
-
-    // #[slot(SlotOfQByteArray)]
-    // unsafe fn on_message(img: QByteArray) {}
 }
