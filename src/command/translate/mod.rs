@@ -1,5 +1,7 @@
 use clap::Clap;
 
+use crate::error::Result;
+
 mod google;
 
 #[derive(Clap, PartialEq, Debug)]
@@ -40,15 +42,14 @@ pub struct TranslateOpt {
 }
 
 impl TranslateOpt {
-    pub async fn run(&self) {
+    pub async fn run(&self) -> Result<()> {
         let result = match self.backend {
             Backend::Google => google::query(&self.query, &self.from, &self.to).await,
         };
 
         if self.display == Display::Stdio {
             println!("{}", result.unwrap());
-        } else {
-
-        };
+        }
+        Ok(())
     }
 }

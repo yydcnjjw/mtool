@@ -1,9 +1,12 @@
+pub mod config;
+
 use std::{
     io::Write,
     process::{Command, Stdio},
 };
 
 use cloud_api::tencent;
+use config::Config;
 use cxx::{CxxVector, UniquePtr};
 use qt_core::{q_init_resource, qs, ApplicationAttribute, QCoreApplication};
 use qt_gui::QGuiApplication;
@@ -76,7 +79,8 @@ fn ocr(img: UniquePtr<CxxVector<u8>>) {
     });
 }
 
-pub fn run() {
+pub fn run(config: Config) {
+    println!("{:?}", config);
     unsafe {
         QCoreApplication::set_attribute_1a(ApplicationAttribute::AAEnableHighDpiScaling);
     }

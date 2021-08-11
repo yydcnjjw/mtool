@@ -1,10 +1,10 @@
 use std::{
     fs, io,
-    path::{Path, PathBuf},
+    path::PathBuf,
 };
 
-use thiserror::Error;
 use serde::de::Deserialize;
+use thiserror::Error;
 
 #[derive(Error, Debug)]
 pub enum Error {
@@ -26,22 +26,31 @@ pub struct Config {
 }
 
 impl Config {
-    pub fn load(path: &Path) -> Result<Config> {
-        Ok(Config {
-            path: path.to_path_buf(),
-            table: toml::from_str(&fs::read_to_string(path)?)?,
-        })
+    pub fn load<T>(path: &T) -> Result<Config>
+    where
+        T: Into<PathBuf> + Clone,
+    {
+        let path = PathBuf::from(path.clone().into());
+        let table = toml::from_str(&fs::read_to_string(path.as_path())?)?;
+        Ok(Config { path, table })
     }
 
-    pub fn store(&self) -> Result<()> {
-        Ok(fs::write(
-            self.path.as_path(),
-            &toml::to_string_pretty(&self.table)?,
-        )?)
-    }
+    // pub fn store(&self) -> Result<()> {
+    //     Ok(fs::write(
+    //         self.path.as_path(),
+    //         &toml::to_string_pretty(&self.table)?,
+    //     )?)
+    // }
 
     pub fn get<'de, T>(&self, key: &String) -> Result<T>
-    where T: Deserialize<'de> {
-        Ok(self.table.get(key).ok_or(Error::KeyNotFound(key.clone()))?.try_into()?)
+    where
+        T: Deserialize<'de>,
+    {
+        Ok(self
+            .table
+            .get(key)
+            .ok_or(Error::KeyNotFound(key.clone()))?
+            .clone()
+            .try_into()?)
     }
 }

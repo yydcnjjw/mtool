@@ -4,6 +4,8 @@ use clap::Clap;
 
 use mdict::common::MdResource;
 
+use crate::{app::App, error::Result};
+
 #[derive(Clap)]
 pub struct Mdict {
     /// query
@@ -15,7 +17,7 @@ pub struct Mdict {
 }
 
 impl Mdict {
-    pub async fn run(&self) {
+    pub async fn run(&self, app: &App) -> Result<()>{
         match mdict::parse(&Path::new(&self.dict_path)) {
             Ok(mut md) => {
                 md.search(&self.query)
@@ -38,5 +40,6 @@ impl Mdict {
             }
             Err(e) => println!("{:?}", e),
         }
+        Ok(())
     }
 }

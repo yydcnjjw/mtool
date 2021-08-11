@@ -3,6 +3,8 @@ use clap::Clap;
 mod hjdict;
 mod mdict;
 
+use crate::error::Result;
+
 use self::hjdict::HJDict;
 use async_trait::async_trait;
 
@@ -47,7 +49,7 @@ impl DictOpt {
         vec![Box::new(HJDict {})]
     }
 
-    pub async fn run(&self) {
+    pub async fn run(&self) -> Result<()> {
         for result in self
             .available_dicts()
             .await
@@ -60,5 +62,6 @@ impl DictOpt {
                 println!("{}", item);
             });
         }
+        Ok(())
     }
 }
