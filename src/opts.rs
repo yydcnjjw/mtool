@@ -10,6 +10,6 @@ pub struct Opts {
     #[clap(subcommand)]
     pub subcmd: SubCommand,
     /// config path
-    #[clap(short, long, default_value = "~/my-tool/config.toml")]
+    #[clap(short, long, default_value = "/home/yydcnjjw/.my-tool/config.toml")]
     pub config_path: String,
 }

@@ -35,12 +35,12 @@ impl Config {
         Ok(Config { path, table })
     }
 
-    // pub fn store(&self) -> Result<()> {
-    //     Ok(fs::write(
-    //         self.path.as_path(),
-    //         &toml::to_string_pretty(&self.table)?,
-    //     )?)
-    // }
+    pub fn store(&self) -> Result<()> {
+        Ok(fs::write(
+            self.path.as_path(),
+            &toml::to_string_pretty(&self.table)?,
+        )?)
+    }
 
     pub fn get<'de, T>(&self, key: &String) -> Result<T>
     where

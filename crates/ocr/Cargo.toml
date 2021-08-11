@@ -10,10 +10,10 @@ edition = "2018"
 cloud-api = { path = "../cloud-api" }
 cxx = "*"
 tokio = { version = "*", features = ["full"] }
-arboard = "*"
+async-trait = "*"
 serde = "*"
-serde_yaml = "*"
 base64 = "*"
+thiserror = "*"
 
 cpp_core = "*"
 qt_core = "*"

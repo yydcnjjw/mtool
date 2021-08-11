@@ -96,7 +96,7 @@ Window {
             }
 
             onDoubleClicked: {
-                screenshot.grabToImage(function(result){
+                screenshot.grabToImage(function(result) {
                     Message.call(result.image)
                 })
             }
