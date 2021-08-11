@@ -83,7 +83,7 @@ impl Mdict {
                                 ))
                             })
                             .for_each(|item| {
-                                println!("{}", html2text::from_read(Cursor::new(&item.1), 100));
+                                termimad::print_inline(html2md::parse_html(&item));
                             });
                     }
                     Err(e) => println!("{}", e),

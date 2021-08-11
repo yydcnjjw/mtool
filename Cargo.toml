@@ -36,5 +36,6 @@ toml = "*"
 # clap_generate = "3.0.0-beta.2"
 html2text = "*"
 html2md = "*"
+termimad = "*"
 
 [build-dependencies]
