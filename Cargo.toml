@@ -29,6 +29,10 @@ tokio = { version = "*", features = ["full"] }
 futures = "*"
 clap = "3.0.0-beta.2"
 async-trait = "*"
+thiserror = "*"
+serde = "*"
+toml = "*"
+
 # clap_generate = "3.0.0-beta.2"
 html2text = "*"
 html2md = "*"

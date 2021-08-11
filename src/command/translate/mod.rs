@@ -21,7 +21,7 @@ pub enum Display {
 }
 
 #[derive(Clap)]
-pub struct Translate {
+pub struct TranslateOpt {
     /// query
     #[clap(required(true), index(1))]
     query: String,
@@ -39,7 +39,7 @@ pub struct Translate {
     display: Display,
 }
 
-impl Translate {
+impl TranslateOpt {
     pub async fn run(&self) {
         let result = match self.backend {
             Backend::Google => google::query(&self.query, &self.from, &self.to).await,

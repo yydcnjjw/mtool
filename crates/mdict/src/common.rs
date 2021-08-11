@@ -96,10 +96,3 @@ impl<'a> MdResource<'a> {
         }
     }
 }
-
-pub fn read_file_to_buf(path: &Path) -> Vec<u8> {
-    let mut file = File::open(path).unwrap();
-    let mut buf = Vec::new();
-    file.read_to_end(&mut buf).unwrap();
-    buf
-}

@@ -4,18 +4,9 @@ pub mod ocr;
 pub mod search;
 pub mod translate;
 
-use self::{dict::DictOpt, mdict::Mdict, ocr::Ocr, search::Search, translate::Translate};
+use self::{dict::DictOpt, mdict::Mdict, ocr::Ocr, search::Search, translate::TranslateOpt};
 
-use clap::{Clap, AppSettings};
-
-/// my tool
-#[derive(Clap)]
-#[clap(version("0.1.0"), author("yydcnjjw <yydcnjjw@gmail.com>"))]
-#[clap(setting = AppSettings::ColoredHelp)]
-pub struct Opts {
-    #[clap(subcommand)]
-    pub subcmd: SubCommand,
-}
+use clap::Clap;
 
 #[derive(Clap)]
 pub enum SubCommand {
@@ -24,7 +15,7 @@ pub enum SubCommand {
     Dict(DictOpt),
     /// translate
     #[clap(version("0.1.0"), author("yydcnjjw <yydcnjjw@gmail.com>"))]
-    Translate(Translate),
+    Translate(TranslateOpt),
     /// search
     #[clap(version("0.1.0"), author("yydcnjjw <yydcnjjw@gmail.com>"))]
     Search(Search),

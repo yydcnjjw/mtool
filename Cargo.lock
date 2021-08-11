@@ -1320,8 +1320,11 @@ dependencies = [
  "html2text",
  "mdict",
  "ocr",
+ "serde",
  "syn 1.0.57",
+ "thiserror",
  "tokio",
+ "toml",
  "translate",
 ]
 

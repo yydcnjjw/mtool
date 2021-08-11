@@ -1,17 +1,18 @@
 mod command;
+mod opts;
 mod util;
+mod config;
 
 use clap::Clap;
-use command::{Opts, SubCommand};
-use SubCommand::Dict;
-use SubCommand::Ocr;
-use SubCommand::Search;
-use SubCommand::Translate;
-use SubCommand::Mdict;
+use command::SubCommand;
+use opts::Opts;
+use SubCommand::*;
 
 #[tokio::main]
 async fn main() {
-    match Opts::parse().subcmd {
+    let opts = Opts::parse();
+    
+    match opts.subcmd {
         Dict(dict) => dict.run().await,
         Translate(translate) => translate.run().await,
         Search(search) => search.run().await,

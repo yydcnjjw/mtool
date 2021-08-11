@@ -7,7 +7,7 @@ pub mod dict_meta;
 pub mod mdict;
 pub mod mdsearch;
 
-use std::{io, path::Path, result, string::FromUtf16Error};
+use std::{fs, io, path::Path, result, string::FromUtf16Error};
 
 use mdict::Mdict;
 use nom::error::{ErrorKind, FromExternalError, ParseError};
@@ -51,7 +51,7 @@ type Result<T> = result::Result<T, Error>;
 type NomResult<I, O, E = Error> = nom::IResult<I, O, E>;
 
 pub fn parse(path: &Path) -> Result<Mdict> {
-    let buf = common::read_file_to_buf(path);
+    let buf = fs::read(path)?;
 
     match mdict::parse(buf.as_slice()) {
         Ok((_, mdict)) => Ok(mdict),
