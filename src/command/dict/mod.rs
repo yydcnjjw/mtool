@@ -17,7 +17,7 @@ pub enum Lang {
 }
 
 #[derive(Clap)]
-pub struct DictOpt {
+pub struct DictCmd {
     /// lang
     #[clap(arg_enum, required(true), index(1))]
     lang: Lang,
@@ -44,7 +44,7 @@ trait DictCap {
 
 trait Dict: DictQuery + DictCap {}
 
-impl DictOpt {
+impl DictCmd {
     async fn available_dicts(&self) -> Vec<Box<dyn Dict>> {
         vec![Box::new(HJDict {})]
     }

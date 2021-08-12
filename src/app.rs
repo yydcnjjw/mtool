@@ -1,6 +1,11 @@
 use clap::Clap;
 
-use crate::{command::SubCommand::*, config::Config, error::Result, opts::Opts};
+use crate::{
+    command::{CommandRunner, SubCommand::*},
+    config::Config,
+    error::Result,
+    opts::Opts,
+};
 
 pub struct App {
     pub opts: Opts,

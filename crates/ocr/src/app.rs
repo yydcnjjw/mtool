@@ -1,12 +1,10 @@
-use std::{
-    io::Write,
-    process::{Command, Stdio},
-};
+use std::process::Stdio;
 
 use cxx::{CxxVector, UniquePtr};
 use qt_core::{q_init_resource, qs, ApplicationAttribute, QCoreApplication};
 use qt_gui::QGuiApplication;
 use qt_qml::{QQmlApplicationEngine, QQmlImageProviderBase};
+use tokio::{io::AsyncWriteExt, process::Command};
 
 use crate::{
     config::Config,
@@ -33,14 +31,14 @@ mod ffi {
     }
 }
 
-fn clip(text: &String) -> Result<()> {
+async fn clip(text: &String) -> Result<()> {
     let mut child = Command::new("xclip")
         .arg("-selection")
         .arg("clipboard")
         .stdin(Stdio::piped())
         .spawn()?;
     let mut stdin = child.stdin.take().ok_or(Error::TakeStdio)?;
-    stdin.write_all(text.as_bytes())?;
+    stdin.write_all(text.as_bytes()).await?;
     Ok(())
 }
 
@@ -55,7 +53,7 @@ async fn ocr_clip(config: Config, img: UniquePtr<CxxVector<u8>>) -> Result<()> {
 
     println!("{}", text);
 
-    clip(&text)?;
+    clip(&text).await?;
     Ok(())
 }
 

@@ -2,13 +2,15 @@ use clap::Clap;
 use mdict::common::MdResource;
 use serde::{Deserialize, Serialize};
 use std::{
-    fs,
-    io::{self, Cursor},
+    fs, io,
     path::{Path, PathBuf},
 };
 use thiserror::Error;
 
 use crate::{app::App, error};
+use async_trait::async_trait;
+
+use super::CommandRunner;
 
 #[derive(Debug, Error)]
 pub enum Error {
@@ -19,7 +21,7 @@ pub enum Error {
 type Result<T> = std::result::Result<T, Error>;
 
 #[derive(Clap)]
-pub struct Mdict {
+pub struct MdictCmd {
     /// query
     #[clap(required(true), index(1))]
     query: String,
@@ -57,8 +59,9 @@ pub struct Config {
     mdict: MdictConfig,
 }
 
-impl Mdict {
-    pub async fn run(&self, app: &App) -> error::Result<()> {
+#[async_trait]
+impl CommandRunner for MdictCmd {
+    async fn run(&self, app: &App) -> error::Result<()> {
         let config: Config = app.config.get(&"dict".to_string())?;
 
         let mut handles = Vec::new();
@@ -68,7 +71,8 @@ impl Mdict {
             handles.push(tokio::spawn(async move {
                 match mdict::parse(&path) {
                     Ok(mut md) => {
-                        md.search(&query)
+                        let html = md
+                            .search(&query)
                             .iter()
                             .filter_map(|item| {
                                 let text = match &item.1 {
@@ -77,14 +81,10 @@ impl Mdict {
                                         return None;
                                     }
                                 };
-                                Some((
-                                    item.0.clone(),
-                                    format!("<div>{} ----------</div>{}", item.0, text),
-                                ))
+                                Some(text)
                             })
-                            .for_each(|item| {
-                                termimad::print_inline(html2md::parse_html(&item));
-                            });
+                            .fold(String::new(), |lhs, rhs| lhs + rhs + "<div></div>");
+                        println!("{}", html);
                     }
                     Err(e) => println!("{}", e),
                 };

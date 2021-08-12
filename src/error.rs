@@ -10,6 +10,8 @@ pub enum Error {
     Opts(#[from] clap::Error),
     #[error("{0}")]
     Mdict(#[from] command::mdict::Error),
+    #[error("{0}")]
+    Ocr(#[from] command::ocr::Error),
 }
 
 pub type Result<T> = std::result::Result<T, Error>;

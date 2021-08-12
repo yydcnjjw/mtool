@@ -4,7 +4,9 @@ pub mod ocr;
 pub mod search;
 pub mod translate;
 
-use self::{dict::DictOpt, mdict::Mdict, ocr::Ocr, search::Search, translate::TranslateOpt};
+use self::{dict::DictCmd, mdict::MdictCmd, ocr::OcrCmd, search::SearchCmd, translate::TranslateCmd};
+use crate::{app::App, error::Result};
+use async_trait::async_trait;
 
 use clap::Clap;
 
@@ -12,17 +14,22 @@ use clap::Clap;
 pub enum SubCommand {
     /// dict
     #[clap(version("0.1.0"), author("yydcnjjw <yydcnjjw@gmail.com>"))]
-    Dict(DictOpt),
+    Dict(DictCmd),
     /// translate
     #[clap(version("0.1.0"), author("yydcnjjw <yydcnjjw@gmail.com>"))]
-    Translate(TranslateOpt),
+    Translate(TranslateCmd),
     /// search
     #[clap(version("0.1.0"), author("yydcnjjw <yydcnjjw@gmail.com>"))]
-    Search(Search),
+    Search(SearchCmd),
     /// ocr
     #[clap(version("0.1.0"), author("yydcnjjw <yydcnjjw@gmail.com>"))]
-    Ocr(Ocr),
+    Ocr(OcrCmd),
     /// mdict
     #[clap(version("0.1.0"), author("yydcnjjw <yydcnjjw@gmail.com>"))]
-    Mdict(Mdict),
+    Mdict(MdictCmd),
+}
+
+#[async_trait]
+pub trait CommandRunner {
+    async fn run(&self, app: &App) -> Result<()>;
 }
