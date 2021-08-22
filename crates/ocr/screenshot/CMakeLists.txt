@@ -12,7 +12,6 @@ set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
 find_package(Qt5 COMPONENTS Core Quick REQUIRED)
-find_package(KF5GlobalAccel REQUIRED)
 
 set(PROJECT_SOURCES
   src/screen_image_provider.cc
