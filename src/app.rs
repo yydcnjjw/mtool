@@ -14,7 +14,8 @@ pub struct App {
 
 impl App {
     pub fn new() -> Result<App> {
-        let opts = Opts::try_parse()?;
+        let opts = Opts::parse();
+        
         let config = Config::load(&opts.config_path)?;
 
         Ok(App { opts, config })

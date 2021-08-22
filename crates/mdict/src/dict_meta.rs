@@ -29,9 +29,9 @@ pub struct DictMeta {
     #[serde(rename = "RegisterBy")]
     register_by: Option<String>,
     #[serde(rename = "Description")]
-    description: String,
+    pub description: String,
     #[serde(rename = "Title")]
-    title: String,
+    pub title: String,
     #[serde(rename = "Encoding")]
     pub encoding: String,
     #[serde(rename = "CreationDate")]

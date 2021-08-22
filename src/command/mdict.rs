@@ -74,17 +74,12 @@ impl CommandRunner for MdictCmd {
                         let html = md
                             .search(&query)
                             .iter()
-                            .filter_map(|item| {
-                                let text = match &item.1 {
-                                    MdResource::Text(text) => text,
-                                    _ => {
-                                        return None;
-                                    }
-                                };
-                                Some(text)
+                            .filter_map(|item| match &item.1 {
+                                MdResource::Text(text) => Some(text),
+                                _ => None,
                             })
                             .fold(String::new(), |lhs, rhs| lhs + rhs + "<div></div>");
-                        println!("{}", html);
+                        println!("{}{}", md.meta.description, html);
                     }
                     Err(e) => println!("{}", e),
                 };
