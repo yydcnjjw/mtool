@@ -17,25 +17,27 @@ members = [
 ]
 
 [dependencies]
-anki = { path = "crates/anki" }
-hjdict = { path = "crates/hjdict" }
-translate = { path = "crates/translate" }
+# anki = { path = "crates/anki" }
+# hjdict = { path = "crates/hjdict" }
+# translate = { path = "crates/translate" }
 # search = {path = "crates/search"}
-ocr = { path = "crates/ocr" }
-mdict = { path = "crates/mdict" }
+# ocr = { path = "crates/ocr" }
+# mdict = { path = "crates/mdict" }
 
-syn = "=1.0.57"
+log = "*"
+pretty_env_logger = "*"
+enum_dispatch = "*"
 tokio = { version = "*", features = ["full"] }
-futures = "*"
-clap = "3.0.0-beta.2"
-# clap_generate = "3.0.0-beta.2"
+clap = "3.0.0-beta.4"
+clap_generate = "3.0.0-beta.4"
 async-trait = "*"
 thiserror = "*"
+anyhow = "*"
 serde = "*"
 toml = "*"
 
-html2text = "*"
-html2md = "*"
-termimad = "*"
+# html2text = "*"
+# html2md = "*"
+# termimad = "*"
 
 [build-dependencies]

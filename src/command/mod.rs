@@ -1,35 +1,59 @@
-pub mod dict;
-pub mod mdict;
-pub mod ocr;
-pub mod search;
-pub mod translate;
+// pub mod dict;
+// pub mod mdict;
+// pub mod ocr;
+// pub mod search;
+// pub mod translate;
 
-use self::{dict::DictCmd, mdict::MdictCmd, ocr::OcrCmd, search::SearchCmd, translate::TranslateCmd};
+// use self::{dict::DictCmd, mdict::MdictCmd, ocr::OcrCmd, search::SearchCmd, translate::TranslateCmd};
 use crate::{app::App, error::Result};
 use async_trait::async_trait;
+use enum_dispatch::enum_dispatch;
 
 use clap::Clap;
+use log::info;
 
 #[derive(Clap)]
+#[enum_dispatch]
 pub enum SubCommand {
-    /// dict
+    // test
     #[clap(version("0.1.0"), author("yydcnjjw <yydcnjjw@gmail.com>"))]
-    Dict(DictCmd),
-    /// translate
-    #[clap(version("0.1.0"), author("yydcnjjw <yydcnjjw@gmail.com>"))]
-    Translate(TranslateCmd),
-    /// search
-    #[clap(version("0.1.0"), author("yydcnjjw <yydcnjjw@gmail.com>"))]
-    Search(SearchCmd),
-    /// ocr
-    #[clap(version("0.1.0"), author("yydcnjjw <yydcnjjw@gmail.com>"))]
-    Ocr(OcrCmd),
-    /// mdict
-    #[clap(version("0.1.0"), author("yydcnjjw <yydcnjjw@gmail.com>"))]
-    Mdict(MdictCmd),
+    Test(TestCmd),
+    // /// dict
+    // #[clap(version("0.1.0"), author("yydcnjjw <yydcnjjw@gmail.com>"))]
+    // Dict(DictCmd),
+    // /// translate
+    // #[clap(version("0.1.0"), author("yydcnjjw <yydcnjjw@gmail.com>"))]
+    // Translate(TranslateCmd),
+    // /// search
+    // #[clap(version("0.1.0"), author("yydcnjjw <yydcnjjw@gmail.com>"))]
+    // Search(SearchCmd),
+    // /// ocr
+    // #[clap(version("0.1.0"), author("yydcnjjw <yydcnjjw@gmail.com>"))]
+    // Ocr(OcrCmd),
+    // /// mdict
+    // #[clap(version("0.1.0"), author("yydcnjjw <yydcnjjw@gmail.com>"))]
+    // Mdict(MdictCmd),
+}
+
+impl SubCommand {
+    pub async fn exec(&self, app: &App) -> Result<()> {
+        self.run(app).await
+    }
 }
 
 #[async_trait]
+#[enum_dispatch(SubCommand)]
 pub trait CommandRunner {
     async fn run(&self, app: &App) -> Result<()>;
+}
+
+#[derive(Clap)]
+pub struct TestCmd {}
+
+#[async_trait]
+impl CommandRunner for TestCmd {
+    async fn run(&self, _app: &App) -> Result<()> {
+        info!("test");
+        Ok(())
+    }
 }
