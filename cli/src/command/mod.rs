@@ -5,12 +5,15 @@
 // pub mod translate;
 
 // use self::{dict::DictCmd, mdict::MdictCmd, ocr::OcrCmd, search::SearchCmd, translate::TranslateCmd};
-use crate::{app::App, error::Result};
+
+use mytool_core::app::{App, Result};
 use async_trait::async_trait;
 use enum_dispatch::enum_dispatch;
 
 use clap::Clap;
 use log::info;
+
+use super::opts::Opts;
 
 #[derive(Clap)]
 #[enum_dispatch]
@@ -36,7 +39,7 @@ pub enum SubCommand {
 }
 
 impl SubCommand {
-    pub async fn exec(&self, app: &App) -> Result<()> {
+    pub async fn exec(&self, app: &App<Opts>) -> Result<()> {
         self.run(app).await
     }
 }
@@ -44,7 +47,7 @@ impl SubCommand {
 #[async_trait]
 #[enum_dispatch(SubCommand)]
 pub trait CommandRunner {
-    async fn run(&self, app: &App) -> Result<()>;
+    async fn run(&self, app: &App<Opts>) -> Result<()>;
 }
 
 #[derive(Clap)]
@@ -52,7 +55,7 @@ pub struct TestCmd {}
 
 #[async_trait]
 impl CommandRunner for TestCmd {
-    async fn run(&self, _app: &App) -> Result<()> {
+    async fn run(&self, _app: &App<Opts>) -> Result<()> {
         info!("test");
         Ok(())
     }

@@ -1027,7 +1027,23 @@ dependencies = [
 ]
 
 [[package]]
-name = "my-tool"
+name = "mytool-cli"
+version = "0.1.0"
+dependencies = [
+ "anyhow",
+ "async-trait",
+ "clap",
+ "clap_generate",
+ "enum_dispatch",
+ "log",
+ "mytool-core",
+ "pretty_env_logger",
+ "thiserror",
+ "tokio",
+]
+
+[[package]]
+name = "mytool-core"
 version = "0.1.0"
 dependencies = [
  "anyhow",

@@ -20,9 +20,13 @@ pub struct Config {
     table: toml::value::Table,
 }
 
-impl Config {
-    fn path_str(&self) -> &str {
-        self.path.to_str().unwrap_or_default()
+trait PathStr {
+    fn str_or_default(&self) -> &str;
+}
+
+impl PathStr for PathBuf {
+    fn str_or_default(&self) -> &str {
+        self.to_str().unwrap_or_default()
     }
 }
 
@@ -32,12 +36,11 @@ impl Config {
         T: Into<PathBuf> + Clone,
     {
         let path = PathBuf::from(path.clone().into());
-        let path_str = path.to_str().unwrap_or_default();
         let table = toml::from_str(
             &fs::read_to_string(path.as_path())
-                .with_context(|| format!("read config {}", path_str))?,
+                .with_context(|| format!("read config {}", path.str_or_default()))?,
         )
-        .with_context(|| format!("parse config {}", path_str))?;
+        .with_context(|| format!("parse config {}", path.str_or_default()))?;
         Ok(Config { path, table })
     }
 
@@ -45,9 +48,9 @@ impl Config {
         Ok(fs::write(
             self.path.as_path(),
             &toml::to_string_pretty(&self.table)
-                .with_context(|| format!("serialize config {}", self.path_str()))?,
+                .with_context(|| format!("serialize config {}", self.path.str_or_default()))?,
         )
-        .with_context(|| format!("write config {}", self.path_str()))?)
+        .with_context(|| format!("write config {}", self.path.str_or_default()))?)
     }
 
     pub fn get<'de, T>(&self, key: &String) -> Result<T>

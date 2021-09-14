@@ -1,6 +1,8 @@
 use clap::{AppSettings, Clap};
 
-use crate::command::SubCommand;
+use mytool_core::opts::AppOpts;
+
+use super::command::SubCommand;
 
 /// my tool
 #[derive(Clap)]
@@ -12,4 +14,14 @@ pub struct Opts {
     /// config path
     #[clap(short, long, default_value = "/home/yydcnjjw/.my-tool/config.toml")]
     pub config_path: String,
+}
+
+impl AppOpts for Opts {
+    fn config_path(&self) -> &str {
+        self.config_path.as_str()
+    }
+
+    fn exec_cmd(&self) -> anyhow::Result<()> {
+        todo!()
+    }
 }
