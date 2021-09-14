@@ -1,6 +1,6 @@
 use clap::{AppSettings, Clap};
 
-use mytool_core::opts::AppOpts;
+use mytool_core::{app::App, opts::AppOpts};
 
 use super::command::SubCommand;
 
@@ -19,9 +19,5 @@ pub struct Opts {
 impl AppOpts for Opts {
     fn config_path(&self) -> &str {
         self.config_path.as_str()
-    }
-
-    fn exec_cmd(&self) -> anyhow::Result<()> {
-        todo!()
     }
 }

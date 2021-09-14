@@ -34,8 +34,4 @@ where
 
         Ok(Self { opts, config })
     }
-
-    pub async fn run(&self) -> Result<()> {
-        Ok(self.opts.exec_cmd().context("Execute command failed")?)
-    }
 }

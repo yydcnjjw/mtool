@@ -6,9 +6,9 @@
 
 // use self::{dict::DictCmd, mdict::MdictCmd, ocr::OcrCmd, search::SearchCmd, translate::TranslateCmd};
 
-use mytool_core::app::{App, Result};
 use async_trait::async_trait;
 use enum_dispatch::enum_dispatch;
+use mytool_core::app::{App, Result};
 
 use clap::Clap;
 use log::info;
