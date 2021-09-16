@@ -2,6 +2,8 @@
 members = [
   "crates/*",
   "core",
+  "service",
   "cli",
+  "srv"
 ]
 

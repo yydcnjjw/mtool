@@ -1,5 +1,5 @@
 [package]
-name = "mytool-cli"
+name = "mytool-srv"
 version = "0.1.0"
 edition = "2021"
 publish = false
@@ -8,10 +8,10 @@ publish = false
 
 [dependencies]
 mytool-core = { path = "../core" }
+mytool-service = { path = "../service" }
 
 log = "*"
 pretty_env_logger = "*"
-enum_dispatch = "*"
 tokio = { version = "*", features = ["full"] }
 clap = "3.0.0-beta.4"
 clap_generate = "3.0.0-beta.4"

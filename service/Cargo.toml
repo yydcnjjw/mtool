@@ -1,8 +1,7 @@
 [package]
-name = "mytool-cli"
+name = "mytool-service"
 version = "0.1.0"
 edition = "2021"
-publish = false
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
@@ -13,8 +12,11 @@ log = "*"
 pretty_env_logger = "*"
 enum_dispatch = "*"
 tokio = { version = "*", features = ["full"] }
-clap = "3.0.0-beta.4"
-clap_generate = "3.0.0-beta.4"
 async-trait = "*"
 thiserror = "*"
 anyhow = "*"
+futures = { version = "*", default-features = false }
+tarpc = { version = "*", features = ["tokio1"]}
+
+cron = "*"
+chrono = "*"
