@@ -12,11 +12,14 @@ log = "*"
 pretty_env_logger = "*"
 enum_dispatch = "*"
 tokio = { version = "*", features = ["full"] }
+tokio-stream = { version = "*", features = ["sync"] }
 async-trait = "*"
 thiserror = "*"
 anyhow = "*"
 futures = { version = "*", default-features = false }
-tarpc = { version = "*", features = ["tokio1"]}
+tarpc = { version = "*", features = ["tokio1"] }
+serde = { version = "*", features = ["derive"] }
+toml = "*"
 
 cron = "*"
 chrono = "*"

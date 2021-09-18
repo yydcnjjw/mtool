@@ -5,6 +5,7 @@ use anyhow::{anyhow, Context};
 use async_trait::async_trait;
 use thiserror::Error;
 use tokio::process::Command;
+use serde::{Serialize, Deserialize};
 
 #[derive(Debug, Error)]
 pub enum Error {
@@ -16,6 +17,7 @@ pub enum Error {
 
 type Result<T> = std::result::Result<T, Error>;
 
+#[derive(Serialize, Deserialize, Debug)]
 pub struct ShellOperate {
     script: String,
 }
