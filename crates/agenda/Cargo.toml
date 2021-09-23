@@ -22,3 +22,5 @@ chrono = "*"
 
 log = "*"
 pretty_env_logger = "*"
+
+enum_dispatch = "*"

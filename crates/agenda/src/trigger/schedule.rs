@@ -128,7 +128,8 @@ mod schedule {
 
 #[cfg(test)]
 mod tests {
-    use crate::agenda::trigger::ScheduleTrigger;
+    use crate::trigger::ScheduleTrigger;
+
 
     #[test]
     fn test_schedule_serialize() {

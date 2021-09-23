@@ -9,12 +9,16 @@ publish = false
 [dependencies]
 mytool-core = { path = "../core" }
 mytool-service = { path = "../service" }
+agenda = { path = "../crates/agenda" }
 
 log = "*"
 pretty_env_logger = "*"
 tokio = { version = "*", features = ["full"] }
+futures = "*"
 clap = "3.0.0-beta.4"
 clap_generate = "3.0.0-beta.4"
 async-trait = "*"
 thiserror = "*"
 anyhow = "*"
+
+toml = "*"

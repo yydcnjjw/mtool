@@ -3,9 +3,10 @@ use std::fmt;
 use super::async_op::{self, AsyncOperate};
 use anyhow::{anyhow, Context};
 use async_trait::async_trait;
+use log::debug;
+use serde::{Deserialize, Serialize};
 use thiserror::Error;
 use tokio::process::Command;
-use serde::{Serialize, Deserialize};
 
 #[derive(Debug, Error)]
 pub enum Error {
@@ -30,13 +31,14 @@ impl ShellOperate {
 
 impl fmt::Display for ShellOperate {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        write!(f, "sh: {}", self.script)
+        write!(f, "ShellOperate: {}", self.script)
     }
 }
 
 #[async_trait]
 impl AsyncOperate for ShellOperate {
     async fn run(&self) -> async_op::Result<()> {
+        debug!("ShellOperate: {}", self.script);
         let output = Command::new("sh")
             .arg("-c")
             .arg(self.script.clone())
@@ -48,7 +50,8 @@ impl AsyncOperate for ShellOperate {
             return Err(anyhow!(Error::CmdExec(
                 output.status,
                 String::from_utf8(output.stderr).context("Convert output failed")?,
-            )).into());
+            ))
+            .into());
         }
 
         Ok(())

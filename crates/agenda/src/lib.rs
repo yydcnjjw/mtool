@@ -1,3 +1,7 @@
+#![feature(macro_attributes_in_derive_output)]
+
 pub mod trigger;
 pub mod operate;
-pub mod task;
+mod task;
+
+pub use task::*;
