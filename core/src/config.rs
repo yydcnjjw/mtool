@@ -1,4 +1,5 @@
-use std::{fs, path::PathBuf};
+use std::path::{Path, PathBuf};
+use std::fs;
 
 use anyhow::Context;
 use serde::de::Deserialize;
@@ -31,16 +32,20 @@ impl PathStr for PathBuf {
 }
 
 impl Config {
-    pub fn load<T>(path: &T) -> Result<Config>
+    pub fn path(&self) -> &Path {
+        self.path.as_path()
+    }
+
+    // BUG: https://github.com/rust-lang/rust/issues/50133
+    pub fn try_from<T>(path: T) -> Result<Config>
     where
-        T: Into<PathBuf> + Clone,
+        T: Into<PathBuf>,
     {
-        let path = PathBuf::from(path.clone().into());
-        let table = toml::from_str(
-            &fs::read_to_string(path.as_path())
-                .with_context(|| format!("read config {}", path.str_or_default()))?,
-        )
-        .with_context(|| format!("parse config {}", path.str_or_default()))?;
+        let path: PathBuf = path.into();
+        let s = fs::read_to_string(path.as_path())
+            .with_context(|| format!("Read config {}", path.str_or_default()))?;
+        let table = toml::from_str(&s)
+            .with_context(|| format!("Parse config {}", path.str_or_default()))?;
         Ok(Config { path, table })
     }
 
@@ -64,5 +69,15 @@ impl Config {
             .clone()
             .try_into()
             .with_context(|| format!("get config value {}", key))?)
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_config_try_from() {
+        Config::try_from("test.toml");
     }
 }

@@ -29,7 +29,7 @@ where
 
         let opts = Opts::parse();
 
-        let config = Config::load(&opts.config_path())
+        let config = Config::try_from(&opts.config_path())
             .with_context(|| format!("Load config {}", opts.config_path()))?;
 
         Ok(Self { opts, config })
