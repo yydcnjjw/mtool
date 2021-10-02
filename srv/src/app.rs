@@ -1,9 +1,31 @@
+use std::path::PathBuf;
+
+use anyhow::Context;
 use clap::{AppSettings, Clap};
 
 use futures::future::join_all;
-use mytool_core::{app::App as CoreApp, app::Result, opts::AppOpts};
 
 use crate::service::{AgendaService, Service};
+use mytool_core::{
+    app::{App as CoreApp, Result as AppResult},
+    opts::AppOpts,
+};
+
+static APP_NAME: &str = "my-tool";
+
+fn default_config_dir() -> String {
+    format!(".{}/server", APP_NAME)
+}
+
+fn default_config_path() -> String {
+    dirs::home_dir()
+        .context("Home dir is not found")
+        .unwrap_or(PathBuf::new())
+        .join(default_config_dir())
+        .to_str()
+        .unwrap_or_default()
+        .to_string()
+}
 
 /// my tool
 #[derive(Clap)]
@@ -11,7 +33,7 @@ use crate::service::{AgendaService, Service};
 #[clap(setting = AppSettings::ColoredHelp)]
 pub struct Opts {
     /// config path
-    #[clap(short, long, default_value = "/home/yydcnjjw/.my-tool/srv/config.toml")]
+    #[clap(short, long, default_value = "default_config_path")]
     pub config_path: String,
 }
 
@@ -27,17 +49,18 @@ pub struct App {
 }
 
 impl App {
-    pub fn new() -> Result<Self> {
+    pub async fn new() -> AppResult<Self> {
         Ok(Self {
-            instance: CoreApp::<Opts>::new()?,
+            instance: CoreApp::<Opts>::new().await?,
             services: Vec::new(),
         })
     }
 
     pub async fn run(&mut self) {
-        self.services.push(Box::new(
-            AgendaService::from_config("/home/yydcnjjw/.my-tool/srv/agenda.toml").unwrap(),
-        ));
+        {
+            let srv = Box::new(AgendaService::new(self).unwrap());
+            self.services.push(srv);
+        }
 
         join_all(self.services.iter_mut().map(|srv| srv.run())).await;
     }

@@ -1,9 +1,11 @@
-use std::{collections::HashMap, io, path::Path};
+use std::{collections::HashMap, hash::Hash, io, path::Path};
 
 use agenda::Task;
 use async_trait::async_trait;
 use futures::future::join_all;
 use thiserror::Error;
+
+use crate::app::App;
 
 use super::Service;
 
@@ -24,6 +26,12 @@ pub struct AgendaService {
 }
 
 impl AgendaService {
+    pub fn new(app: &mut App) -> Result<Self> {
+        Ok(Self {
+            tasks: HashMap::new(),
+        })
+    }
+
     pub fn from_config<P: AsRef<Path>>(config: P) -> Result<Self> {
         Ok(Self {
             tasks: AgendaService::parse_config_file(config)?,

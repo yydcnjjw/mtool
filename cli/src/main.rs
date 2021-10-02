@@ -1,5 +1,3 @@
-#![feature(macro_attributes_in_derive_output)]
-
 mod app;
 mod opts;
 mod command;

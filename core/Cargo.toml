@@ -17,3 +17,6 @@ thiserror = "*"
 anyhow = "*"
 serde = "*"
 toml = "*"
+
+[dev-dependencies]
+tempfile = "*"

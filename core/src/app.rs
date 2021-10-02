@@ -24,12 +24,12 @@ impl<Opts> App<Opts>
 where
     Opts: AppOpts,
 {
-    pub fn new() -> Result<Self> {
-        pretty_env_logger::init();
+    pub async fn new() -> Result<Self> {
+        pretty_env_logger::init_timed();
 
         let opts = Opts::parse();
 
-        let config = Config::try_from(&opts.config_path())
+        let config = Config::load(&opts.config_path()).await
             .with_context(|| format!("Load config {}", opts.config_path()))?;
 
         Ok(Self { opts, config })
