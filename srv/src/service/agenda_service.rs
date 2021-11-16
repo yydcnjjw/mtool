@@ -1,4 +1,4 @@
-use std::{collections::HashMap, hash::Hash, io, path::Path};
+use std::{collections::HashMap, io, path::Path};
 
 use agenda::Task;
 use async_trait::async_trait;

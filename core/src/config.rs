@@ -15,11 +15,11 @@ pub enum Error {
     Other(#[from] anyhow::Error),
 }
 
-type Result<T> = std::result::Result<T, Error>;
+pub type Result<T> = std::result::Result<T, Error>;
 
 #[derive(Debug)]
 pub struct Config {
-    path: PathBuf,
+    name: String,
     table: toml::value::Table,
 }
 
@@ -34,33 +34,35 @@ impl PathStr for PathBuf {
 }
 
 impl Config {
-    pub fn path(&self) -> &Path {
-        self.path.as_path()
-    }
-
     // BUG: https://github.com/rust-lang/rust/issues/50133
     pub async fn load<T>(path: T) -> Result<Config>
     where
         T: Into<PathBuf>,
     {
         let path: PathBuf = path.into();
+
+        let name = path
+            .file_name()
+            .with_context(|| format!("Config must be file: {}", path.str_or_default()))?;
+
         let s = fs::read_to_string(path.as_path())
             .await
             .with_context(|| format!("Read config {}", path.str_or_default()))?;
         let table = toml::from_str(&s)
             .with_context(|| format!("Parse config {}", path.str_or_default()))?;
-        Ok(Config { path, table })
+
+        Ok(Config { name, table })
     }
 
     pub async fn store(&self) -> Result<()> {
         Ok(fs::write(self.path.as_path(), &self.serialize_config()?)
             .await
-            .with_context(|| format!("Write config {}", self.path.str_or_default()))?)
+            .with_context(|| format!("Write config {}", self.name))?)
     }
 
     fn serialize_config(&self) -> Result<String> {
         Ok(toml::to_string_pretty(&self.table)
-            .with_context(|| format!("Serialize config {}", self.path.str_or_default()))?)
+            .with_context(|| format!("Serialize config {}", self.name))?)
     }
 
     pub async fn insert<T>(&mut self, key: &str, value: T) -> Result<()>
@@ -167,5 +169,5 @@ value = "*"
         config.insert_store("module1", "test").await.unwrap();
 
         assert_eq!(config.get::<String>("module1").await.unwrap(), "test");
-    }    
+    }
 }
