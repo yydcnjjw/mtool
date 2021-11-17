@@ -1,6 +1,6 @@
 use clap::{AppSettings, Clap};
 
-use mytool_core::{app::App, opts::AppOpts};
+use mytool_core::opts::AppOpts;
 
 use super::command::SubCommand;
 
