@@ -1,8 +1,9 @@
 use clap::{AppSettings, Clap};
 
-use mytool_core::opts::AppOpts;
+use crate::command::SubCommand;
+// use mytool_core::app::AppOpts;
 
-use super::command::SubCommand;
+// use super::command::SubCnnnommand;
 
 /// my tool
 #[derive(Clap)]
@@ -16,8 +17,8 @@ pub struct Opts {
     pub config_path: String,
 }
 
-impl AppOpts for Opts {
-    fn config_path(&self) -> &str {
-        self.config_path.as_str()
-    }
-}
+// impl AppOpts for Opts {
+//     fn config_path(&self) -> &str {
+//         self.config_path.as_str()
+//     }
+// }

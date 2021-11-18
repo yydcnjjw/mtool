@@ -43,7 +43,9 @@ impl Config {
 
         let name = path
             .file_name()
-            .with_context(|| format!("Config must be file: {}", path.str_or_default()))?;
+            .with_context(|| format!("Config must be file: {}", path.str_or_default()))?
+            .to_str()
+            .unwrap();
 
         let s = fs::read_to_string(path.as_path())
             .await
@@ -51,13 +53,14 @@ impl Config {
         let table = toml::from_str(&s)
             .with_context(|| format!("Parse config {}", path.str_or_default()))?;
 
-        Ok(Config { name, table })
+        Ok(Config { name: name.to_string(), table })
     }
 
     pub async fn store(&self) -> Result<()> {
-        Ok(fs::write(self.path.as_path(), &self.serialize_config()?)
-            .await
-            .with_context(|| format!("Write config {}", self.name))?)
+        Ok(())
+        // Ok(fs::write(self.path.as_path(), &self.serialize_config()?)
+        //     .await
+        //     .with_context(|| format!("Write config {}", self.name))?)
     }
 
     fn serialize_config(&self) -> Result<String> {
@@ -104,8 +107,8 @@ impl Display for Config {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         write!(
             f,
-            "path: {}\n{}",
-            self.path().to_str().unwrap_or_default(),
+            "path: \n{}",
+            // self.path().to_str().unwrap_or_default(),
             self.serialize_config().unwrap_or_default()
         )
     }
