@@ -8,6 +8,7 @@ publish = false
 
 [dependencies]
 mytool-core = { path = "../core" }
+cloud-api = { path = "../crates/cloud-api" }
 
 log = "*"
 pretty_env_logger = "*"

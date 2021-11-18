@@ -1124,6 +1124,7 @@ dependencies = [
  "bitflags",
  "clap",
  "clap_generate",
+ "cloud-api",
  "crossterm",
  "enum_dispatch",
  "log",

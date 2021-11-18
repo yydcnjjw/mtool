@@ -5,6 +5,7 @@ use self::api::ApiError;
 pub mod api;
 pub mod credential;
 pub mod ocr;
+pub mod translate;
 
 #[derive(Error, Debug)]
 pub enum Error {
