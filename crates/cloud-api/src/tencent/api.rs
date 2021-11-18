@@ -48,7 +48,7 @@ where
 {
     let secret_id = &cred.secret_id;
     let secret_key = &cred.secret_key;
-    let algorithm = cred.algorithm;
+    let algorithm = &cred.algorithm;
 
     let service = T::service();
     let host = T::host();

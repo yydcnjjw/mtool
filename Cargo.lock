@@ -1131,6 +1131,7 @@ dependencies = [
  "mytool-core",
  "nom 7.1.0",
  "pretty_env_logger",
+ "serde",
  "thiserror",
  "tokio",
 ]

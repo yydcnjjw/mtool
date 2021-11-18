@@ -1,8 +1,15 @@
-#[derive(Debug)]
+use serde::{Deserialize, Serialize};
+
+fn default_algorithm() -> String {
+    return "TC3-HMAC-SHA256".into();
+}
+
+#[derive(Debug, Serialize, Deserialize)]
 pub struct Credential {
     pub secret_id: String,
     pub secret_key: String,
-    pub algorithm: &'static str,
+    #[serde(default = "default_algorithm")]
+    pub algorithm: String,
 }
 
 impl Credential {
@@ -10,7 +17,7 @@ impl Credential {
         Self {
             secret_id,
             secret_key,
-            algorithm: "TC3-HMAC-SHA256",
+            algorithm: "TC3-HMAC-SHA256".into(),
         }
     }
 }

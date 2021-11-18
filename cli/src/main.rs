@@ -1,21 +1,31 @@
-use cloud_api::tencent;
-use std::env;
-
-// mod app;
+mod app;
 // mod opts;
-// mod command;
-mod kbd;
-mod keybind;
+mod command;
+// mod kbd;
+// mod keybind;
 
-fn run_cmd(cmd: &String, args: &[String]) {
-    println!("cmd {}, args {:?}", cmd, args);
+use anyhow::Context;
+use app::App;
+use cloud_api::tencent::credential::Credential;
+use command::Command;
+use mytool_core::config;
+use std::{env, path::PathBuf};
+
+async fn run() -> anyhow::Result<()> {
+    let mut app = App::new().await?;
+
+    command::add_command(&mut app)?;
+
+    let args = env::args().skip(1).collect::<Vec<String>>();
+    let (cmd, args) = args.split_first().unwrap();
+
+    app.cmder.exec(cmd, args).await?;
+
+    Ok(())
 }
 
 #[tokio::main]
-async fn main() {
-    // let args = env::args().skip(1).collect::<Vec<String>>();
-    // let (cmd, args) = args.split_first().unwrap();
-    // run_cmd(cmd, args)
-
-    // app::run().await.expect("Cli");
+async fn main() -> anyhow::Result<()> {
+    run().await?;
+    Ok(())
 }
