@@ -6,7 +6,6 @@ mod command;
 
 use anyhow::Context;
 use app::App;
-use cloud_api::tencent::credential::Credential;
 use command::Command;
 use mytool_core::config;
 use std::{env, path::PathBuf};
