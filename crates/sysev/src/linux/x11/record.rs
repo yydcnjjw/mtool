@@ -5,13 +5,17 @@ use std::{
     ptr::{null, null_mut},
 };
 
-use x11::{keysym::XK_M, xlib::{self, XkbGetNames, _XDisplay}, xrecord};
+use x11::{
+    keysym::XK_M,
+    xlib::{self, XkbGetNames, _XDisplay},
+    xrecord,
+};
 
 use anyhow::Context;
 use thiserror::Error;
 
 use crate::{
-    event::{self, KeyAction},
+    event::{self, KeyAction, KeyCode},
     linux::x11::keysym::KeySym,
 };
 
@@ -101,15 +105,16 @@ unsafe extern "C" fn record_callback(
             let keysym = xlib::XKeycodeToKeysym(
                 display as *mut _XDisplay,
                 keycode,
-                if (state as u32 & xlib::ShiftMask) != 0 {
-                    1
-                } else {
-                    0
-                },
+                0
+                // if (state as u32 & xlib::ShiftMask) != 0 {
+                //     1
+                // } else {
+                //     0
+                // },
             );
 
-            // let s: event::KeySym = KeySym(keysym.try_into().unwrap()).into();
-            println!("{}, {}, {}", keycode, state, keysym);
+            let s = KeyCode::from(KeySym::new(keysym));
+            println!("{}, {}, {:?}, {:?}", keycode, state, keysym, s);
         }
         _ => {}
     }

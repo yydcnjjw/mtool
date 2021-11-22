@@ -27,8 +27,8 @@ pub enum KeyCode {
     I,
     O,
     P,
-    BacketLeft,  // [
-    BacketRight, // ]
+    BracketLeft,  // [
+    BracketRight, // ]
     Backslash,   // \
     CapsLock,
     A,
@@ -110,6 +110,7 @@ pub enum KeyCode {
     LeftGUI,     // super_L
     RightGUI,    // super_R
     Application, // menu
+    Unknown,
 }
 
 bitflags! {
