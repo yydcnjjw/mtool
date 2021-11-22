@@ -5,12 +5,12 @@ use std::{
     ptr::{null, null_mut},
 };
 
-use anyhow::Context;
 use x11::{
     xlib::{self, _XDisplay},
     xrecord,
 };
 
+use anyhow::Context;
 use thiserror::Error;
 
 #[derive(Debug, Error)]
@@ -67,7 +67,7 @@ fn run() -> Result<()> {
         if display2.is_null() {
             return Err(Error::XLib("Can't open display".into()));
         }
-        
+
         let result = xrecord::XRecordEnableContext(
             display,
             context,
