@@ -9,6 +9,8 @@ edition = "2021"
 serde = {version = "*", features = ["derive"], optional=true}
 thiserror = "*"
 anyhow = "*"
+bitflags = "*"
+
 
 [target.'cfg(target_os = "linux")'.dependencies]
 x11 = {version = "*", features = ["xlib", "xrecord"]}

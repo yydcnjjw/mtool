@@ -2283,6 +2283,7 @@ name = "sysev"
 version = "0.1.0"
 dependencies = [
  "anyhow",
+ "bitflags",
  "serde",
  "thiserror",
  "windows",
