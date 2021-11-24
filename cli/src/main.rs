@@ -1,14 +1,11 @@
 mod app;
 // mod opts;
 mod command;
-// mod kbd;
-// mod keybind;
+mod kbd;
+mod keybind;
 
-use anyhow::Context;
 use app::App;
-use command::Command;
-use mytool_core::config;
-use std::{env, path::PathBuf};
+use std::env;
 
 async fn run() -> anyhow::Result<()> {
     let mut app = App::new().await?;

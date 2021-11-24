@@ -1,6 +1,6 @@
 use std::{
     fmt::{self, Display},
-    path::{Path, PathBuf},
+    path::PathBuf,
 };
 use tokio::fs;
 

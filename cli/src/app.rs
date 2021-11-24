@@ -1,4 +1,4 @@
-use std::{env, path::PathBuf};
+use std::path::PathBuf;
 
 use anyhow::Context;
 use mytool_core::config::Config;
@@ -20,7 +20,7 @@ pub struct App {
 }
 
 fn config_path() -> Option<PathBuf> {
-    env::home_dir().map(|p| p.join(".my-tool").join("config.toml"))
+    dirs::home_dir().map(|p| p.join(".my-tool").join("config.toml"))
 }
 
 impl App {

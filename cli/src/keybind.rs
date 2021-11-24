@@ -37,6 +37,8 @@
 //         Self { tree: Node::new() }
 //     }
 
+use sysev::event::KeyEvent;
+use crate::kbd::KeyCombine;
 //     fn add(&mut self, seq: Vec<KeyCombine>, f: fn() -> ()) {
 //         let mut node = &mut self.tree;
 //         for key in seq.iter() {
@@ -45,57 +47,12 @@
 //         node.v = Some(f);
 //     }
 // }
-use crossterm::event::{self, KeyCode, KeyEvent, KeyModifiers};
-
-use crate::kbd::{Key, KeyCombine, KeyMods};
-
-impl From<KeyCode> for Key {
-    fn from(val: KeyCode) -> Self {
-        match val {
-            KeyCode::F(n) => Key::Fn(n),
-            KeyCode::Char(c) => Key::Char(c),
-            KeyCode::Backspace => Key::Backspace,
-            KeyCode::Enter => Key::Enter,
-            KeyCode::Left => Key::Left,
-            KeyCode::Right => Key::Right,
-            KeyCode::Up => Key::Up,
-            KeyCode::Down => Key::Down,
-            KeyCode::Home => Key::Home,
-            KeyCode::End => Key::End,
-            KeyCode::PageUp => Key::PageUp,
-            KeyCode::PageDown => Key::PageDown,
-            KeyCode::Tab => Key::Tab,
-            KeyCode::BackTab => Key::BackTab,
-            KeyCode::Delete => Key::Delete,
-            KeyCode::Insert => Key::Insert,
-            KeyCode::Null => Key::Null,
-            KeyCode::Esc => Key::Esc,
-        }
-    }
-}
-
-impl From<KeyModifiers> for KeyMods {
-    fn from(val: KeyModifiers) -> Self {
-        let mut km = KeyMods::NONE;
-
-        if val.contains(KeyModifiers::SHIFT) {
-            km |= KeyMods::SHIFT
-        }
-        if val.contains(KeyModifiers::CONTROL) {
-            km |= KeyMods::CTRL
-        }
-        if val.contains(KeyModifiers::ALT) {
-            km |= KeyMods::ALT
-        }
-        km
-    }
-}
 
 impl From<KeyEvent> for KeyCombine {
     fn from(val: KeyEvent) -> Self {
         KeyCombine {
-            key: val.code.into(),
-            mods: val.modifiers.into(),
+            key: val.keycode,
+            mods: val.modifiers,
         }
     }
 }

@@ -44,6 +44,7 @@ pub struct GeneralBasicOCRRequest {
     #[serde(flatten)]
     image: OCRImage,
     #[serde(skip)]
+    #[allow(dead_code)]
     scene: Option<String>,
     language_type: OCRLanguageType,
     is_pdf: bool,

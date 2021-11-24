@@ -1,13 +1,11 @@
 use std::{
-    any::Any,
     ffi::{c_void, CStr},
-    os::raw::{c_char, c_int, c_uint, c_ulong},
-    ptr::{null, null_mut},
+    os::raw::{c_char, c_int, c_ulong},
+    ptr::null,
 };
 
 use x11::{
-    keysym::XK_M,
-    xlib::{self, XkbGetNames, _XDisplay},
+    xlib::{self, _XDisplay},
     xrecord,
 };
 
@@ -15,8 +13,10 @@ use anyhow::Context;
 use thiserror::Error;
 
 use crate::{
-    event::{self, KeyAction, KeyCode},
-    linux::x11::keysym::KeySym,
+    event::{Event, KeyAction, KeyEvent},
+    event_bus::Sender,
+    keydef::{KeyCode, KeyModifier},
+    linux::x11::key::KeySym,
 };
 
 #[derive(Debug, Error)]
@@ -33,17 +33,27 @@ type Result<T> = std::result::Result<T, Error>;
 
 static mut RECORD_ALL_CLIENTS: c_ulong = xrecord::XRecordAllClients;
 
-fn run() -> Result<()> {
-    unsafe {
-        let display = xlib::XOpenDisplay(null());
-        if display.is_null() {
+pub struct Record {
+    record_dpy: *mut _XDisplay,
+    record_ctx: c_ulong,
+    main_dpy: *mut _XDisplay,
+    pub sender: Sender,
+}
+
+impl Record {
+    unsafe fn open_display() -> Result<*mut _XDisplay> {
+        let dpy = xlib::XOpenDisplay(null());
+        if dpy.is_null() {
             return Err(Error::XLib("Can't open display".into()));
         }
+        Ok(dpy)
+    }
 
+    unsafe fn create_context(dpy: *mut _XDisplay) -> Result<c_ulong> {
         let ext_name =
             CStr::from_bytes_with_nul(b"RECORD\0").context("Build CStr RECORD failed!")?;
 
-        let extension = xlib::XInitExtension(display, ext_name.as_ptr());
+        let extension = xlib::XInitExtension(dpy, ext_name.as_ptr());
         if extension.is_null() {
             return Err(Error::XLib("Can't init extension".into()));
         }
@@ -52,71 +62,95 @@ fn run() -> Result<()> {
         (*record_range).device_events.first = xlib::KeyPress as u8;
         (*record_range).device_events.last = xlib::MotionNotify as u8;
 
-        let context = xrecord::XRecordCreateContext(
-            display,
-            0,
-            &mut RECORD_ALL_CLIENTS,
-            1,
-            &mut record_range,
-            1,
-        );
+        let context =
+            xrecord::XRecordCreateContext(dpy, 0, &mut RECORD_ALL_CLIENTS, 1, &mut record_range, 1);
 
         if context == 0 {
             return Err(Error::XRecord("Can't create context".into()));
         }
-
         xlib::XFree(record_range as *mut c_void);
 
-        xlib::XSync(display, xlib::True);
+        Ok(context)
+    }
 
-        let display2 = xlib::XOpenDisplay(null());
-        if display2.is_null() {
-            return Err(Error::XLib("Can't open display".into()));
-        }
-
+    unsafe fn enable_context(record: *mut Record) -> Result<()> {
         let result = xrecord::XRecordEnableContext(
-            display,
-            context,
-            Some(record_callback),
-            display2 as *mut c_char,
+            (*record).record_dpy,
+            (*record).record_ctx,
+            Some(record_cb),
+            record as *mut c_char,
         );
         if result == 0 {
             return Err(Error::XRecord("Can't enable context".into()));
         }
+        Ok(())
     }
-    Ok(())
+
+    fn new(sender: Sender) -> Result<Record> {
+        unsafe {
+            let record_dpy = Record::open_display()?;
+            let record_ctx = Record::create_context(record_dpy)?;
+
+            xlib::XSync(record_dpy, xlib::True);
+
+            let main_dpy = Record::open_display()?;
+
+            Ok(Record {
+                record_dpy,
+                record_ctx,
+                main_dpy,
+                sender,
+            })
+        }
+    }
+
+    pub fn run_loop(sender: Sender) -> Result<()> {
+        unsafe {
+            let mut r = Record::new(sender)?;
+            Record::enable_context(&mut r)
+        }
+    }
 }
 
-unsafe extern "C" fn record_callback(
-    display: *mut c_char,
-    raw_data: *mut xrecord::XRecordInterceptData,
-) {
+unsafe extern "C" fn record_cb(record: *mut c_char, raw_data: *mut xrecord::XRecordInterceptData) {
+    let record = &*(record as *mut Record);
+
     if (*raw_data).category != xrecord::XRecordFromServer {
         return;
     }
 
-    let ev = (*raw_data).data as *const xproto::_xEvent;
+    let mut ev: Option<Event> = None;
+    let xev = (*raw_data).data as *const xproto::_xEvent;
 
-    match (*ev).u.u.as_ref().type_ as c_int {
-        xlib::KeyPress => {
-            let keycode = (*ev).u.u.as_ref().detail;
-            let state = (*ev).u.keyButtonPointer.as_ref().state;
+    let t = (*xev).u.u.as_ref().type_ as c_int;
+    match t {
+        xlib::KeyPress | xlib::KeyRelease => {
+            let kc = (*xev).u.u.as_ref().detail;
+            let modifiers = KeyModifier::from((*xev).u.keyButtonPointer.as_ref().state);
+            let ks = xlib::XKeycodeToKeysym(record.main_dpy, kc, 0);
+            let keycode = KeyCode::from(KeySym::new(ks));
+            let scancode = (kc - 8) as u32;
+            let action = if t == xlib::KeyPress {
+                KeyAction::Press
+            } else {
+                KeyAction::Release
+            };
 
-            let keysym = xlib::XKeycodeToKeysym(
-                display as *mut _XDisplay,
+            ev = Some(Event::Key(KeyEvent {
+                scancode,
                 keycode,
-                0
-                // if (state as u32 & xlib::ShiftMask) != 0 {
-                //     1
-                // } else {
-                //     0
-                // },
-            );
-
-            let s = KeyCode::from(KeySym::new(keysym));
-            println!("{}, {}, {:?}, {:?}", keycode, state, keysym, s);
+                modifiers,
+                action,
+            }));
         }
         _ => {}
+    }
+
+    if let Some(e) = ev {
+        if let Err(e) = record.sender.send(e) {
+            // TODO: logger
+            println!("{}", e);
+        }
     }
 
     xrecord::XRecordFreeData(raw_data);
@@ -124,10 +158,7 @@ unsafe extern "C" fn record_callback(
 
 #[cfg(test)]
 mod tests {
-    use super::run;
 
-    #[test]
-    fn it_works() {
-        run().unwrap();
-    }
+    #[tokio::test]
+    async fn it_works() {}
 }

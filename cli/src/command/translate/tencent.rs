@@ -1,5 +1,3 @@
-use std::ops::Deref;
-
 use crate::app::App;
 
 use anyhow::Context;

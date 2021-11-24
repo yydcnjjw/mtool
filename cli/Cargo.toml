@@ -9,6 +9,7 @@ publish = false
 [dependencies]
 mytool-core = { path = "../core" }
 cloud-api = { path = "../crates/cloud-api" }
+sysev = { path = "../crates/sysev" }
 
 log = "*"
 pretty_env_logger = "*"
@@ -24,3 +25,4 @@ serde = "*"
 nom = "7"
 bitflags = "*"
 crossterm = "*"
+dirs = "*"

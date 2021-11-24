@@ -1,6 +1,7 @@
-pub mod translate;
+mod translate;
+mod test;
 
-use std::{collections::HashMap, fmt::format};
+use std::collections::HashMap;
 
 use anyhow::Context;
 use async_trait::async_trait;
@@ -28,6 +29,7 @@ impl Commander {
         Ok(())
     }
 
+    #[allow(dead_code)]
     pub fn list_command_name(&self) -> Vec<&String> {
         self.cmds.keys().collect::<_>()
     }
@@ -40,6 +42,7 @@ impl Commander {
         self.cmds.insert(name, cmd);
     }
 
+    #[allow(dead_code)]
     pub fn remove(&mut self, name: String) {
         self.cmds.remove(&name);
     }
@@ -52,6 +55,7 @@ pub trait Command {
 
 pub fn add_command(app: &mut App) -> anyhow::Result<()> {
     translate::add_command(app)?;
+    test::add_command(app)?;
     Ok(())
 }
 
