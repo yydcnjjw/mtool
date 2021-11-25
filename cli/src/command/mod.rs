@@ -1,5 +1,5 @@
-mod translate;
 mod test;
+mod translate;
 
 use std::collections::HashMap;
 

@@ -1,4 +1,4 @@
-use std::{ops::ControlFlow, str::FromStr};
+use std::{hash::Hash, ops::ControlFlow, str::FromStr};
 
 use anyhow::Context;
 use sysev::keydef::{KeyCode, KeyModifier};
@@ -14,7 +14,6 @@ use nom::{
 
 use thiserror::Error;
 
-// keyboard definition.
 #[derive(Debug, Error)]
 pub enum Error {
     #[error("{0}")]
@@ -59,6 +58,7 @@ impl TryFromStr for KeyCode {
             ),
             map(tag_no_case("<Backspace>"), |_| KeyCode::BackSpace),
             map(tag_no_case("<Return>"), |_| KeyCode::Return),
+            // TODO: more special keycode
             map_res(anychar, |c| -> Result<KeyCode> {
                 Ok(match c {
                     '`' => KeyCode::GraveAccent,
@@ -135,7 +135,7 @@ impl TryFromStr for KeyModifier {
     }
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone, Hash, PartialEq, std::cmp::Eq)]
 pub struct KeyCombine {
     pub key: KeyCode,
     pub mods: KeyModifier,
@@ -202,7 +202,7 @@ mod tests {
 
     #[test]
     fn test_kdb() {
-        let kcs = parse_kbd("C-M-a C-S-<enter> C-<f1> b").unwrap();
+        let kcs = parse_kbd("C-M-a C-S-<Return> C-<f1> b").unwrap();
         println!("{:?}", kcs);
     }
 }

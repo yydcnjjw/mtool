@@ -1,3 +1,4 @@
+#![feature(hash_set_entry)]
 mod app;
 // mod opts;
 mod command;

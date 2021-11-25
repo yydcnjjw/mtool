@@ -1,8 +1,14 @@
-use std::thread;
+use std::{sync::Arc, thread};
 
-use crate::app::App;
-use sysev::{self, event::Event};
-use tokio::sync::broadcast;
+use crate::{
+    app::App,
+    keybind::{KeyBinding, KeyDispatcher},
+};
+use sysev::{
+    self,
+    keydef::{KeyCode, KeyModifier},
+    KeyEvent,
+};
 
 use super::Command;
 use async_trait::async_trait;
@@ -18,26 +24,26 @@ impl Cmd {
 #[async_trait]
 impl Command for Cmd {
     async fn exec(&mut self, _: Vec<String>) -> anyhow::Result<()> {
-        let (tx, mut rx) = broadcast::channel(20);
+        let evbus = sysev::EventBus::new(20);
 
+        let tx = evbus.sender();
         thread::spawn(|| {
             sysev::run_loop(tx).unwrap();
         });
 
-        loop {
-            let ev = rx.recv().await;
-            if let Err(e) = ev {
-                println!("{}", e);
-                break;
-            }
+        let mut dispatcher = KeyDispatcher::new(&evbus);
+        dispatcher
+            .bind_key(KeyBinding::new("C-c c".into(), "test".into()))
+            .await?;
+        dispatcher
+            .bind_key(KeyBinding::new("C-c a".into(), "test".into()))
+            .await?;
+        dispatcher
+            .bind_key(KeyBinding::new("C-S-c a".into(), "test".into()))
+            .await?;
 
-            let ev = ev.unwrap();
+        dispatcher.run_loop().await;
 
-            
-            match ev {
-                Event::Key(_) => todo!(),
-            }
-        }
         Ok(())
     }
 }

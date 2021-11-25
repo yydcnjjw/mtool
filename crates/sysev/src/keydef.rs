@@ -1,6 +1,6 @@
 use bitflags::bitflags;
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Hash, std::cmp::Eq, PartialEq)]
 pub enum KeyCode {
     GraveAccent = 1, // `
     Num1,

@@ -3,10 +3,11 @@ mod windows;
 
 #[cfg(target_os = "linux")]
 mod linux;
+mod event_bus;
+
+mod event;
+pub mod keydef;
 
 pub use linux::*;
-
-pub mod event;
-pub mod event_bus;
-
-pub mod keydef;
+pub use event::*;
+pub use event_bus::*;
