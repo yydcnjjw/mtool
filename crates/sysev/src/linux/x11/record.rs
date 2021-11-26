@@ -14,9 +14,9 @@ use thiserror::Error;
 
 use crate::{
     event::{Event, KeyAction, KeyEvent},
-    event_bus::Sender,
     keydef::{KeyCode, KeyModifier},
     linux::x11::key::KeySym,
+    EventSender,
 };
 
 #[derive(Debug, Error)]
@@ -104,7 +104,7 @@ impl Record {
         }
     }
 
-    pub fn run_loop(sender: Sender) -> Result<()> {
+    pub fn run_loop(sender: EventSender) -> Result<()> {
         unsafe {
             let mut r = Record::new(sender)?;
             Record::enable_context(&mut r)
@@ -148,8 +148,7 @@ unsafe extern "C" fn record_cb(record: *mut c_char, raw_data: *mut xrecord::XRec
 
     if let Some(e) = ev {
         if let Err(e) = record.sender.send(e) {
-            // TODO: logger
-            println!("{}", e);
+            log::warn!("{}", e);
         }
     }
 

@@ -203,6 +203,5 @@ mod tests {
     #[test]
     fn test_kdb() {
         let kcs = parse_kbd("C-M-a C-S-<Return> C-<f1> b").unwrap();
-        println!("{:?}", kcs);
     }
 }

@@ -1,7 +1,3 @@
-use tokio::sync::broadcast;
-
-use crate::event::Event;
-
 pub type Sender = broadcast::Sender<Event>;
 pub type Receiver = broadcast::Receiver<Event>;
 

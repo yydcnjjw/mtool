@@ -1,5 +1,4 @@
-use super::Command;
-use crate::app::App;
+use crate::{app::App, core::command::Command};
 use async_trait::async_trait;
 
 mod tencent;
@@ -36,24 +35,31 @@ impl Cmd {
             target,
         })
     }
+
+    async fn text_translate(&mut self, text: String) -> anyhow::Result<String> {
+        let result = self
+            .translator
+            .text_translate(text, self.source.clone(), self.target.clone())
+            .await?;
+        Ok(result)
+    }
 }
 
 #[async_trait]
 impl Command for Cmd {
     async fn exec(&mut self, args: Vec<String>) -> anyhow::Result<()> {
-        assert!(args.len() == 1);
+        if args.len() == 1 {
+            let text = args.first().unwrap();
+            log::info!("{}", self.text_translate(text.clone()).await?);
+        } else {
+            
+        }
 
-        let text = args.first().unwrap();
-        let result = self
-            .translator
-            .text_translate(text.clone(), self.source.clone(), self.target.clone())
-            .await?;
-        println!("{}", result);
         Ok(())
     }
 }
 
-pub fn add_command(app: &mut App) -> anyhow::Result<()> {
+fn add_command(app: &mut App) -> anyhow::Result<()> {
     {
         let cmd = Box::new(Cmd::new(app, LanguageType::Auto, LanguageType::Zh)?);
         app.cmder.insert("tz".into(), cmd);
@@ -65,4 +71,8 @@ pub fn add_command(app: &mut App) -> anyhow::Result<()> {
     }
 
     Ok(())
+}
+
+pub async fn module_load(app: &mut App) -> anyhow::Result<()> {
+    add_command(app)
 }

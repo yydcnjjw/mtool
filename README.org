@@ -1,2 +1,4 @@
 * TODOs
-- [ ] x11::keysym <-> event::KeyCode
+- [ ] evbus
+- [ ] service mgr
+- [X] x11::keysym <-> event::KeyCode

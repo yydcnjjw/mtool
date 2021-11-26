@@ -20,13 +20,10 @@ type Result<T> = std::result::Result<T, Error>;
 static mut HHK: HHOOK = HHOOK(0);
 
 unsafe extern "system" fn keyboard_hook(code: i32, wparam: WPARAM, lparam: LPARAM) -> LRESULT {
-    println!("{}", code);
-
     CallNextHookEx(HHK, code, wparam, lparam)
 }
 
 fn run() -> Result<()> {
-    println!("run");
     unsafe {
         HHK = windows::Win32::UI::WindowsAndMessaging::SetWindowsHookExW(
             WH_KEYBOARD,

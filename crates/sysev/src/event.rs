@@ -18,3 +18,5 @@ pub struct KeyEvent {
     pub modifiers: KeyModifier,
     pub action: KeyAction,
 }
+
+pub type EventSender = broadcast::Sender<Event>;
