@@ -1,5 +1,11 @@
-pub type Sender = broadcast::Sender<Event>;
-pub type Receiver = broadcast::Receiver<Event>;
+pub trait Event {
+    fn type_id() -> u32;
+}
+
+type DynamicEvent = Box<dyn Event>;
+
+pub type Sender = broadcast::Sender<DynamicEvent>;
+pub type Receiver = broadcast::Receiver<DynamicEvent>;
 
 pub struct EventBus {
     tx: Sender,

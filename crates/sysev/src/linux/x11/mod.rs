@@ -1,8 +1,8 @@
-use crate::EventSender;
+use crate::EventCallback;
 
 mod key;
 mod record;
 
-pub fn run_loop(sender: EventSender) -> anyhow::Result<()> {
-    Ok(record::Record::run_loop(sender)?)
+pub fn run_loop(cb: EventCallback) -> anyhow::Result<()> {
+    Ok(record::Record::run_loop(cb)?)
 }

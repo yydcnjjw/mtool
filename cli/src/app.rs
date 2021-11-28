@@ -9,12 +9,8 @@ use log4rs::{
     encode::pattern::PatternEncoder,
 };
 use mytool_core::config::Config;
-use sysev::EventBus;
 
-use crate::{
-    core::{command::Commander, keybind::KeyBindinger},
-    module::module_load,
-};
+use crate::{core::{command::Commander, evbus::EventBus, keybind::KeyBindinger}, module::module_load};
 
 pub struct App {
     pub cfg: Config,
@@ -72,12 +68,7 @@ impl App {
     }
 
     async fn run_sysev_loop(&self) {
-        let tx = self.evbus.sender();
-        tokio::task::spawn_blocking(move || {
-            if let Err(e) = sysev::run_loop(tx) {
-                log::error!("{}", e);
-            }
-        })
+
         .await;
     }
 

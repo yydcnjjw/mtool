@@ -19,4 +19,4 @@ pub struct KeyEvent {
     pub action: KeyAction,
 }
 
-pub type EventSender = broadcast::Sender<Event>;
+pub type EventCallback = fn(Event);

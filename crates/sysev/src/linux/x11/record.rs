@@ -16,7 +16,7 @@ use crate::{
     event::{Event, KeyAction, KeyEvent},
     keydef::{KeyCode, KeyModifier},
     linux::x11::key::KeySym,
-    EventSender,
+    EventCallback,
 };
 
 #[derive(Debug, Error)]
@@ -37,7 +37,7 @@ pub struct Record {
     record_dpy: *mut _XDisplay,
     record_ctx: c_ulong,
     main_dpy: *mut _XDisplay,
-    pub sender: Sender,
+    pub cb: EventCallback,
 }
 
 impl Record {
@@ -86,7 +86,7 @@ impl Record {
         Ok(())
     }
 
-    fn new(sender: Sender) -> Result<Record> {
+    fn new(cb: EventCallback) -> Result<Record> {
         unsafe {
             let record_dpy = Record::open_display()?;
             let record_ctx = Record::create_context(record_dpy)?;
@@ -99,14 +99,14 @@ impl Record {
                 record_dpy,
                 record_ctx,
                 main_dpy,
-                sender,
+                cb,
             })
         }
     }
 
-    pub fn run_loop(sender: EventSender) -> Result<()> {
+    pub fn run_loop(cb: EventCallback) -> Result<()> {
         unsafe {
-            let mut r = Record::new(sender)?;
+            let mut r = Record::new(cb)?;
             Record::enable_context(&mut r)
         }
     }
@@ -147,9 +147,7 @@ unsafe extern "C" fn record_cb(record: *mut c_char, raw_data: *mut xrecord::XRec
     }
 
     if let Some(e) = ev {
-        if let Err(e) = record.sender.send(e) {
-            log::warn!("{}", e);
-        }
+        (record.cb)(e);
     }
 
     xrecord::XRecordFreeData(raw_data);

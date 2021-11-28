@@ -4,8 +4,8 @@ use thiserror::Error;
 use windows::Win32::{
     Foundation::{HINSTANCE, HWND, LPARAM, LRESULT, WPARAM},
     UI::WindowsAndMessaging::{
-        CallNextHookEx, DispatchMessageW, PeekMessageW, TranslateMessage, HHOOK, MSG, PM_REMOVE,
-        WH_KEYBOARD,
+        CallNextHookEx, DispatchMessageW, PeekMessageW, SetWindowsHookExW, TranslateMessage, HHOOK,
+        MSG, PM_REMOVE, WH_KEYBOARD, WH_KEYBOARD_LL,
     },
 };
 
@@ -25,22 +25,7 @@ unsafe extern "system" fn keyboard_hook(code: i32, wparam: WPARAM, lparam: LPARA
 
 fn run() -> Result<()> {
     unsafe {
-        HHK = windows::Win32::UI::WindowsAndMessaging::SetWindowsHookExW(
-            WH_KEYBOARD,
-            Some(keyboard_hook),
-            HINSTANCE::default(),
-            0,
-        );
-
-        let mut msg = MSG::default();
-        loop {
-            if !PeekMessageW(&mut msg, HWND::default(), 0, 0, PM_REMOVE).as_bool() {
-                TranslateMessage(&msg);
-                DispatchMessageW(&msg);
-            }
-
-            thread::sleep(Duration::from_millis(200));
-        }
+        HHK = SetWindowsHookExW(WH_KEYBOARD_LL, Some(keyboard_hook), HINSTANCE::default(), 0);
     }
 
     Ok(())
