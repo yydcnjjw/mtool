@@ -10,7 +10,10 @@ use log4rs::{
 };
 use mytool_core::config::Config;
 
-use crate::{core::{command::Commander, evbus::EventBus, keybind::KeyBindinger}, module::module_load};
+use crate::{
+    core::{command::Commander, evbus::EventBus, keybind::KeyBindinger},
+    module::module_load,
+};
 
 pub struct App {
     pub cfg: Config,
@@ -27,7 +30,7 @@ impl App {
     pub async fn new() -> anyhow::Result<Self> {
         let cfg = Config::load(config_path().context("Get config path")?).await?;
         let cmder = Commander::new();
-        let evbus = EventBus::new(10);
+        let evbus = EventBus::new(32);
         let kber = KeyBindinger::new(&evbus);
 
         Ok(Self {
@@ -69,7 +72,7 @@ impl App {
 
     async fn run_sysev_loop(&self) {
 
-        .await;
+        // .await;
     }
 
     pub async fn run() -> anyhow::Result<()> {
@@ -77,17 +80,17 @@ impl App {
 
         let mut app = App::new().await?;
 
-        module_load(&mut app).await?;
+        // module_load(&mut app).await?;
 
-        app.exec_cmd().await?;
+        // app.exec_cmd().await?;
 
         log::debug!("Run service !!!");
 
-        let j1 = app.run_sysev_loop();
+        // let j1 = app.run_sysev_loop();
 
-        let j2 = app.kber.run_loop();
+        // let j2 = app.kber.run_loop();
 
-        join_all(vec![j1, j2]).await;
+        // join_all(vec![j1, j2]).await;
 
         Ok(())
     }

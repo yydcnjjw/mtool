@@ -5,6 +5,7 @@ use crate::{
         service::Service,
     },
 };
+use async_trait::async_trait;
 
 struct SysEventService {
     sender: Sender,
@@ -16,12 +17,13 @@ impl SysEventService {
     }
 }
 
-impl Event for sysev::Event {
-    fn type_id() -> u32 {
-        0
-    }
-}
+// impl Event for sysev::Event {
+//     fn type_id() -> u32 {
+//         0
+//     }
+// }
 
+#[async_trait]
 impl Service for SysEventService {
     async fn run_loop(&mut self) {
         let sender = self.sender.clone();
@@ -36,14 +38,10 @@ pub async fn module_load(app: &mut App) -> anyhow::Result<()> {
     Ok(())
 }
 
-
 #[cfg(test)]
 mod tests {
-    use tokio::sync::broadcast;
-
     use super::*;
 
     #[test]
-    fn test_sysev() {
-    }
+    fn test_sysev() {}
 }

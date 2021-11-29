@@ -1,9 +1,13 @@
-use crate::{app::App, core::service::Service};
+use crate::{
+    app::App,
+    core::{evbus::EventBus, service::Service},
+};
 
-use sysev::{self, EventBus};
+use sysev;
 use tokio::sync::broadcast;
 
 use super::{kbdispatcher::KeyBindingDispatcher, Result};
+use async_trait::async_trait;
 
 #[derive(Debug, Clone)]
 pub struct KeyBinding {
@@ -51,6 +55,7 @@ impl KeyBindinger {
     }
 }
 
+#[async_trait]
 impl Service for KeyBindinger {
     async fn run_loop(&mut self) {
         let rx = self.kb_dispatcher.subscribe();

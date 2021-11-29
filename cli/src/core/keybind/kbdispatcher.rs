@@ -2,8 +2,10 @@ use std::sync::Arc;
 
 use anyhow::Context;
 use futures::{future, pin_mut, StreamExt};
-use sysev::{Event, EventBus, KeyAction, KeyEvent};
+use sysev::{Event, KeyAction, KeyEvent};
 use tokio::sync::{broadcast, Mutex};
+
+use crate::core::evbus::{EventBus, Receiver};
 
 use super::{
     kbd::{parse_kbd, KeyCombine},
@@ -13,7 +15,7 @@ use super::{
 
 #[derive(Debug)]
 pub struct KeyBindingDispatcher {
-    ev_source: sysev::Receiver,
+    ev_source: Receiver,
     root: KeyBindingRoot,
     cur_node: Option<Arc<Mutex<KeyNode>>>,
 
