@@ -1,6 +1,7 @@
-use std::{env, path::PathBuf};
+use std::{env, path::PathBuf, sync::Arc, time::Duration};
 
 use anyhow::Context;
+use async_trait::async_trait;
 use futures::future::join_all;
 use log::LevelFilter;
 use log4rs::{
@@ -10,16 +11,13 @@ use log4rs::{
 };
 use mytool_core::config::Config;
 
-use crate::{
-    core::{command::Commander, evbus::EventBus, keybind::KeyBindinger},
-    module::module_load,
-};
+use crate::core::{evbus::{EventBus, post}, module::Module, service::{self, AddService, RunAll, Service}};
 
 pub struct App {
     pub cfg: Config,
-    pub cmder: Commander,
-    pub evbus: EventBus,
-    pub kber: KeyBindinger,
+    // pub cmder: Commander,
+    pub evbus: Arc<EventBus>,
+    // pub kber: KeyBindinger,
 }
 
 fn config_path() -> Option<PathBuf> {
@@ -29,23 +27,24 @@ fn config_path() -> Option<PathBuf> {
 impl App {
     pub async fn new() -> anyhow::Result<Self> {
         let cfg = Config::load(config_path().context("Get config path")?).await?;
-        let cmder = Commander::new();
-        let evbus = EventBus::new(32);
-        let kber = KeyBindinger::new(&evbus);
+        // let cmder = Commander::new();
+        let evbus = Arc::new(EventBus::new(32));
+        // let kber = KeyBindinger::new(&evbus);
 
         Ok(Self {
             cfg,
-            cmder,
+            // cmder,
             evbus,
-            kber,
+            // kber,
         })
     }
 
     async fn exec_cmd(&mut self) -> anyhow::Result<()> {
-        let args = env::args().skip(1).collect::<Vec<String>>();
-        let (cmd, args) = args.split_first().unwrap();
+        // let args = env::args().skip(1).collect::<Vec<String>>();
+        // let (cmd, args) = args.split_first().unwrap();
 
-        self.cmder.exec(cmd, args).await
+        // self.cmder.exec(cmd, args).await
+        Ok(())
     }
 
     fn logger_init() {
@@ -78,13 +77,41 @@ impl App {
     pub async fn run() -> anyhow::Result<()> {
         App::logger_init();
 
-        let mut app = App::new().await?;
+        let app = App::new().await?;
+
+        service::module_load(&app).await?;
+
+        let sender = app.evbus.sender();
+
+        struct DemoService {}
+        #[async_trait]
+        impl Service for DemoService {
+            async fn run_loop(&self) {
+                println!("Demo Service is running");
+            }
+        }
+
+        // tokio::time::sleep(Duration::from_millis(1000)).await;
+
+        // let mut rx = app.evbus.subscribe();
+        // tokio::spawn(async move {
+        //     while let Ok(e) = rx.recv().await {
+        //         println!("{:?}", e);
+        //     }
+        // });
+
+        
+        // post(sender.clone(), ());
+
+        AddService::post(sender.clone(), Arc::new(DemoService {})).await?;
+        
+        RunAll::post(sender.clone()).await?;
 
         // module_load(&mut app).await?;
 
         // app.exec_cmd().await?;
 
-        log::debug!("Run service !!!");
+        // log::debug!("Run service !!!");
 
         // let j1 = app.run_sysev_loop();
 

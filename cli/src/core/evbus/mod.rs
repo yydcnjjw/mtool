@@ -1,61 +1,24 @@
+mod event;
+
 use std::{
     any::{Any, TypeId},
     ops::Deref,
+    sync::Arc,
 };
 
+use anyhow::Context;
 use cloud_api::tencent::api::ResponseType;
 use futures::SinkExt;
 use tokio::sync::{broadcast, oneshot};
 
-type DynamicEvent = Box<dyn Any>;
+pub use self::event::{Event, ResponsiveEvent};
+
+pub type DynamicEvent = Arc<dyn Any + Send + Sync>;
+
 pub type Sender = broadcast::Sender<DynamicEvent>;
 pub type Receiver = broadcast::Receiver<DynamicEvent>;
 
-type Responder<T> = oneshot::Sender<T>;
-
-pub struct Event<T> {
-    data: T,
-}
-
-impl<T> Event<T> {
-    pub fn new(data: T) -> Self {
-        Self { data }
-    }
-}
-
-impl<T> Deref for Event<T> {
-    type Target = T;
-
-    fn deref(&self) -> &Self::Target {
-        &self.data
-    }
-}
-
-pub struct ResponsiveEvent<T> {
-    base: Event<T>,
-    responder: Responder<T>,
-}
-
-impl<T> ResponsiveEvent<T> {
-    pub fn new(data: T, responder: Responder<T>) -> Self {
-        Self {
-            base: Event::new(data),
-            responder,
-        }
-    }
-
-    fn result(&self, v: T) -> Result<(), T> {
-        self.responder.send(v)
-    }
-}
-
-impl<T> Deref for ResponsiveEvent<T> {
-    type Target = Event<T>;
-
-    fn deref(&self) -> &Self::Target {
-        &self.base
-    }
-}
+pub type Responder<T> = oneshot::Sender<T>;
 
 pub struct EventBus {
     tx: Sender,
@@ -67,8 +30,8 @@ impl EventBus {
         Self { tx }
     }
 
-    pub fn sender(&self) -> Sender {
-        self.tx.clone()
+    pub fn sender(&self) -> &Sender {
+        &self.tx
     }
 
     pub fn subscribe(&self) -> Receiver {
@@ -76,12 +39,21 @@ impl EventBus {
     }
 }
 
-pub async fn post_result<T: Send>(sender: &Sender, data: T) -> anyhow::Result<T> {
-    let (tx, rx) = oneshot::channel();
-    sender.send(Box::new(ResponsiveEvent::new(data, tx)))?;
-    Ok(rx.await?)
+pub async fn post_result<I, O>(sender: Sender, data: I) -> anyhow::Result<O>
+where
+    I: 'static + Send + Sync,
+    O: 'static + Send + Sync,
+{
+    let (tx, rx) = oneshot::channel::<O>();
+    sender
+        .send(Arc::new(ResponsiveEvent::new(data, tx)))
+        .context("Send event")?;
+    Ok(rx.await.context("Wait result")?)
 }
 
-pub async fn post<T: Send>(sender: &Sender, data: T) {
-    sender.send(Box::new(Event::new(data)))
+pub fn post<T>(sender: Sender, data: T)
+where
+    T: 'static + Send + Sync,
+{
+    sender.send(Arc::new(Event::new(data))).unwrap();
 }

@@ -1,46 +1,69 @@
 use std::{
     any::{Any, TypeId},
     ops::Add,
+    sync::Arc,
 };
 
+use anyhow::Context;
 use futures::future::join_all;
 use tokio::sync::oneshot;
 
-use crate::core::evbus::{Event, EventBus, Receiver, ResponsiveEvent};
+use crate::{
+    app::App,
+    core::evbus::{self, post_result, Event, EventBus, Receiver, ResponsiveEvent, Sender},
+};
 
-use super::Service;
+use super::{DynamicService, Service};
 
-pub struct Server {
-    services: Vec<Box<dyn Service>>,
-    source: Receiver,
+pub struct AddService {
+    pub service: DynamicService,
 }
 
-struct AddService {
-    pub service: Box<dyn Service>,
+impl AddService {
+    pub async fn post(sender: Sender, service: DynamicService) -> anyhow::Result<()> {
+        Ok(post_result::<AddService, ()>(sender, AddService { service }).await?)
+    }
+}
+
+pub struct RunAll {}
+
+impl RunAll {
+    pub async fn post(sender: Sender) -> anyhow::Result<()> {
+        Ok(post_result::<RunAll, ()>(sender, RunAll {}).await?)
+    }
+}
+
+pub struct Server {
+    services: Vec<DynamicService>,
 }
 
 impl Server {
-    pub fn new(evbus: &EventBus) -> Self {
+    fn new() -> Self {
         Self {
             services: Vec::new(),
-            source: evbus.subscribe(),
         }
     }
 
-    fn add_service(&mut self, service: Box<dyn Service>) {
+    fn add_service(&mut self, service: DynamicService) {
         self.services.push(service)
     }
 
-    async fn run(&mut self) {
-        while let Some(e) = self.source.recv().await {
-            match e.type_id() {
-                TypeId::of::<ResponsiveEvent<AddService>>() => {
-                    let e = e.downcast_ref::<ResponsiveEvent<AddService>>().unwrap();
-                    self.add_service(e.service);
-                }
+    async fn run_all(&mut self) {
+        join_all(self.services.iter_mut().map(|s| s.run_loop())).await;
+    }
+
+    pub async fn run_loop(mut rx: Receiver) {
+        let mut server = Server::new();
+
+        while let Ok(e) = rx.recv().await {
+            if let Some(e) = e.downcast_ref::<ResponsiveEvent<AddService, ()>>() {
+                server.add_service(e.service.clone());
+                e.result(());
+            } else if let Some(e) = e.downcast_ref::<ResponsiveEvent<RunAll, ()>>() {
+                server.run_all().await;
+                e.result(());
+                break;
             }
         }
-
-        // join_all(self.services.iter_mut().map(|s| s.run_loop())).await;
     }
 }
