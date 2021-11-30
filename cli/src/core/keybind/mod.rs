@@ -14,3 +14,11 @@ pub enum Error {
 }
 
 pub type Result<T> = std::result::Result<T, Error>;
+
+pub async fn module_load(app: &App) -> anyhow::Result<()> {
+    let mut rx = app.evbus.subscribe();
+
+    
+
+    Ok(())
+}
