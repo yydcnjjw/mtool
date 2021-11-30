@@ -20,7 +20,7 @@ pub struct AddService {
 }
 
 impl AddService {
-    pub async fn post(sender: Sender, service: DynamicService) -> anyhow::Result<()> {
+    pub async fn post(sender: &Sender, service: DynamicService) -> anyhow::Result<()> {
         Ok(post_result::<AddService, ()>(sender, AddService { service }).await?)
     }
 }
@@ -28,7 +28,7 @@ impl AddService {
 pub struct RunAll {}
 
 impl RunAll {
-    pub async fn post(sender: Sender) -> anyhow::Result<()> {
+    pub async fn post(sender: &Sender) -> anyhow::Result<()> {
         Ok(post_result::<RunAll, ()>(sender, RunAll {}).await?)
     }
 }

@@ -39,7 +39,7 @@ impl EventBus {
     }
 }
 
-pub async fn post_result<I, O>(sender: Sender, data: I) -> anyhow::Result<O>
+pub async fn post_result<I, O>(sender: &Sender, data: I) -> anyhow::Result<O>
 where
     I: 'static + Send + Sync,
     O: 'static + Send + Sync,
@@ -51,7 +51,7 @@ where
     Ok(rx.await.context("Wait result")?)
 }
 
-pub fn post<T>(sender: Sender, data: T)
+pub fn post<T>(sender: &Sender, data: T)
 where
     T: 'static + Send + Sync,
 {

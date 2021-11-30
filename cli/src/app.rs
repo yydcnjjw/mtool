@@ -103,9 +103,9 @@ impl App {
         
         // post(sender.clone(), ());
 
-        AddService::post(sender.clone(), Arc::new(DemoService {})).await?;
+        AddService::post(sender, Arc::new(DemoService {})).await?;
         
-        RunAll::post(sender.clone()).await?;
+        RunAll::post(sender).await?;
 
         // module_load(&mut app).await?;
 
