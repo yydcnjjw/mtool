@@ -11,7 +11,12 @@ use log4rs::{
 };
 use mytool_core::config::Config;
 
-use crate::core::{evbus::{EventBus, post}, module_load};
+use crate::core::{
+    evbus::{post, EventBus},
+    keybind::DefineKeyBinding,
+    module_load,
+    service::RunAll,
+};
 
 pub struct App {
     pub cfg: Config,
@@ -81,17 +86,13 @@ impl App {
 
         module_load(&app).await?;
 
-        // module_load(&mut app).await?;
+        let sender = &app.evbus.sender();
+        DefineKeyBinding::post(sender, "C-m a", "test").await?;
+        DefineKeyBinding::post(sender, "C-m c", "test").await?;
 
-        // app.exec_cmd().await?;
-
-        // log::debug!("Run service !!!");
-
-        // let j1 = app.run_sysev_loop();
-
-        // let j2 = app.kber.run_loop();
-
-        // join_all(vec![j1, j2]).await;
+        loop {
+            tokio::time::sleep(Duration::from_secs(1));
+        }
 
         Ok(())
     }

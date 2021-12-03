@@ -1,3 +1,5 @@
+#![feature(type_alias_impl_trait)]
+
 #[cfg(target_os = "windows")]
 mod windows;
 

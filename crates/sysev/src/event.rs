@@ -18,5 +18,3 @@ pub struct KeyEvent {
     pub modifiers: KeyModifier,
     pub action: KeyAction,
 }
-
-pub type EventCallback = fn(Event);

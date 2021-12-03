@@ -2,6 +2,7 @@ mod event;
 
 use std::{
     any::{Any, TypeId},
+    fmt::Debug,
     ops::Deref,
     sync::Arc,
 };
@@ -30,8 +31,8 @@ impl EventBus {
         Self { tx }
     }
 
-    pub fn sender(&self) -> &Sender {
-        &self.tx
+    pub fn sender(&self) -> Sender {
+        self.tx.clone()
     }
 
     pub fn subscribe(&self) -> Receiver {
@@ -47,13 +48,15 @@ where
     let (tx, rx) = oneshot::channel::<O>();
     sender
         .send(Arc::new(ResponsiveEvent::new(data, tx)))
-        .context("Send event")?;
-    Ok(rx.await.context("Wait result")?)
+        .context("Send event failed")?;
+    Ok(rx.await.context("Wait result failed")?)
 }
 
-pub fn post<T>(sender: &Sender, data: T)
+pub fn post<T>(sender: &Sender, data: T) -> anyhow::Result<usize>
 where
     T: 'static + Send + Sync,
 {
-    sender.send(Arc::new(Event::new(data))).unwrap();
+    sender
+        .send(Arc::new(Event::new(data)))
+        .context("Send event failed")
 }

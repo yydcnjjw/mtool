@@ -3,11 +3,15 @@ mod kbdispatcher;
 mod kber;
 mod kbnode;
 
+use std::cell::Cell;
+
 use thiserror::Error;
 
 use crate::app::App;
 
-use self::kber::KeyBindinger;
+use self::{kbdispatcher::KeyBindingDispatcher, kber::KeyBindinger};
+
+pub use kbdispatcher::*;
 
 #[derive(Debug, Error)]
 pub enum Error {
@@ -19,10 +23,15 @@ pub type Result<T> = std::result::Result<T, Error>;
 
 pub async fn module_load(app: &App) -> anyhow::Result<()> {
     let tx = app.evbus.sender();
+    
     let mut rx = app.evbus.subscribe();
-
     tokio::spawn(async move {
-        KeyBindinger::run_loop(tx.clone(), rx).await;
+        KeyBindingDispatcher::run_loop(tx, rx).await;
+    });
+
+    let mut rx = app.evbus.subscribe();
+    tokio::spawn(async move {
+        KeyBindinger::run_loop(rx).await;
     });
 
     Ok(())

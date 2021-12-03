@@ -16,7 +16,6 @@ use crate::{
     event::{Event, KeyAction, KeyEvent},
     keydef::{KeyCode, KeyModifier},
     linux::x11::key::KeySym,
-    EventCallback,
 };
 
 #[derive(Debug, Error)]
@@ -33,16 +32,19 @@ type Result<T> = std::result::Result<T, Error>;
 
 static mut RECORD_ALL_CLIENTS: c_ulong = xrecord::XRecordAllClients;
 
-pub struct Record {
+pub struct Record<F> {
     record_dpy: *mut _XDisplay,
     record_ctx: c_ulong,
     main_dpy: *mut _XDisplay,
-    pub cb: EventCallback,
+    pub cb: F,
 }
 
-impl Record {
-    unsafe fn open_display() -> Result<*mut _XDisplay> {
-        let dpy = xlib::XOpenDisplay(null());
+impl<F> Record<F>
+where
+    F: Fn(Event),
+{
+    fn open_display() -> Result<*mut _XDisplay> {
+        let dpy = unsafe { xlib::XOpenDisplay(null()) };
         if dpy.is_null() {
             return Err(Error::XLib("Can't open display".into()));
         }
@@ -73,29 +75,31 @@ impl Record {
         Ok(context)
     }
 
-    unsafe fn enable_context(record: *mut Record) -> Result<()> {
-        let result = xrecord::XRecordEnableContext(
-            (*record).record_dpy,
-            (*record).record_ctx,
-            Some(record_cb),
-            record as *mut c_char,
-        );
+    fn enable_context(record: *mut Record<F>) -> Result<()> {
+        let result = unsafe {
+            xrecord::XRecordEnableContext(
+                (*record).record_dpy,
+                (*record).record_ctx,
+                Some(record_cb::<F>),
+                record as *mut c_char,
+            )
+        };
         if result == 0 {
             return Err(Error::XRecord("Can't enable context".into()));
         }
         Ok(())
     }
 
-    fn new(cb: EventCallback) -> Result<Record> {
+    fn new(cb: F) -> Result<Self> {
         unsafe {
-            let record_dpy = Record::open_display()?;
-            let record_ctx = Record::create_context(record_dpy)?;
+            let record_dpy = Self::open_display()?;
+            let record_ctx = Self::create_context(record_dpy)?;
 
             xlib::XSync(record_dpy, xlib::True);
 
-            let main_dpy = Record::open_display()?;
+            let main_dpy = Self::open_display()?;
 
-            Ok(Record {
+            Ok(Self {
                 record_dpy,
                 record_ctx,
                 main_dpy,
@@ -104,16 +108,17 @@ impl Record {
         }
     }
 
-    pub fn run_loop(cb: EventCallback) -> Result<()> {
-        unsafe {
-            let mut r = Record::new(cb)?;
-            Record::enable_context(&mut r)
-        }
+    pub fn run_loop(cb: F) -> Result<()> {
+        let mut r = Record::new(cb)?;
+        Record::enable_context(&mut r)
     }
 }
 
-unsafe extern "C" fn record_cb(record: *mut c_char, raw_data: *mut xrecord::XRecordInterceptData) {
-    let record = &*(record as *mut Record);
+unsafe extern "C" fn record_cb<F>(record: *mut c_char, raw_data: *mut xrecord::XRecordInterceptData)
+where
+    F: Fn(Event),
+{
+    let record = &mut *(record as *mut Record<F>);
 
     if (*raw_data).category != xrecord::XRecordFromServer {
         return;

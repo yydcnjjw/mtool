@@ -1,11 +1,13 @@
-use std::{cell::RefCell, collections::HashMap, rc::Rc};
+use std::{collections::HashMap, ops::Deref, sync::Arc};
+
+use tokio::sync::RwLock;
 
 use super::{kbd::KeyCombine, kber::KeyBinding, Result};
 
 #[derive(Debug)]
 pub struct Node<Key, Value> {
     pub v: Value,
-    pub childs: HashMap<Key, Rc<RefCell<Self>>>,
+    pub childs: HashMap<Key, SharedNode<Key, Value>>,
 }
 
 impl<Key, Value> Node<Key, Value> {
@@ -17,32 +19,55 @@ impl<Key, Value> Node<Key, Value> {
     }
 }
 
+#[derive(Debug, Clone)]
+pub struct SharedNode<Key, Value> {
+    inner: Arc<RwLock<Node<Key, Value>>>,
+}
+
+impl<Key, Value> SharedNode<Key, Value> {
+    fn new(v: Value) -> Self {
+        Self {
+            inner: Arc::new(RwLock::new(Node::new(v))),
+        }
+    }
+}
+
+impl<Key, Value> Deref for SharedNode<Key, Value> {
+    type Target = Arc<RwLock<Node<Key, Value>>>;
+
+    fn deref(&self) -> &Self::Target {
+        &self.inner
+    }
+}
+
 pub type KeyNode = Node<KeyCombine, Option<KeyBinding>>;
+pub type SharedKeyNode = SharedNode<KeyCombine, Option<KeyBinding>>;
 
 #[derive(Debug)]
 pub struct KeyBindingRoot {
-    pub root: Rc<RefCell<KeyNode>>,
+    pub root: SharedKeyNode,
 }
 
 impl KeyBindingRoot {
     pub fn new() -> Self {
         Self {
-            root: Rc::new(RefCell::new(KeyNode::new(None))),
+            root: SharedKeyNode::new(None),
         }
     }
 
-    pub fn add_kcs(&mut self, kcs: Vec<KeyCombine>, kb: KeyBinding) -> Result<()> {
+    pub async fn add_kcs(&mut self, kcs: Vec<KeyCombine>, kb: KeyBinding) -> Result<()> {
         let mut node = self.root.clone();
         for item in kcs {
             let n = node.clone();
             node = n
-                .borrow_mut()
+                .write()
+                .await
                 .childs
                 .entry(item)
-                .or_insert(Rc::new(RefCell::new(KeyNode::new(None))))
+                .or_insert(SharedKeyNode::new(None))
                 .clone();
         }
-        node.borrow_mut().v = Some(kb);
+        node.write().await.v = Some(kb);
         Ok(())
     }
 
@@ -58,8 +83,8 @@ mod tests {
 
     use super::*;
 
-    #[test]
-    fn test_name() {
+    #[tokio::test]
+    async fn test_name() {
         let mut kbr = KeyBindingRoot::new();
 
         {
@@ -70,7 +95,9 @@ mod tests {
                     kbd: "ctrl+a b",
                     cmd_name: "".into(),
                 },
-            );
+            )
+            .await
+            .unwrap();
         }
 
         {
@@ -81,7 +108,9 @@ mod tests {
                     kbd: "ctrl+a bc",
                     cmd_name: "".into(),
                 },
-            );
+            )
+            .await
+            .unwrap();
         }
     }
 }
