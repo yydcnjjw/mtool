@@ -1,6 +1,5 @@
 mod test;
 mod translate;
-mod sysev;
 
 use crate::app::App;
 

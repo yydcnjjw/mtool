@@ -1,7 +1,17 @@
+use crate::app::App;
+
 pub mod evbus;
-pub mod service;
-pub mod sysev;
+pub mod config;
+
+mod service;
+mod sysev;
 
 // pub mod command;
-pub mod config;
-pub mod keybind;
+mod keybind;
+
+pub async fn module_load(app: &App) -> anyhow::Result<()> {
+    service::module_load(app).await?;
+    sysev::module_load(app).await?;
+    keybind::module_load(app).await?;
+    Ok(())
+}

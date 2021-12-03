@@ -2,18 +2,13 @@ use async_trait::async_trait;
 
 use crate::app::App;
 
-use super::service::Service;
-struct SysevService {}
-
-#[async_trait]
-impl Service for SysevService {
-    async fn run_loop(&self) {
-        
-    }
-}
+use super::evbus::{post, Sender};
 
 pub async fn module_load(app: &App) -> anyhow::Result<()> {
     let sender = app.evbus.sender();
-    AddService::post(sender, Arc::new(SysevService {})).await?;
+    tokio::task::spawn_blocking(move || {
+        // TODO:
+        // sysev::run_loop(|e| post(&sender, e));
+    });
     Ok(())
 }

@@ -11,7 +11,7 @@ use log4rs::{
 };
 use mytool_core::config::Config;
 
-use crate::core::{evbus::{EventBus, post}, module::Module, service::{self, AddService, RunAll, Service}};
+use crate::core::{evbus::{EventBus, post}, module_load};
 
 pub struct App {
     pub cfg: Config,
@@ -79,33 +79,7 @@ impl App {
 
         let app = App::new().await?;
 
-        service::module_load(&app).await?;
-
-        let sender = app.evbus.sender();
-
-        struct DemoService {}
-        #[async_trait]
-        impl Service for DemoService {
-            async fn run_loop(&self) {
-                println!("Demo Service is running");
-            }
-        }
-
-        // tokio::time::sleep(Duration::from_millis(1000)).await;
-
-        // let mut rx = app.evbus.subscribe();
-        // tokio::spawn(async move {
-        //     while let Ok(e) = rx.recv().await {
-        //         println!("{:?}", e);
-        //     }
-        // });
-
-        
-        // post(sender.clone(), ());
-
-        AddService::post(sender, Arc::new(DemoService {})).await?;
-        
-        RunAll::post(sender).await?;
+        module_load(&app).await?;
 
         // module_load(&mut app).await?;
 

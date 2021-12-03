@@ -8,7 +8,7 @@ use crate::app::App;
 
 use self::server::Server;
 
-use super::{evbus::EventBus, module::Module};
+use super::evbus::EventBus;
 
 pub use server::{AddService, RunAll};
 

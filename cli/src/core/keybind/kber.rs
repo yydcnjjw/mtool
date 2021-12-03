@@ -1,4 +1,10 @@
-use crate::{app::App, core::{evbus::{EventBus, Receiver}, service::Service}};
+use crate::{
+    app::App,
+    core::{
+        evbus::{EventBus, Receiver, Sender},
+        service::Service,
+    },
+};
 
 use sysev;
 use tokio::sync::broadcast;
@@ -12,15 +18,11 @@ pub struct KeyBinding {
     pub cmd_name: String,
 }
 
-pub struct KeyBindinger {
-    kb_dispatcher: KeyBindingDispatcher,
-}
+pub struct KeyBindinger {}
 
 impl KeyBindinger {
-    pub fn new(evbus: &EventBus) -> Self {
-        Self {
-            kb_dispatcher: KeyBindingDispatcher::new(evbus),
-        }
+    pub fn new() -> Self {
+        Self {}
     }
 
     pub async fn define_key_binding(&mut self, kbd: &str, cmd: &str) -> Result<()> {
@@ -44,8 +46,10 @@ impl KeyBindinger {
         }
     }
 
-    async fn run_loop(mut rx: Receiver) {
+    pub async fn run_loop(tx: Sender, mut rx: Receiver) {
         // let kber = KeyBindinger::new();
+
+        KeyBindingDispatcher::run_loop(tx, rx);
     }
 }
 
