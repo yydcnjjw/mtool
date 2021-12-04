@@ -1,12 +1,9 @@
-use windows::{
-    core::Handle,
-    Win32::{
-        Foundation::{GetLastError, HINSTANCE},
-        UI::WindowsAndMessaging::{SetWindowsHookExW, HHOOK, HOOKPROC, WINDOWS_HOOK_ID},
-    },
+use windows::Win32::{
+    Foundation::HINSTANCE,
+    UI::WindowsAndMessaging::{SetWindowsHookExW, HHOOK, HOOKPROC, WINDOWS_HOOK_ID},
 };
 
-use super::{Error, Result};
+use super::Result;
 
 #[derive(Debug)]
 pub struct GlobalHook {
@@ -16,12 +13,7 @@ pub struct GlobalHook {
 impl GlobalHook {
     fn install(idhook: WINDOWS_HOOK_ID, hook: HOOKPROC) -> Result<HHOOK> {
         let hhk = unsafe { SetWindowsHookExW(idhook, Some(hook), HINSTANCE::default(), 0) };
-
-        if hhk.is_invalid() {
-            Ok(hhk)
-        } else {
-            Err(Error::InstallHook(unsafe { GetLastError() }))
-        }
+        Ok(hhk)
     }
 
     pub fn handle(&self) -> HHOOK {
