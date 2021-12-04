@@ -12,6 +12,7 @@ tokio = {version = "*", features = ["full"]}
 thiserror = "*"
 anyhow = "*"
 bitflags = "*"
+once_cell = "*"
 
 
 [target.'cfg(target_os = "linux")'.dependencies]

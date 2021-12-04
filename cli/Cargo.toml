@@ -28,6 +28,5 @@ nom = "7"
 bitflags = "*"
 crossterm = "*"
 dirs = "*"
-daemonize = "*"
 
 dialog = "*"

@@ -1,22 +1,30 @@
+mod hook;
+
 use std::ptr::null_mut;
 
+use anyhow::Context;
+use once_cell::sync;
 use thiserror::Error;
 use windows::Win32::{
-    Foundation::{HINSTANCE, HWND, LPARAM, LRESULT, WPARAM},
-    UI::WindowsAndMessaging::{
-        CallNextHookEx, GetMessageW, SetWindowsHookExW, HHOOK, KBDLLHOOKSTRUCT, WH_KEYBOARD_LL,
-    },
+    Foundation::{HWND, LPARAM, LRESULT, WIN32_ERROR, WPARAM},
+    UI::WindowsAndMessaging::{CallNextHookEx, GetMessageW, KBDLLHOOKSTRUCT, WH_KEYBOARD_LL},
 };
+
+use crate::Event;
+
+use self::hook::GlobalHook;
 
 #[derive(Debug, Error)]
 pub enum Error {
+    #[error("Install hook failed")]
+    InstallHook(WIN32_ERROR),
     #[error(transparent)]
     Other(#[from] anyhow::Error),
 }
 
 type Result<T> = std::result::Result<T, Error>;
 
-static mut HHK: HHOOK = HHOOK(0);
+static KEYBOARD_HOOK: sync::OnceCell<GlobalHook> = sync::OnceCell::new();
 
 extern "system" fn keyboard_hook(code: i32, wparam: WPARAM, lparam: LPARAM) -> LRESULT {
     let ev = unsafe { *(lparam.0 as *const KBDLLHOOKSTRUCT) };
@@ -24,15 +32,20 @@ extern "system" fn keyboard_hook(code: i32, wparam: WPARAM, lparam: LPARAM) -> L
 
     println!("{:?}, {:?}", action, ev);
 
-    unsafe { CallNextHookEx(HHK, code, wparam, lparam) }
+    unsafe { CallNextHookEx(KEYBOARD_HOOK.get().unwrap().handle(), code, wparam, lparam) }
 }
 
-fn run() -> Result<()> {
+pub fn run_loop<F>(cb: F) -> anyhow::Result<()>
+where
+    F: Fn(Event),
+{
+    KEYBOARD_HOOK
+        .set(GlobalHook::new(WH_KEYBOARD_LL, keyboard_hook).context("Register Keyboard event")?)
+        .unwrap();
+
     unsafe {
-        HHK = SetWindowsHookExW(WH_KEYBOARD_LL, Some(keyboard_hook), HINSTANCE::default(), 0);
         GetMessageW(null_mut(), HWND::default(), 0, 0);
     }
-
     Ok(())
 }
 
@@ -42,6 +55,6 @@ mod tests {
 
     #[test]
     fn test_name() {
-        run().unwrap();
+        run_loop(|e| {}).unwrap();
     }
 }
