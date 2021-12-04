@@ -5,7 +5,7 @@ mod record;
 
 pub fn run_loop<F>(cb: F) -> anyhow::Result<()>
 where
-    F: Fn(Event),
+    F: 'static + Fn(Event) + Send + Sync,
 {
     Ok(record::Record::run_loop(cb)?)
 }

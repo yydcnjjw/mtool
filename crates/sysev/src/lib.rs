@@ -11,6 +11,7 @@ mod linux;
 pub use linux::*;
 
 mod event;
+mod modifier_state;
 pub mod keydef;
 
 pub use event::*;
