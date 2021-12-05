@@ -1,7 +1,6 @@
 use std::{path::PathBuf, sync::Arc, time::Duration};
 
 use anyhow::Context;
-use async_trait::async_trait;
 use log::LevelFilter;
 use log4rs::{
     append::{console::ConsoleAppender, file::FileAppender},
@@ -10,12 +9,10 @@ use log4rs::{
 };
 use mytool_core::config::Config;
 
-use crate::core::{
-    command::{AddCommand, Command},
+use crate::{core::{
     evbus::EventBus,
-    keybind::DefineKeyBinding,
     module_load,
-};
+}, module};
 
 pub struct App {
     pub cfg: Config,
@@ -74,24 +71,10 @@ impl App {
         let app = App::new().await?;
 
         module_load(&app).await?;
-
-        let sender = &app.evbus.sender();
-        DefineKeyBinding::post(sender, "C-m a", "test").await??;
-        DefineKeyBinding::post(sender, "C-m c", "test").await??;
-
-        AddCommand::post(sender, "test".into(), TestCmd {}).await?;
+        module::module_load(&app).await?;
 
         loop {
             tokio::time::sleep(Duration::from_secs(1)).await;
         }
-    }
-}
-
-struct TestCmd {}
-#[async_trait]
-impl Command for TestCmd {
-    async fn exec(&mut self, _args: Vec<String>) -> anyhow::Result<()> {
-        println!("test");
-        Ok(())
     }
 }
