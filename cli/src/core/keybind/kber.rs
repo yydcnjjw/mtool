@@ -1,18 +1,7 @@
-use std::ops::Deref;
-
-use crate::{
-    app::App,
-    core::{
-        evbus::{Event, EventBus, Receiver, Sender},
-        service::Service,
-    },
+use crate::core::{
+    command::ExecCommand,
+    evbus::{Event, Receiver, Sender},
 };
-
-use sysev;
-use tokio::sync::broadcast;
-
-use super::{kbdispatcher::KeyBindingDispatcher, Result};
-use async_trait::async_trait;
 
 #[derive(Debug, Clone)]
 pub struct KeyBinding {
@@ -23,17 +12,17 @@ pub struct KeyBinding {
 pub struct KeyBindinger {}
 
 impl KeyBindinger {
-    pub fn new() -> Self {
-        Self {}
-    }
-
-    pub async fn run_loop(mut rx: Receiver) {
-        log::info!("KeyBindinger is running");
+    pub async fn run_loop(sender: Sender, mut rx: Receiver) {
         while let Ok(e) = rx.recv().await {
             if let Some(e) = e.downcast_ref::<Event<KeyBinding>>() {
-                log::info!("{:?}", e.deref());
+                let tx = sender.clone();
+                let cmd_name = e.cmd_name.clone();
+                tokio::spawn(async move {
+                    if let Err(e) = ExecCommand::post(&tx, cmd_name, Vec::new()).await {
+                        log::error!("{}", e);
+                    }
+                });
             }
         }
-        log::info!("KeyBindinger finished");
     }
 }

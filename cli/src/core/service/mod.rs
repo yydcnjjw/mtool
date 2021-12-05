@@ -8,8 +8,6 @@ use crate::app::App;
 
 use self::server::Server;
 
-use super::evbus::EventBus;
-
 pub use server::{AddService, RunAll};
 
 #[async_trait]
@@ -20,7 +18,7 @@ pub trait Service {
 type DynamicService = Arc<dyn Service + Send + Sync>;
 
 pub async fn module_load(app: &App) -> anyhow::Result<()> {
-    let mut rx = app.evbus.subscribe();
+    let rx = app.evbus.subscribe();
     tokio::spawn(async move {
         Server::run_loop(rx).await;
     });

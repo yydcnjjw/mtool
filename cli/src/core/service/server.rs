@@ -1,25 +1,15 @@
-use std::{
-    any::{Any, TypeId},
-    ops::Add,
-    sync::Arc,
-};
-
-use anyhow::Context;
 use futures::future::join_all;
-use tokio::sync::oneshot;
 
-use crate::{
-    app::App,
-    core::evbus::{self, post_result, Event, EventBus, Receiver, ResponsiveEvent, Sender},
-};
+use crate::core::evbus::{post_result, Receiver, ResponsiveEvent, Sender};
 
-use super::{DynamicService, Service};
+use super::DynamicService;
 
 pub struct AddService {
     pub service: DynamicService,
 }
 
 impl AddService {
+    #[allow(dead_code)]
     pub async fn post(sender: &Sender, service: DynamicService) -> anyhow::Result<()> {
         Ok(post_result::<AddService, ()>(sender, AddService { service }).await?)
     }
@@ -28,6 +18,7 @@ impl AddService {
 pub struct RunAll {}
 
 impl RunAll {
+    #[allow(dead_code)]
     pub async fn post(sender: &Sender) -> anyhow::Result<()> {
         Ok(post_result::<RunAll, ()>(sender, RunAll {}).await?)
     }

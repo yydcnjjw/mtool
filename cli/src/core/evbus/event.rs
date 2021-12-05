@@ -1,6 +1,7 @@
-use std::{ops::{Deref, DerefMut}, sync::{Arc, Mutex}};
-
-use futures::SinkExt;
+use std::{
+    ops::{Deref, DerefMut},
+    sync::{Arc, Mutex},
+};
 
 use super::Responder;
 
@@ -37,9 +38,12 @@ impl<I, O> ResponsiveEvent<I, O> {
 
     pub fn result(&self, o: O) {
         let mut tx = self.responder.lock().unwrap();
-        let mut tx = tx.deref_mut();
+        let tx = tx.deref_mut();
         let tx = std::mem::replace(tx, None);
-        tx.unwrap().send(o);
+
+        if let Err(_) = tx.unwrap().send(o) {
+            log::error!("Responsive event result send failed");
+        }
     }
 }
 
