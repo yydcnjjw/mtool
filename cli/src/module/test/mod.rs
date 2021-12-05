@@ -1,42 +1,25 @@
 use crate::{
     app::App,
-    core::{command::Command, keybind::define_globale_key},
+    core::{
+        command::{AddCommand, Command},
+        keybind::DefineKeyBinding,
+    },
 };
 
 use async_trait::async_trait;
 
-struct Cmd {}
-
-impl Cmd {
-    pub fn new() -> Self {
-        Self {}
-    }
-}
-
+struct TestCmd {}
 #[async_trait]
-impl Command for Cmd {
-    async fn exec(&mut self, _: Vec<String>) -> anyhow::Result<()> {
-        log::info!("test");
+impl Command for TestCmd {
+    async fn exec(&mut self, _args: Vec<String>) -> anyhow::Result<()> {
+        println!("test");
         Ok(())
     }
 }
 
-pub fn add_command(app: &mut App) -> anyhow::Result<()> {
-    {
-        let cmd = Box::new(Cmd::new());
-        app.cmder.insert("test".into(), cmd);
-    }
-
-    Ok(())
-}
-
-pub async fn define_key(app: &mut App) -> anyhow::Result<()> {
-    define_globale_key(app, "C-j t", "test").await?;
-    Ok(())
-}
-
-pub async fn module_load(app: &mut App) -> anyhow::Result<()> {
-    add_command(app)?;
-    define_key(app).await?;
+pub async fn module_load(app: &App) -> anyhow::Result<()> {
+    let sender = &app.evbus.sender();
+    AddCommand::post(sender, "test".into(), TestCmd {}).await?;
+    DefineKeyBinding::post(sender, "C-m t", "test").await??;
     Ok(())
 }

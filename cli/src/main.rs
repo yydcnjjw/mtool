@@ -2,7 +2,7 @@
 
 mod app;
 mod core;
-// mod module;
+mod module;
 // mod opts;
 
 use app::App;
