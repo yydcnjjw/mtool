@@ -9,6 +9,8 @@ use app::App;
 
 #[tokio::main]
 async fn main() -> anyhow::Result<()> {
-    App::run().await?;
+    if let Err(e) = App::run_loop().await {
+        log::error!("{}", e);
+    }
     Ok(())
 }

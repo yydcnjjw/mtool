@@ -40,7 +40,7 @@ impl<Key, Value> Deref for SharedNode<Key, Value> {
     }
 }
 
-pub type KeyNode = Node<KeyCombine, Option<KeyBinding>>;
+// pub type KeyNode = Node<KeyCombine, Option<KeyBinding>>;
 pub type SharedKeyNode = SharedNode<KeyCombine, Option<KeyBinding>>;
 
 #[derive(Debug)]

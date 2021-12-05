@@ -1,19 +1,14 @@
-use std::{borrow::Borrow, cell::RefCell, ops::Deref, rc::Rc, slice::SliceIndex};
+use std::ops::Deref;
 
 use anyhow::Context;
-use futures::{future, pin_mut, StreamExt};
 use sysev::{KeyAction, KeyEvent};
-use tokio::sync::{broadcast, Mutex};
 
-use crate::core::{
-    evbus::{post, post_result, Event, EventBus, Receiver, ResponsiveEvent, Sender},
-    service::Service,
-};
+use crate::core::evbus::{post, post_result, Event, Receiver, ResponsiveEvent, Sender};
 
 use super::{
     kbd::{parse_kbd, KeyCombine},
     kber::KeyBinding,
-    kbnode::{KeyBindingRoot, KeyNode, SharedKeyNode},
+    kbnode::{KeyBindingRoot, SharedKeyNode},
     Result,
 };
 
@@ -41,15 +36,11 @@ impl KeyBindingDispatcher {
 
     #[allow(dead_code)]
     pub async fn remove_keybinging(&mut self, _kb: KeyBinding) -> Result<()> {
-        // let kcs = parse_kbd(kb.kbd.as_str()).context("Bind key")?;
-        // self.root.add_kcs(kcs, kb).await?;
-        // Ok(())
         todo!("remove kb")
     }
 
     async fn dispatch(&mut self, e: &KeyEvent) {
         let kc = KeyCombine::from(e.clone());
-        log::debug!("{:?}", kc);
 
         if self.cur_node.is_none() {
             self.cur_node = Some(self.root.root.clone());
@@ -72,7 +63,6 @@ impl KeyBindingDispatcher {
 
     pub async fn run_loop(tx: Sender, mut rx: Receiver) {
         let mut kbder = KeyBindingDispatcher::new(tx);
-        log::info!("KeyBindingDispatcher is running");
 
         while let Ok(e) = rx.recv().await {
             if let Some(e) = e.downcast_ref::<Event<sysev::Event>>() {
@@ -82,7 +72,7 @@ impl KeyBindingDispatcher {
                             kbder.dispatch(e).await;
                         }
                     }
-                    _ => {}
+                    // _ => {}
                 }
             } else if let Some(e) =
                 e.downcast_ref::<ResponsiveEvent<DefineKeyBinding, anyhow::Result<()>>>()
@@ -95,7 +85,6 @@ impl KeyBindingDispatcher {
                 );
             }
         }
-        log::info!("KeyBindingDispatcher finished");
     }
 }
 
