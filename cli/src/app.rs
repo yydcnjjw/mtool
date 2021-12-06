@@ -1,5 +1,6 @@
 use std::{env, sync::Arc, time::Duration};
 
+use anyhow::Context;
 use log::LevelFilter;
 use log4rs::{
     append::{console::ConsoleAppender, file::FileAppender},
@@ -15,6 +16,10 @@ use crate::{
     },
     module,
 };
+
+fn get_default_tmp_path() -> Option<std::path::PathBuf> {
+    dirs::template_dir().map(|p| p.join("mytool.log"))
+}
 
 pub struct App {
     pub evbus: Arc<EventBus>,
@@ -41,13 +46,13 @@ impl App {
         Ok(())
     }
 
-    fn logger_init() {
+    fn logger_init() -> anyhow::Result<()>{
         let stdout = ConsoleAppender::builder().build();
 
         let requests = FileAppender::builder()
             .encoder(Box::new(PatternEncoder::new("{d} - {m}{n}")))
-            .build("/tmp/mytool.log")
-            .unwrap();
+            .build(get_default_tmp_path().context("Get default tmp path failed")?)
+            .context("Build file appender")?;
 
         let config = log4rs::config::Config::builder()
             .appender(Appender::builder().build("stdout", Box::new(stdout)))
@@ -58,13 +63,14 @@ impl App {
                     .appender("mytool")
                     .build(LevelFilter::Debug),
             )
-            .unwrap();
+            .context("Config builer failed")?;
 
-        let _handle = log4rs::init_config(config).unwrap();
+        let _handle = log4rs::init_config(config).context("log4rs init config")?;
+        Ok(())
     }
 
     pub async fn run_loop() -> anyhow::Result<()> {
-        App::logger_init();
+        App::logger_init().context("logger init failed")?;
 
         let app = App::new().await?;
 
