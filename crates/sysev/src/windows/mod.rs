@@ -1,6 +1,7 @@
 mod hook;
 mod key;
 
+use std::ptr::null_mut;
 use std::sync::atomic::{AtomicBool, Ordering};
 use std::{fmt::Debug, sync::Mutex};
 
@@ -12,9 +13,8 @@ use windows::Win32::{
     Foundation::{HWND, LPARAM, LRESULT, WIN32_ERROR, WPARAM},
     System::Threading::GetCurrentThreadId,
     UI::WindowsAndMessaging::{
-        CallNextHookEx, PeekMessageW, PostThreadMessageW, WaitMessage,
-        KBDLLHOOKSTRUCT, MSG, PM_REMOVE, WH_KEYBOARD_LL, WM_KEYDOWN, WM_KEYUP, WM_QUIT,
-        WM_SYSKEYDOWN, WM_SYSKEYUP,
+        CallNextHookEx, PeekMessageW, WaitMessage, KBDLLHOOKSTRUCT, PM_REMOVE, WH_KEYBOARD_LL,
+        WM_KEYDOWN, WM_KEYUP, WM_SYSKEYDOWN, WM_SYSKEYUP,
     },
 };
 
@@ -94,10 +94,8 @@ where
 
     let is_sleep = HOOK_IS_SLEEP.get_or_init(|| AtomicBool::new(false));
     unsafe {
-        let mut msg = MSG::default();
-
         while !is_sleep.load(Ordering::Relaxed) {
-            while PeekMessageW(&mut msg as *mut MSG, HWND::default(), 0, 0, PM_REMOVE).as_bool() {
+            while PeekMessageW(null_mut(), HWND::default(), 0, 0, PM_REMOVE).as_bool() {
                 WaitMessage();
             }
         }
@@ -109,17 +107,9 @@ where
 pub fn quit() -> anyhow::Result<()> {
     KEYBOARD_HOOK.get().unwrap().uninstall()?;
 
-    let is_sleep = HOOK_IS_SLEEP.get_or_init(|| AtomicBool::new(true));
-    is_sleep.store(true, Ordering::Relaxed);
-
-    unsafe {
-        PostThreadMessageW(
-            *HOOK_THREAD_ID.get().unwrap(),
-            WM_QUIT,
-            WPARAM::default(),
-            LPARAM::default(),
-        )
-    };
+    HOOK_IS_SLEEP
+        .get_or_init(|| AtomicBool::new(true))
+        .store(true, Ordering::Relaxed);
 
     Ok(())
 }
