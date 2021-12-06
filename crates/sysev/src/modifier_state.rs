@@ -9,11 +9,14 @@ pub struct ModifierState {
 }
 
 impl ModifierState {
+    #[allow(dead_code)]
     pub fn new() -> Self {
         Self {
             s: KeyModifier::NONE,
         }
     }
+
+    #[allow(dead_code)]    
     pub fn update(&mut self, code: &KeyCode, action: &KeyAction) -> KeyModifier {
         let modifer = match code {
             KeyCode::LeftShift | KeyCode::RightShift => KeyModifier::SHIFT,
