@@ -1,4 +1,10 @@
-use crate::{app::App, core::command::Command};
+use crate::{
+    app::App,
+    core::{
+        command::{AddCommand, Command},
+        evbus::Sender,
+    },
+};
 use async_trait::async_trait;
 
 mod tencent;
@@ -28,9 +34,9 @@ struct Cmd {
 }
 
 impl Cmd {
-    fn new(app: &mut App, source: LanguageType, target: LanguageType) -> anyhow::Result<Self> {
+    async fn new(tx: &Sender, source: LanguageType, target: LanguageType) -> anyhow::Result<Self> {
         Ok(Self {
-            translator: tencent::Translator::new(app)?,
+            translator: tencent::Translator::new(tx).await?,
             source,
             target,
         })
@@ -50,29 +56,27 @@ impl Command for Cmd {
     async fn exec(&mut self, args: Vec<String>) -> anyhow::Result<()> {
         if args.len() == 1 {
             let text = args.first().unwrap();
-            log::info!("{}", self.text_translate(text.clone()).await?);
+            println!("{}", self.text_translate(text.clone()).await?);
         } else {
-            
         }
 
         Ok(())
     }
 }
 
-fn add_command(app: &mut App) -> anyhow::Result<()> {
-    {
-        let cmd = Box::new(Cmd::new(app, LanguageType::Auto, LanguageType::Zh)?);
-        app.cmder.insert("tz".into(), cmd);
-    }
-
-    {
-        let cmd = Box::new(Cmd::new(app, LanguageType::Auto, LanguageType::En)?);
-        app.cmder.insert("te".into(), cmd)
-    }
-
+pub async fn module_load(app: &App) -> anyhow::Result<()> {
+    let sender = &app.evbus.sender();
+    AddCommand::post(
+        sender,
+        "tz".into(),
+        Cmd::new(sender, LanguageType::Auto, LanguageType::Zh).await?,
+    )
+    .await?;
+    AddCommand::post(
+        sender,
+        "te".into(),
+        Cmd::new(sender, LanguageType::Auto, LanguageType::En).await?,
+    )
+    .await?;
     Ok(())
-}
-
-pub async fn module_load(app: &mut App) -> anyhow::Result<()> {
-    add_command(app)
 }

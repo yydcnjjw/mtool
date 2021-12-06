@@ -1,6 +1,6 @@
 use std::{collections::HashMap, sync::Arc};
 
-use crate::core::evbus::{post_result, Receiver, ResponsiveEvent, Sender};
+use crate::{app::QuitApp, core::evbus::{Event, Receiver, ResponsiveEvent, Sender, post_result}};
 
 use super::Command;
 
@@ -47,12 +47,8 @@ pub struct ExecCommand {
 }
 
 impl ExecCommand {
-    pub async fn post(
-        sender: &Sender,
-        func: String,
-        args: Vec<String>,
-    ) -> anyhow::Result<anyhow::Result<()>> {
-        post_result::<ExecCommand, anyhow::Result<()>>(sender, ExecCommand { func, args }).await
+    pub async fn post(sender: &Sender, func: String, args: Vec<String>) -> anyhow::Result<()> {
+        post_result::<ExecCommand, anyhow::Result<()>>(sender, ExecCommand { func, args }).await?
     }
 }
 
@@ -106,6 +102,8 @@ impl Commander {
                 e.downcast_ref::<ResponsiveEvent<ExecCommand, anyhow::Result<()>>>()
             {
                 e.result(cmder.exec(&e.func, &e.args).await);
+            } else if let Some(_) = e.downcast_ref::<Event<QuitApp>>() {
+                break;
             }
         }
     }

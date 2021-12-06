@@ -30,3 +30,7 @@ crossterm = "*"
 dirs = "*"
 
 dialog = "*"
+toml = "*"
+
+[dev-dependencies]
+tempfile = "*"

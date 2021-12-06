@@ -3,7 +3,7 @@ use std::ops::Deref;
 use anyhow::Context;
 use sysev::{KeyAction, KeyEvent};
 
-use crate::core::evbus::{post, post_result, Event, Receiver, ResponsiveEvent, Sender};
+use crate::{app::QuitApp, core::evbus::{post, post_result, Event, Receiver, ResponsiveEvent, Sender}};
 
 use super::{
     kbd::{parse_kbd, KeyCombine},
@@ -71,8 +71,7 @@ impl KeyBindingDispatcher {
                         if matches!(e.action, KeyAction::Press) {
                             kbder.dispatch(e).await;
                         }
-                    }
-                    // _ => {}
+                    } // _ => {}
                 }
             } else if let Some(e) =
                 e.downcast_ref::<ResponsiveEvent<DefineKeyBinding, anyhow::Result<()>>>()
@@ -83,6 +82,8 @@ impl KeyBindingDispatcher {
                         .await
                         .context("Add KeyBinding"),
                 );
+            } else if let Some(_) = e.downcast_ref::<Event<QuitApp>>() {
+                break;
             }
         }
     }
@@ -102,7 +103,7 @@ pub struct DefineKeyBinding {
 }
 
 impl DefineKeyBinding {
-    pub async fn post(sender: &Sender, kbd: &str, cmd: &str) -> anyhow::Result<anyhow::Result<()>> {
+    pub async fn post(sender: &Sender, kbd: &str, cmd: &str) -> anyhow::Result<()> {
         post_result::<DefineKeyBinding, anyhow::Result<()>>(
             sender,
             DefineKeyBinding {
@@ -112,6 +113,6 @@ impl DefineKeyBinding {
                 },
             },
         )
-        .await
+        .await?
     }
 }

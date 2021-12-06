@@ -1,45 +1,41 @@
-use std::{path::PathBuf, sync::Arc, time::Duration};
+use std::{env, sync::Arc, time::Duration};
 
-use anyhow::Context;
 use log::LevelFilter;
 use log4rs::{
     append::{console::ConsoleAppender, file::FileAppender},
     config::{Appender, Root},
     encode::pattern::PatternEncoder,
 };
-use mytool_core::config::Config;
 
-use crate::{core::{
-    evbus::EventBus,
-    module_load,
-}, module};
+use crate::{
+    core::{
+        self,
+        command::ExecCommand,
+        evbus::{post, EventBus, Sender},
+    },
+    module,
+};
 
 pub struct App {
-    pub cfg: Config,
     pub evbus: Arc<EventBus>,
-}
-
-fn config_path() -> Option<PathBuf> {
-    dirs::home_dir().map(|p| p.join(".my-tool").join("config.toml"))
 }
 
 impl App {
     pub async fn new() -> anyhow::Result<Self> {
-        let cfg = Config::load(config_path().context("Get config path")?).await?;
         let evbus = Arc::new(EventBus::new(32));
-
-        Ok(Self {
-            cfg,
-            evbus,
-        })
+        Ok(Self { evbus })
     }
 
-    #[allow(dead_code)]
-    async fn exec_cmd(&mut self) -> anyhow::Result<()> {
-        // let args = env::args().skip(1).collect::<Vec<String>>();
-        // let (cmd, args) = args.split_first().unwrap();
+    async fn exec_cmd(tx: Sender) -> anyhow::Result<()> {
+        let args = env::args().skip(1).collect::<Vec<String>>();
+        if args.is_empty() {
+            return Ok(());
+        }
 
-        // self.cmder.exec(cmd, args).await
+        let (cmd, args) = args.split_first().unwrap();
+        ExecCommand::post(&tx, cmd.into(), args.to_vec()).await?;
+        QuitApp::post(&tx, 0);
+
         Ok(())
     }
 
@@ -56,7 +52,7 @@ impl App {
             .appender(Appender::builder().build("mytool", Box::new(requests)))
             .build(
                 Root::builder()
-                    .appender("stdout")
+                    // .appender("stdout")
                     .appender("mytool")
                     .build(LevelFilter::Debug),
             )
@@ -70,11 +66,30 @@ impl App {
 
         let app = App::new().await?;
 
-        module_load(&app).await?;
+        core::module_load(&app).await?;
         module::module_load(&app).await?;
 
-        loop {
-            tokio::time::sleep(Duration::from_secs(1)).await;
+        let tx = app.evbus.sender();
+
+        tokio::spawn(async move { App::exec_cmd(tx).await });
+
+        while app.evbus.sender().receiver_count() != 0 {
+            tokio::time::sleep(Duration::from_millis(300)).await;
+        }
+
+        Ok(())
+    }
+}
+
+pub struct QuitApp {
+    #[allow(dead_code)]
+    ec: i32,
+}
+
+impl QuitApp {
+    pub fn post(tx: &Sender, ec: i32) {
+        if let Err(e) = post(tx, QuitApp { ec }) {
+            log::error!("{}", e);
         }
     }
 }
