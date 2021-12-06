@@ -1,12 +1,22 @@
 mod hook;
 mod key;
 
+use std::sync::atomic::{AtomicBool, Ordering};
 use std::{fmt::Debug, ptr::null_mut, sync::Mutex};
 
 use anyhow::anyhow;
 use anyhow::Context;
 use once_cell::sync::OnceCell;
 use thiserror::Error;
+use windows::Win32::System::Threading::GetCurrentThreadId;
+use windows::Win32::UI::WindowsAndMessaging::DispatchMessageW;
+use windows::Win32::UI::WindowsAndMessaging::PeekMessageW;
+use windows::Win32::UI::WindowsAndMessaging::WaitMessage;
+use windows::Win32::UI::WindowsAndMessaging::MSG;
+use windows::Win32::UI::WindowsAndMessaging::PM_REMOVE;
+use windows::Win32::UI::WindowsAndMessaging::WM_INPUT;
+use windows::Win32::UI::WindowsAndMessaging::WM_QUIT;
+use windows::Win32::UI::WindowsAndMessaging::{PostThreadMessageW, WM_USER};
 use windows::Win32::{
     Foundation::{HWND, LPARAM, LRESULT, WIN32_ERROR, WPARAM},
     UI::WindowsAndMessaging::{
@@ -23,6 +33,8 @@ use self::hook::GlobalHook;
 pub enum Error {
     #[error("Install hook failed")]
     InstallHook(WIN32_ERROR),
+    #[error("Uninstall hook failed")]
+    UninstallHook(WIN32_ERROR),
     #[error(transparent)]
     Other(#[from] anyhow::Error),
 }
@@ -32,6 +44,8 @@ type Result<T> = std::result::Result<T, Error>;
 static KEYBOARD_HOOK: OnceCell<GlobalHook> = OnceCell::new();
 static MODIFIER_STATE: OnceCell<Mutex<ModifierState>> = OnceCell::new();
 static EVENT_CALLBACK: OnceCell<Box<dyn Fn(Event) + Send + Sync>> = OnceCell::new();
+static HOOK_THREAD_ID: OnceCell<u32> = OnceCell::new();
+static HOOK_IS_SLEEP: OnceCell<AtomicBool> = OnceCell::new();
 
 extern "system" fn keyboard_hook(code: i32, wparam: WPARAM, lparam: LPARAM) -> LRESULT {
     let ev = unsafe { *(lparam.0 as *const KBDLLHOOKSTRUCT) };
@@ -81,9 +95,39 @@ where
         return Err(anyhow!("Init keyboard hook failed"));
     }
 
-    unsafe {
-        GetMessageW(null_mut(), HWND::default(), 0, 0);
+    if let Err(_) = HOOK_THREAD_ID.set(unsafe { GetCurrentThreadId() }) {
+        return Err(anyhow!("Init hook thread id failed"));
     }
+
+    let is_sleep = HOOK_IS_SLEEP.get_or_init(|| AtomicBool::new(false));
+    unsafe {
+        let mut msg = MSG::default();
+
+        while !is_sleep.load(Ordering::Relaxed) {
+            while PeekMessageW(&mut msg as *mut MSG, HWND::default(), 0, 0, PM_REMOVE).as_bool() {
+                WaitMessage();
+            }
+        }
+    }
+
+    Ok(())
+}
+
+pub fn quit() -> anyhow::Result<()> {
+    KEYBOARD_HOOK.get().unwrap().uninstall()?;
+
+    let is_sleep = HOOK_IS_SLEEP.get_or_init(|| AtomicBool::new(true));
+    is_sleep.store(true, Ordering::Relaxed);
+
+    unsafe {
+        PostThreadMessageW(
+            *HOOK_THREAD_ID.get().unwrap(),
+            WM_QUIT,
+            WPARAM::default(),
+            LPARAM::default(),
+        )
+    };
+
     Ok(())
 }
 
