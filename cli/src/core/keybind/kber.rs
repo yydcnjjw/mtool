@@ -1,7 +1,7 @@
-use crate::core::{
+use crate::{app::QuitApp, core::{
     command::ExecCommand,
     evbus::{Event, Receiver, Sender},
-};
+}};
 
 #[derive(Debug, Clone)]
 pub struct KeyBinding {
@@ -22,6 +22,8 @@ impl KeyBindinger {
                         log::error!("{}", e);
                     }
                 });
+            } else if let Some(_) = e.downcast_ref::<Event<QuitApp>>() {
+                break;
             }
         }
     }

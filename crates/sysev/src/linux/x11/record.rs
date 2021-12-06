@@ -1,12 +1,14 @@
 use std::{
     ffi::{c_void, CStr},
     os::raw::{c_char, c_int, c_ulong},
-    ptr::null,
+    ptr::{null, null_mut},
+    sync::atomic::{AtomicBool, AtomicPtr, Ordering},
 };
 
+use once_cell::sync::OnceCell;
 use x11::{
     xlib::{self, _XDisplay},
-    xrecord,
+    xrecord::{self, XRecordFreeContext, XRecordProcessReplies},
 };
 
 use anyhow::Context;
@@ -24,25 +26,26 @@ pub enum Error {
     XLib(String),
     #[error("{0}")]
     XRecord(String),
+    #[error("Init record failed")]
+    Init,
     #[error(transparent)]
     Other(#[from] anyhow::Error),
 }
 
 type Result<T> = std::result::Result<T, Error>;
 
+static RECORD: OnceCell<Record> = OnceCell::new();
 static mut RECORD_ALL_CLIENTS: c_ulong = xrecord::XRecordAllClients;
 
-pub struct Record<F> {
-    record_dpy: *mut _XDisplay,
+pub struct Record {
+    record_dpy: AtomicPtr<_XDisplay>,
     record_ctx: c_ulong,
-    main_dpy: *mut _XDisplay,
-    pub cb: F,
+    main_dpy: AtomicPtr<_XDisplay>,
+    pub cb: Box<dyn Fn(Event) + Send + Sync>,
+    is_stop: AtomicBool,
 }
 
-impl<F> Record<F>
-where
-    F: Fn(Event),
-{
+impl Record {
     fn open_display() -> Result<*mut _XDisplay> {
         let dpy = unsafe { xlib::XOpenDisplay(null()) };
         if dpy.is_null() {
@@ -75,13 +78,13 @@ where
         Ok(context)
     }
 
-    fn enable_context(record: *mut Record<F>) -> Result<()> {
+    fn enable_context(&self) -> Result<()> {
         let result = unsafe {
-            xrecord::XRecordEnableContext(
-                (*record).record_dpy,
-                (*record).record_ctx,
-                Some(record_cb::<F>),
-                record as *mut c_char,
+            xrecord::XRecordEnableContextAsync(
+                self.record_dpy.load(Ordering::Relaxed),
+                self.record_ctx,
+                Some(record_cb),
+                null_mut(),
             )
         };
         if result == 0 {
@@ -90,7 +93,20 @@ where
         Ok(())
     }
 
-    fn new(cb: F) -> Result<Self> {
+    fn disable_context(&self) -> Result<()> {
+        let result = unsafe {
+            xrecord::XRecordDisableContext(self.record_dpy.load(Ordering::Relaxed), self.record_ctx)
+        };
+        if result == 0 {
+            return Err(Error::XRecord("Can't disable context".into()));
+        }
+        Ok(())
+    }
+
+    fn new<F>(cb: F) -> Result<Self>
+    where
+        F: 'static + Fn(Event) + Send + Sync,
+    {
         unsafe {
             let record_dpy = Self::open_display()?;
             let record_ctx = Self::create_context(record_dpy)?;
@@ -100,25 +116,48 @@ where
             let main_dpy = Self::open_display()?;
 
             Ok(Self {
-                record_dpy,
+                record_dpy: AtomicPtr::new(record_dpy),
                 record_ctx,
-                main_dpy,
-                cb,
+                main_dpy: AtomicPtr::new(main_dpy),
+                cb: Box::new(cb),
+                is_stop: AtomicBool::new(false),
             })
         }
     }
+    pub fn quit() -> Result<()> {
+        let record = RECORD.get().unwrap();
+        record.is_stop.store(true, Ordering::Relaxed);
+        Ok(())
+    }
 
-    pub fn run_loop(cb: F) -> Result<()> {
-        let mut r = Record::new(cb)?;
-        Record::enable_context(&mut r)
+    pub fn run_loop<F>(cb: F) -> Result<()>
+    where
+        F: 'static + Fn(Event) + Send + Sync,
+    {
+        if let Err(_) = RECORD.set(Record::new(cb)?) {
+            return Err(Error::Init);
+        }
+        let record = RECORD.get().unwrap();
+        record.enable_context()?;
+
+        while !record.is_stop.load(Ordering::Relaxed) {
+            unsafe {
+                XRecordProcessReplies(record.record_dpy.load(Ordering::Relaxed));
+            }
+        }
+
+        record.disable_context()?;
+        unsafe {
+            XRecordFreeContext(record.record_dpy.load(Ordering::Relaxed), record.record_ctx);
+            // xlib::XCloseDisplay(record.record_dpy.load(Ordering::Relaxed));
+            // xlib::XCloseDisplay(record.main_dpy.load(Ordering::Relaxed));
+        }
+        Ok(())
     }
 }
 
-unsafe extern "C" fn record_cb<F>(record: *mut c_char, raw_data: *mut xrecord::XRecordInterceptData)
-where
-    F: Fn(Event),
-{
-    let record = &mut *(record as *mut Record<F>);
+unsafe extern "C" fn record_cb(_: *mut c_char, raw_data: *mut xrecord::XRecordInterceptData) {
+    let record = RECORD.get().unwrap();
 
     if (*raw_data).category != xrecord::XRecordFromServer {
         return;
@@ -132,7 +171,7 @@ where
         xlib::KeyPress | xlib::KeyRelease => {
             let kc = (*xev).u.u.as_ref().detail;
             let modifiers = KeyModifier::from((*xev).u.keyButtonPointer.as_ref().state);
-            let ks = xlib::XKeycodeToKeysym(record.main_dpy, kc, 0);
+            let ks = xlib::XKeycodeToKeysym(record.main_dpy.load(Ordering::Relaxed), kc, 0);
             let keycode = KeyCode::from(KeySym::new(ks));
             let scancode = (kc - 8) as u32;
             let action = if t == xlib::KeyPress {

@@ -14,7 +14,6 @@ anyhow = "*"
 bitflags = "*"
 once_cell = "*"
 
-
 [target.'cfg(target_os = "linux")'.dependencies]
 x11 = {version = "*", features = ["xlib", "xrecord"]}
 xproto = "*"

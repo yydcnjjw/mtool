@@ -1,4 +1,3 @@
 * TODOs
-- [ ] evbus
-- [ ] service mgr
+- [ ] evbus global
 - [X] x11::keysym <-> event::KeyCode

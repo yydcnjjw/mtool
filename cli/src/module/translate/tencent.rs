@@ -1,4 +1,4 @@
-use crate::app::App;
+use crate::core::{config::configer::GetConfig, evbus::Sender};
 
 use anyhow::Context;
 use async_trait::async_trait;
@@ -18,7 +18,7 @@ pub enum Error {
     Other(#[from] anyhow::Error),
 }
 
-pub type Result<T> = std::result::Result<T, Error>;
+type Result<T> = std::result::Result<T, Error>;
 
 #[derive(Debug, Deserialize)]
 struct Config {
@@ -41,9 +41,11 @@ pub struct Translator {
 }
 
 impl Translator {
-    pub fn new(app: &mut App) -> Result<Self> {
+    pub async fn new(tx: &Sender) -> Result<Self> {
         Ok(Self {
-            cfg: app.cfg.get("translate").context("Get config translate")?,
+            cfg: GetConfig::post(tx, "translate".into())
+                .await
+                .context("Get config translate")?,
         })
     }
 }

@@ -9,3 +9,7 @@ where
 {
     Ok(record::Record::run_loop(cb)?)
 }
+
+pub fn quit() -> anyhow::Result<()> {
+    Ok(record::Record::quit()?)
+}

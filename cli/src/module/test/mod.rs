@@ -20,6 +20,6 @@ impl Command for TestCmd {
 pub async fn module_load(app: &App) -> anyhow::Result<()> {
     let sender = &app.evbus.sender();
     AddCommand::post(sender, "test".into(), TestCmd {}).await?;
-    DefineKeyBinding::post(sender, "C-m t", "test").await??;
+    DefineKeyBinding::post(sender, "C-m t", "test").await?;
     Ok(())
 }
