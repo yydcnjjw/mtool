@@ -2,25 +2,18 @@ mod hook;
 mod key;
 
 use std::sync::atomic::{AtomicBool, Ordering};
-use std::{fmt::Debug, ptr::null_mut, sync::Mutex};
+use std::{fmt::Debug, sync::Mutex};
 
 use anyhow::anyhow;
 use anyhow::Context;
 use once_cell::sync::OnceCell;
 use thiserror::Error;
-use windows::Win32::System::Threading::GetCurrentThreadId;
-use windows::Win32::UI::WindowsAndMessaging::DispatchMessageW;
-use windows::Win32::UI::WindowsAndMessaging::PeekMessageW;
-use windows::Win32::UI::WindowsAndMessaging::WaitMessage;
-use windows::Win32::UI::WindowsAndMessaging::MSG;
-use windows::Win32::UI::WindowsAndMessaging::PM_REMOVE;
-use windows::Win32::UI::WindowsAndMessaging::WM_INPUT;
-use windows::Win32::UI::WindowsAndMessaging::WM_QUIT;
-use windows::Win32::UI::WindowsAndMessaging::{PostThreadMessageW, WM_USER};
 use windows::Win32::{
     Foundation::{HWND, LPARAM, LRESULT, WIN32_ERROR, WPARAM},
+    System::Threading::GetCurrentThreadId,
     UI::WindowsAndMessaging::{
-        CallNextHookEx, GetMessageW, KBDLLHOOKSTRUCT, WH_KEYBOARD_LL, WM_KEYDOWN, WM_KEYUP,
+        CallNextHookEx, PeekMessageW, PostThreadMessageW, WaitMessage,
+        KBDLLHOOKSTRUCT, MSG, PM_REMOVE, WH_KEYBOARD_LL, WM_KEYDOWN, WM_KEYUP, WM_QUIT,
         WM_SYSKEYDOWN, WM_SYSKEYUP,
     },
 };
