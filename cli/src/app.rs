@@ -33,7 +33,9 @@ impl App {
         }
 
         let (cmd, args) = args.split_first().unwrap();
-        ExecCommand::post(&tx, cmd.into(), args.to_vec()).await?;
+        if let Err(e) = ExecCommand::post(&tx, cmd.into(), args.to_vec()).await {
+            log::error!("{}", e);
+        }
         QuitApp::post(&tx, 0);
 
         Ok(())

@@ -35,6 +35,7 @@ pub enum Error {
 type Result<T> = std::result::Result<T, Error>;
 
 static RECORD: OnceCell<Record> = OnceCell::new();
+static IS_STOP: OnceCell<AtomicBool> = OnceCell::new();
 static mut RECORD_ALL_CLIENTS: c_ulong = xrecord::XRecordAllClients;
 
 pub struct Record {
@@ -42,7 +43,6 @@ pub struct Record {
     record_ctx: c_ulong,
     main_dpy: AtomicPtr<_XDisplay>,
     pub cb: Box<dyn Fn(Event) + Send + Sync>,
-    is_stop: AtomicBool,
 }
 
 impl Record {
@@ -120,13 +120,12 @@ impl Record {
                 record_ctx,
                 main_dpy: AtomicPtr::new(main_dpy),
                 cb: Box::new(cb),
-                is_stop: AtomicBool::new(false),
             })
         }
     }
     pub fn quit() -> Result<()> {
-        let record = RECORD.get().unwrap();
-        record.is_stop.store(true, Ordering::Relaxed);
+        let is_stop = IS_STOP.get_or_init(|| AtomicBool::new(true));
+        is_stop.store(true, Ordering::Relaxed);
         Ok(())
     }
 
@@ -140,7 +139,9 @@ impl Record {
         let record = RECORD.get().unwrap();
         record.enable_context()?;
 
-        while !record.is_stop.load(Ordering::Relaxed) {
+        let is_stop = IS_STOP.get_or_init(|| AtomicBool::new(false));
+
+        while !is_stop.load(Ordering::Relaxed) {
             unsafe {
                 XRecordProcessReplies(record.record_dpy.load(Ordering::Relaxed));
             }
