@@ -1,4 +1,8 @@
-use std::{env::{self, temp_dir}, sync::Arc, time::Duration};
+use std::{
+    env::{self, temp_dir},
+    sync::Arc,
+    time::Duration,
+};
 
 use anyhow::Context;
 use log::LevelFilter;
@@ -46,7 +50,7 @@ impl App {
         Ok(())
     }
 
-    fn logger_init() -> anyhow::Result<()>{
+    fn logger_init() -> anyhow::Result<()> {
         let stdout = ConsoleAppender::builder().build();
 
         let requests = FileAppender::builder()
@@ -59,7 +63,7 @@ impl App {
             .appender(Appender::builder().build("mytool", Box::new(requests)))
             .build(
                 Root::builder()
-                    // .appender("stdout")
+                    .appender("stdout")
                     .appender("mytool")
                     .build(LevelFilter::Debug),
             )

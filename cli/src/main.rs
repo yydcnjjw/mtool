@@ -3,7 +3,6 @@
 mod app;
 mod core;
 mod module;
-// mod opts;
 
 use app::App;
 
