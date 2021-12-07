@@ -1,4 +1,4 @@
-use std::{env, sync::Arc, time::Duration};
+use std::{env::{self, temp_dir}, sync::Arc, time::Duration};
 
 use anyhow::Context;
 use log::LevelFilter;
@@ -17,8 +17,8 @@ use crate::{
     module,
 };
 
-fn get_default_tmp_path() -> Option<std::path::PathBuf> {
-    dirs::template_dir().map(|p| p.join("mytool.log"))
+fn get_default_tmp_path() -> std::path::PathBuf {
+    temp_dir().join("mytool.log")
 }
 
 pub struct App {
@@ -51,7 +51,7 @@ impl App {
 
         let requests = FileAppender::builder()
             .encoder(Box::new(PatternEncoder::new("{d} - {m}{n}")))
-            .build(get_default_tmp_path().context("Get default tmp path failed")?)
+            .build(get_default_tmp_path())
             .context("Build file appender")?;
 
         let config = log4rs::config::Config::builder()
