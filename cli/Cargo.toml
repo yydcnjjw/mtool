@@ -32,5 +32,8 @@ dirs = "*"
 dialog = "*"
 toml = "*"
 
+# iced = "*"
+winit = "*"
+
 [dev-dependencies]
 tempfile = "*"
