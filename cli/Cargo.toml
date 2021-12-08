@@ -32,8 +32,10 @@ dirs = "*"
 dialog = "*"
 toml = "*"
 
-# iced = "*"
-winit = "*"
+iced_glutin = { git = "https://github.com/iced-rs/iced", branch = "master" }
+iced_glow = { git = "https://github.com/iced-rs/iced", branch = "master" }
+iced_winit = { git = "https://github.com/iced-rs/iced", branch = "master" }
+glow = "*"
 
 [dev-dependencies]
 tempfile = "*"
