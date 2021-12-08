@@ -1,96 +1,99 @@
-use glow::*;
-use iced_glow::Color;
+use iced_wgpu::wgpu;
+use iced_winit::Color;
 
 pub struct Scene {
-    program: glow::Program,
-    vertex_array: glow::VertexArray,
+    pipeline: wgpu::RenderPipeline,
 }
 
 impl Scene {
-    pub fn new(gl: &glow::Context, shader_version: &str) -> Self {
-        unsafe {
-            let vertex_array = gl
-                .create_vertex_array()
-                .expect("Cannot create vertex array");
-            gl.bind_vertex_array(Some(vertex_array));
+    pub fn new(device: &wgpu::Device) -> Scene {
+        let pipeline = build_pipeline(device);
 
-            let program = gl.create_program().expect("Cannot create program");
-
-            let (vertex_shader_source, fragment_shader_source) = (
-                r#"const vec2 verts[3] = vec2[3](
-                    vec2(0.5f, 1.0f),
-                    vec2(0.0f, 0.0f),
-                    vec2(1.0f, 0.0f)
-                );
-                out vec2 vert;
-                void main() {
-                    vert = verts[gl_VertexID];
-                    gl_Position = vec4(vert - 0.5, 0.0, 1.0);
-                }"#,
-                r#"precision highp float;
-                in vec2 vert;
-                out vec4 color;
-                void main() {
-                    color = vec4(vert, 0.5, 1.0);
-                }"#,
-            );
-
-            let shader_sources = [
-                (glow::VERTEX_SHADER, vertex_shader_source),
-                (glow::FRAGMENT_SHADER, fragment_shader_source),
-            ];
-
-            let mut shaders = Vec::with_capacity(shader_sources.len());
-
-            for (shader_type, shader_source) in shader_sources.iter() {
-                let shader = gl
-                    .create_shader(*shader_type)
-                    .expect("Cannot create shader");
-                gl.shader_source(shader, &format!("{}\n{}", shader_version, shader_source));
-                gl.compile_shader(shader);
-                if !gl.get_shader_compile_status(shader) {
-                    panic!("{}", gl.get_shader_info_log(shader));
-                }
-                gl.attach_shader(program, shader);
-                shaders.push(shader);
-            }
-
-            gl.link_program(program);
-            if !gl.get_program_link_status(program) {
-                panic!("{}", gl.get_program_info_log(program));
-            }
-
-            for shader in shaders {
-                gl.detach_shader(program, shader);
-                gl.delete_shader(shader);
-            }
-
-            gl.use_program(Some(program));
-            Self {
-                program,
-                vertex_array,
-            }
-        }
+        Scene { pipeline }
     }
 
-    pub fn clear(&self, gl: &glow::Context, background_color: Color) {
-        let [r, g, b, a] = background_color.into_linear();
-        unsafe {
-            gl.clear_color(r, g, b, a);
-            gl.clear(glow::COLOR_BUFFER_BIT);
-        }
+    pub fn clear<'a>(
+        &self,
+        target: &'a wgpu::TextureView,
+        encoder: &'a mut wgpu::CommandEncoder,
+        background_color: Color,
+    ) -> wgpu::RenderPass<'a> {
+        encoder.begin_render_pass(&wgpu::RenderPassDescriptor {
+            label: None,
+            color_attachments: &[wgpu::RenderPassColorAttachment {
+                view: target,
+                resolve_target: None,
+                ops: wgpu::Operations {
+                    load: wgpu::LoadOp::Clear({
+                        let [r, g, b, a] = background_color.into_linear();
+
+                        wgpu::Color {
+                            r: r as f64,
+                            g: g as f64,
+                            b: b as f64,
+                            a: a as f64,
+                        }
+                    }),
+                    store: true,
+                },
+            }],
+            depth_stencil_attachment: None,
+        })
     }
 
-    pub fn draw(&self, gl: &glow::Context) {
-        unsafe {
-            gl.draw_arrays(glow::TRIANGLES, 0, 3);
-        }
+    pub fn draw<'a>(&'a self, render_pass: &mut wgpu::RenderPass<'a>) {
+        render_pass.set_pipeline(&self.pipeline);
+        render_pass.draw(0..3, 0..1);
     }
+}
 
-    pub fn cleanup(&self, gl: &glow::Context) {
-        unsafe {
-            gl.delete_program(self.program);
-            gl.delete_vertex_array(self.vertex_array);
-        }
-    }
+fn build_pipeline(device: &wgpu::Device) -> wgpu::RenderPipeline {
+    let vs_module =
+        device.create_shader_module(&wgpu::include_spirv!("shader/vert.spv"));
+
+    let fs_module =
+        device.create_shader_module(&wgpu::include_spirv!("shader/frag.spv"));
+
+    let pipeline_layout =
+        device.create_pipeline_layout(&wgpu::PipelineLayoutDescriptor {
+            label: None,
+            push_constant_ranges: &[],
+            bind_group_layouts: &[],
+        });
+
+    let pipeline =
+        device.create_render_pipeline(&wgpu::RenderPipelineDescriptor {
+            label: None,
+            layout: Some(&pipeline_layout),
+            vertex: wgpu::VertexState {
+                module: &vs_module,
+                entry_point: "main",
+                buffers: &[],
+            },
+            fragment: Some(wgpu::FragmentState {
+                module: &fs_module,
+                entry_point: "main",
+                targets: &[wgpu::ColorTargetState {
+                    format: wgpu::TextureFormat::Bgra8UnormSrgb,
+                    blend: Some(wgpu::BlendState {
+                        color: wgpu::BlendComponent::REPLACE,
+                        alpha: wgpu::BlendComponent::REPLACE,
+                    }),
+                    write_mask: wgpu::ColorWrites::ALL,
+                }],
+            }),
+            primitive: wgpu::PrimitiveState {
+                topology: wgpu::PrimitiveTopology::TriangleList,
+                front_face: wgpu::FrontFace::Ccw,
+                ..Default::default()
+            },
+            depth_stencil: None,
+            multisample: wgpu::MultisampleState {
+                count: 1,
+                mask: !0,
+                alpha_to_coverage_enabled: false,
+            },
+        });
+
+    pipeline
 }
