@@ -1,15 +1,18 @@
-mod controls;
 mod terminal;
+mod window;
 
 use crate::app::App;
 
-use controls::Controls;
 use terminal::Terminal;
 
 use iced_wgpu::{wgpu, Backend, Renderer, Settings, Viewport};
 use iced_winit::{
     conversion, futures, program,
-    winit::{self, dpi::PhysicalSize},
+    winit::{
+        self,
+        dpi::{PhysicalSize, Position},
+        monitor::MonitorHandle,
+    },
     Clipboard, Debug, Size,
 };
 
@@ -24,20 +27,35 @@ use winit::{
 use iced_winit::winit::platform::windows::EventLoopExtWindows;
 
 #[cfg(target_os = "linux")]
-use iced_winit::winit::platform::unix::{EventLoopExtUnix, XWindowType};
+use iced_winit::winit::platform::unix::{EventLoopExtUnix, WindowBuilderExtUnix, XWindowType};
 
-pub async fn module_load(_app: &App) -> anyhow::Result<()> {
+pub async fn module_load(app: &App) -> anyhow::Result<()> {
     // Initialize winit
     let event_loop: EventLoop<()> = EventLoop::new_any_thread();
 
-    let window_builder = winit::window::WindowBuilder::new();
+    let mut window_builder = winit::window::WindowBuilder::new();
 
     #[cfg(target_os = "linux")]
     {
         window_builder = window_builder.with_x11_window_type(vec![XWindowType::Toolbar])
     }
+
+    let primary = event_loop
+        .primary_monitor()
+        .ok_or(anyhow::anyhow!("primary monitor is not found"))?;
+
+    let primary_size = primary.size();
+
+    let window_size = PhysicalSize::<u32>::new(1024, 128);
+
+    let window_pos = PhysicalPosition::<i32>::new(
+        ((primary_size.width - window_size.width) / 2).try_into()?,
+        8,
+    );
+
     let window = window_builder
-        .with_inner_size(PhysicalSize::new(800, 100))
+        .with_inner_size(window_size)
+        .with_position(window_pos)
         .with_decorations(false)
         .with_transparent(true)
         .build(&event_loop)?;
@@ -104,11 +122,18 @@ pub async fn module_load(_app: &App) -> anyhow::Result<()> {
     let mut staging_belt = wgpu::util::StagingBelt::new(5 * 1024);
     let mut local_pool = futures::executor::LocalPool::new();
 
-    let controls = Terminal::new();
+    let controls = Terminal::new(app.evbus.sender());
 
     // Initialize iced
     let mut debug = Debug::new();
-    let mut renderer = Renderer::new(Backend::new(&mut device, Settings::default(), format));
+    let mut renderer = Renderer::new(Backend::new(
+        &mut device,
+        Settings {
+            default_font: Some(include_bytes!("assets/Hack-Regular.ttf")),
+            ..Default::default()
+        },
+        format,
+    ));
 
     let mut state =
         program::State::new(controls, viewport.logical_size(), &mut renderer, &mut debug);
