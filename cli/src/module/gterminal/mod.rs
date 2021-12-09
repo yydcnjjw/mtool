@@ -1,13 +1,21 @@
 mod controls;
-mod scene;
+mod terminal;
 
 use crate::app::App;
 
 use controls::Controls;
-use scene::Scene;
+use terminal::Terminal;
 
 use iced_wgpu::{wgpu, Backend, Renderer, Settings, Viewport};
-use iced_winit::{conversion, futures, program, winit, Clipboard, Debug, Size};
+use iced_winit::{
+    conversion, futures, program,
+    winit::{
+        self,
+        dpi::PhysicalSize,
+        platform::unix::{WindowBuilderExtUnix, XWindowType},
+    },
+    Clipboard, Debug, Size,
+};
 
 use futures::task::SpawnExt;
 use winit::{
@@ -22,16 +30,23 @@ use iced_winit::winit::platform::windows::EventLoopExtWindows;
 #[cfg(target_os = "linux")]
 use iced_winit::winit::platform::unix::EventLoopExtUnix;
 
-pub async fn module_load(app: &App) -> anyhow::Result<()> {
+pub async fn module_load(_app: &App) -> anyhow::Result<()> {
     // Initialize winit
     let event_loop: EventLoop<()> = EventLoop::new_any_thread();
-    let window = winit::window::Window::new(&event_loop).unwrap();
+
+    let window = winit::window::WindowBuilder::new()
+        .with_x11_window_type(vec![XWindowType::Toolbar])
+        .with_inner_size(PhysicalSize::new(800, 100))
+        .with_decorations(false)
+        .with_transparent(true)
+        .build(&event_loop)?;
 
     let physical_size = window.inner_size();
     let mut viewport = Viewport::with_physical_size(
         Size::new(physical_size.width, physical_size.height),
         window.scale_factor(),
     );
+
     let mut cursor_position = PhysicalPosition::new(-1.0, -1.0);
     let mut modifiers = ModifiersState::default();
     let mut clipboard = Clipboard::connect(&window);
@@ -40,7 +55,7 @@ pub async fn module_load(app: &App) -> anyhow::Result<()> {
     let instance = wgpu::Instance::new(wgpu::Backends::PRIMARY);
     let surface = unsafe { instance.create_surface(&window) };
 
-    let (format, (mut device, queue)) = futures::executor::block_on(async {
+    let (format, (mut device, queue)) = {
         let adapter = instance
             .request_adapter(&wgpu::RequestAdapterOptions {
                 power_preference: wgpu::PowerPreference::HighPerformance,
@@ -66,7 +81,7 @@ pub async fn module_load(app: &App) -> anyhow::Result<()> {
                 .await
                 .expect("Request device"),
         )
-    });
+    };
 
     {
         let size = window.inner_size();
@@ -88,9 +103,7 @@ pub async fn module_load(app: &App) -> anyhow::Result<()> {
     let mut staging_belt = wgpu::util::StagingBelt::new(5 * 1024);
     let mut local_pool = futures::executor::LocalPool::new();
 
-    // Initialize scene and GUI controls
-    let scene = Scene::new(&mut device);
-    let controls = Controls::new();
+    let controls = Terminal::new();
 
     // Initialize iced
     let mut debug = Debug::new();
@@ -158,7 +171,7 @@ pub async fn module_load(app: &App) -> anyhow::Result<()> {
                         &device,
                         &wgpu::SurfaceConfiguration {
                             usage: wgpu::TextureUsages::RENDER_ATTACHMENT,
-                            format: format,
+                            format,
                             width: size.width,
                             height: size.height,
                             present_mode: wgpu::PresentMode::Mailbox,
@@ -180,15 +193,6 @@ pub async fn module_load(app: &App) -> anyhow::Result<()> {
                         let view = frame
                             .texture
                             .create_view(&wgpu::TextureViewDescriptor::default());
-
-                        {
-                            // We clear the frame
-                            let mut render_pass =
-                                scene.clear(&view, &mut encoder, program.background_color());
-
-                            // Draw the scene
-                            scene.draw(&mut render_pass);
-                        }
 
                         // And then iced on top
                         renderer.with_primitives(|backend, primitive| {
