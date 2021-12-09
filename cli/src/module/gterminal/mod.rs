@@ -9,11 +9,7 @@ use terminal::Terminal;
 use iced_wgpu::{wgpu, Backend, Renderer, Settings, Viewport};
 use iced_winit::{
     conversion, futures, program,
-    winit::{
-        self,
-        dpi::PhysicalSize,
-        platform::unix::{WindowBuilderExtUnix, XWindowType},
-    },
+    winit::{self, dpi::PhysicalSize},
     Clipboard, Debug, Size,
 };
 
@@ -28,14 +24,19 @@ use winit::{
 use iced_winit::winit::platform::windows::EventLoopExtWindows;
 
 #[cfg(target_os = "linux")]
-use iced_winit::winit::platform::unix::EventLoopExtUnix;
+use iced_winit::winit::platform::unix::{EventLoopExtUnix, XWindowType};
 
 pub async fn module_load(_app: &App) -> anyhow::Result<()> {
     // Initialize winit
     let event_loop: EventLoop<()> = EventLoop::new_any_thread();
 
-    let window = winit::window::WindowBuilder::new()
-        .with_x11_window_type(vec![XWindowType::Toolbar])
+    let window_builder = winit::window::WindowBuilder::new();
+
+    #[cfg(target_os = "linux")]
+    {
+        window_builder = window_builder.with_x11_window_type(vec![XWindowType::Toolbar])
+    }
+    let window = window_builder
         .with_inner_size(PhysicalSize::new(800, 100))
         .with_decorations(false)
         .with_transparent(true)
