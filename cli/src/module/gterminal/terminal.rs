@@ -8,16 +8,14 @@ use iced_winit::{
 use crate::core::{command::ExecCommand, evbus::Sender};
 
 pub struct Terminal {
-    tx: Sender,
     input: text_input::State,
     input_value: String,
     output: String,
 }
 
 impl Terminal {
-    pub fn new(tx: Sender) -> Self {
+    pub fn new() -> Self {
         Self {
-            tx,
             input: text_input::State::focused(),
             input_value: Default::default(),
             output: Default::default(),
@@ -71,7 +69,6 @@ impl Program for Terminal {
             // ),
             Message::Output(v) => {
                 self.output = v;
-                println!("-----output: {}", self.output);
                 Command::none()
             }
         }

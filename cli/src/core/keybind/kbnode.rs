@@ -92,7 +92,7 @@ mod tests {
             kbr.add_kcs(
                 kcs,
                 KeyBinding {
-                    kbd: "ctrl+a b",
+                    kbd: "ctrl+a b".into(),
                     cmd_name: "".into(),
                 },
             )
@@ -105,7 +105,7 @@ mod tests {
             kbr.add_kcs(
                 kcs,
                 KeyBinding {
-                    kbd: "ctrl+a bc",
+                    kbd: "ctrl+a bc".into(),
                     cmd_name: "".into(),
                 },
             )
