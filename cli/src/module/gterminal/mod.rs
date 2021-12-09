@@ -1,5 +1,6 @@
+mod controls;
+mod scene;
 mod terminal;
-mod window;
 
 use crate::app::App;
 
@@ -13,7 +14,7 @@ use iced_winit::{
         dpi::{PhysicalSize, Position},
         monitor::MonitorHandle,
     },
-    Clipboard, Debug, Size,
+    Clipboard, Color, Debug, Size,
 };
 
 use futures::task::SpawnExt;
@@ -29,15 +30,19 @@ use iced_winit::winit::platform::windows::EventLoopExtWindows;
 #[cfg(target_os = "linux")]
 use iced_winit::winit::platform::unix::{EventLoopExtUnix, WindowBuilderExtUnix, XWindowType};
 
-pub async fn module_load(app: &App) -> anyhow::Result<()> {
+use self::{controls::Controls, scene::Scene};
+
+pub fn run_test() -> anyhow::Result<()> {
     // Initialize winit
-    let event_loop: EventLoop<()> = EventLoop::new_any_thread();
+    let event_loop = EventLoop::new();
 
     let mut window_builder = winit::window::WindowBuilder::new();
 
     #[cfg(target_os = "linux")]
     {
-        window_builder = window_builder.with_x11_window_type(vec![XWindowType::Toolbar])
+        window_builder = window_builder
+            .with_x11_window_type(vec![XWindowType::Toolbar])
+            .with_transparent(true)
     }
 
     let primary = event_loop
@@ -57,7 +62,6 @@ pub async fn module_load(app: &App) -> anyhow::Result<()> {
         .with_inner_size(window_size)
         .with_position(window_pos)
         .with_decorations(false)
-        .with_transparent(true)
         .build(&event_loop)?;
 
     let physical_size = window.inner_size();
@@ -65,7 +69,6 @@ pub async fn module_load(app: &App) -> anyhow::Result<()> {
         Size::new(physical_size.width, physical_size.height),
         window.scale_factor(),
     );
-
     let mut cursor_position = PhysicalPosition::new(-1.0, -1.0);
     let mut modifiers = ModifiersState::default();
     let mut clipboard = Clipboard::connect(&window);
@@ -74,7 +77,7 @@ pub async fn module_load(app: &App) -> anyhow::Result<()> {
     let instance = wgpu::Instance::new(wgpu::Backends::PRIMARY);
     let surface = unsafe { instance.create_surface(&window) };
 
-    let (format, (mut device, queue)) = {
+    let (format, (mut device, queue)) = futures::executor::block_on(async {
         let adapter = instance
             .request_adapter(&wgpu::RequestAdapterOptions {
                 power_preference: wgpu::PowerPreference::HighPerformance,
@@ -100,7 +103,7 @@ pub async fn module_load(app: &App) -> anyhow::Result<()> {
                 .await
                 .expect("Request device"),
         )
-    };
+    });
 
     {
         let size = window.inner_size();
@@ -122,18 +125,13 @@ pub async fn module_load(app: &App) -> anyhow::Result<()> {
     let mut staging_belt = wgpu::util::StagingBelt::new(5 * 1024);
     let mut local_pool = futures::executor::LocalPool::new();
 
-    let controls = Terminal::new(app.evbus.sender());
+    // Initialize scene and GUI controls
+    let scene = Scene::new(&mut device);
+    let controls = Terminal::new();
 
     // Initialize iced
     let mut debug = Debug::new();
-    let mut renderer = Renderer::new(Backend::new(
-        &mut device,
-        Settings {
-            default_font: Some(include_bytes!("assets/Hack-Regular.ttf")),
-            ..Default::default()
-        },
-        format,
-    ));
+    let mut renderer = Renderer::new(Backend::new(&mut device, Settings::default(), format));
 
     let mut state =
         program::State::new(controls, viewport.logical_size(), &mut renderer, &mut debug);
@@ -220,6 +218,23 @@ pub async fn module_load(app: &App) -> anyhow::Result<()> {
                             .texture
                             .create_view(&wgpu::TextureViewDescriptor::default());
 
+                        {
+                            // We clear the frame
+                            let mut render_pass = scene.clear(
+                                &view,
+                                &mut encoder,
+                                Color {
+                                    r: 0.1,
+                                    g: 0.2,
+                                    b: 0.3,
+                                    a: 0.0,
+                                },
+                            );
+
+                            // Draw the scene
+                            scene.draw(&mut render_pass);
+                        }
+
                         // And then iced on top
                         renderer.with_primitives(|backend, primitive| {
                             backend.present(
@@ -264,7 +279,20 @@ pub async fn module_load(app: &App) -> anyhow::Result<()> {
             }
             _ => {}
         }
-    });
+    })
+}
 
+pub async fn module_load(app: &App) -> anyhow::Result<()> {
+    run_test();
     Ok(())
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_run() {
+        run().unwrap();
+    }
 }
