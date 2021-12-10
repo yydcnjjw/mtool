@@ -1,8 +1,7 @@
 use iced_wgpu::Renderer;
 use iced_winit::{
-    alignment,
-    widget::{container, text_input, Column, Container, Row, Text, TextInput},
-    Alignment, Color, Command, Element, Font, Length, Padding, Program, Widget,
+    widget::{text_input, Column, Container, Text, TextInput},
+    Color, Command, Element, Length, Padding, Program,
 };
 
 use crate::core::{command::ExecCommand, evbus::Sender};

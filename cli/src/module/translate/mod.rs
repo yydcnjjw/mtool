@@ -1,4 +1,4 @@
-use std::{any::Any, sync::Arc};
+use std::sync::Arc;
 
 use crate::{app::App, core::{command::{self, AddCommand, Command}, evbus::Sender}};
 use async_trait::async_trait;
