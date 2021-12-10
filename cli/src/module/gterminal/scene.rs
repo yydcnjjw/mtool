@@ -2,6 +2,7 @@ use iced_wgpu::wgpu;
 use iced_winit::Color;
 
 pub struct Scene {
+    #[allow(dead_code)]
     pipeline: wgpu::RenderPipeline,
 }
 
@@ -41,6 +42,7 @@ impl Scene {
         })
     }
 
+    #[allow(dead_code)]
     pub fn draw<'a>(&'a self, render_pass: &mut wgpu::RenderPass<'a>) {
         render_pass.set_pipeline(&self.pipeline);
         render_pass.draw(0..3, 0..1);

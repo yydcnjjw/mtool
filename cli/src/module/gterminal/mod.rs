@@ -1,8 +1,5 @@
-mod controls;
 mod scene;
 mod terminal;
-
-use std::ops::Deref;
 
 use crate::{app::App, core::evbus::Sender};
 
@@ -11,15 +8,11 @@ use terminal::Terminal;
 use iced_wgpu::{wgpu, Backend, Renderer, Settings, Viewport};
 use iced_winit::{
     clipboard, command, conversion, futures, program,
-    winit::{
-        self,
-        dpi::{PhysicalSize, Position},
-        monitor::MonitorHandle,
-    },
+    winit::{self, dpi::PhysicalSize},
     Clipboard, Color, Debug, Error, Executor, Proxy, Runtime, Size,
 };
 
-use futures::{task::SpawnExt, SinkExt};
+use futures::task::SpawnExt;
 use winit::{
     dpi::PhysicalPosition,
     event::{Event, ModifiersState, WindowEvent},
@@ -32,9 +25,7 @@ use iced_winit::winit::platform::windows::EventLoopExtWindows;
 #[cfg(target_os = "linux")]
 use iced_winit::winit::platform::unix::{EventLoopExtUnix, WindowBuilderExtUnix, XWindowType};
 
-use self::{controls::Controls, scene::Scene};
-
-type TokioHandle = tokio::runtime::Handle;
+use self::scene::Scene;
 
 struct CurrentTokio {
     handle: tokio::runtime::Handle,
@@ -55,6 +46,7 @@ impl Executor for CurrentTokio {
         let _ = self.handle.spawn(async { future.await });
     }
 
+    #[allow(unused_must_use)]
     fn enter<R>(&self, f: impl FnOnce() -> R) -> R {
         println!("enter");
         self.handle.enter();
@@ -75,6 +67,7 @@ pub fn run(tx: Sender) -> anyhow::Result<()> {
         Runtime::new(executor, proxy)
     };
 
+    #[allow(unused_mut)]
     let mut window_builder = winit::window::WindowBuilder::new();
 
     #[cfg(target_os = "linux")]
@@ -291,7 +284,7 @@ pub fn run(tx: Sender) -> anyhow::Result<()> {
                                 label: None,
                             });
 
-                        let program = state.program();
+                        let _program = state.program();
 
                         let view = frame
                             .texture
@@ -299,8 +292,7 @@ pub fn run(tx: Sender) -> anyhow::Result<()> {
 
                         {
                             // We clear the frame
-                            let mut render_pass =
-                                scene.clear(&view, &mut encoder, Color::TRANSPARENT);
+                            let _render_pass = scene.clear(&view, &mut encoder, Color::TRANSPARENT);
 
                             // Draw the scene
                             // scene.draw(&mut render_pass);
