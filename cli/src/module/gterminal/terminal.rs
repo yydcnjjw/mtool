@@ -37,10 +37,13 @@ impl Terminal {
         let vec = input.split(' ').map(|s| s.to_string()).collect::<Vec<_>>();
         let (cmd, args) = vec.split_first().unwrap();
 
-        match ExecCommand::post::<String>(&tx, cmd.clone(), args.to_vec()).await {
+        println!("execute prev: {:?}", input);
+        let o = match ExecCommand::post::<String>(&tx, cmd.clone(), args.to_vec()).await {
             Ok(o) => o.to_string(),
             Err(e) => e.to_string(),
-        }
+        };
+        println!("execute result: {:?}", o);
+        o
     }
 }
 
@@ -55,11 +58,15 @@ impl Program for Terminal {
                 self.input_value = v;
                 Command::none()
             }
-            Message::InputSummit => Command::perform(
-                Terminal::execute(self.tx.clone(), self.input_value.clone()),
-                Message::Output,
-            ),
+            Message::InputSummit => {
+                self.output = "Waiting for...!".into();
+                Command::perform(
+                    Terminal::execute(self.tx.clone(), self.input_value.clone()),
+                    Message::Output,
+                )
+            }
             Message::Output(v) => {
+                println!("updade output {}", v);
                 self.output = v;
                 Command::none()
             }

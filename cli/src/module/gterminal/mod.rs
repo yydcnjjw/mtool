@@ -51,16 +51,18 @@ impl Executor for CurrentTokio {
     }
 
     fn spawn(&self, future: impl futures::Future<Output = ()> + Send + 'static) {
-        self.handle.spawn(future);
+        println!("spawn future");
+        let _ = self.handle.spawn(async { future.await });
     }
 
     fn enter<R>(&self, f: impl FnOnce() -> R) -> R {
+        println!("enter");
         self.handle.enter();
         f()
     }
 }
 
-pub async fn run(tx: Sender) -> anyhow::Result<()> {
+pub fn run(tx: Sender) -> anyhow::Result<()> {
     // Initialize winit
     let event_loop = EventLoop::<terminal::Message>::new_any_thread();
 
@@ -181,6 +183,7 @@ pub async fn run(tx: Sender) -> anyhow::Result<()> {
 
         match event {
             Event::UserEvent(message) => {
+                println!("queue event: {:?}", message);
                 state.queue_message(message);
             }
             Event::WindowEvent { event, .. } => {
@@ -226,6 +229,7 @@ pub async fn run(tx: Sender) -> anyhow::Result<()> {
                         for action in cmd.actions() {
                             match action {
                                 command::Action::Future(future) => {
+                                    println!("async task");
                                     runtime.spawn(future);
                                 }
                                 command::Action::Clipboard(action) => match action {
@@ -350,7 +354,10 @@ pub async fn run(tx: Sender) -> anyhow::Result<()> {
 }
 
 pub async fn module_load(app: &App) -> anyhow::Result<()> {
-    tokio::spawn(run(app.evbus.sender()));
+    let tx = app.evbus.sender();
+    tokio::task::spawn_blocking(|| {
+        run(tx).unwrap();
+    });
     Ok(())
 }
 
