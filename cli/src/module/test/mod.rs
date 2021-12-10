@@ -1,7 +1,9 @@
+use std::{any::Any, sync::Arc};
+
 use crate::{
     app::App,
     core::{
-        command::{AddCommand, Command},
+        command::{self, AddCommand, Command},
         keybind::DefineKeyBinding,
     },
 };
@@ -11,9 +13,9 @@ use async_trait::async_trait;
 struct TestCmd {}
 #[async_trait]
 impl Command for TestCmd {
-    async fn exec(&mut self, _args: Vec<String>) -> anyhow::Result<()> {
+    async fn exec(&mut self, _args: Vec<String>) -> anyhow::Result<command::Output> {
         println!("test");
-        Ok(())
+        Ok(Arc::new(()))
     }
 }
 

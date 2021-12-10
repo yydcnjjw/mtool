@@ -11,14 +11,16 @@ pub struct Terminal {
     input: text_input::State,
     input_value: String,
     output: String,
+    tx: Sender,
 }
 
 impl Terminal {
-    pub fn new() -> Self {
+    pub fn new(tx: Sender) -> Self {
         Self {
             input: text_input::State::focused(),
             input_value: Default::default(),
             output: Default::default(),
+            tx,
         }
     }
 }
@@ -28,6 +30,18 @@ pub enum Message {
     InputChanged(String),
     InputSummit,
     Output(String),
+}
+
+impl Terminal {
+    async fn execute(tx: Sender, input: String) -> String {
+        let vec = input.split(' ').map(|s| s.to_string()).collect::<Vec<_>>();
+        let (cmd, args) = vec.split_first().unwrap();
+
+        match ExecCommand::post::<String>(&tx, cmd.clone(), args.to_vec()).await {
+            Ok(o) => o.to_string(),
+            Err(e) => e.to_string(),
+        }
+    }
 }
 
 impl Program for Terminal {
@@ -41,32 +55,10 @@ impl Program for Terminal {
                 self.input_value = v;
                 Command::none()
             }
-            Message::InputSummit => {
-                self.output = self.input_value.clone();
-                Command::none()
-            }
-            // Command::perform(
-            // {
-            //     let tx = self.tx.clone();
-
-            //     let (cmd, args) = self
-            //         .input_value
-            //         .split(' ')
-            //         .map(|s| s.to_string())
-            //         .collect::<Vec<_>>()
-            //         .split_first()
-            //         .unwrap();
-
-            //     // async { ExecCommand::post(&tx, cmd.clone(), args.to_vec()).await }
-            //     println!("-----perform output: {}", self.output);
-            //     let output = self.input_value.clone();
-            //     async { output }
-            // },
-            // |v| {
-            //     println!("-----callback output: {}", v);
-            //     Message::Output(v)
-            // },
-            // ),
+            Message::InputSummit => Command::perform(
+                Terminal::execute(self.tx.clone(), self.input_value.clone()),
+                Message::Output,
+            ),
             Message::Output(v) => {
                 self.output = v;
                 Command::none()
@@ -128,7 +120,7 @@ mod style {
         }
 
         fn value_color(&self) -> Color {
-            Color::from_rgba8(238, 238, 228, 1.0)
+            Color::WHITE
         }
 
         fn selection_color(&self) -> Color {

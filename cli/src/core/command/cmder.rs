@@ -1,8 +1,15 @@
-use std::{collections::HashMap, sync::Arc};
+use std::{
+    any::{Any, TypeId},
+    collections::HashMap,
+    sync::Arc,
+};
 
-use crate::{app::QuitApp, core::evbus::{Event, Receiver, ResponsiveEvent, Sender, post_result}};
+use crate::{
+    app::QuitApp,
+    core::evbus::{post_result, Event, Receiver, ResponsiveEvent, Sender},
+};
 
-use super::Command;
+use super::{Command, Output};
 
 use anyhow::Context;
 use tokio::sync::Mutex;
@@ -47,8 +54,22 @@ pub struct ExecCommand {
 }
 
 impl ExecCommand {
-    pub async fn post(sender: &Sender, func: String, args: Vec<String>) -> anyhow::Result<()> {
-        post_result::<ExecCommand, anyhow::Result<()>>(sender, ExecCommand { func, args }).await?
+    pub async fn post_any(
+        sender: &Sender,
+        func: String,
+        args: Vec<String>,
+    ) -> anyhow::Result<Output> {
+        post_result::<ExecCommand, anyhow::Result<Output>>(sender, ExecCommand { func, args })
+            .await?
+    }
+
+    pub async fn post<T>(sender: &Sender, func: String, args: Vec<String>) -> anyhow::Result<Arc<T>>
+    where
+        T: 'static + Send + Sync,
+    {
+        let o = ExecCommand::post_any(sender, func, args).await?;
+        o.downcast::<T>()
+            .map_err(|_| anyhow::anyhow!(format!("Try cast to {:?} failed", TypeId::of::<T>())))
     }
 }
 
@@ -63,12 +84,11 @@ impl Commander {
         }
     }
 
-    async fn exec(&self, name: &String, args: &[String]) -> anyhow::Result<()> {
+    async fn exec(&self, name: &String, args: &[String]) -> anyhow::Result<Output> {
         let cmd = self
             .get(name)
             .with_context(|| format!("Command `{}` not found", name))?;
-        cmd.lock().await.exec(args.to_vec()).await?;
-        Ok(())
+        cmd.lock().await.exec(args.to_vec()).await
     }
 
     #[allow(dead_code)]
@@ -99,7 +119,7 @@ impl Commander {
                 cmder.remove(&e.func);
                 e.result(());
             } else if let Some(e) =
-                e.downcast_ref::<ResponsiveEvent<ExecCommand, anyhow::Result<()>>>()
+                e.downcast_ref::<ResponsiveEvent<ExecCommand, anyhow::Result<Output>>>()
             {
                 e.result(cmder.exec(&e.func, &e.args).await);
             } else if let Some(_) = e.downcast_ref::<Event<QuitApp>>() {

@@ -8,7 +8,7 @@ use anyhow::Context;
 use log::LevelFilter;
 use log4rs::{
     append::{console::ConsoleAppender, file::FileAppender},
-    config::{Appender, Root},
+    config::{Appender, Logger, Root},
     encode::pattern::PatternEncoder,
 };
 
@@ -42,8 +42,9 @@ impl App {
         }
 
         let (cmd, args) = args.split_first().unwrap();
-        if let Err(e) = ExecCommand::post(&tx, cmd.into(), args.to_vec()).await {
-            log::error!("{}", e);
+        match ExecCommand::post::<String>(&tx, cmd.into(), args.to_vec()).await {
+            Ok(output) => println!("{}", output),
+            Err(e) => println!("{}", e),
         }
         QuitApp::post(&tx, 0);
 
@@ -63,8 +64,8 @@ impl App {
             .appender(Appender::builder().build("mytool", Box::new(requests)))
             .build(
                 Root::builder()
-                    .appender("stdout")
                     .appender("mytool")
+                    // .appender("stdout")
                     .build(LevelFilter::Debug),
             )
             .context("Config builer failed")?;
