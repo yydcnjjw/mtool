@@ -1,7 +1,10 @@
-use crate::{app::QuitApp, core::{
-    command::ExecCommand,
-    evbus::{Event, Receiver, Sender},
-}};
+use crate::{
+    app::QuitApp,
+    core::{
+        command::ExecCommand,
+        evbus::{Event, Receiver, Sender},
+    },
+};
 
 #[derive(Debug, Clone)]
 pub struct KeyBinding {
@@ -18,7 +21,7 @@ impl KeyBindinger {
                 let tx = sender.clone();
                 let cmd_name = e.cmd_name.clone();
                 tokio::spawn(async move {
-                    if let Err(e) = ExecCommand::post(&tx, cmd_name, Vec::new()).await {
+                    if let Err(e) = ExecCommand::post_any(&tx, cmd_name, Vec::new()).await {
                         log::error!("{}", e);
                     }
                 });

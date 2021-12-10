@@ -1,10 +1,6 @@
-use crate::{
-    app::App,
-    core::{
-        command::{AddCommand, Command},
-        evbus::Sender,
-    },
-};
+use std::{any::Any, sync::Arc};
+
+use crate::{app::App, core::{command::{self, AddCommand, Command}, evbus::Sender}};
 use async_trait::async_trait;
 
 mod tencent;
@@ -53,14 +49,12 @@ impl Cmd {
 
 #[async_trait]
 impl Command for Cmd {
-    async fn exec(&mut self, args: Vec<String>) -> anyhow::Result<()> {
-        if args.len() == 1 {
-            let text = args.first().unwrap();
-            println!("{}", self.text_translate(text.clone()).await?);
-        } else {
+    async fn exec(&mut self, args: Vec<String>) -> anyhow::Result<command::Output> {
+        if args.len() != 1 {
+            return Err(anyhow::anyhow!("More Args required"));
         }
-
-        Ok(())
+        let text = args.first().unwrap();
+        Ok(Arc::new(self.text_translate(text.clone()).await?))
     }
 }
 

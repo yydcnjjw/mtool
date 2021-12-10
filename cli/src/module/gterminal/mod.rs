@@ -2,22 +2,24 @@ mod controls;
 mod scene;
 mod terminal;
 
-use crate::app::App;
+use std::ops::Deref;
+
+use crate::{app::App, core::evbus::Sender};
 
 use terminal::Terminal;
 
 use iced_wgpu::{wgpu, Backend, Renderer, Settings, Viewport};
 use iced_winit::{
-    conversion, futures, program,
+    clipboard, command, conversion, futures, program,
     winit::{
         self,
         dpi::{PhysicalSize, Position},
         monitor::MonitorHandle,
     },
-    Clipboard, Color, Debug, Size,
+    Clipboard, Color, Debug, Error, Executor, Proxy, Runtime, Size,
 };
 
-use futures::task::SpawnExt;
+use futures::{task::SpawnExt, SinkExt};
 use winit::{
     dpi::PhysicalPosition,
     event::{Event, ModifiersState, WindowEvent},
@@ -32,9 +34,44 @@ use iced_winit::winit::platform::unix::{EventLoopExtUnix, WindowBuilderExtUnix, 
 
 use self::{controls::Controls, scene::Scene};
 
-pub fn run_test() -> anyhow::Result<()> {
+type TokioHandle = tokio::runtime::Handle;
+
+struct CurrentTokio {
+    handle: tokio::runtime::Handle,
+}
+
+impl Executor for CurrentTokio {
+    fn new() -> Result<Self, futures::io::Error>
+    where
+        Self: Sized,
+    {
+        Ok(Self {
+            handle: tokio::runtime::Handle::current(),
+        })
+    }
+
+    fn spawn(&self, future: impl futures::Future<Output = ()> + Send + 'static) {
+        self.handle.spawn(future);
+    }
+
+    fn enter<R>(&self, f: impl FnOnce() -> R) -> R {
+        self.handle.enter();
+        f()
+    }
+}
+
+pub async fn run(tx: Sender) -> anyhow::Result<()> {
     // Initialize winit
-    let event_loop = EventLoop::new();
+    let event_loop = EventLoop::<terminal::Message>::new_any_thread();
+
+    let proxy = event_loop.create_proxy();
+    let mut runtime = {
+        let proxy = Proxy::new(event_loop.create_proxy());
+
+        let executor = CurrentTokio::new().map_err(Error::ExecutorCreationFailed)?;
+
+        Runtime::new(executor, proxy)
+    };
 
     let mut window_builder = winit::window::WindowBuilder::new();
 
@@ -127,10 +164,11 @@ pub fn run_test() -> anyhow::Result<()> {
 
     // Initialize scene and GUI controls
     let scene = Scene::new(&mut device);
-    let controls = Terminal::new();
+    let controls = Terminal::new(tx);
 
     // Initialize iced
     let mut debug = Debug::new();
+
     let mut renderer = Renderer::new(Backend::new(&mut device, Settings::default(), format));
 
     let mut state =
@@ -142,6 +180,9 @@ pub fn run_test() -> anyhow::Result<()> {
         *control_flow = ControlFlow::Wait;
 
         match event {
+            Event::UserEvent(message) => {
+                state.queue_message(message);
+            }
             Event::WindowEvent { event, .. } => {
                 match event {
                     WindowEvent::CursorMoved { position, .. } => {
@@ -175,14 +216,48 @@ pub fn run_test() -> anyhow::Result<()> {
                 // If there are events pending
                 if !state.is_queue_empty() {
                     // We update iced
-                    let _ = state.update(
+                    if let Some(cmd) = state.update(
                         viewport.logical_size(),
                         conversion::cursor_position(cursor_position, viewport.scale_factor()),
                         &mut renderer,
                         &mut clipboard,
                         &mut debug,
-                    );
+                    ) {
+                        for action in cmd.actions() {
+                            match action {
+                                command::Action::Future(future) => {
+                                    runtime.spawn(future);
+                                }
+                                command::Action::Clipboard(action) => match action {
+                                    clipboard::Action::Read(tag) => {
+                                        let message = tag(clipboard.read());
 
+                                        proxy
+                                            .send_event(message)
+                                            .expect("Send message to event loop");
+                                    }
+                                    clipboard::Action::Write(contents) => {
+                                        clipboard.write(contents);
+                                    }
+                                },
+                                command::Action::Window(_) => todo!(),
+                                // command::Action::Window(action) => match action {
+                                //     window::Action::Resize { width, height } => {
+                                //         window.set_inner_size(winit::dpi::LogicalSize {
+                                //             width,
+                                //             height,
+                                //         });
+                                //     }
+                                //     window::Action::Move { x, y } => {
+                                //         window.set_outer_position(winit::dpi::LogicalPosition {
+                                //             x,
+                                //             y,
+                                //         });
+                                //     }
+                                // },
+                            }
+                        }
+                    }
                     // and request a redraw
                     window.request_redraw();
                 }
@@ -220,19 +295,11 @@ pub fn run_test() -> anyhow::Result<()> {
 
                         {
                             // We clear the frame
-                            let mut render_pass = scene.clear(
-                                &view,
-                                &mut encoder,
-                                Color {
-                                    r: 0.1,
-                                    g: 0.2,
-                                    b: 0.3,
-                                    a: 0.0,
-                                },
-                            );
+                            let mut render_pass =
+                                scene.clear(&view, &mut encoder, Color::TRANSPARENT);
 
                             // Draw the scene
-                            scene.draw(&mut render_pass);
+                            // scene.draw(&mut render_pass);
                         }
 
                         // And then iced on top
@@ -283,7 +350,7 @@ pub fn run_test() -> anyhow::Result<()> {
 }
 
 pub async fn module_load(app: &App) -> anyhow::Result<()> {
-    run_test();
+    tokio::spawn(run(app.evbus.sender()));
     Ok(())
 }
 
@@ -292,7 +359,5 @@ mod tests {
     use super::*;
 
     #[test]
-    fn test_run() {
-        run().unwrap();
-    }
+    fn test_run() {}
 }
