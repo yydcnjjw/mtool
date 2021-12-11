@@ -36,13 +36,10 @@ impl Terminal {
         let vec = input.split(' ').map(|s| s.to_string()).collect::<Vec<_>>();
         let (cmd, args) = vec.split_first().unwrap();
 
-        println!("execute prev: {:?}", input);
-        let o = match ExecCommand::post::<String>(&tx, cmd.clone(), args.to_vec()).await {
+        match ExecCommand::post::<String>(&tx, cmd.clone(), args.to_vec()).await {
             Ok(o) => o.to_string(),
             Err(e) => e.to_string(),
-        };
-        println!("execute result: {:?}", o);
-        o
+        }
     }
 }
 
@@ -65,7 +62,6 @@ impl Program for Terminal {
                 )
             }
             Message::Output(v) => {
-                println!("updade output {}", v);
                 self.output = v;
                 Command::none()
             }
