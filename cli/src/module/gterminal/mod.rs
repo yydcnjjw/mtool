@@ -42,13 +42,11 @@ impl Executor for CurrentTokio {
     }
 
     fn spawn(&self, future: impl futures::Future<Output = ()> + Send + 'static) {
-        println!("spawn future");
         let _ = self.handle.spawn(async { future.await });
     }
 
     #[allow(unused_must_use)]
     fn enter<R>(&self, f: impl FnOnce() -> R) -> R {
-        println!("enter");
         self.handle.enter();
         f()
     }
@@ -176,7 +174,6 @@ pub fn run(tx: Sender) -> anyhow::Result<()> {
 
         match event {
             Event::UserEvent(message) => {
-                println!("queue event: {:?}", message);
                 state.queue_message(message);
             }
             Event::WindowEvent { event, .. } => {
@@ -222,7 +219,6 @@ pub fn run(tx: Sender) -> anyhow::Result<()> {
                         for action in cmd.actions() {
                             match action {
                                 command::Action::Future(future) => {
-                                    println!("async task");
                                     runtime.spawn(future);
                                 }
                                 command::Action::Clipboard(action) => match action {
