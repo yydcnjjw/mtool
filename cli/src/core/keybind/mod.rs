@@ -23,6 +23,7 @@ pub async fn module_load(app: &App) -> anyhow::Result<()> {
     let tx = app.evbus.sender();
     let rx = app.evbus.subscribe();
     tokio::spawn(async move {
+        log::debug!("keybinding dispatcher run loop!");
         KeyBindingDispatcher::run_loop(tx, rx).await;
         log::debug!("keybinding dispatcher run loop quit!");
     });
@@ -30,6 +31,7 @@ pub async fn module_load(app: &App) -> anyhow::Result<()> {
     let tx = app.evbus.sender();
     let rx = app.evbus.subscribe();
     tokio::spawn(async move {
+        log::debug!("keybindinger run loop!");
         KeyBindinger::run_loop(tx, rx).await;
         log::debug!("keybindinger run loop quit!");
     });
