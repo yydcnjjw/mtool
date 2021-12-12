@@ -75,11 +75,14 @@ pub fn run(tx: Sender) -> anyhow::Result<()> {
             .with_transparent(true)
     }
 
-    let primary = event_loop
-        .primary_monitor()
-        .ok_or(anyhow::anyhow!("primary monitor is not found"))?;
+    // let primary = event_loop
+    //     .primary_monitor()
+    //     .ok_or(anyhow::anyhow!("primary monitor is not found"))?;
 
-    let primary_size = primary.size();
+    let primary_size = PhysicalSize::<u32> {
+        width: 1920,
+        height: 1080,
+    }; //  primary.size();
 
     let window_size = PhysicalSize::<u32>::new(1024, 128);
 
@@ -104,7 +107,7 @@ pub fn run(tx: Sender) -> anyhow::Result<()> {
     let mut clipboard = Clipboard::connect(&window);
 
     // Initialize wgpu
-    let instance = wgpu::Instance::new(wgpu::Backends::PRIMARY);
+    let instance = wgpu::Instance::new(wgpu::Backends::GL);
     let surface = unsafe { instance.create_surface(&window) };
 
     let (format, (mut device, queue)) = futures::executor::block_on(async {
@@ -156,7 +159,7 @@ pub fn run(tx: Sender) -> anyhow::Result<()> {
     let mut local_pool = futures::executor::LocalPool::new();
 
     // Initialize scene and GUI controls
-    let scene = Scene::new(&mut device);
+    // let scene = Scene::new(&mut device);
     let controls = Terminal::new(tx);
 
     // Initialize iced
@@ -288,7 +291,8 @@ pub fn run(tx: Sender) -> anyhow::Result<()> {
 
                         {
                             // We clear the frame
-                            let _render_pass = scene.clear(&view, &mut encoder, Color::TRANSPARENT);
+                            // #[allow(unused_mut, unused_variables)]
+                            // let mut render_pass = scene.clear(&view, &mut encoder, Color::TRANSPARENT);
 
                             // Draw the scene
                             // scene.draw(&mut render_pass);
@@ -345,6 +349,14 @@ pub async fn module_load(app: &App) -> anyhow::Result<()> {
     let tx = app.evbus.sender();
     tokio::task::spawn_blocking(|| {
         run(tx).unwrap();
+
+        // let event_loop = EventLoop::<terminal::Message>::new_any_thread();
+
+        // let window = winit::window::Window::new(&event_loop).unwrap();
+
+        // event_loop.run(move |e, _, cf| {
+        //     *cf = ControlFlow::Wait;
+        // });
     });
     Ok(())
 }

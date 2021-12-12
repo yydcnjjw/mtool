@@ -7,6 +7,6 @@ mod module;
 use app::App;
 
 #[tokio::main]
-async fn main() -> anyhow::Result<()> {
-    App::run_loop().await
+async fn main() {
+    App::run_loop().await.unwrap();
 }

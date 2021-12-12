@@ -65,7 +65,7 @@ impl App {
             .build(
                 Root::builder()
                     .appender("mytool")
-                    // .appender("stdout")
+                    .appender("stdout")
                     .build(LevelFilter::Debug),
             )
             .context("Config builer failed")?;

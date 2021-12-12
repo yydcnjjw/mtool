@@ -15,6 +15,8 @@ pub async fn module_load(app: &App) -> anyhow::Result<()> {
     let sender = app.evbus.sender();
 
     tokio::task::spawn_blocking(move || {
+        log::debug!("sysev run loop!");
+        
         let tx = sender.clone();
         if let Err(e) = sysev::run_loop(move |e| {
             if let Err(e) = post(&tx, e) {
@@ -36,7 +38,6 @@ pub async fn module_load(app: &App) -> anyhow::Result<()> {
                     log::error!("{}", e);
                 }
             } else if let Some(_) = e.downcast_ref::<Event<SysevQuit>>() {
-                log::debug!("sysev quit event!");
                 break;
             }
         }

@@ -18,6 +18,7 @@ pub trait Command {
 pub async fn module_load(app: &App) -> anyhow::Result<()> {
     let rx = app.evbus.subscribe();
     tokio::spawn(async move {
+        log::debug!("commander run loop!");
         Commander::run_loop(rx).await;
         log::debug!("commander run loop quit!");
     });
