@@ -77,10 +77,7 @@ fn build_pipeline(device: &wgpu::Device) -> wgpu::RenderPipeline {
                 entry_point: "main",
                 targets: &[wgpu::ColorTargetState {
                     format: wgpu::TextureFormat::Bgra8UnormSrgb,
-                    blend: Some(wgpu::BlendState {
-                        color: wgpu::BlendComponent::REPLACE,
-                        alpha: wgpu::BlendComponent::REPLACE,
-                    }),
+                    blend: Some(wgpu::BlendState::ALPHA_BLENDING),
                     write_mask: wgpu::ColorWrites::ALL,
                 }],
             }),
