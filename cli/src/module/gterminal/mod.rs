@@ -8,7 +8,7 @@ use terminal::Terminal;
 use iced_wgpu::{wgpu, Backend, Renderer, Settings, Viewport};
 use iced_winit::{
     clipboard, command, conversion, futures, program,
-    winit::{self, dpi::PhysicalSize},
+    winit::{self, dpi::PhysicalSize, platform::windows::WindowBuilderExtWindows},
     Clipboard, Color, Debug, Error, Executor, Proxy, Runtime, Size,
 };
 
@@ -73,16 +73,21 @@ pub fn run(tx: Sender) -> anyhow::Result<()> {
         window_builder = window_builder
             .with_x11_window_type(vec![XWindowType::Toolbar])
             .with_transparent(true)
+            .with_decorations(false);
     }
 
-    // let primary = event_loop
-    //     .primary_monitor()
-    //     .ok_or(anyhow::anyhow!("primary monitor is not found"))?;
+    #[cfg(target_os = "windows")]
+    {
+        window_builder = window_builder
+            .with_no_redirection_bitmap(true)
+            .with_decorations(false);
+    }
 
-    let primary_size = PhysicalSize::<u32> {
-        width: 1920,
-        height: 1080,
-    }; //  primary.size();
+    let primary = event_loop
+        .primary_monitor()
+        .ok_or(anyhow::anyhow!("primary monitor is not found"))?;
+
+    let primary_size = primary.size();
 
     let window_size = PhysicalSize::<u32>::new(1024, 128);
 
@@ -94,7 +99,6 @@ pub fn run(tx: Sender) -> anyhow::Result<()> {
     let window = window_builder
         .with_inner_size(window_size)
         .with_position(window_pos)
-        .with_decorations(false)
         .build(&event_loop)?;
 
     let physical_size = window.inner_size();
@@ -107,7 +111,11 @@ pub fn run(tx: Sender) -> anyhow::Result<()> {
     let mut clipboard = Clipboard::connect(&window);
 
     // Initialize wgpu
-    let instance = wgpu::Instance::new(wgpu::Backends::GL);
+    let instance = wgpu::Instance::new(if cfg!(windows) {
+        wgpu::Backends::DX12
+    } else {
+        wgpu::Backends::PRIMARY
+    });
     let surface = unsafe { instance.create_surface(&window) };
 
     let (format, (mut device, queue)) = futures::executor::block_on(async {
@@ -141,7 +149,7 @@ pub fn run(tx: Sender) -> anyhow::Result<()> {
     {
         let size = window.inner_size();
 
-        surface.configure(
+        surface.configured(
             &device,
             &wgpu::SurfaceConfiguration {
                 usage: wgpu::TextureUsages::RENDER_ATTACHMENT,
@@ -159,7 +167,7 @@ pub fn run(tx: Sender) -> anyhow::Result<()> {
     let mut local_pool = futures::executor::LocalPool::new();
 
     // Initialize scene and GUI controls
-    // let scene = Scene::new(&mut device);
+    let scene = Scene::new(&mut device);
     let controls = Terminal::new(tx);
 
     // Initialize iced
@@ -292,10 +300,11 @@ pub fn run(tx: Sender) -> anyhow::Result<()> {
                         {
                             // We clear the frame
                             // #[allow(unused_mut, unused_variables)]
-                            // let mut render_pass = scene.clear(&view, &mut encoder, Color::TRANSPARENT);
+                            let mut render_pass =
+                                scene.clear(&view, &mut encoder, Color::TRANSPARENT);
 
                             // Draw the scene
-                            // scene.draw(&mut render_pass);
+                            scene.draw(&mut render_pass);
                         }
 
                         // And then iced on top
