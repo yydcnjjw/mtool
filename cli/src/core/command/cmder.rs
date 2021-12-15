@@ -59,6 +59,7 @@ impl ExecCommand {
             .await?
     }
 
+    #[allow(dead_code)]
     pub async fn post_none(sender: &Sender, func: String, args: Vec<String>) -> anyhow::Result<()> {
         let o = ExecCommand::post_output(sender, func.clone(), args).await?;
         match o {
@@ -67,6 +68,7 @@ impl ExecCommand {
         }
     }
 
+    #[allow(dead_code)]
     pub async fn post_any<T>(
         sender: &Sender,
         func: String,

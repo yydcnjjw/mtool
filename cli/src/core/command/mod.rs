@@ -10,6 +10,7 @@ use crate::app::App;
 
 pub enum Output {
     None,
+    #[allow(dead_code)]
     Any(Arc<dyn Any + Send + Sync>),
     String(String),
 }
