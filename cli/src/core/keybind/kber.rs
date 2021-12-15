@@ -21,7 +21,7 @@ impl KeyBindinger {
                 let tx = sender.clone();
                 let cmd_name = e.cmd_name.clone();
                 tokio::spawn(async move {
-                    if let Err(e) = ExecCommand::post_any(&tx, cmd_name, Vec::new()).await {
+                    if let Err(e) = ExecCommand::post_output(&tx, cmd_name, Vec::new()).await {
                         log::error!("{}", e);
                     }
                 });

@@ -15,7 +15,7 @@ struct TestCmd {}
 impl Command for TestCmd {
     async fn exec(&mut self, _args: Vec<String>) -> anyhow::Result<command::Output> {
         println!("test");
-        Ok(Arc::new(()))
+        Ok(command::Output::None)
     }
 }
 

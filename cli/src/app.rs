@@ -15,7 +15,7 @@ use log4rs::{
 use crate::{
     core::{
         self,
-        command::ExecCommand,
+        command::{self, ExecCommand},
         evbus::{post, EventBus, Sender},
     },
     module,
@@ -41,10 +41,13 @@ impl App {
             return Ok(());
         }
 
-        let (cmd, args) = args.split_first().unwrap();
-        match ExecCommand::post::<String>(&tx, cmd.into(), args.to_vec()).await {
-            Ok(output) => println!("{}", output),
-            Err(e) => println!("{}", e),
+        let cmd = args.first().unwrap();
+        match ExecCommand::post_output(&tx, cmd.into(), args.to_vec()).await {
+            Ok(output) => match output {
+                command::Output::String(v) => println!("{}", v),
+                _ => {}
+            },
+            Err(e) => println!("{:?}", e),
         }
         QuitApp::post(&tx, 0);
 

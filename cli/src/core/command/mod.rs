@@ -8,7 +8,11 @@ pub use cmder::*;
 
 use crate::app::App;
 
-pub type Output = Arc<dyn Any + Send + Sync>;
+pub enum Output {
+    None,
+    Any(Arc<dyn Any + Send + Sync>),
+    String(String),
+}
 
 #[async_trait]
 pub trait Command {
