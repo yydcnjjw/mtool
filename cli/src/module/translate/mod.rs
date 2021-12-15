@@ -1,5 +1,3 @@
-use std::sync::Arc;
-
 use crate::{
     app::App,
     core::{
@@ -7,7 +5,9 @@ use crate::{
         evbus::Sender,
     },
 };
+use anyhow::Context;
 use async_trait::async_trait;
+use clap::Parser;
 
 mod tencent;
 
@@ -53,15 +53,20 @@ impl Cmd {
     }
 }
 
+/// Translate module
+#[derive(Parser, Debug)]
+#[clap(about, version, author)]
+struct Args {
+    text: String,
+}
+
 #[async_trait]
 impl Command for Cmd {
     async fn exec(&mut self, args: Vec<String>) -> anyhow::Result<command::Output> {
-        if args.len() != 1 {
-            return Err(anyhow::anyhow!("More Args required"));
-        }
-        let text = args.first().unwrap();
+        let args = Args::try_parse_from(args).context("Translate parse args failed")?;
+
         Ok(command::Output::String(
-            self.text_translate(text.clone()).await?,
+            self.text_translate(args.text.clone()).await?,
         ))
     }
 }
