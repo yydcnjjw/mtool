@@ -50,7 +50,7 @@ pub struct ExecCommand {
 }
 
 impl ExecCommand {
-    pub async fn post_any(
+    pub async fn post_output(
         sender: &Sender,
         func: String,
         args: Vec<String>,
@@ -59,13 +59,29 @@ impl ExecCommand {
             .await?
     }
 
-    pub async fn post<T>(sender: &Sender, func: String, args: Vec<String>) -> anyhow::Result<Arc<T>>
+    pub async fn post_none(sender: &Sender, func: String, args: Vec<String>) -> anyhow::Result<()> {
+        let o = ExecCommand::post_output(sender, func.clone(), args).await?;
+        match o {
+            Output::None => Ok(()),
+            _ => Err(anyhow::anyhow!(format!("{} output is None", func))),
+        }
+    }
+
+    pub async fn post_any<T>(
+        sender: &Sender,
+        func: String,
+        args: Vec<String>,
+    ) -> anyhow::Result<Arc<T>>
     where
         T: 'static + Send + Sync,
     {
-        let o = ExecCommand::post_any(sender, func, args).await?;
-        o.downcast::<T>()
-            .map_err(|_| anyhow::anyhow!(format!("Try cast to {:?} failed", TypeId::of::<T>())))
+        let o = ExecCommand::post_output(sender, func.clone(), args).await?;
+        match o {
+            Output::Any(o) => o.downcast::<T>().map_err(|_| {
+                anyhow::anyhow!(format!("Try cast to {:?} failed", TypeId::of::<T>()))
+            }),
+            _ => Err(anyhow::anyhow!(format!("{} output is Any", func))),
+        }
     }
 }
 

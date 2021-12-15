@@ -1,6 +1,12 @@
 use std::sync::Arc;
 
-use crate::{app::App, core::{command::{self, AddCommand, Command}, evbus::Sender}};
+use crate::{
+    app::App,
+    core::{
+        command::{self, AddCommand, Command},
+        evbus::Sender,
+    },
+};
 use async_trait::async_trait;
 
 mod tencent;
@@ -54,7 +60,9 @@ impl Command for Cmd {
             return Err(anyhow::anyhow!("More Args required"));
         }
         let text = args.first().unwrap();
-        Ok(Arc::new(self.text_translate(text.clone()).await?))
+        Ok(command::Output::String(
+            self.text_translate(text.clone()).await?,
+        ))
     }
 }
 
