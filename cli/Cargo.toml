@@ -35,5 +35,7 @@ toml = "*"
 iced_winit = { git = "https://github.com/iced-rs/iced", branch = "master" }
 iced_wgpu = { git = "https://github.com/iced-rs/iced", branch = "master", features = ["spirv"] }
 
+notify-rust = "*"
+
 [dev-dependencies]
 tempfile = "*"
