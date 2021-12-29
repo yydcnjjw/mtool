@@ -1,11 +1,7 @@
 [workspace]
-resolver = "2"
 members = [
-  "crates/*",
+  # "crates/*",
   "modules/*",
-  "core",
-  "service",
-  "cli",
-  "srv"
+  "mcli",
 ]
 
