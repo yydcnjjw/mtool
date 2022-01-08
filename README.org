@@ -1,12 +1,2 @@
 * TODOs
-- [ ] module manage
-  #+begin_src rust
-    trait Module {
-        async fn load(&self) -> anyhow::Result<()>
-        async fn unload(&self) -> anyhow::Result<()>
-    }
-  #+end_src
-
-- [ ] evbus global
-- [ ] gterminal: cjk
-- [X] x11::keysym <-> event::KeyCode
+- [ ] logger config from file
