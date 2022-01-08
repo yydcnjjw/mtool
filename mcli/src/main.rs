@@ -90,7 +90,7 @@ fn logger_init() -> anyhow::Result<()> {
 
     let config = log4rs::config::Config::builder()
         .appender(Appender::builder().build("stdout", Box::new(stdout)))
-        .build(Root::builder().appender("stdout").build(LevelFilter::Debug))
+        .build(Root::builder().appender("stdout").build(LevelFilter::Info))
         .context("Failed to build logger config")?;
 
     let _handle = log4rs::init_config(config).context("Failed to init log4rs config")?;
