@@ -1,9 +1,12 @@
+mod daemon;
+
 use std::{env, path::PathBuf, sync::Arc};
 
 use anyhow::Context;
 
 use cmder_mod::Cmder;
 use config_mod::{self, Config};
+use daemon::DaemonCmd;
 use keybinding_mod::KeyBinding;
 use log::LevelFilter;
 use log4rs::{
@@ -47,20 +50,32 @@ impl App {
         }
     }
 
-    async fn run() -> anyhow::Result<()> {
-        let (tx, rx) = mpsc::channel(32);
-        let cli = ServerClient { sender: tx };
-
-        let _serve = tokio::spawn(Self::run_serve(rx, cli.clone()));
-
-        toast_mod::load(cli.cmder()).await?;
-        translate_mod::load(cli.cmder(), cli.config()).await?;
-
+    async fn run_cmd(cli: ServerClient) -> anyhow::Result<()> {
         let args: Vec<String> = env::args().skip(1).collect();
 
         let cmd = args.first().context("At least one parameter")?;
 
         cli.cmder().exec(cmd.clone(), args).await?;
+        Ok(())
+    }
+
+    async fn run() -> anyhow::Result<()> {
+        let (tx, rx) = mpsc::channel(32);
+        let cli = ServerClient { sender: tx };
+
+        let serve = tokio::spawn(Self::run_serve(rx, cli.clone()));
+
+        cli.cmder()
+            .add("daemon".into(), DaemonCmd::new(serve))
+            .await?;
+
+        cli.keybinding()
+            .define_key_binding("C-a a".into(), "toast".into()).await??;
+
+        toast_mod::load(cli.cmder()).await?;
+        translate_mod::load(cli.cmder(), cli.config()).await?;
+
+        Self::run_cmd(cli).await?;
 
         Ok(())
     }

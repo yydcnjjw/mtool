@@ -1379,6 +1379,7 @@ dependencies = [
  "anyhow",
  "async-trait",
  "futures",
+ "log",
  "mrpc-derive",
  "serde",
  "thiserror",
