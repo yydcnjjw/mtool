@@ -69,9 +69,6 @@ impl App {
             .add("daemon".into(), DaemonCmd::new(serve))
             .await?;
 
-        cli.keybinding()
-            .define_key_binding("C-a a".into(), "toast".into()).await??;
-
         toast_mod::load(cli.cmder()).await?;
         translate_mod::load(cli.cmder(), cli.config()).await?;
 
