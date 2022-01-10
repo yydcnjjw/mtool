@@ -1,5 +1,5 @@
 [package]
-name = "mcli"
+name = "mtool-service"
 version = "0.1.0"
 edition = "2021"
 
@@ -7,17 +7,8 @@ edition = "2021"
 
 [dependencies]
 mrpc = { path = "../../mrpc/mrpc" }
+
 sysev-mod = { path = "../modules/sysev" }
 config-mod = { path = "../modules/config" }
 keybinding-mod = { path = "../modules/keybinding" }
 cmder-mod = { path = "../modules/cmder" }
-toast-mod = { path = "../modules/toast" }
-translate-mod = { path = "../modules/translate" }
-
-tokio = { version = "1", features = ["full"] }
-anyhow = "1.0"
-thiserror = "1.0"
-log = "0.4"
-log4rs = "1.0"
-
-dirs = "4.0"

@@ -1,7 +1,7 @@
 {
-  "name": "PWA TEST",
-  "short_name": "PWA TEST",
-  "description": "PWA TEST",
+  "name": "mwebterm",
+  "short_name": "mwebterm",
+  "description": "mwebterm",
   "start_url": "./index.html",
   "display": "standalone",
   "background_color": "purple",

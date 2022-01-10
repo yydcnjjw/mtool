@@ -24,6 +24,7 @@ impl From<LanguageType> for text::LanguageType {
     }
 }
 
+#[derive(Debug)]
 pub struct Translator {
     cfg: Config,
 }

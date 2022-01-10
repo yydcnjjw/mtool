@@ -1,7 +1,7 @@
 var cache_storage_key = 'pwa'
 
 var cache_list = [
-    "index.html",
+    "./index.html",
 ]
 
 self.addEventListener('install', (e) => {

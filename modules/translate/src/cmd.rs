@@ -19,6 +19,7 @@ struct Args {
     text: String,
 }
 
+#[derive(Debug)]
 pub struct Cmd {
     source: LanguageType,
     target: LanguageType,

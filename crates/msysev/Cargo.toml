@@ -7,7 +7,7 @@ edition = "2021"
 
 [dependencies]
 log = "0.4"
-tokio = { version = "1" }
+tokio = { version = "1", default_features = false }
 anyhow = "1.0"
 thiserror = "1.0"
 

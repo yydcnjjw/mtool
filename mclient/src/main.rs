@@ -1,29 +1,16 @@
 mod daemon;
-
-use std::{env, path::PathBuf, sync::Arc};
+mod path;
 
 use anyhow::Context;
-
 use cmder_mod::Cmder;
-use config_mod::{self, Config};
+use config_mod::Config;
 use daemon::DaemonCmd;
 use keybinding_mod::KeyBinding;
-use log::LevelFilter;
-use log4rs::{
-    append::console::ConsoleAppender,
-    config::{Appender, Root},
-};
-use sysev_mod::{self, Sysev};
-
+use mrpc::net::{tcp, websocket};
+use mtool_service::*;
+use std::{env, sync::Arc};
+use sysev_mod::Sysev;
 use tokio::sync::mpsc;
-
-#[mrpc::server]
-enum Server {
-    Sysev(sysev_mod::Service),
-    Config(config_mod::Service),
-    Keybinding(keybinding_mod::Service),
-    Cmder(cmder_mod::Service),
-}
 
 struct App {
     cli: ServerClient,
@@ -50,18 +37,13 @@ impl App {
         }
     }
 
-    async fn run_cmd(cli: ServerClient) -> anyhow::Result<()> {
-        let args: Vec<String> = env::args().skip(1).collect();
-
-        let cmd = args.first().context("At least one parameter")?;
-
-        cli.cmder().exec(cmd.clone(), args).await?;
-        Ok(())
-    }
-
-    async fn run() -> anyhow::Result<()> {
+    async fn run() -> anyhow::Result<ServerClient> {
         let (tx, rx) = mpsc::channel(32);
-        let cli = ServerClient { sender: tx };
+
+        let cli = ServerClient::new(tx.clone());
+
+        tokio::spawn(websocket::reader("127.0.0.1:8080", tx.clone()));
+        tokio::spawn(tcp::reader("127.0.0.1:8089", tx.clone()));
 
         let serve = tokio::spawn(Self::run_serve(rx, cli.clone()));
 
@@ -69,12 +51,12 @@ impl App {
             .add("daemon".into(), DaemonCmd::new(serve))
             .await?;
 
+        cmder_mod::load(cli.cmder()).await?;
         toast_mod::load(cli.cmder()).await?;
         translate_mod::load(cli.cmder(), cli.config()).await?;
+        webterm_mod::load().await?;
 
-        Self::run_cmd(cli).await?;
-
-        Ok(())
+        Ok(cli)
     }
 }
 
@@ -84,7 +66,7 @@ impl Server for App {
         Ok(Sysev::new())
     }
     async fn create_config(self: Arc<Self>) -> anyhow::Result<Arc<dyn config_mod::Service>> {
-        Ok(Config::new(default_config_path().context("Failed to open config file")?).await)
+        Ok(Config::new(path::config_file().context("Failed to open config file")?).await)
     }
     async fn create_keybinding(
         self: Arc<Self>,
@@ -97,27 +79,35 @@ impl Server for App {
     }
 }
 
-fn logger_init() -> anyhow::Result<()> {
-    let stdout = ConsoleAppender::builder().build();
+async fn run_cmd(cli: ServerClient) -> anyhow::Result<()> {
+    let args: Vec<String> = env::args().skip(1).collect();
 
-    let config = log4rs::config::Config::builder()
-        .appender(Appender::builder().build("stdout", Box::new(stdout)))
-        .build(Root::builder().appender("stdout").build(LevelFilter::Info))
-        .context("Failed to build logger config")?;
+    let cmd = args.first().context("At least one parameter")?;
 
-    let _handle = log4rs::init_config(config).context("Failed to init log4rs config")?;
+    cli.cmder().exec(cmd.clone(), args).await?;
     Ok(())
 }
 
-fn default_config_path() -> Option<PathBuf> {
-    dirs::home_dir().map(|p| p.join(".my-tool").join("config.toml"))
+fn logger_init() -> anyhow::Result<()> {
+    log4rs::init_file(
+        path::logger_config_file().context("Failed to get logger config file")?,
+        Default::default(),
+    )?;
+    Ok(())
+}
+
+async fn run() -> anyhow::Result<()> {
+    if let Err(e) = logger_init() {
+        println!("{:?}", e);
+        return Ok(());
+    }
+
+    run_cmd(App::run().await?).await
 }
 
 #[tokio::main]
 async fn main() {
-    logger_init().unwrap();
-
-    if let Err(e) = App::run().await {
+    if let Err(e) = run().await {
         log::error!("{:?}", e);
     }
 }

@@ -1,0 +1,34 @@
+[package]
+name = "webterm-mod"
+version = "0.1.0"
+edition = "2021"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+mrpc = { path = "../../../mrpc/mrpc", features = ["websocket_web"] }
+mtool-service = { path = "../../mservice" }
+
+log = "0.4"
+tokio = { version = "1", default_features = false }
+anyhow = "1.0"
+async-trait = "0.1"
+
+wasm-bindgen = "0.2"
+wasm-bindgen-futures = "0.4"
+console_log = { version = "0.2", features = ["color"] }
+yew = "0.19"
+gloo = "0.5"
+stylist = { version = "0.10", features = ["yew_integration"] }
+
+[dependencies.web-sys]
+version = "0.3"
+features = [
+  "BinaryType",
+  "Blob",
+  "ErrorEvent",
+  "FileReader",
+  "MessageEvent",
+  "ProgressEvent",
+  "WebSocket",
+]

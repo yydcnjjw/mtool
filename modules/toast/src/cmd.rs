@@ -7,6 +7,7 @@ use cmder_mod::Command;
 use notify_rust::{Notification, Timeout};
 use tokio::sync::Mutex;
 
+#[derive(Debug)]
 pub struct Cmd {}
 
 impl Cmd {

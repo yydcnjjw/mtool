@@ -5,12 +5,16 @@ edition = "2021"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
+[features]
+service = ["keybinding-mod"]
+
 [dependencies]
 mrpc = { path = "../../../mrpc/mrpc" }
-keybinding-mod = { path = "../keybinding" }
 
-log = "0.4"
-tokio = { version = "1" }
-anyhow = "1.0"
-
+tokio = { version = "1", default_features = false }
 async-trait = "0.1"
+serde-error = "0.1"
+anyhow = "1.0"
+log = "0.4"
+
+keybinding-mod = { path = "../keybinding", optional = true }

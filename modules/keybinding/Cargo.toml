@@ -5,13 +5,17 @@ edition = "2021"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
+[features]
+service = ["mkeybinding", "msysev", "sysev-mod"]
+
 [dependencies]
 mrpc = { path = "../../../mrpc/mrpc" }
-mkeybinding = { path = "../../crates/mkeybinding" }
-msysev = { path = "../../crates/msysev" }
-sysev-mod = { path = "../sysev" }
-
-log = "0.4"
-tokio = { version = "1" }
 anyhow = "1.0"
 thiserror = "1.0"
+serde-error = "0.1"
+log = "0.4"
+tokio = { version = "1", default_features = false }
+
+mkeybinding = { path = "../../crates/mkeybinding", optional = true }
+msysev = { path = "../../crates/msysev", optional = true }
+sysev-mod = { path = "../sysev", optional = true }

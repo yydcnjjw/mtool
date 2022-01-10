@@ -41,6 +41,10 @@ impl Service for Cmder {
         self.cmds.write().await.remove(&name);
     }
 
+    async fn list(self: Arc<Self>) -> Vec<String> {
+        self.cmds.read().await.keys().cloned().collect()
+    }
+
     async fn exec(self: Arc<Self>, name: String, args: Vec<String>) {
         match self.cmds.read().await.get(&name) {
             Some(cmd) => {

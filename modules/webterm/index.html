@@ -1,0 +1,21 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8">
+    <title>mwebterm</title>
+    <meta name=viewport content="width=device-width, initial-scale=1, user-scalable=no">
+    <link rel="manifest" href="assets/manifest.webmanifest">
+    <link data-trunk rel="copy-dir" href="assets">
+  </head>
+  <script type="text/javascript">
+    if ('serviceWorker' in navigator) {
+        navigator.serviceWorker.register('assets/service_worker.js')
+            .then(function(registration) {
+            }, function(error) {
+                console.log('Failed to register service worker:', error);
+            });
+    } else {
+        console.log('Service workers are not supported.');
+    }
+  </script>
+</html>

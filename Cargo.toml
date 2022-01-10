@@ -2,6 +2,7 @@
 members = [
   # "crates/*",
   "modules/*",
-  "mcli",
+  "mclient",
+  "mservice",
 ]
 

@@ -5,10 +5,15 @@ edition = "2021"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
+[features]
+# service = ["msysev"]
+service = []
+
 [dependencies]
 mrpc = { path = "../../../mrpc/mrpc" }
-msysev = { path = "../../crates/msysev" }
-
-log = "0.4"
-tokio = { version = "1" }
 anyhow = "1.0"
+log = "0.4"
+tokio = { version = "1", default_features = false }
+
+# msysev = { path = "../../crates/msysev", optional = true }
+msysev = { path = "../../crates/msysev" }

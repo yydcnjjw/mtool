@@ -1,9 +1,10 @@
-use std::sync::Arc;
+use std::{fmt::Debug, sync::Arc};
 
 use cmder_mod::Command;
 use mrpc::async_trait;
 use tokio::{sync::Mutex, task::JoinHandle};
 
+#[derive(Debug)]
 pub struct DaemonCmd {
     serve: JoinHandle<()>,
 }
