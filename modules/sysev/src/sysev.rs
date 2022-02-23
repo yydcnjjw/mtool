@@ -1,8 +1,8 @@
-use std::sync::Arc;
 use msysev::Event as SysEvent;
+use std::sync::Arc;
 use tokio::sync::broadcast;
 
-use crate::Service;
+use crate::{Service, ServiceRequest, ServiceResponse};
 
 pub struct Sysev {
     tx: broadcast::Sender<SysEvent>,
@@ -35,7 +35,7 @@ impl Sysev {
     }
 }
 
-#[mrpc::async_trait]
+#[mrpc::service]
 impl Service for Sysev {
     fn subscribe(self: Arc<Self>) -> broadcast::Receiver<SysEvent> {
         self.tx.subscribe()

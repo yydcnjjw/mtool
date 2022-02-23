@@ -9,14 +9,7 @@ use config_mod::ServiceClient as ConfigCli;
 use language::LanguageType;
 use tencent::Config;
 
-pub async fn load<CmderPoster, ConfigPoster>(
-    cmder: CmderCli<CmderPoster>,
-    cfgcli: ConfigCli<ConfigPoster>,
-) -> anyhow::Result<()>
-where
-    CmderPoster: cmder_mod::ServicePoster,
-    ConfigPoster: config_mod::ServicePoster,
-{
+pub async fn load(cmder: CmderCli, cfgcli: ConfigCli) -> anyhow::Result<()> {
     let cfg: Config = cfgcli.get_value("translate".into()).await??.try_into()?;
 
     cmder

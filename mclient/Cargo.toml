@@ -6,7 +6,7 @@ edition = "2021"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-mrpc = { path = "../../mrpc/mrpc", features = ["tcp", "websocket"] }
+mrpc = { path = "../../mrpc/mrpc" }
 mtool-service = { path = "../mservice" }
 
 sysev-mod = { path = "../modules/sysev", features = ["service"] }

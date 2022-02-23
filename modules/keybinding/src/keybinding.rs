@@ -2,20 +2,17 @@ use anyhow::Context;
 use mkeybinding::{KeyCombine, KeyDispatcher};
 use msysev::KeyAction;
 use std::sync::Arc;
-use sysev_mod::ServiceClient as SysevCli;
+use sysev_mod::ServiceClient as SysevClient;
 use tokio::sync::{broadcast, RwLock};
 
-use crate::{SerdeResult, Service};
+use crate::{SerdeResult, Service, ServiceRequest, ServiceResponse};
 
 pub struct KeyBinding {
     dispatcher: Arc<RwLock<KeyDispatcher<String>>>,
 }
 
 impl KeyBinding {
-    pub async fn new<SysevPoster>(sysevcli: SysevCli<SysevPoster>) -> anyhow::Result<Arc<Self>>
-    where
-        SysevPoster: sysev_mod::ServicePoster,
-    {
+    pub async fn new(sysevcli: SysevClient) -> anyhow::Result<Arc<Self>> {
         let rx = sysevcli.subscribe().await?;
 
         let self_ = Arc::new(Self {
@@ -44,7 +41,7 @@ impl KeyBinding {
     }
 }
 
-#[mrpc::async_trait]
+#[mrpc::service]
 impl Service for KeyBinding {
     async fn define_key_binding(self: Arc<Self>, kbd: String, cmd: String) -> SerdeResult<()> {
         self.dispatcher

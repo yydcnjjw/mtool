@@ -1,13 +1,10 @@
 mod help;
 
-use crate::{ServiceClient, ServicePoster};
+use crate::CmderCli;
 
 use self::help::Help;
 
-pub async fn load_buildin<CmderPoster>(cmder: ServiceClient<CmderPoster>) -> anyhow::Result<()>
-where
-    CmderPoster: ServicePoster + 'static,
-{
+pub async fn load_buildin(cmder: CmderCli) -> anyhow::Result<()> {
     cmder.add("help".into(), Help::new(cmder.clone())).await?;
     Ok(())
 }

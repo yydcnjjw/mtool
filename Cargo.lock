@@ -1468,6 +1468,7 @@ version = "0.1.0"
 dependencies = [
  "anyhow",
  "async-trait",
+ "bytes",
  "futures",
  "js-sys",
  "log",
@@ -1480,6 +1481,7 @@ dependencies = [
  "tokio-serde",
  "tokio-tungstenite",
  "tokio-util",
+ "url",
  "wasm-bindgen",
  "wasm-bindgen-futures",
  "web-sys",

@@ -10,7 +10,7 @@ use anyhow::Context;
 
 use toml::Value;
 
-use crate::{Error, SerdeResult, Service};
+use crate::{Error, SerdeResult, Service, ServiceRequest, ServiceResponse};
 
 pub struct Config {
     table: toml::value::Table,
@@ -31,6 +31,7 @@ impl Config {
     }
 }
 
+#[mrpc::service]
 impl Service for Config {
     fn get_value(self: Arc<Self>, key: String) -> SerdeResult<Value> {
         self.table

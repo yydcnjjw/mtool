@@ -2,7 +2,7 @@ use std::{collections::HashMap, sync::Arc};
 
 use tokio::sync::{broadcast, RwLock};
 
-use crate::{command::AsyncCommand, Service};
+use crate::{command::AsyncCommand, Service, ServiceResponse, ServiceRequest};
 use keybinding_mod::ServiceClient as KbCli;
 
 pub struct Cmder {
@@ -10,10 +10,7 @@ pub struct Cmder {
 }
 
 impl Cmder {
-    pub async fn new<KbPoster>(kbcli: KbCli<KbPoster>) -> anyhow::Result<Arc<Self>>
-    where
-        KbPoster: keybinding_mod::ServicePoster,
-    {
+    pub async fn new(kbcli: KbCli) -> anyhow::Result<Arc<Self>> {
         let rx = kbcli.subscribe().await?;
         let self_ = Arc::new(Self {
             cmds: Arc::new(RwLock::new(HashMap::new())),
@@ -31,7 +28,7 @@ impl Cmder {
     }
 }
 
-#[mrpc::async_trait]
+#[mrpc::service]
 impl Service for Cmder {
     async fn add(self: Arc<Self>, name: String, cmd: AsyncCommand) {
         self.cmds.write().await.insert(name, cmd);

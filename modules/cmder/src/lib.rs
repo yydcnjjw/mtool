@@ -1,7 +1,7 @@
 #[cfg(feature = "service")]
-mod cmder;
-#[cfg(feature = "service")]
 mod cmd;
+#[cfg(feature = "service")]
+mod cmder;
 
 mod command;
 
@@ -16,11 +16,10 @@ pub trait Service {
     async fn exec(name: String, args: Vec<String>);
 }
 
+pub(crate) type CmderCli = ServiceClient;
+
 #[cfg(feature = "service")]
-pub async fn load<CmderPoster>(cmder: ServiceClient<CmderPoster>) -> anyhow::Result<()>
-where
-    CmderPoster: ServicePoster + 'static,
-{
+pub async fn load(cmder: CmderCli) -> anyhow::Result<()> {
     cmd::load_buildin(cmder).await?;
     Ok(())
 }

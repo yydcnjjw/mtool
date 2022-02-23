@@ -6,44 +6,36 @@ use cmder_mod::Cmder;
 use config_mod::Config;
 use daemon::DaemonCmd;
 use keybinding_mod::KeyBinding;
-use mrpc::net::{tcp, websocket};
+use mrpc::Server;
 use mtool_service::*;
 use std::{env, sync::Arc};
 use sysev_mod::Sysev;
-use tokio::sync::mpsc;
 
 struct App {
-    cli: ServerClient,
+    cli: ServiceClient,
 }
 
 impl App {
-    async fn new(cli: ServerClient) -> anyhow::Result<Arc<Self>> {
+    async fn new(cli: ServiceClient) -> anyhow::Result<Arc<Self>> {
         Ok(Arc::new(Self { cli }))
     }
 
     async fn run_serve(
-        rx: mpsc::Receiver<mrpc::Message<ServerRequest, ServerResponse>>,
-        cli: ServerClient,
+        rx: mrpc::sync::mpsc::Receiver<mrpc::message::Request<ServiceRequest, ServiceResponse>>,
+        cli: ServiceClient,
     ) {
         match App::new(cli).await {
-            Ok(app) => {
-                if let Err(e) = app.serve(rx).await {
-                    log::error!("App exited with error: {:?}", e);
-                }
-            }
+            Ok(app) => app.run_loop(rx).await,
             Err(e) => {
                 log::error!("Failed to new App: {:?}", e);
             }
         }
     }
 
-    async fn run() -> anyhow::Result<ServerClient> {
-        let (tx, rx) = mpsc::channel(32);
+    async fn run() -> anyhow::Result<ServiceClient> {
+        let (tx, rx) = mrpc::transport::native::channel(32);
 
-        let cli = ServerClient::new(tx.clone());
-
-        tokio::spawn(websocket::reader("127.0.0.1:8080", tx.clone()));
-        tokio::spawn(tcp::reader("127.0.0.1:8089", tx.clone()));
+        let cli = ServiceClient::new(Arc::new(tx));
 
         let serve = tokio::spawn(Self::run_serve(rx, cli.clone()));
 
@@ -60,26 +52,24 @@ impl App {
     }
 }
 
-#[mrpc::async_trait]
-impl Server for App {
-    async fn create_sysev(self: Arc<Self>) -> anyhow::Result<Arc<dyn sysev_mod::Service>> {
+#[mrpc::service]
+impl Service for App {
+    async fn create_sysev(self: Arc<Self>) -> anyhow::Result<sysev_mod::SharedService> {
         Ok(Sysev::new())
     }
-    async fn create_config(self: Arc<Self>) -> anyhow::Result<Arc<dyn config_mod::Service>> {
+    async fn create_config(self: Arc<Self>) -> anyhow::Result<config_mod::SharedService> {
         Ok(Config::new(path::config_file().context("Failed to open config file")?).await)
     }
-    async fn create_keybinding(
-        self: Arc<Self>,
-    ) -> anyhow::Result<Arc<dyn keybinding_mod::Service>> {
+    async fn create_keybinding(self: Arc<Self>) -> anyhow::Result<keybinding_mod::SharedService> {
         Ok(KeyBinding::new(self.cli.sysev()).await?)
     }
 
-    async fn create_cmder(self: Arc<Self>) -> anyhow::Result<Arc<dyn cmder_mod::Service>> {
+    async fn create_cmder(self: Arc<Self>) -> anyhow::Result<cmder_mod::SharedService> {
         Ok(Cmder::new(self.cli.keybinding()).await?)
     }
 }
 
-async fn run_cmd(cli: ServerClient) -> anyhow::Result<()> {
+async fn run_cmd(cli: ServiceClient) -> anyhow::Result<()> {
     let args: Vec<String> = env::args().skip(1).collect();
 
     let cmd = args.first().context("At least one parameter")?;
