@@ -48,13 +48,13 @@ struct Args {
 #[async_trait]
 impl Command for Cmd {
     async fn exec(&mut self, args: Vec<String>) {
-        let args = Args::try_parse_from(args).context("Failed to parse toast args");
-        if let Err(ref e) = args {
-            log::warn!("{:?}", e);
-            return;
-        }
-
-        let args = args.unwrap();
+        let args = match Args::try_parse_from(args).context("Failed to parse toast args") {
+            Ok(v) => v,
+            Err(e) => {
+                log::warn!("{:?}", e);
+                return;
+            }
+        };
 
         let mut notify = Notification::new();
         if let Some(appname) = args.appname.as_ref() {

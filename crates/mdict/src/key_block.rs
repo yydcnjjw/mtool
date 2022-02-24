@@ -24,10 +24,14 @@ use crate::{
 #[derive(Debug)]
 pub struct KeyBlockHeader {
     n_blocks: usize,
+    #[allow(dead_code)]
     n_entries: usize,
+    #[allow(dead_code)]
     nb_decompressed: Option<u64>,
     nb_block_info: usize,
+    #[allow(dead_code)]
     nb_blocks: usize,
+    #[allow(dead_code)]
     checksum: Option<u32>,
 }
 

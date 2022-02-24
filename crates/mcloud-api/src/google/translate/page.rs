@@ -1,3 +1,4 @@
+use anyhow::Context;
 use thiserror::Error;
 
 const GOOGLE_TRANSLATE_ROOT_URL: &str = "https://translate.google.com/";
@@ -12,8 +13,8 @@ pub enum Error {
     TKKNotFound,
     #[error("request parse failure")]
     RequestParse,
-    #[error("{0}")]
-    NetRequest(#[from] reqwest::Error),
+    #[error(transparent)]
+    Other(#[from] anyhow::Error),
 }
 
 type Result<T> = std::result::Result<T, Error>;
@@ -23,9 +24,14 @@ async fn tkk() -> Result<TKK> {
         .get(GOOGLE_TRANSLATE_ROOT_URL)
         .header(reqwest::header::USER_AGENT, USER_AGENT)
         .send()
-        .await?
+        .await
+        .context(format!(
+            "Failed to send request {}",
+            GOOGLE_TRANSLATE_ROOT_URL
+        ))?
         .text()
-        .await?;
+        .await
+        .context("Failed to recv response")?;
     match regex::Regex::new(r"tkk:'(\d*).(\d*)'")
         .unwrap()
         .captures_iter(&resp)
@@ -133,6 +139,7 @@ fn simple(v: &serde_json::Value, i: usize) -> Option<String> {
             }),
     )
 }
+
 fn simple_translation(v: &serde_json::Value) -> Option<String> {
     simple(v, 0)
 }
@@ -170,10 +177,10 @@ pub async fn query(q: &str, from: &str, to: &str) -> Result<String> {
 
 #[cfg(test)]
 mod tests {
-    use crate::google;
+    use super::query;
 
     #[tokio::test]
     async fn test() -> google::Result<String> {
-        google::query("english", "auto", "zh-CN").await
+        query("english", "auto", "zh-CN").await.unwrap()
     }
 }

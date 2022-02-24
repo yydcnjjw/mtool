@@ -24,6 +24,7 @@ enum ContentBlockType {
 #[derive(Debug)]
 struct ContentBlock {
     block_type: ContentBlockType,
+    #[allow(dead_code)]
     checksum: u32,
     data: Vec<u8>,
 }

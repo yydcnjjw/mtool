@@ -45,13 +45,15 @@ impl Cmd {
 #[async_trait]
 impl Command for Cmd {
     async fn exec(&mut self, args: Vec<String>) {
-        let args = Args::try_parse_from(args).context("Failed to parse translate args");
-        if let Err(ref e) = args {
-            log::warn!("{:?}", e);
-            return;
-        }
+        let args = match Args::try_parse_from(args).context("Failed to parse translate args") {
+            Ok(v) => v,
+            Err(e) => {
+                log::warn!("{:?}", e);
+                return;
+            }
+        };
 
-        let Args { text } = args.unwrap();
+        let Args { text } = args;
 
         match self.text_translate(text).await {
             Ok(result) => {

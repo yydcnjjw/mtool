@@ -1,6 +1,9 @@
 [workspace]
 members = [
-  # "crates/*",
+  "crates/msysev",
+  "crates/mcloud-api",
+  "crates/mkeybinding",
+  "crates/mdict",
   "modules/*",
   "mclient",
   "mservice",

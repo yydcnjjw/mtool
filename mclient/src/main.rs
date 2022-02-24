@@ -58,6 +58,7 @@ impl App {
         cmder_mod::load(cli.cmder()).await?;
         toast_mod::load(cli.cmder()).await?;
         translate_mod::load(cli.cmder(), cli.config()).await?;
+        dict_mod::load(cli.cmder(), cli.config()).await?;
         webterm_mod::load().await?;
 
         Ok(cli)

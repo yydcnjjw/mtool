@@ -33,25 +33,7 @@ struct MdictConfig {
 }
 
 impl MdictConfig {
-    async fn list_dict_paths(&self) -> Result<Vec<PathBuf>> {
-        println!("{}", self.dict_path);
-        let path = Path::new(&self.dict_path);
 
-        Ok(fs::read_dir(path)?
-            .filter_map(|path| path.ok())
-            .filter_map(|path| {
-                if let Ok(t) = path.file_type() {
-                    if t.is_dir() {
-                        None
-                    } else {
-                        Some(path.path())
-                    }
-                } else {
-                    None
-                }
-            })
-            .collect())
-    }
 }
 
 #[derive(Debug, Serialize, Deserialize)]

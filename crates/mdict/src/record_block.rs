@@ -10,8 +10,11 @@ use crate::{common::mdict_number, content_block, dict_meta::DictMeta, Error, Nom
 #[derive(Debug)]
 struct RecordBlockHeader {
     n_blocks: usize,
+    #[allow(dead_code)]
     n_entries: usize,
+    #[allow(dead_code)]
     nb_block_info: usize,
+    #[allow(dead_code)]
     nb_blocks: usize,
 }
 
@@ -23,6 +26,7 @@ pub struct RecordBlockInfo {
 
 #[derive(Debug)]
 pub struct RecordBlock {
+    #[allow(dead_code)]
     header: RecordBlockHeader,
     pub infos: Vec<RecordBlockInfo>,
     blocks: Vec<Vec<u8>>,
