@@ -44,6 +44,8 @@ impl Service for Sysev {
 
 impl Drop for Sysev {
     fn drop(&mut self) {
-        msysev::quit().unwrap();
+        if let Err(e) = msysev::quit() {
+            log::error!("Failed to exit sysev loop: {:?}", e);
+        }
     }
 }

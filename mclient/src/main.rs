@@ -10,14 +10,26 @@ use mrpc::Server;
 use mtool_service::*;
 use std::{env, sync::Arc};
 use sysev_mod::Sysev;
+use tokio::sync::OnceCell;
 
 struct App {
     cli: ServiceClient,
+
+    sysev: OnceCell<Arc<Sysev>>,
+    config: OnceCell<Arc<Config>>,
+    keybinding: OnceCell<Arc<KeyBinding>>,
+    cmder: OnceCell<Arc<Cmder>>,
 }
 
 impl App {
     async fn new(cli: ServiceClient) -> anyhow::Result<Arc<Self>> {
-        Ok(Arc::new(Self { cli }))
+        Ok(Arc::new(Self {
+            cli,
+            sysev: OnceCell::const_new(),
+            config: OnceCell::const_new(),
+            keybinding: OnceCell::const_new(),
+            cmder: OnceCell::const_new(),
+        }))
     }
 
     async fn run_serve(
@@ -54,18 +66,39 @@ impl App {
 
 #[mrpc::service]
 impl Service for App {
-    async fn create_sysev(self: Arc<Self>) -> anyhow::Result<sysev_mod::SharedService> {
-        Ok(Sysev::new())
+    async fn get_sysev(self: Arc<Self>) -> sysev_mod::SharedService {
+        self.sysev
+            .get_or_init(|| async move { Sysev::new() })
+            .await
+            .clone()
     }
-    async fn create_config(self: Arc<Self>) -> anyhow::Result<config_mod::SharedService> {
-        Ok(Config::new(path::config_file().context("Failed to open config file")?).await)
+    async fn get_config(self: Arc<Self>) -> config_mod::SharedService {
+        self.config
+            .get_or_init(|| async move {
+                Config::new(
+                    path::config_file()
+                        .context("Failed to open savev file")
+                        .unwrap(),
+                )
+                .await
+            })
+            .await
+            .clone()
     }
-    async fn create_keybinding(self: Arc<Self>) -> anyhow::Result<keybinding_mod::SharedService> {
-        Ok(KeyBinding::new(self.cli.sysev()).await?)
+    async fn get_keybinding(self: Arc<Self>) -> keybinding_mod::SharedService {
+        let sysev = self.cli.sysev();
+        self.keybinding
+            .get_or_init(|| async move { KeyBinding::new(sysev).await.unwrap() })
+            .await
+            .clone()
     }
 
-    async fn create_cmder(self: Arc<Self>) -> anyhow::Result<cmder_mod::SharedService> {
-        Ok(Cmder::new(self.cli.keybinding()).await?)
+    async fn get_cmder(self: Arc<Self>) -> cmder_mod::SharedService {
+        let keybinding = self.cli.keybinding();
+        self.cmder
+            .get_or_init(|| async move { Cmder::new(keybinding).await.unwrap() })
+            .await
+            .clone()
     }
 }
 
