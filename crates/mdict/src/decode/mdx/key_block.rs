@@ -16,7 +16,7 @@ use std::{
 };
 
 use super::{
-    common::{cond_if, mdict_number, mdict_string, NomResult},
+    common::{cond_if, mdx_number, mdx_string, NomResult},
     content_block,
     dict_meta::DictMeta,
     Result,
@@ -43,11 +43,11 @@ where
 {
     map(
         tuple((
-            mdict_number(meta),
-            mdict_number(meta),
+            mdx_number(meta),
+            mdx_number(meta),
             cond(meta.is_ver2(), be_u64),
-            mdict_number(meta),
-            mdict_number(meta),
+            mdx_number(meta),
+            mdx_number(meta),
             cond(meta.is_ver2(), le_u32),
         )),
         |(n_blocks, n_entries, nb_decompressed, nb_block_info, nb_blocks, checksum)| {
@@ -170,11 +170,11 @@ where
     count(
         map(
             tuple((
-                mdict_number(meta),
+                mdx_number(meta),
                 info_key(meta),
                 info_key(meta),
-                mdict_number(meta),
-                mdict_number(meta),
+                mdx_number(meta),
+                mdx_number(meta),
             )),
             |(n_entries, head, tail, nb_compressed, nb_decompressed)| KeyBlockInfo {
                 n_entries,
@@ -233,7 +233,7 @@ where
 
         let (_, entries) = count(
             map(
-                tuple((mdict_number(meta), mdict_string(meta))),
+                tuple((mdx_number(meta), mdx_string(meta))),
                 |(pos, key)| KeyIndex { pos, key },
             ),
             item.n_entries,

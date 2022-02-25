@@ -1,4 +1,4 @@
-use super::{common::MdResource, key_block::KeyIndex, Result};
+use super::{common::Resource, key_block::KeyIndex, Result};
 use super::{dict_meta::DictMeta, key_block::KeyBlock, record_block::RecordBlock};
 
 #[derive(Debug)]
@@ -21,7 +21,7 @@ impl Dict {
             [index.block_pos..index.block_pos + index.data_size])
     }
 
-    pub fn search<'a>(&'a mut self, text: &String) -> Vec<(String, MdResource<'a>)> {
+    pub fn search<'a>(&'a mut self, text: &String) -> Vec<(String, Resource<'a>)> {
         let search_indexs = self.search_index(|key| key == text);
 
         if let Err(_) = self.record_block.unzip_blocks(
@@ -36,7 +36,7 @@ impl Dict {
         let mut krv = Vec::new();
         for (key, index) in search_indexs.iter() {
             let kr = match self.get_record(index) {
-                Ok(data) => match MdResource::new(text, data, &self.meta) {
+                Ok(data) => match Resource::new(text, data, &self.meta) {
                     Ok(resource) => Some((key.clone(), resource)),
                     Err(_) => None,
                 },

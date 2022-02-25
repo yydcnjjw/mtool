@@ -14,7 +14,9 @@ mdict = { path = "../../crates/mdict" }
 clap = { version = "3.0.5", features = ["derive"] }
 serde = { version = "1.0", features = ["derive"] }
 
-log = "0.4"
-tokio = { version = "1" }
-anyhow = "1.0"
+tokio = "1"
+tokio-stream = { version = "0.1", features = ["fs"] }
 async-trait = "0.1"
+
+anyhow = "1.0"
+log = "0.4"

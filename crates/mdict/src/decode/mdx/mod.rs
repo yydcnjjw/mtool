@@ -10,8 +10,8 @@ mod record_block;
 type Result<T> = std::result::Result<T, Error>;
 
 pub use self::{
-    common::MdResource,
+    common::Resource,
     dict::Dict,
     error::Error,
-    parser::{parse, parse_from_file},
+    parser::parse,
 };

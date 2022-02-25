@@ -1,12 +1,17 @@
-use std::{fs, path::PathBuf, sync::Arc};
+use std::{
+    path::{Path, PathBuf},
+    str::FromStr,
+    sync::Arc,
+};
 
 use anyhow::Context;
 use async_trait::async_trait;
 use clap::Parser;
 use cmder_mod::Command;
-use mdict::decode::mdict::{parse_from_file as mdict_parse_from_file, MdResource};
+use mdict::decode::mdx;
 use serde::{Deserialize, Serialize};
-use tokio::sync::Mutex;
+use tokio::{fs, sync::Mutex};
+use tokio_stream::{wrappers::ReadDirStream, StreamExt};
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct MdictConfig {
@@ -15,20 +20,23 @@ pub struct MdictConfig {
 
 impl MdictConfig {
     async fn list_dict_paths(&self) -> anyhow::Result<Vec<PathBuf>> {
-        Ok(fs::read_dir(&self.path)?
-            .filter_map(|path| path.ok())
-            .filter_map(|path| {
-                if let Ok(t) = path.file_type() {
-                    if t.is_dir() {
-                        None
-                    } else {
-                        Some(path.path())
+        let meta = fs::metadata(&self.path).await?;
+        let mut vec = Vec::new();
+        if meta.is_dir() {
+            let mut s = ReadDirStream::new(fs::read_dir(&self.path).await?);
+            while let Some(item) = s.next().await {
+                if let Ok(item) = item {
+                    if let Ok(t) = item.file_type().await {
+                        if t.is_file() {
+                            vec.push(item.path());
+                        }
                     }
-                } else {
-                    None
                 }
-            })
-            .collect())
+            }
+        } else {
+            vec.push(PathBuf::from_str(&self.path).context("Failed to parse dict path")?);
+        }
+        Ok(vec)
     }
 }
 
@@ -52,32 +60,36 @@ struct Args {
 }
 
 impl Cmd {
+    async fn query<P>(q: String, path: P) -> anyhow::Result<()>
+    where
+        P: AsRef<Path>,
+    {
+        let data = fs::read(path).await?;
+
+        let mut md = mdx::parse(data.as_slice()).context("Failed to parse mdx")?;
+        let html = md
+            .search(&q)
+            .iter()
+            .filter_map(|item| match &item.1 {
+                mdx::Resource::Text(text) => Some(text),
+                _ => None,
+            })
+            .fold(String::new(), |lhs, rhs| lhs + rhs + "<div></div>");
+        println!("{}{}", md.meta.description, html);
+
+        Ok(())
+    }
+
     async fn execute(&mut self, args: &Vec<String>) -> anyhow::Result<()> {
         let args = Args::try_parse_from(args).context("Failed to parse dict args")?;
 
         let mut handles = Vec::new();
         for path in self.cfg.list_dict_paths().await? {
-            let query = args.query.clone();
-            handles.push(tokio::spawn(async move {
-                match mdict_parse_from_file(&path) {
-                    Ok(mut md) => {
-                        let html = md
-                            .search(&query)
-                            .iter()
-                            .filter_map(|item| match &item.1 {
-                                MdResource::Text(text) => Some(text),
-                                _ => None,
-                            })
-                            .fold(String::new(), |lhs, rhs| lhs + rhs + "<div></div>");
-                        println!("{}{}", md.meta.description, html);
-                    }
-                    Err(e) => println!("{:?}", e),
-                };
-            }));
+            handles.push(tokio::spawn(Self::query(args.query.clone(), path)));
         }
 
         for handle in handles {
-            handle.await?;
+            handle.await??;
         }
         Ok(())
     }

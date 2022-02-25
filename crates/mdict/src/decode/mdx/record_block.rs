@@ -6,7 +6,7 @@ use nom::{
 };
 
 use super::{
-    common::{mdict_number, NomResult},
+    common::{mdx_number, NomResult},
     content_block,
     dict_meta::DictMeta,
     Error, Result,
@@ -108,10 +108,10 @@ where
 {
     map(
         tuple((
-            mdict_number(meta),
-            mdict_number(meta),
-            mdict_number(meta),
-            mdict_number(meta),
+            mdx_number(meta),
+            mdx_number(meta),
+            mdx_number(meta),
+            mdx_number(meta),
         )),
         |(n_blocks, n_entries, nb_block_info, nb_blocks)| RecordBlockHeader {
             n_entries,
@@ -131,7 +131,7 @@ where
 {
     count(
         map(
-            tuple((mdict_number(meta), mdict_number(meta))),
+            tuple((mdx_number(meta), mdx_number(meta))),
             |(nb_compressed, nb_decompressed)| RecordBlockInfo {
                 nb_compressed,
                 nb_decompressed,

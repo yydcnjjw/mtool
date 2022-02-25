@@ -1,11 +1,10 @@
-use std::{fs, ops::RangeFrom, path::Path};
+use std::ops::RangeFrom;
 
-use anyhow::Context;
 use nom::{InputIter, InputLength, Slice};
 
 use super::{common::NomResult, dict_meta, key_block, record_block, Dict, Result};
 
-pub fn parse<I>(in_: I) -> NomResult<I, Dict>
+fn parse_inner<I>(in_: I) -> NomResult<I, Dict>
 where
     I: Clone + PartialEq + Slice<RangeFrom<usize>> + InputIter<Item = u8> + InputLength,
 {
@@ -23,9 +22,10 @@ where
     ))
 }
 
-pub fn parse_from_file<P: AsRef<Path>>(path: P) -> Result<Dict> {
-    let buf = fs::read(path).context("Failed to read dict")?;
-
-    let (_, mdict) = parse(buf.as_slice())?;
-    Ok(mdict)
+pub fn parse<I>(in_: I) -> Result<Dict>
+where
+    I: Clone + PartialEq + Slice<RangeFrom<usize>> + InputIter<Item = u8> + InputLength,
+{
+    let (_, dict) = parse_inner(in_)?;
+    Ok(dict)
 }

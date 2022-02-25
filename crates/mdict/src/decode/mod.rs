@@ -1,2 +1,2 @@
-pub mod mdict;
+pub mod mdx;
 pub mod hjdict;

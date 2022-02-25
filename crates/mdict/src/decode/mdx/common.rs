@@ -16,7 +16,7 @@ pub type NomResult<I, O, E = Error> = nom::IResult<I, O, E>;
 #[macro_export]
 macro_rules! nom_return {
     ($in_:tt, $output_t:ty, $x:expr) => {
-        match || -> crate::decode::mdict::Result<$output_t> { Ok($x) }() {
+        match || -> crate::decode::mdx::Result<$output_t> { Ok($x) }() {
             Ok(v) => Ok(($in_, v)),
             Err(e) => Err(nom::Err::Failure(e)),
         }
@@ -41,7 +41,7 @@ where
     }
 }
 
-pub fn mdict_number<I, E>(meta: &DictMeta) -> impl FnMut(I) -> IResult<I, usize, E>
+pub fn mdx_number<I, E>(meta: &DictMeta) -> impl FnMut(I) -> IResult<I, usize, E>
 where
     I: Slice<RangeFrom<usize>> + InputIter<Item = u8> + InputLength,
     E: ParseError<I>,
@@ -56,7 +56,7 @@ where
 const U8NULL: &'static [u8] = &[0u8];
 const U16NULL: &'static [u8] = &[0u8, 0u8];
 
-pub fn mdict_string<I, E>(meta: &DictMeta) -> impl FnMut(I) -> IResult<I, String, E>
+pub fn mdx_string<I, E>(meta: &DictMeta) -> impl FnMut(I) -> IResult<I, String, E>
 where
     I: Clone
         + PartialEq
@@ -79,18 +79,18 @@ where
 }
 
 #[derive(Debug)]
-pub enum MdResource<'a> {
+pub enum Resource<'a> {
     Text(String),
     Raw(&'a [u8]),
 }
 
-impl<'a> MdResource<'a> {
-    pub fn new(key: &String, data: &'a [u8], meta: &DictMeta) -> Result<MdResource<'a>> {
+impl<'a> Resource<'a> {
+    pub fn new(key: &String, data: &'a [u8], meta: &DictMeta) -> Result<Resource<'a>> {
         if key.ends_with(".png") {
-            Ok(MdResource::Raw(data))
+            Ok(Resource::Raw(data))
         } else {
-            let (_, text) = mdict_string::<_, Error>(meta)(data)?;
-            Ok(MdResource::Text(text))
+            let (_, text) = mdx_string::<_, Error>(meta)(data)?;
+            Ok(Resource::Text(text))
         }
     }
 }
