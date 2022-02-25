@@ -6,11 +6,24 @@ edition = "2018"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-flate2 = { version = "*", features = ["zlib"], default-features = false }
-minilzo-rs = "*"
-ripemd128 = "*"
-byteorder = "*"
-thiserror = "*"
-serde = { version = "*", features = [ "derive" ] }
-quick-xml = { version = "*", features = [ "serialize" ] }
-nom = "*"
+# for mdict
+flate2 = { version = "1.0", features = ["zlib"], default-features = false }
+minilzo-rs = "0.6"
+ripemd128 = "0.1"
+byteorder = "1.4"
+nom = "7"
+quick-xml = { version = "0.22", features = [ "serialize" ] }
+
+# for hjdict
+reqwest = "0.11"
+soup = "0.5"
+html5ever = "0.22"
+# colored = "*"
+regex = "1.5"
+
+thiserror = "1.0"
+anyhow = "1.0"
+serde = { version = "1.0", features = [ "derive" ] }
+
+
+

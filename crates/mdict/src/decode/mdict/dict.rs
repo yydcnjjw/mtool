@@ -1,13 +1,21 @@
-use crate::{common::MdResource, key_block::KeyIndex, mdict::Mdict, Result};
+use super::{common::MdResource, key_block::KeyIndex, Result};
+use super::{dict_meta::DictMeta, key_block::KeyBlock, record_block::RecordBlock};
 
 #[derive(Debug)]
-pub struct RecordIndex {
+pub struct Dict {
+    pub meta: DictMeta,
+    pub key_block: KeyBlock,
+    pub record_block: RecordBlock,
+}
+
+#[derive(Debug)]
+struct RecordIndex {
     pub block_index: usize,
     pub block_pos: usize,
     pub data_size: usize,
 }
 
-impl Mdict {
+impl Dict {
     fn get_record<'a>(&'a self, index: &RecordIndex) -> Result<&'a [u8]> {
         Ok(&self.record_block.get_block(index.block_index)?
             [index.block_pos..index.block_pos + index.data_size])

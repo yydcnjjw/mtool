@@ -4,7 +4,7 @@ use anyhow::Context;
 use async_trait::async_trait;
 use clap::Parser;
 use cmder_mod::Command;
-use mdict::common::MdResource;
+use mdict::decode::mdict::{parse_from_file as mdict_parse_from_file, MdResource};
 use serde::{Deserialize, Serialize};
 use tokio::sync::Mutex;
 
@@ -59,7 +59,7 @@ impl Cmd {
         for path in self.cfg.list_dict_paths().await? {
             let query = args.query.clone();
             handles.push(tokio::spawn(async move {
-                match mdict::parse(&path) {
+                match mdict_parse_from_file(&path) {
                     Ok(mut md) => {
                         let html = md
                             .search(&query)

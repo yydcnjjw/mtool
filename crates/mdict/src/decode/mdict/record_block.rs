@@ -5,7 +5,12 @@ use nom::{
     IResult, InputIter, InputLength, Slice,
 };
 
-use crate::{common::mdict_number, content_block, dict_meta::DictMeta, Error, NomResult, Result};
+use super::{
+    common::{mdict_number, NomResult},
+    content_block,
+    dict_meta::DictMeta,
+    Error, Result,
+};
 
 #[derive(Debug)]
 struct RecordBlockHeader {
@@ -52,15 +57,13 @@ impl RecordBlock {
             return Ok(());
         }
 
-        match content_block::parse(block.as_slice(), info.nb_compressed, info.nb_decompressed) {
-            Ok((_, decompressed_block)) => {
-                let block = self.blocks.index_mut(i);
-                block.clear();
-                block.extend_from_slice(&decompressed_block);
-                Ok(())
-            }
-            Err(e) => Err(Error::Nom(e.to_string())),
-        }
+        let (_, decompressed_block) =
+            content_block::parse(block.as_slice(), info.nb_compressed, info.nb_decompressed)?;
+
+        let block = self.blocks.index_mut(i);
+        block.clear();
+        block.extend_from_slice(&decompressed_block);
+        Ok(())
     }
 
     pub fn get_block<'a>(&'a self, i: usize) -> Result<&'a Vec<u8>> {
@@ -79,7 +82,7 @@ where
     let (in_, infos) = record_block_info(meta, &header)(in_)?;
 
     let mut input = in_.clone();
-    
+
     let mut blocks = Vec::new();
     for info in infos.iter() {
         let input_ = input.clone();

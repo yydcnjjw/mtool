@@ -1,5 +1,6 @@
 use std::ops::RangeFrom;
 
+use anyhow::Context;
 use nom::{
     combinator::map,
     multi::length_count,
@@ -10,7 +11,9 @@ use nom::{
 
 use serde::Deserialize;
 
-use crate::{nom_return, NomResult};
+use crate::nom_return;
+
+use super::common::NomResult;
 
 #[derive(Debug, Deserialize, PartialEq)]
 pub struct DictMeta {
@@ -62,6 +65,9 @@ where
         tuple((length_count(map(be_u32, |i| i / 2), le_u16), le_u32))(in_)?;
 
     nom_return!(in_, DictMeta, {
-        quick_xml::de::from_str::<DictMeta>(&String::from_utf16(&dict_meta)?)?
+        quick_xml::de::from_str::<DictMeta>(
+            &String::from_utf16(&dict_meta).context("Failed to convert to utf-16")?,
+        )
+        .context("Failed to parse mdict meta xml")?
     })
 }

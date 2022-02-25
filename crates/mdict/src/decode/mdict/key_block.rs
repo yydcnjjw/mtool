@@ -1,3 +1,4 @@
+use anyhow::Context;
 use byteorder::{LittleEndian, WriteBytesExt};
 use flate2::read::ZlibDecoder;
 use nom::{
@@ -14,11 +15,11 @@ use std::{
     ops::RangeFrom,
 };
 
-use crate::{
-    common::{cond_if, mdict_number, mdict_string},
+use super::{
+    common::{cond_if, mdict_number, mdict_string, NomResult},
     content_block,
     dict_meta::DictMeta,
-    NomResult, Result,
+    Result,
 };
 
 #[derive(Debug)]
@@ -75,8 +76,10 @@ fn info_unzip(in_: Vec<u8>, checksum: u32) -> Result<Vec<u8>> {
     let key: Vec<u8>;
     {
         let mut vec = Vec::with_capacity(8);
-        vec.write_u32::<LittleEndian>(checksum)?;
-        vec.write_u32::<LittleEndian>(0x3695)?;
+        vec.write_u32::<LittleEndian>(checksum)
+            .context("Failed to write cksum")?;
+        vec.write_u32::<LittleEndian>(0x3695)
+            .context("Failed to write magic 0x3695")?;
 
         let mut hasher = Ripemd128::new();
         hasher.input(vec);
@@ -100,7 +103,9 @@ fn info_unzip(in_: Vec<u8>, checksum: u32) -> Result<Vec<u8>> {
 
     {
         let mut decoder = ZlibDecoder::new(Cursor::new(in_));
-        decoder.read_to_end(&mut output)?;
+        decoder
+            .read_to_end(&mut output)
+            .context("Failed to decode zlib")?;
     }
 
     Ok(output)

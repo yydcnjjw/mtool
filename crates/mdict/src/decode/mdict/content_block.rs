@@ -3,6 +3,7 @@ use std::{
     ops::RangeFrom,
 };
 
+use anyhow::Context;
 use flate2::read::ZlibDecoder;
 use nom::{
     combinator::map,
@@ -12,7 +13,9 @@ use nom::{
     InputIter, InputLength, Slice,
 };
 
-use crate::{nom_return, NomResult};
+use crate::nom_return;
+
+use super::common::NomResult;
 
 #[derive(Debug)]
 enum ContentBlockType {
@@ -58,14 +61,17 @@ where
             ContentBlockType::Zlib => {
                 let mut output = Vec::with_capacity(nb_decompressed);
                 let mut decoder = ZlibDecoder::new(Cursor::new(block.data));
-                decoder.read_to_end(&mut output)?;
+                decoder
+                    .read_to_end(&mut output)
+                    .context("Failed to decode zlib block")?;
                 output
             }
             ContentBlockType::UnCompressed => block.data,
             ContentBlockType::LZO => {
-                let lzo = minilzo_rs::LZO::init()?;
+                let lzo = minilzo_rs::LZO::init().context("Failed to init lzo decode")?;
 
-                lzo.decompress(&block.data, nb_decompressed)?
+                lzo.decompress(&block.data, nb_decompressed)
+                    .context("Failed to decode lzo block")?
             }
         }
     })

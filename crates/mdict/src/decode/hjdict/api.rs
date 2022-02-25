@@ -1,6 +1,7 @@
+use anyhow::Context;
 use reqwest;
 
-use crate::{
+use super::{
     parser::{parse, JPWord},
     Result,
 };
@@ -22,9 +23,13 @@ pub async fn query_jp_dict(input: &String) -> Result<Vec<JPWord>> {
         .header(reqwest::header::USER_AGENT, USER_AGENT)
         .header(reqwest::header::COOKIE, COOKIE)
         .send()
-        .await?;
+        .await
+        .context("Failed to send query request")?;
 
-    let text = resp.text().await?;
+    let text = resp
+        .text()
+        .await
+        .context("Failed to parse query response")?;
 
     parse(input, &text)
 }

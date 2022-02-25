@@ -1,22 +1,11 @@
-use std::ops::RangeFrom;
+use std::{fs, ops::RangeFrom, path::Path};
 
+use anyhow::Context;
 use nom::{InputIter, InputLength, Slice};
 
-use crate::{
-    dict_meta::{self, DictMeta},
-    key_block::{self, KeyBlock},
-    record_block::{self, RecordBlock},
-    NomResult,
-};
+use super::{common::NomResult, dict_meta, key_block, record_block, Dict, Result};
 
-#[derive(Debug)]
-pub struct Mdict {
-    pub meta: DictMeta,
-    pub key_block: KeyBlock,
-    pub record_block: RecordBlock,
-}
-
-pub(crate) fn parse<I>(in_: I) -> NomResult<I, Mdict>
+pub fn parse<I>(in_: I) -> NomResult<I, Dict>
 where
     I: Clone + PartialEq + Slice<RangeFrom<usize>> + InputIter<Item = u8> + InputLength,
 {
@@ -26,10 +15,17 @@ where
 
     Ok((
         in_,
-        Mdict {
+        Dict {
             meta,
             key_block,
             record_block,
         },
     ))
+}
+
+pub fn parse_from_file<P: AsRef<Path>>(path: P) -> Result<Dict> {
+    let buf = fs::read(path).context("Failed to read dict")?;
+
+    let (_, mdict) = parse(buf.as_slice())?;
+    Ok(mdict)
 }

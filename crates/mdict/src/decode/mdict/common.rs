@@ -9,14 +9,14 @@ use nom::{
     Compare, IResult, InputIter, InputLength, InputTake, Parser, Slice,
 };
 
-use crate::{Error, Result};
+use super::{dict_meta::DictMeta, Error, Result};
 
-use super::dict_meta::DictMeta;
+pub type NomResult<I, O, E = Error> = nom::IResult<I, O, E>;
 
 #[macro_export]
 macro_rules! nom_return {
     ($in_:tt, $output_t:ty, $x:expr) => {
-        match || -> crate::Result<$output_t> { Ok($x) }() {
+        match || -> crate::decode::mdict::Result<$output_t> { Ok($x) }() {
             Ok(v) => Ok(($in_, v)),
             Err(e) => Err(nom::Err::Failure(e)),
         }
@@ -89,10 +89,8 @@ impl<'a> MdResource<'a> {
         if key.ends_with(".png") {
             Ok(MdResource::Raw(data))
         } else {
-            match mdict_string::<_, Error>(meta)(data) {
-                Ok((_, text)) => Ok(MdResource::Text(text)),
-                Err(e) => Err(Error::Nom(e.to_string())),
-            }
+            let (_, text) = mdict_string::<_, Error>(meta)(data)?;
+            Ok(MdResource::Text(text))
         }
     }
 }
