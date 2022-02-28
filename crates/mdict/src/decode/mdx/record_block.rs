@@ -61,8 +61,7 @@ impl RecordBlock {
             content_block::parse(block.as_slice(), info.nb_compressed, info.nb_decompressed)?;
 
         let block = self.blocks.index_mut(i);
-        block.clear();
-        block.extend_from_slice(&decompressed_block);
+        *block = decompressed_block;
         Ok(())
     }
 
