@@ -2,7 +2,7 @@ use std::{collections::HashMap, sync::Arc};
 
 use tokio::sync::{broadcast, RwLock};
 
-use crate::{command::AsyncCommand, Service, ServiceResponse, ServiceRequest};
+use crate::{command::AsyncCommand, Service, ServiceRequest, ServiceResponse};
 use keybinding_mod::ServiceClient as KbCli;
 
 pub struct Cmder {
@@ -43,8 +43,10 @@ impl Service for Cmder {
     }
 
     async fn exec(self: Arc<Self>, name: String, args: Vec<String>) {
-        match self.cmds.read().await.get(&name) {
+        let cmd = { self.cmds.read().await.get(&name).cloned() };
+        match cmd {
             Some(cmd) => {
+                log::debug!("exec: {}, {:?}", name, args);
                 cmd.lock().await.exec(args).await;
             }
             None => {

@@ -59,7 +59,10 @@ impl App {
         toast_mod::load(cli.cmder()).await?;
         translate_mod::load(cli.cmder(), cli.config()).await?;
         dict_mod::load(cli.cmder(), cli.config()).await?;
-        webterm_mod::load().await?;
+
+        // webterm_mod::load().await?;
+
+        anynav_mod::load(cli.keybinding(), cli.cmder()).await?;
 
         Ok(cli)
     }
@@ -73,6 +76,7 @@ impl Service for App {
             .await
             .clone()
     }
+
     async fn get_config(self: Arc<Self>) -> config_mod::SharedService {
         self.config
             .get_or_init(|| async move {
@@ -86,6 +90,7 @@ impl Service for App {
             .await
             .clone()
     }
+
     async fn get_keybinding(self: Arc<Self>) -> keybinding_mod::SharedService {
         let sysev = self.cli.sysev();
         self.keybinding
@@ -131,6 +136,7 @@ async fn run() -> anyhow::Result<()> {
 
 #[tokio::main]
 async fn main() {
+    
     if let Err(e) = run().await {
         log::error!("{:?}", e);
     }

@@ -7,7 +7,7 @@ use nom::{
     multi::{count, length_count},
     number::streaming::{be_u16, be_u64, be_u8, le_u16, le_u32, le_u8},
     sequence::tuple,
-    AsBytes, IResult, InputIter, InputLength, Parser, Slice,
+    IResult, InputIter, InputLength, Parser, Slice,
 };
 use ripemd128::{Digest, Ripemd128};
 use std::{
@@ -16,8 +16,7 @@ use std::{
 };
 
 use super::{
-    common::{cond_if, mdx_number, mdx_string, NomResult},
-    content_block,
+    common::{cond_if, mdx_number, NomResult},
     dict_meta::DictMeta,
     Result,
 };
@@ -26,7 +25,7 @@ use super::{
 pub struct KeyBlockHeader {
     n_blocks: usize,
     #[allow(dead_code)]
-    n_entries: usize,
+    pub n_entries: usize,
     #[allow(dead_code)]
     nb_decompressed: Option<u64>,
     nb_block_info: usize,
@@ -65,11 +64,11 @@ where
 
 #[derive(Debug)]
 pub struct KeyBlockInfo {
-    n_entries: usize,
+    pub n_entries: usize,
     pub head: String,
     pub tail: String,
-    nb_compressed: usize,
-    nb_decompressed: usize,
+    pub nb_compressed: usize,
+    pub nb_decompressed: usize,
 }
 
 fn info_unzip(in_: Vec<u8>, checksum: u32) -> Result<Vec<u8>> {
@@ -210,61 +209,25 @@ where
 }
 
 #[derive(Debug)]
-pub struct KeyIndex {
-    pub pos: usize,
-    pub key: String,
-}
-
-fn key_blocks<I>(
-    in_: I,
-    meta: &DictMeta,
-    infos: &Vec<KeyBlockInfo>,
-) -> NomResult<I, Vec<Vec<KeyIndex>>>
-where
-    I: Clone + PartialEq + Slice<RangeFrom<usize>> + InputIter<Item = u8> + InputLength,
-{
-    let mut input = in_.clone();
-
-    let mut vec = Vec::new();
-    for item in infos {
-        let input_ = input.clone();
-        let (i_, data) = content_block::parse(input_, item.nb_compressed, item.nb_decompressed)?;
-        input = i_;
-
-        let (_, entries) = count(
-            map(
-                tuple((mdx_number(meta), mdx_string(meta))),
-                |(pos, key)| KeyIndex { pos, key },
-            ),
-            item.n_entries,
-        )(data.as_bytes())?;
-        vec.push(entries);
-    }
-
-    Ok((input, vec))
-}
-
-#[derive(Debug)]
-pub struct KeyBlock {
+pub struct KeyBlock<T> {
     pub header: KeyBlockHeader,
     pub infos: Vec<KeyBlockInfo>,
-    pub blocks: Vec<Vec<KeyIndex>>,
+    pub keys_input: T,
 }
 
-pub fn parse<I>(in_: I, meta: &DictMeta) -> NomResult<I, KeyBlock>
+pub fn parse<I>(in_: I, meta: &DictMeta) -> NomResult<I, KeyBlock<I>>
 where
     I: Clone + PartialEq + Slice<RangeFrom<usize>> + InputIter<Item = u8> + InputLength,
 {
     let (in_, header) = key_block_header(meta)(in_)?;
     let (in_, infos) = key_block_info(in_, meta, &header)?;
-    let (in_, blocks) = key_blocks(in_, meta, &infos)?;
 
     Ok((
-        in_,
+        in_.slice(header.nb_blocks..),
         KeyBlock {
             header,
             infos,
-            blocks,
+            keys_input: in_.clone(),
         },
     ))
 }

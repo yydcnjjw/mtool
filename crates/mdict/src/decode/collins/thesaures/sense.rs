@@ -1,7 +1,7 @@
 use itertools::Itertools;
 use scraper::ElementRef;
 
-use crate::{decode::collins::ToDisplay, static_selector};
+use crate::{decode::ToDisplay, static_selector};
 
 use super::Synonym;
 

@@ -1,5 +1,5 @@
 use msysev::Event as SysEvent;
-use std::sync::Arc;
+use std::{sync::Arc, thread};
 use tokio::sync::broadcast;
 
 use crate::{Service, ServiceRequest, ServiceResponse};
@@ -14,24 +14,22 @@ impl Sysev {
 
         let self_ = Arc::new(Self { tx });
 
-        tokio::spawn(Self::run_loop(self_.clone()));
+        Self::run_loop(self_.clone());
 
         self_
     }
 
-    async fn run_loop(self: Arc<Self>) {
+    fn run_loop(self: Arc<Self>) {
         let tx = self.tx.clone();
-        if let Err(e) = tokio::task::spawn_blocking(move || {
-            msysev::run_loop(move |e| {
+        thread::spawn(move || {
+            if let Err(e) = msysev::run_loop(move |e| {
                 if let Err(e) = tx.send(e) {
                     log::warn!("Failed to send sys event: {:?}", e);
                 }
-            })
-        })
-        .await
-        {
-            log::error!("sysev loop exited: {:?}", e);
-        }
+            }) {
+                log::error!("sysev loop exited: {:?}", e);
+            }
+        });
     }
 }
 

@@ -1,12 +1,7 @@
 use std::fmt;
 
-use crate::decode::collins::thesaures::{Sense, Synonym, Thesaures};
-
-pub trait OutputOrg {
-    fn output_org<Fmt>(&self, f: &mut Fmt) -> fmt::Result
-    where
-        Fmt: fmt::Write;
-}
+use super::{Sense, Synonym, ThesauresResult};
+use crate::decode::collins::output::OutputOrg;
 
 impl OutputOrg for Sense {
     fn output_org<Fmt>(&self, f: &mut Fmt) -> fmt::Result
@@ -45,7 +40,7 @@ impl OutputOrg for Synonym {
         write!(f, " ")?;
 
         if let Some(sound) = &self.sound {
-            write!(f, "[[{}][audio]]", sound)?;
+            write!(f, "[[{}][▷]]", sound)?;
         }
 
         write!(f, "\n")?;
@@ -57,7 +52,7 @@ impl OutputOrg for Synonym {
     }
 }
 
-impl OutputOrg for Thesaures {
+impl OutputOrg for ThesauresResult {
     fn output_org<Fmt>(&self, f: &mut Fmt) -> fmt::Result
     where
         Fmt: fmt::Write,

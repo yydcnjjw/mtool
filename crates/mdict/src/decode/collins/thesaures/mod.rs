@@ -1,15 +1,16 @@
-mod parser;
 mod output;
+mod parser;
 mod sense;
 mod synonym;
+mod thesaures;
 
 use reqwest::header::USER_AGENT;
 
 const DEFAULT_USER_AGENT: &'static str = "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_13_6) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/60.0.3112.78 Safari/537.36";
 
-pub use self::{parser::Thesaures, sense::Sense, synonym::Synonym};
+pub use self::{sense::Sense, synonym::Synonym, thesaures::ThesauresResult};
 
-pub async fn query(word: &str) -> anyhow::Result<Vec<Thesaures>> {
+pub async fn query(word: &str) -> anyhow::Result<Vec<ThesauresResult>> {
     let cli = reqwest::Client::builder()
         .use_rustls_tls() // for tls fingerpint
         .build()?;
@@ -30,7 +31,9 @@ pub async fn query(word: &str) -> anyhow::Result<Vec<Thesaures>> {
 
 #[cfg(test)]
 mod tests {
-    use super::{query, output::OutputOrg};
+    use crate::decode::collins::output::OutputOrg;
+
+    use super::query;
 
     #[tokio::test]
     async fn test_thesaures() {

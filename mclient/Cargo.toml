@@ -17,9 +17,11 @@ cmder-mod = { path = "../modules/cmder", features = ["service"] }
 toast-mod = { path = "../modules/toast" }
 translate-mod = { path = "../modules/translate" }
 dict-mod = { path = "../modules/dict" }
-webterm-mod = { path = "../modules/webterm" }
+# webterm-mod = { path = "../modules/webterm" }
+anynav-mod = { path = "../modules/anynav" }
 
 tokio = { version = "1", features = ["full"] }
+
 anyhow = "1.0"
 thiserror = "1.0"
 log = "0.4"

@@ -11,9 +11,14 @@ pub trait Command: Send + Sync + Debug {
 
 pub type AsyncCommand = Arc<Mutex<dyn Command>>;
 
-#[derive(Debug)]
 pub struct ClosureCmd<Closure> {
     closure: Closure,
+}
+
+impl<Closure> Debug for ClosureCmd<Closure> {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.debug_struct("ClosureCmd").finish()
+    }
 }
 
 impl<Closure> ClosureCmd<Closure> {
@@ -25,7 +30,7 @@ impl<Closure> ClosureCmd<Closure> {
 #[async_trait]
 impl<Closure> Command for ClosureCmd<Closure>
 where
-    Closure: FnMut(Vec<String>) + Send + Sync + Debug,
+    Closure: FnMut(Vec<String>) + Send + Sync,
 {
     async fn exec(&mut self, args: Vec<String>) {
         (self.closure)(args);

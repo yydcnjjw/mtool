@@ -8,7 +8,7 @@ edition = "2021"
 [dependencies]
 cmder-mod = { path = "../cmder" }
 
-notify-rust = "4"
+notify-rust = { version = "4", default-features = false }
 clap = { version = "3.0.5", features = ["derive"] }
 
 log = "0.4"

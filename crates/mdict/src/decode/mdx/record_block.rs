@@ -1,15 +1,13 @@
-use std::ops::{IndexMut, RangeFrom};
+use std::ops::RangeFrom;
 
 use nom::{
-    combinator::map, error::ParseError, multi::count, number::streaming::le_u8, sequence::tuple,
-    IResult, InputIter, InputLength, Slice,
+    combinator::map, error::ParseError, multi::count, sequence::tuple, IResult, InputIter,
+    InputLength, Slice,
 };
 
 use super::{
     common::{mdx_number, NomResult},
-    content_block,
     dict_meta::DictMeta,
-    Error, Result,
 };
 
 #[derive(Debug)]
@@ -30,72 +28,26 @@ pub struct RecordBlockInfo {
 }
 
 #[derive(Debug)]
-pub struct RecordBlock {
+pub struct RecordBlock<T> {
     #[allow(dead_code)]
     header: RecordBlockHeader,
     pub infos: Vec<RecordBlockInfo>,
-    blocks: Vec<Vec<u8>>,
+    pub records_input: T,
 }
 
-impl RecordBlock {
-    pub fn unzip_blocks(&mut self, indexs: &Vec<usize>) -> Result<()> {
-        for i in indexs {
-            self.unzip_block(*i)?;
-        }
-
-        Ok(())
-    }
-
-    fn unzip_block(&mut self, i: usize) -> Result<()> {
-        let info = self
-            .infos
-            .get(i)
-            .ok_or(Error::OutOfBounds(self.infos.len(), i))?;
-
-        let block = self.blocks.get(i).unwrap();
-        if block.len() == info.nb_decompressed {
-            return Ok(());
-        }
-
-        let (_, decompressed_block) =
-            content_block::parse(block.as_slice(), info.nb_compressed, info.nb_decompressed)?;
-
-        let block = self.blocks.index_mut(i);
-        *block = decompressed_block;
-        Ok(())
-    }
-
-    pub fn get_block<'a>(&'a self, i: usize) -> Result<&'a Vec<u8>> {
-        Ok(self
-            .blocks
-            .get(i)
-            .ok_or(Error::OutOfBounds(self.blocks.len(), i))?)
-    }
-}
-
-pub fn parse<I>(in_: I, meta: &DictMeta) -> NomResult<I, RecordBlock>
+pub fn parse<I>(in_: I, meta: &DictMeta) -> NomResult<I, RecordBlock<I>>
 where
     I: Clone + PartialEq + Slice<RangeFrom<usize>> + InputIter<Item = u8> + InputLength,
 {
     let (in_, header) = record_block_header(meta)(in_)?;
     let (in_, infos) = record_block_info(meta, &header)(in_)?;
 
-    let mut input = in_.clone();
-
-    let mut blocks = Vec::new();
-    for info in infos.iter() {
-        let input_ = input.clone();
-        let (i_, block) = count(le_u8, info.nb_compressed)(input_)?;
-        input = i_;
-        blocks.push(block);
-    }
-
     Ok((
-        input,
+        in_.clone(),
         RecordBlock {
             header,
             infos,
-            blocks,
+            records_input: in_.clone(),
         },
     ))
 }

@@ -63,6 +63,7 @@ impl TryFromStr for KeyCode {
             ),
             map(tag_no_case("<Backspace>"), |_| KeyCode::BackSpace),
             map(tag_no_case("<Return>"), |_| KeyCode::Return),
+            map(tag_no_case("<Spacebar>"), |_| KeyCode::Spacebar),
             // TODO: more special keycode
             map_res(anychar, |c| -> Result<KeyCode> {
                 Ok(match c {
