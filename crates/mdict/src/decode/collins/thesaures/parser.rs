@@ -1,5 +1,3 @@
-use std::fmt;
-
 use scraper::Html;
 
 use crate::static_selector;
@@ -31,19 +29,8 @@ fn thesaures_list<'a>(doc: &'a Html) -> anyhow::Result<impl Iterator<Item = Thes
         .map(|(source, senses)| Thesaures { source, senses }))
 }
 
-impl fmt::Display for Thesaures {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        write!(f, "* {}\n", self.source)?;
-
-        for sense in &self.senses {
-            write!(f, "** {}", sense)?;
-        }
-
-        Ok(())
-    }
-}
-
 pub fn parse(doc: &str) -> anyhow::Result<Vec<Thesaures>> {
     let doc = Html::parse_document(doc);
     Ok(thesaures_list(&doc).unwrap().collect::<Vec<_>>())
 }
+

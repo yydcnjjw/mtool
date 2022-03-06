@@ -1,5 +1,3 @@
-use std::fmt;
-
 use itertools::Itertools;
 use scraper::ElementRef;
 
@@ -26,28 +24,5 @@ impl<'a> From<ElementRef<'a>> for Synonym {
             examples: examples.map(|n| n.to_display()).collect_vec(),
             query_url: queryable.and_then(|n| n.value().attr("href").map(|v| v.to_string())),
         }
-    }
-}
-
-impl fmt::Display for Synonym {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        if let Some(query_url) = &self.query_url {
-            write!(f, "[[{}][{}]]", query_url, self.word)?;
-        } else {
-            write!(f, "{}", self.word)?;
-        }
-
-        write!(f, " ")?;
-
-        if let Some(sound) = &self.sound {
-            write!(f, "[[{}][audio]]", sound)?;
-        }
-
-        write!(f, "\n")?;
-
-        for example in &self.examples {
-            write!(f, "- {}\n", example)?;
-        }
-        Ok(())
     }
 }

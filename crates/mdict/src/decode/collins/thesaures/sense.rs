@@ -1,5 +1,3 @@
-use std::fmt;
-
 use itertools::Itertools;
 use scraper::ElementRef;
 
@@ -37,24 +35,4 @@ fn synonym_list<'a>(elem: ElementRef<'a>) -> Vec<Synonym> {
     elem.select(static_selector!(".blockSyn > .type-syn"))
         .map(|e| Synonym::from(e))
         .collect_vec()
-}
-
-impl fmt::Display for Sense {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        write!(f, "{} {}\n\n", self.word, self.pos)?;
-
-        if let Some(content) = &self.content {
-            write!(f, "{}\n\n", content)?;
-        }
-
-        if let Some(example) = &self.example {
-            write!(f, "{}\n\n", example)?;
-        }
-
-        for synonym in &self.synonyms {
-            write!(f, "*** {}", synonym)?;
-        }
-
-        Ok(())
-    }
 }

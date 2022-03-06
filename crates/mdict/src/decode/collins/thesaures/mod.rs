@@ -1,4 +1,5 @@
 mod parser;
+mod output;
 mod sense;
 mod synonym;
 
@@ -29,13 +30,16 @@ pub async fn query(word: &str) -> anyhow::Result<Vec<Thesaures>> {
 
 #[cfg(test)]
 mod tests {
-    use super::*;
+    use super::{query, output::OutputOrg};
 
     #[tokio::test]
     async fn test_thesaures() {
         let result = query("test").await.unwrap();
+        let mut output = String::new();
         for v in result {
-            println!("{}", v);
+            v.output_org(&mut output).unwrap();
         }
+
+        println!("{}", output);
     }
 }
