@@ -60,8 +60,6 @@ impl App {
         translate_mod::load(cli.cmder(), cli.config()).await?;
         dict_mod::load(cli.cmder(), cli.config()).await?;
 
-        // webterm_mod::load().await?;
-
         anynav_mod::load(cli.keybinding(), cli.cmder()).await?;
 
         Ok(cli)
