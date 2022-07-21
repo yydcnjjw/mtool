@@ -2,6 +2,8 @@ import { NgModule } from '@angular/core';
 import { BrowserModule } from '@angular/platform-browser';
 import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
 
+import { MatDividerModule } from '@angular/material/divider';
+
 import { SearchModule } from './search/search.module';
 import { DictModule } from './dict/dict.module';
 
@@ -17,6 +19,8 @@ import { AppComponent } from './app.component';
     BrowserModule,
     AppRoutingModule,
     BrowserAnimationsModule,
+
+    MatDividerModule,
 
     SearchModule,
     DictModule,

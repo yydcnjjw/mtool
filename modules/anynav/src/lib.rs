@@ -42,7 +42,7 @@ pub async fn load(
 
     let cfg: Config = cfgcli.get_value("anynav".into()).await??.try_into()?;
 
-    let dict_plug = dict::init(cfg.dict).await;
+    let dict_plug = dict::init(cfg.dict).await?;
 
     thread::spawn(move || {
         let _guard = async_rt.enter();

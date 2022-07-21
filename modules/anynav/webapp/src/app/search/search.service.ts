@@ -11,9 +11,8 @@ export class SearchDirective {
   constructor(public viewContainerRef: ViewContainerRef) { }
 }
 
-
 export interface SearchCommand {
-  key(): string;
+  keys(): Array<string>;
   description(): string;
   view(): Type<any>;
 
@@ -35,7 +34,9 @@ export class SearchService {
   constructor() { }
 
   add_search_command(command: SearchCommand) {
-    this.cmds.set(command.key(), command);
+    for (let key of command.keys()) {
+      this.cmds.set(key, command);
+    }
   }
 
   async search(input: string): Promise<SearchResult | undefined> {
@@ -49,8 +50,9 @@ export class SearchService {
 
     const cmd = this.cmds.get(key)!;
     try {
-      return { cmd, data: await cmd.search(text) };
+      return { cmd, data: await cmd.search(text.trim()) };
     } catch (e) {
+      console.log(`${key} search error: ${e}`)
       return undefined;
     }
   }

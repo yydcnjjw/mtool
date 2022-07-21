@@ -60,7 +60,7 @@
         "height": 80,
         "width": 800,
         "resizable": true,
-        "transparent": true,
+        "transparent": false,
         "decorations": true,
         "alwaysOnTop": true
       }

@@ -1,2 +1,65 @@
-<div class="word" [innerHTML]="data.detail">
+<div #view class="word" tabindex="0">
+
+  <h2 class="word mat-h2">
+    <span>{{data.word}}</span>
+    <span *ngIf="data.phonetic"> | {{data.phonetic}}</span>
+  </h2>
+
+  <mat-divider></mat-divider>
+
+  <div class="trans mat-body">
+    <div *ngFor="let trans of data.translation">
+      {{trans}}
+    </div>
+  </div>
+
+  <mat-divider></mat-divider>
+
+  <div *ngIf="data.definition.length != 0">
+    <div class="def mat-body">
+      <div *ngFor="let def of data.definition">
+        {{def}}
+      </div>
+    </div>
+
+    <mat-divider></mat-divider>
+  </div>
+
+  <div *ngIf="data.exchange.length != 0">
+    <div class="exchange mat-body">
+      <span *ngFor="let exchange of data.exchange">
+        {{exchange}} /
+      </span>
+    </div>
+
+    <mat-divider></mat-divider>
+  </div>
+
+  <div *ngIf="data.pos.length != 0">
+    <div class="pos mat-body">
+      <span *ngFor="let pos of data.pos">{{pos}}</span>
+    </div>
+
+    <mat-divider></mat-divider>
+  </div>
+
+  <div *ngIf="data.tag.length != 0">
+    <div class="tag mat-body">
+      <span *ngFor="let tag of data.tag">{{map_tag(tag)}} / </span>
+    </div>
+
+    <mat-divider></mat-divider>
+  </div>
+
+  <div *ngIf="data.collins || data.oxford || data.bnc || data.frq" class="frq mat-body">
+    <span *ngIf="data.collins">{{'★'.repeat(data.collins)}} / </span>
+    <span *ngIf="data.oxford && data.oxford > 0">※ / </span>
+    <span *ngIf="data.bnc">BNC:{{data.bnc}} / </span>
+    <span *ngIf="data.frq">COCA:{{data.frq}} /</span>
+  </div>
+
+  <div class="action">
+    a:anki
+  </div>
+
 </div>

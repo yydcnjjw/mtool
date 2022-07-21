@@ -16,6 +16,7 @@ pub trait Service {
     async fn exec(name: String, args: Vec<String>);
 }
 
+#[cfg(feature = "service")]
 pub(crate) type CmderCli = ServiceClient;
 
 #[cfg(feature = "service")]

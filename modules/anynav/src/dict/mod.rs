@@ -1,51 +1,151 @@
-use std::{fmt, fs, path::Path, sync::Mutex};
+mod entities;
+
+use entities::{prelude::*, *};
+
+use std::{fmt, path::Path};
 
 use anyhow::Context;
-use mdict::decode::mdx;
-use once_cell::sync::OnceCell;
+use sea_orm::*;
 use serde::{Deserialize, Serialize};
 use tauri::{
     plugin::{Builder, TauriPlugin},
     Manager, Runtime,
 };
 
-struct Dict {
-    mdx: Mutex<mdx::Dict<&'static [u8]>>,
+struct DictDB {
+    db: DatabaseConnection,
 }
 
-#[derive(Serialize, Deserialize, Debug)]
-struct WordDetail {
+#[derive(Serialize, Deserialize)]
+struct Word {
     word: String,
-    detail: String,
+    phonetic: Option<String>,
+    definition: Vec<String>,
+    translation: Vec<String>,
+    pos: Vec<String>,
+    collins: Option<i32>,
+    oxford: Option<i32>,
+    tag: Vec<String>,
+    bnc: Option<i32>,
+    frq: Option<i32>,
+    exchange: Vec<String>,
+    detail: Option<String>,
+    audio: Option<String>,
 }
 
-impl Dict {
-    fn new<P>(path: P) -> anyhow::Result<Self>
+impl From<dict::Model> for Word {
+    fn from(word: dict::Model) -> Self {
+        let dict::Model {
+            id: _,
+            word,
+            phonetic,
+            definition,
+            translation,
+            pos,
+            collins,
+            oxford,
+            tag,
+            bnc,
+            frq,
+            exchange,
+            detail,
+            audio,
+        } = word;
+        Word {
+            word,
+            phonetic: phonetic.filter(|v| !v.is_empty()),
+            definition: definition.map_or(Vec::new(), |v| {
+                v.lines()
+                    .filter_map(|v| {
+                        if v.is_empty() {
+                            None
+                        } else {
+                            Some(v.to_string())
+                        }
+                    })
+                    .collect()
+            }),
+            translation: translation.map_or(Vec::new(), |v| {
+                v.lines()
+                    .filter_map(|v| {
+                        if v.is_empty() {
+                            None
+                        } else {
+                            Some(v.to_string())
+                        }
+                    })
+                    .collect()
+            }),
+            pos: pos.map_or(Vec::new(), |v| {
+                v.split("/")
+                    .filter_map(|v| {
+                        if v.is_empty() {
+                            None
+                        } else {
+                            Some(v.to_string())
+                        }
+                    })
+                    .collect()
+            }),
+            collins,
+            oxford,
+            tag: tag.map_or(Vec::new(), |v| {
+                v.split_whitespace()
+                    .filter_map(|v| {
+                        if v.is_empty() {
+                            None
+                        } else {
+                            Some(v.to_string())
+                        }
+                    })
+                    .collect()
+            }),
+            bnc,
+            frq,
+            exchange: exchange.map_or(Vec::new(), |v| {
+                v.split("/")
+                    .filter_map(|v| {
+                        if v.is_empty() {
+                            None
+                        } else {
+                            Some(v.to_string())
+                        }
+                    })
+                    .collect()
+            }),
+            detail: detail.filter(|v| !v.is_empty()),
+            audio: audio.filter(|v| !v.is_empty()),
+        }
+    }
+}
+
+impl DictDB {
+    async fn new<P>(path: P) -> anyhow::Result<Self>
     where
         P: AsRef<Path> + fmt::Display,
     {
-        static DATA: OnceCell<Vec<u8>> = OnceCell::new();
+        let db = Database::connect(format!("sqlite://{}", path))
+            .await
+            .context(format!("Failed to connect {}", path))?;
 
-        let data = DATA.get_or_try_init(|| {
-            fs::read(&path).context(format!("Failed to read dict: {}", path.to_string()))
-        })?;
-        let mdx = Mutex::new(mdx::parse(data.as_slice()).context("Failed to parse mdx")?);
-        Ok(Self { mdx })
+        Ok(Self { db })
+    }
+
+    async fn query(&self, text: &str) -> anyhow::Result<Word> {
+        Ok(Word::from(
+            Dict::find()
+                .filter(dict::Column::Word.eq(text))
+                .one(&self.db)
+                .await
+                .context(format!("Failed to query: {}", text))?
+                .context(format!("{} not found", text))?,
+        ))
     }
 }
 
 #[tauri::command]
-fn query(input: String, dict: tauri::State<Dict>) -> Result<WordDetail, String> {
-    let dict = dict.mdx.lock().unwrap();
-    let (word, res) = dict.search(&input).map_err(|e| e.to_string())?;
-
-    match res {
-        mdx::Resource::Text(v) => Ok(WordDetail {
-            word: word.clone(),
-            detail: v.clone(),
-        }),
-        mdx::Resource::Raw(_) => Err("invalid query".into()),
-    }
+async fn query(text: String, dict: tauri::State<'_, DictDB>) -> Result<Word, String> {
+    dict.query(&text).await.map_err(|e| format!("{:?}", e))
 }
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
@@ -53,12 +153,14 @@ pub struct Config {
     path: String,
 }
 
-pub async fn init<R: Runtime>(cfg: Config) -> TauriPlugin<R> {
-    Builder::new("dict")
+pub async fn init<R: Runtime>(cfg: Config) -> anyhow::Result<TauriPlugin<R>> {
+    let dict = DictDB::new(cfg.path).await?;
+
+    Ok(Builder::new("dict")
         .invoke_handler(tauri::generate_handler![query])
         .setup(|app_handle| {
-            app_handle.manage(Dict::new(cfg.path)?);
+            app_handle.manage(dict);
             Ok(())
         })
-        .build()
+        .build())
 }

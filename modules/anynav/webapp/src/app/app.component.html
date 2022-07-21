@@ -1,4 +1,6 @@
 <div class="box" #box>
-  <input type="search" class="search" [placeholder]="search_placeholder" (input)="on_search_input($event)" />
+  <input #search type="search" class="search mat-app-background" [placeholder]="search_placeholder"
+    (input)="on_search_input($event)"/>
+  <mat-divider></mat-divider>
   <ng-template search-view class="search_view"></ng-template>
 </div>
