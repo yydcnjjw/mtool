@@ -27,28 +27,11 @@ where
 }
 
 pub async fn load(keybindingcli: KeybindingCli, cmder: CmderCli) -> anyhow::Result<()> {
-    cmder
-        .add(
-            "test".into(),
-            ClosureCmd::new(move |_| {
-                println!("test");
-            }),
-        )
-        .await?;
-    keybindingcli
-        .define_key_binding("C-A-l".into(), "test".into())
-        .await??;
-
     let async_rt = tokio::runtime::Handle::current();
 
     thread::spawn(move || {
         let _guard = async_rt.enter();
         tauri::async_runtime::set(async_rt);
-
-        #[cfg(target_os = "windows")]
-        unsafe {
-            windows::Win32::UI::Controls::InitCommonControls();
-        }
 
         let context = tauri::generate_context!();
         tauri::Builder::default()

@@ -53,7 +53,7 @@ pub fn init<R: Runtime>() -> TauriPlugin<R> {
         .invoke_handler(tauri::generate_handler![query])
         .setup(|app_handle| {
             app_handle.manage(Dict::new(
-                "/home/yydcnjjw/.mtool/dict/mdict/concise-bing.mdx",
+                "C:/Users/yydcnjjw/.mtool/dict/mdict/concise-bing.mdx",
             )?);
             Ok(())
         })
