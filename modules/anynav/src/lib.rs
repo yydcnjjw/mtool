@@ -7,11 +7,18 @@
 use std::thread;
 
 use cmder_mod::{ClosureCmd, ServiceClient as CmderCli};
+use config_mod::ServiceClient as ConfigCli;
 use keybinding_mod::ServiceClient as KeybindingCli;
 
+use serde::{Deserialize, Serialize};
 use tauri::Manager;
 
 mod dict;
+
+#[derive(Debug, Serialize, Deserialize, Clone)]
+pub struct Config {
+    dict: dict::Config,
+}
 
 fn window_toggle<R>(win: tauri::Window<R>) -> tauri::Result<()>
 where
@@ -26,8 +33,16 @@ where
     Ok(())
 }
 
-pub async fn load(keybindingcli: KeybindingCli, cmder: CmderCli) -> anyhow::Result<()> {
+pub async fn load(
+    keybindingcli: KeybindingCli,
+    cmder: CmderCli,
+    cfgcli: ConfigCli,
+) -> anyhow::Result<()> {
     let async_rt = tokio::runtime::Handle::current();
+
+    let cfg: Config = cfgcli.get_value("anynav".into()).await??.try_into()?;
+
+    let dict_plug = dict::init(cfg.dict).await;
 
     thread::spawn(move || {
         let _guard = async_rt.enter();
@@ -72,7 +87,7 @@ pub async fn load(keybindingcli: KeybindingCli, cmder: CmderCli) -> anyhow::Resu
 
                 Ok(())
             })
-            .plugin(dict::init())
+            .plugin(dict_plug)
             .run(context)
             .expect("Failed to running anynav");
     });

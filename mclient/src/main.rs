@@ -60,7 +60,7 @@ impl App {
         translate_mod::load(cli.cmder(), cli.config()).await?;
         dict_mod::load(cli.cmder(), cli.config()).await?;
 
-        anynav_mod::load(cli.keybinding(), cli.cmder()).await?;
+        anynav_mod::load(cli.keybinding(), cli.cmder(), cli.config()).await?;
 
         Ok(cli)
     }

@@ -48,13 +48,16 @@ fn query(input: String, dict: tauri::State<Dict>) -> Result<WordDetail, String> 
     }
 }
 
-pub fn init<R: Runtime>() -> TauriPlugin<R> {
+#[derive(Debug, Serialize, Deserialize, Clone)]
+pub struct Config {
+    path: String,
+}
+
+pub async fn init<R: Runtime>(cfg: Config) -> TauriPlugin<R> {
     Builder::new("dict")
         .invoke_handler(tauri::generate_handler![query])
         .setup(|app_handle| {
-            app_handle.manage(Dict::new(
-                "C:/Users/yydcnjjw/.mtool/dict/mdict/concise-bing.mdx",
-            )?);
+            app_handle.manage(Dict::new(cfg.path)?);
             Ok(())
         })
         .build()

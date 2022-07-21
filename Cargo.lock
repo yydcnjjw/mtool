@@ -69,6 +69,7 @@ dependencies = [
  "anyhow",
  "async-trait",
  "cmder-mod",
+ "config-mod",
  "keybinding-mod",
  "log",
  "mdict",
