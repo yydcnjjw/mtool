@@ -6,12 +6,13 @@
 
 use std::thread;
 
+use anyhow::Context;
 use cmder_mod::{ClosureCmd, ServiceClient as CmderCli};
 use config_mod::ServiceClient as ConfigCli;
 use keybinding_mod::ServiceClient as KeybindingCli;
 
 use serde::{Deserialize, Serialize};
-use tauri::Manager;
+use tauri::{AppHandle, Manager, GlobalShortcutManager};
 
 mod dict;
 
@@ -29,6 +30,48 @@ where
     } else {
         win.show()?;
         win.set_focus()?;
+    }
+    Ok(())
+}
+
+async fn register_window_toogle_shortcut(
+    app: AppHandle,
+    keybindingcli: KeybindingCli,
+    cmder: CmderCli,
+) -> anyhow::Result<()> {
+    {
+        let app = app.clone();
+        let cmder = cmder.clone();
+        cmder
+            .add(
+                "anynav_window_toggle".into(),
+                ClosureCmd::new(move |_| {
+                    let win = app.get_window("main").unwrap();
+                    if let Err(e) = window_toggle(win) {
+                        log::error!("{:?}", e);
+                    }
+                }),
+            )
+            .await?;
+    }
+
+    if cfg!(windows) {
+        app.global_shortcut_manager().register("Ctrl+Alt+Space", move || {
+            let cmder = cmder.clone();
+            tokio::spawn(async move {
+                if let Err(e) = cmder.exec("anynav_window_toggle".into(), Vec::new()).await {
+                    log::error!("{:?}", e);
+                }
+            });
+            
+        }).context("Failed to register shortcut C-A-<Spacebar>")?;
+    } else {
+        // BUG: window event can not captured at tauri
+        // maybe webview2 capture all event
+        // https://github.com/MicrosoftEdge/WebView2Feedback/issues/468
+        keybindingcli
+            .define_key_binding("C-A-<Spacebar>".into(), "anynav_window_toggle".into())
+            .await??;
     }
     Ok(())
 }
@@ -60,29 +103,9 @@ pub async fn load(
 
                 let app = app.app_handle();
                 tokio::spawn(async move {
-                    if let Err(e) = {
-                        cmder
-                            .add(
-                                "anynav_window_toggle".into(),
-                                ClosureCmd::new(move |_| {
-                                    let win = app.get_window("main").unwrap();
-                                    if let Err(e) = window_toggle(win) {
-                                        log::error!("{:?}", e);
-                                    }
-                                }),
-                            )
-                            .await?;
-                        keybindingcli
-                            .define_key_binding(
-                                "C-A-<Spacebar>".into(),
-                                "anynav_window_toggle".into(),
-                            )
-                            .await??;
-                        Ok::<(), anyhow::Error>(())
-                    } {
+                    if let Err(e) = register_window_toogle_shortcut(app, keybindingcli, cmder).await {
                         log::error!("{:?}", e);
                     }
-                    Ok::<(), anyhow::Error>(())
                 });
 
                 Ok(())
