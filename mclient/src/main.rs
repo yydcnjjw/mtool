@@ -1,6 +1,6 @@
+mod app;
 mod daemon;
 mod path;
-mod app;
 
 use anyhow::Context;
 use app::App;
@@ -12,7 +12,7 @@ use daemon::daemon;
 #[clap(author, version, about, long_about = None)]
 pub struct Args {
     /// daemon
-    #[clap(short, long, value_parser, default_value_t = false)]
+    #[clap(long, value_parser, default_value_t = false)]
     daemon: bool,
 }
 

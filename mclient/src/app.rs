@@ -12,6 +12,7 @@ use tokio::sync::OnceCell;
 use crate::{path, Args};
 
 pub struct App {
+    #[allow(dead_code)]
     args: Args,
 
     cli: ServiceClient,
@@ -60,11 +61,7 @@ impl App {
             .await
             .context("Failed to load module")?;
 
-        if app.args.daemon {
-            log::info!("mtool running at daemon");
-            serve.await?;
-        }
-
+        serve.await?;
         Ok(())
     }
 }

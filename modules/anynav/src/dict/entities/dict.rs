@@ -8,6 +8,7 @@ pub struct Model {
     #[sea_orm(primary_key)]
     pub id: i32,
     pub word: String,
+    pub sw: String,
     pub phonetic: Option<String>,
     pub definition: Option<String>,
     pub translation: Option<String>,

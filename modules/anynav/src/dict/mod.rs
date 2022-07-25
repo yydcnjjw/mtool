@@ -37,6 +37,7 @@ impl From<dict::Model> for Word {
     fn from(word: dict::Model) -> Self {
         let dict::Model {
             id: _,
+            sw: _,
             word,
             phonetic,
             definition,
@@ -131,21 +132,33 @@ impl DictDB {
         Ok(Self { db })
     }
 
-    async fn query(&self, text: &str) -> anyhow::Result<Word> {
-        Ok(Word::from(
-            Dict::find()
-                .filter(dict::Column::Word.eq(text))
-                .one(&self.db)
-                .await
-                .context(format!("Failed to query: {}", text))?
-                .context(format!("{} not found", text))?,
-        ))
+    async fn query(&self, text: &str, limit: u64) -> anyhow::Result<Vec<Word>> {
+        Ok(Dict::find()
+            .filter(
+                dict::Column::Word
+                    .eq(text)
+                    .or(dict::Column::Sw.like(&format!("{}%", text))),
+            )
+            .order_by(dict::Column::Sw, Order::Asc)
+            .limit(limit)
+            .all(&self.db)
+            .await
+            .context(format!("Failed to query: {}", text))?
+            .into_iter()
+            .map(|v| Word::from(v))
+            .collect())
     }
 }
 
 #[tauri::command]
-async fn query(text: String, dict: tauri::State<'_, DictDB>) -> Result<Word, String> {
-    dict.query(&text).await.map_err(|e| format!("{:?}", e))
+async fn query(
+    text: String,
+    limit: u64,
+    dict: tauri::State<'_, DictDB>,
+) -> Result<Vec<Word>, String> {
+    dict.query(&text, limit)
+        .await
+        .map_err(|e| format!("{:?}", e))
 }
 
 #[derive(Debug, Serialize, Deserialize, Clone)]

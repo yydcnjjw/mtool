@@ -3,8 +3,10 @@
     flex-grow: 1;
 }
 
-.box {
+.view {
     width: 100%;
+    display: flex;
+    flex-direction: column;
 }
 
 .search {
@@ -18,6 +20,8 @@
 
     outline: none;
 
+    font-family: Consolas, Hack, "Noto Sans CJK SC";
+
     &::placeholder {
         text-overflow: ellipsis;
         font-style: italic;
@@ -28,9 +32,4 @@
         
         display: none;
     }
-}
-
-.search-view {
-    display: flex;
-    width: 100%;
 }

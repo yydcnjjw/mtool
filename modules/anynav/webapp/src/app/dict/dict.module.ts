@@ -2,6 +2,8 @@ import { NgModule } from '@angular/core';
 import { CommonModule } from '@angular/common';
 
 import { MatDividerModule } from '@angular/material/divider';
+import { MatListModule } from '@angular/material/list';
+import { ScrollingModule } from '@angular/cdk/scrolling';
 
 import { SearchModule } from '../search/search.module';
 import { SearchService } from '../search/search.service';
@@ -15,7 +17,10 @@ import { DictComponent } from './dict/dict.component';
   imports: [
     CommonModule,
     SearchModule,
-    MatDividerModule
+
+    MatDividerModule,
+    MatListModule,
+    ScrollingModule
   ],
   providers: [
 

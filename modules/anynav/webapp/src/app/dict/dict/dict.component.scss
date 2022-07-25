@@ -1,32 +1,18 @@
 :host {
     width: 100%;
+    flex-grow: 1;
 }
 
-.word {
+.view {
     width: 100%;
-    padding: 0px 0.5em;
+    height: 100%;
 }
 
-.trans {
-    padding: 2px 0px;
+.scroll-view {
+    width: 100%;
+    height: 100%;
 }
 
-.def {
-    padding: 2px 0px;
-}
-
-.exchange {
-    padding: 2px 0px;
-}
-
-.pos {
-    padding: 2px 0px;
-}
-
-.tag {
-    padding: 2px 0px;
-}
-
-.frq {
-    padding: 2px 0px;
+.word-view {
+    padding: 0 1em;
 }

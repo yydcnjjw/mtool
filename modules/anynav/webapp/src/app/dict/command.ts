@@ -35,6 +35,6 @@ export class DictCommand implements SearchCommand {
   }
 
   async search(text: string): Promise<any> {
-    return await invoke('plugin:dict|query', { text });
+    return await invoke('plugin:dict|query', { text, limit: 10 });
   }
 }

@@ -1,65 +1,74 @@
-<div #view class="word" tabindex="0">
+<div class="view" #view tabindex="0">
+  <cdk-virtual-scroll-viewport class="scroll-view" itemSize="10">
+    <ng-template #word>
+      <div class="word-view mat-typography">
+        <h2>
+          <span>{{selected_word!.word}}</span>
+          <span *ngIf="selected_word!.phonetic"> | {{selected_word!.phonetic}}</span>
+        </h2>
 
-  <h2 class="word mat-h2">
-    <span>{{data.word}}</span>
-    <span *ngIf="data.phonetic"> | {{data.phonetic}}</span>
-  </h2>
+        <div *ngIf="selected_word!.translation.length != 0">
+          <p *ngFor="let trans of selected_word!.translation">
+            {{trans}}
+          </p>
+        </div>
 
-  <mat-divider></mat-divider>
+        <mat-divider></mat-divider>
 
-  <div class="trans mat-body">
-    <div *ngFor="let trans of data.translation">
-      {{trans}}
-    </div>
-  </div>
+        <div *ngIf="selected_word!.definition.length != 0">
+          <p *ngFor="let def of selected_word!.definition">
+            {{def}}
+          </p>
+        </div>
 
-  <mat-divider></mat-divider>
+        <mat-divider></mat-divider>
 
-  <div *ngIf="data.definition.length != 0">
-    <div class="def mat-body">
-      <div *ngFor="let def of data.definition">
-        {{def}}
+        <div *ngIf="selected_word!.exchange.length != 0">
+          <p>
+            <span *ngFor="let exchange of selected_word!.exchange">
+              {{exchange}} /
+            </span>
+          </p>
+        </div>
+
+        <div *ngIf="selected_word!.pos.length != 0">
+          <p>
+            <span *ngFor="let pos of selected_word!.pos">{{pos}}</span>
+          </p>
+        </div>
+
+        <div *ngIf="selected_word!.tag.length != 0">
+          <p>
+            <span *ngFor="let tag of selected_word!.tag">{{map_tag(tag)}} / </span>
+          </p>
+        </div>
+
+        <p *ngIf="selected_word!.collins || selected_word!.oxford || selected_word!.bnc || selected_word!.frq">
+          <span *ngIf="selected_word!.collins">{{'★'.repeat(selected_word!.collins)}} / </span>
+          <span *ngIf="selected_word!.oxford && selected_word!.oxford > 0">※ / </span>
+          <span *ngIf="selected_word!.bnc">BNC:{{selected_word!.bnc}} / </span>
+          <span *ngIf="selected_word!.frq">COCA:{{selected_word!.frq}} /</span>
+        </p>
       </div>
-    </div>
+    </ng-template>
+    <mat-selection-list *ngIf="!selected_word; else word" #word_list [multiple]="false" dense>
+      <mat-list-option class="list-item" *cdkVirtualFor="let word of data" [value]="word">
+        <h3 class="word" matLine>
+          <span>{{word.word}}</span>
+          <span *ngIf="word.phonetic"> | {{word.phonetic}}</span>
+        </h3>
 
-    <mat-divider></mat-divider>
-  </div>
+        <p class="word-detail" matLine *ngFor="let trans of word.translation.slice(0, 3)">
+          {{trans}}
+        </p>
 
-  <div *ngIf="data.exchange.length != 0">
-    <div class="exchange mat-body">
-      <span *ngFor="let exchange of data.exchange">
-        {{exchange}} /
-      </span>
-    </div>
-
-    <mat-divider></mat-divider>
-  </div>
-
-  <div *ngIf="data.pos.length != 0">
-    <div class="pos mat-body">
-      <span *ngFor="let pos of data.pos">{{pos}}</span>
-    </div>
-
-    <mat-divider></mat-divider>
-  </div>
-
-  <div *ngIf="data.tag.length != 0">
-    <div class="tag mat-body">
-      <span *ngFor="let tag of data.tag">{{map_tag(tag)}} / </span>
-    </div>
-
-    <mat-divider></mat-divider>
-  </div>
-
-  <div *ngIf="data.collins || data.oxford || data.bnc || data.frq" class="frq mat-body">
-    <span *ngIf="data.collins">{{'★'.repeat(data.collins)}} / </span>
-    <span *ngIf="data.oxford && data.oxford > 0">※ / </span>
-    <span *ngIf="data.bnc">BNC:{{data.bnc}} / </span>
-    <span *ngIf="data.frq">COCA:{{data.frq}} /</span>
-  </div>
-
-  <div class="action">
-    a:anki
-  </div>
-
+        <div *ngIf="word.translation.length == 0">
+          <p class="word-detail" matLine *ngFor="let def of word.definition">
+            {{def}}
+          </p>
+        </div>
+        <mat-divider></mat-divider>
+      </mat-list-option>
+    </mat-selection-list>
+  </cdk-virtual-scroll-viewport>
 </div>
