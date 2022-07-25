@@ -36,6 +36,7 @@ once_cell = "1.13"
 # when `tauri dev` runs it is executed with `cargo run --no-default-features` if `devPath` is an URL
 # default = [ "custom-protocol" ]
 default = [ ]
+
 # this feature is used used for production builds where `devPath` points to the filesystem
 # DO NOT remove this
-custom-protocol = [ "tauri/custom-protocol" ]
+custom-protocol = ["tauri/custom-protocol"]
