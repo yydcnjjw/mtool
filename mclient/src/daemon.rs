@@ -1,25 +1,16 @@
-use std::{fmt::Debug, sync::Arc};
+use anyhow::Context;
+use daemonize::Daemonize;
 
-use cmder_mod::Command;
-use mrpc::async_trait;
-use tokio::{sync::Mutex, task::JoinHandle};
+use crate::path;
 
-#[derive(Debug)]
-pub struct DaemonCmd {
-    serve: JoinHandle<()>,
-}
-
-impl DaemonCmd {
-    pub fn new(serve: JoinHandle<()>) -> Arc<Mutex<Self>> {
-        Arc::new(Mutex::new(Self { serve }))
-    }
-}
-
-#[async_trait]
-impl Command for DaemonCmd {
-    async fn exec(&mut self, _args: Vec<String>) {
-        if let Err(e) = (&mut self.serve).await {
-            log::error!("{:?}", e);
-        }
-    }
+pub fn daemon() -> anyhow::Result<()> {
+    let daemonize = Daemonize::new()
+        .pid_file(
+            path::config_dir()
+                .map(|p| p.join("m.pid"))
+                .context("Failed to get pid file path")?,
+        )
+        .working_directory(path::config_dir().context("Failed to get m config path")?);
+    daemonize.start().context("Failed to start daemon")?;
+    Ok(())
 }

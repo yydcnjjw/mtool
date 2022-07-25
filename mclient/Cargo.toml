@@ -28,6 +28,9 @@ log4rs = "1.0"
 
 dirs = "4.0"
 
+daemonize = "0.4"
+
+clap = { version = "3.2", features = ["derive"] }
 
 [features]
 local = ["anynav-mod/custom-protocol"]

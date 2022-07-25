@@ -61,7 +61,7 @@
         "width": 800,
         "resizable": true,
         "transparent": false,
-        "decorations": true,
+        "decorations": false,
         "alwaysOnTop": true
       }
     ]
