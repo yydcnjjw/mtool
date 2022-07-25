@@ -37,13 +37,10 @@ export class DictComponent implements OnInit, OnDestroy {
 
     hotkeys('alt+o,a', {
       scope: 'dict_search_view',
-      keyup: true,
-      keydown: true,
     }, (e, keyev) => {
-      console.log(e, keyev);
-      this.view.nativeElement.focus();
       switch (keyev.key) {
         case 'alt+o':
+          this.view.nativeElement.focus();
           this.action = true;
           return;
         default:
@@ -56,6 +53,8 @@ export class DictComponent implements OnInit, OnDestroy {
             this.anki();
             break;
         }
+
+        this.action = false;
       }
     })
 

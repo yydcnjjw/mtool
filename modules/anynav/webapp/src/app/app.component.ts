@@ -32,8 +32,6 @@ export class AppComponent implements OnInit, AfterViewInit, OnDestroy {
       return true;
     }
     hotkeys('ctrl+f,ctrl+b,ctrl+a,ctrl+e,alt+f,alt+b,ctrl+k,alt+e', (e, keyev) => {
-      console.log(e, keyev);
-
       switch (keyev.key) {
         case 'ctrl+f':
           this.forward_char();
