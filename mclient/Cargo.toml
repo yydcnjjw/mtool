@@ -28,9 +28,10 @@ log4rs = "1.0"
 
 dirs = "4.0"
 
-daemonize = "0.4"
-
 clap = { version = "3.2", features = ["derive"] }
+
+[target.'cfg(not(target_os = "windows"))'.dependencies]
+daemonize = "0.4"
 
 [features]
 local = ["anynav-mod/custom-protocol"]

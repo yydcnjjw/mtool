@@ -1,8 +1,17 @@
+#[cfg(not(target_os = "windows"))]
+use crate::path;
+#[cfg(not(target_os = "windows"))]
 use anyhow::Context;
+#[cfg(not(target_os = "windows"))]
 use daemonize::Daemonize;
 
-use crate::path;
+#[cfg(target_os = "windows")]
+pub fn daemon() -> anyhow::Result<()> {
+    log::warn!("daemon not supported at windows");
+    Ok(())
+}
 
+#[cfg(not(target_os = "windows"))]
 pub fn daemon() -> anyhow::Result<()> {
     let daemonize = Daemonize::new()
         .pid_file(
