@@ -28,6 +28,7 @@ impl KeyBinding {
         while let Ok(e) = rx.recv().await {
             match e {
                 msysev::Event::Key(e) if matches!(e.action, KeyAction::Press) => {
+                    log::trace!("{:?}", e);
                     self.dispatcher.write().await.dispatch(KeyCombine {
                         key: e.keycode,
                         mods: e.modifiers,
