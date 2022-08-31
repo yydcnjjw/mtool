@@ -2,13 +2,13 @@ use std::{
     ffi::{c_void, CStr},
     os::raw::{c_char, c_int, c_ulong},
     ptr::{null, null_mut},
-    sync::atomic::{AtomicBool, AtomicPtr, Ordering},
+    sync::atomic::{AtomicPtr, Ordering},
 };
 
 use once_cell::sync::OnceCell;
 use x11::{
     xlib::{self, _XDisplay},
-    xrecord::{self, XRecordFreeContext, XRecordProcessReplies},
+    xrecord::{self, XRecordFreeContext},
 };
 
 use anyhow::Context;
@@ -35,7 +35,6 @@ pub enum Error {
 type Result<T> = std::result::Result<T, Error>;
 
 static RECORD: OnceCell<Record> = OnceCell::new();
-static IS_STOP: OnceCell<AtomicBool> = OnceCell::new();
 static mut RECORD_ALL_CLIENTS: c_ulong = xrecord::XRecordAllClients;
 
 pub struct Record {
@@ -45,6 +44,14 @@ pub struct Record {
     pub cb: Box<dyn Fn(Event) + Send + Sync>,
 }
 
+impl Drop for Record {
+    fn drop(&mut self) {
+        self.free_context();
+        Self::close_display(self.record_dpy.load(Ordering::Relaxed)).unwrap();
+        Self::close_display(self.main_dpy.load(Ordering::Relaxed)).unwrap();
+    }
+}
+
 impl Record {
     fn open_display() -> Result<*mut _XDisplay> {
         let dpy = unsafe { xlib::XOpenDisplay(null()) };
@@ -52,6 +59,15 @@ impl Record {
             return Err(Error::XLib("Can't open display".into()));
         }
         Ok(dpy)
+    }
+
+    fn close_display(dpy: *mut _XDisplay) -> Result<()> {
+        unsafe {
+            if xlib::XCloseDisplay(dpy) as u8 == xlib::BadGC {
+                return Err(Error::XLib("Can't close display".into()));
+            }
+            Ok(())
+        }
     }
 
     unsafe fn create_context(dpy: *mut _XDisplay) -> Result<c_ulong> {
@@ -80,7 +96,7 @@ impl Record {
 
     fn enable_context(&self) -> Result<()> {
         let result = unsafe {
-            xrecord::XRecordEnableContextAsync(
+            xrecord::XRecordEnableContext(
                 self.record_dpy.load(Ordering::Relaxed),
                 self.record_ctx,
                 Some(record_cb),
@@ -103,6 +119,12 @@ impl Record {
         Ok(())
     }
 
+    fn free_context(&self) {
+        unsafe {
+            XRecordFreeContext(self.record_dpy.load(Ordering::Relaxed), self.record_ctx);
+        }
+    }
+
     fn new<F>(cb: F) -> Result<Self>
     where
         F: 'static + Fn(Event) + Send + Sync,
@@ -123,9 +145,9 @@ impl Record {
             })
         }
     }
+
     pub fn quit() -> Result<()> {
-        let is_stop = IS_STOP.get_or_init(|| AtomicBool::new(true));
-        is_stop.store(true, Ordering::Relaxed);
+        RECORD.get().unwrap().disable_context()?;
         Ok(())
     }
 
@@ -138,21 +160,6 @@ impl Record {
         }
         let record = RECORD.get().unwrap();
         record.enable_context()?;
-
-        let is_stop = IS_STOP.get_or_init(|| AtomicBool::new(false));
-
-        while !is_stop.load(Ordering::Relaxed) {
-            unsafe {
-                XRecordProcessReplies(record.record_dpy.load(Ordering::Relaxed));
-            }
-        }
-
-        record.disable_context()?;
-        unsafe {
-            XRecordFreeContext(record.record_dpy.load(Ordering::Relaxed), record.record_ctx);
-            // xlib::XCloseDisplay(record.record_dpy.load(Ordering::Relaxed));
-            // xlib::XCloseDisplay(record.main_dpy.load(Ordering::Relaxed));
-        }
         Ok(())
     }
 }
