@@ -21,6 +21,44 @@ export interface Word {
   audio: string | undefined;
 }
 
+function map_word_tag(tag: string): string {
+  switch (tag) {
+    case 'zk':
+      return '中考';
+    case 'gk':
+      return '高考';
+    case 'cet4':
+      return '四级';
+    default:
+      return tag;
+  }
+}
+
+export function gen_markdown(word: Word): string {
+  return `
+## ${word.word}
+${word.phonetic}
+
+${word.exchange.map(v => v).join('/')}
+
+${word.tag.map(v => map_word_tag(v)).join('/')}
+
+${'★'.repeat(word.collins || 0)}${word.oxford ? '※' : ''}
+
+${word.bnc ? `BNC:${word.bnc}` : ''}
+
+${word.frq ? `COCA:${word.frq}` : ''}
+
+${word.pos.map(v => v).join('/')}
+
+### Translation
+${word.translation.map(v => `- ${v}`).join('\n')}
+### Definition
+${word.definition.map(v => `- ${v}`).join('\n')}
+
+`
+}
+
 export class DictCommand implements SearchCommand {
   keys(): Array<string> {
     return ['d', 'dict'];

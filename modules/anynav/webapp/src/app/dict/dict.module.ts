@@ -9,6 +9,7 @@ import { SearchModule } from '../search/search.module';
 import { SearchService } from '../search/search.service';
 import { DictCommand } from './command';
 import { DictComponent } from './dict/dict.component';
+import { MarkdownModule } from 'ngx-markdown';
 
 @NgModule({
   declarations: [
@@ -20,7 +21,9 @@ import { DictComponent } from './dict/dict.component';
 
     MatDividerModule,
     MatListModule,
-    ScrollingModule
+    ScrollingModule,
+
+    MarkdownModule.forRoot()
   ],
   providers: [
 

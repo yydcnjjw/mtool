@@ -1,7 +1,7 @@
 import { Component, ElementRef, Input, OnDestroy, OnInit, ViewChild } from '@angular/core';
 import { MatSelectionList } from '@angular/material/list';
 import hotkeys from 'hotkeys-js';
-import { Word } from '../command';
+import { gen_markdown, Word } from '../command';
 
 @Component({
   selector: 'app-dict',
@@ -22,19 +22,6 @@ export class DictComponent implements OnInit, OnDestroy {
   selected_word: Word | undefined;
 
   action = false;
-
-  map_tag(tag: string): string {
-    switch (tag) {
-      case 'zk':
-        return '中考';
-      case 'gk':
-        return '高考';
-      case 'cet4':
-        return '四级';
-      default:
-        return tag;
-    }
-  }
 
   constructor(
   ) { }
@@ -136,6 +123,10 @@ export class DictComponent implements OnInit, OnDestroy {
     }
 
     this.selected_word = view.selectedOptions.selected[0].value;
+  }
+
+  selected_word_to_markdown(): string {
+    return this.selected_word ? gen_markdown(this.selected_word) : '';
   }
 
 }

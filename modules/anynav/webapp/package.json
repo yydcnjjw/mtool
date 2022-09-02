@@ -22,6 +22,7 @@
     "@angular/router": "^14.0.0",
     "@tauri-apps/api": "^1.0.1",
     "hotkeys-js": "^3.9.4",
+    "ngx-markdown": "^14.0.1",
     "rxjs": "~7.5.0",
     "tslib": "^2.3.0",
     "zone.js": "~0.11.4"
