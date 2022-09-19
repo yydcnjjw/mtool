@@ -1,15 +1,18 @@
-use crate::Event;
-
 mod key;
 mod record;
 
-pub fn run_loop<F>(cb: F) -> anyhow::Result<()>
-where
-    F: 'static + Fn(Event) + Send + Sync,
-{
-    Ok(record::Record::run_loop(cb)?)
-}
+pub mod event;
 
-pub fn quit() -> anyhow::Result<()> {
-    Ok(record::Record::quit()?)
+use thiserror::Error;
+
+#[derive(Debug, Error)]
+pub enum Error {
+    #[error("{0}")]
+    XLib(String),
+    #[error("{0}")]
+    XRecord(String),
+    #[error("Init record failed")]
+    Init,
+    #[error(transparent)]
+    Other(#[from] anyhow::Error),
 }

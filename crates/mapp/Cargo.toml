@@ -1,0 +1,26 @@
+[package]
+name = "mapp"
+version = "0.1.0"
+edition = "2021"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+minject = { path = "../minject" }
+
+thiserror = "1.0"
+anyhow = "1.0"
+
+async-trait = "0.1"
+tokio = { version = "1.0", features = ["full"] }
+futures = "0.3"
+async-recursion = "1.0.0"
+
+petgraph = "0.6"
+
+log = "0.4"
+
+rand = "0.8"
+
+[dev-dependencies]
+tokio = { version = "1.0", features = ["rt", "macros"] }

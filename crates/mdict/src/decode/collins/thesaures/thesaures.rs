@@ -15,7 +15,9 @@ fn source<'a>(doc: &'a Html) -> impl Iterator<Item = String> + 'a {
         .filter_map(|node| node.text().nth(0).map(|v| v.to_string()))
 }
 
-fn sense_list_iter<'a>(doc: &'a Html) -> anyhow::Result<impl Iterator<Item = Vec<Sense>> + 'a> {
+fn sense_list_iter<'a>(
+    doc: &'a Html,
+) -> Result<impl Iterator<Item = Vec<Sense>> + 'a, anyhow::Error> {
     Ok(doc.select(static_selector!(".synonyms")).map(|node| {
         node.select(static_selector!(".sense"))
             .map(|e| Sense::from(e))
@@ -23,7 +25,9 @@ fn sense_list_iter<'a>(doc: &'a Html) -> anyhow::Result<impl Iterator<Item = Vec
     }))
 }
 
-pub fn thesaures_list<'a>(doc: &'a Html) -> anyhow::Result<impl Iterator<Item = ThesauresResult> + 'a> {
+pub fn thesaures_list<'a>(
+    doc: &'a Html,
+) -> Result<impl Iterator<Item = ThesauresResult> + 'a, anyhow::Error> {
     Ok(source(doc)
         .zip(sense_list_iter(doc)?)
         .map(|(source, senses)| ThesauresResult { source, senses }))

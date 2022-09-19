@@ -5,9 +5,7 @@ use windows::Win32::{
     },
 };
 
-use crate::Error;
-
-use super::Result;
+use super::Error;
 
 #[derive(Debug)]
 pub struct GlobalHook {
@@ -15,13 +13,13 @@ pub struct GlobalHook {
 }
 
 impl GlobalHook {
-    fn install(idhook: WINDOWS_HOOK_ID, hook: HOOKPROC) -> Result<HHOOK> {
+    fn install(idhook: WINDOWS_HOOK_ID, hook: HOOKPROC) -> Result<HHOOK, Error> {
         let hhk = unsafe { SetWindowsHookExW(idhook, hook, HINSTANCE::default(), 0) };
         Ok(hhk)
     }
 
-    pub fn uninstall(&self) -> Result<()> {
-        if unsafe { UnhookWindowsHookEx(self.inst) }.0 == 0 {
+    pub fn uninstall(&self) -> Result<(), Error> {
+        if unsafe { !UnhookWindowsHookEx(self.inst) }.as_bool() {
             Err(Error::UninstallHook(unsafe { GetLastError() }))
         } else {
             Ok(())
@@ -32,7 +30,7 @@ impl GlobalHook {
         self.inst
     }
 
-    pub fn new(idhook: WINDOWS_HOOK_ID, hook: HOOKPROC) -> Result<Self> {
+    pub fn new(idhook: WINDOWS_HOOK_ID, hook: HOOKPROC) -> Result<Self, Error> {
         Ok(Self {
             inst: GlobalHook::install(idhook, hook)?,
         })

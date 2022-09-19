@@ -1,0 +1,21 @@
+[package]
+name = "minject"
+version = "0.1.0"
+edition = "2021"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+minject-macro = { path = "./macro" }
+
+thiserror = "1.0"
+anyhow = "1.0"
+
+dashmap = "5.4"
+
+tokio = { version = "1", features = ["full"] }
+
+async-trait = "0.1"
+
+[dev-dependencies]
+

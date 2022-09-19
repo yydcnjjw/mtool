@@ -10,7 +10,7 @@ const DEFAULT_USER_AGENT: &'static str = "Mozilla/5.0 (Macintosh; Intel Mac OS X
 
 pub use self::{sense::Sense, synonym::Synonym, thesaures::ThesauresResult};
 
-pub async fn query(word: &str) -> anyhow::Result<Vec<ThesauresResult>> {
+pub async fn query(word: &str) -> Result<Vec<ThesauresResult>, anyhow::Error> {
     let cli = reqwest::Client::builder()
         .use_rustls_tls() // for tls fingerpint
         .build()?;

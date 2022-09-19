@@ -8,7 +8,7 @@ pub use self::dict::DictResult;
 
 const DEFAULT_USER_AGENT: &'static str = "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_13_6) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/60.0.3112.78 Safari/537.36";
 
-pub async fn query(word: &str) -> anyhow::Result<Vec<DictResult>> {
+pub async fn query(word: &str) -> Result<Vec<DictResult>, anyhow::Error> {
     let cli = reqwest::Client::builder()
         .use_rustls_tls() // for tls fingerpint
         .build()?;

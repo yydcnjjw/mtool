@@ -1,12 +1,11 @@
 [workspace]
 members = [
-  "crates/msysev",
-  "crates/mcloud-api",
-  "crates/manki-api",
-  "crates/mkeybinding",
-  "crates/mdict",
-  "modules/*",
-  "mclient",
-  "mservice",
+  "crates/*",
+  "modules/mtool_core",
+  "modules/mtool_system",
+  "modules/mtool_toast",
+  "modules/mtool_translate",
+  "modules/mtool_dict",
+  "mtool",
 ]
 

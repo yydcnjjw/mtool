@@ -1,0 +1,32 @@
+[package]
+name = "mtool"
+version = "0.1.0"
+edition = "2021"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+mapp = { path = "../crates/mapp" }
+
+# async
+tokio = { version = "1", features = ["full"] }
+async-trait = "0.1"
+
+# error handle
+anyhow = "1.0"
+thiserror = "1.0"
+
+mtool_core = { path = "../modules/mtool_core" }
+
+mtool_system = { path = "../modules/mtool_system" }
+
+mtool_cmder = { path = "../modules/mtool_cmder" }
+
+mtool_toast = { path = "../modules/mtool_toast" }
+
+mtool_translate = { path = "../modules/mtool_translate" }
+
+mtool_dict = { path = "../modules/mtool_dict" }
+
+[features]
+

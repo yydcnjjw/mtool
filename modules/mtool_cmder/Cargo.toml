@@ -1,0 +1,26 @@
+[package]
+name = "mtool_cmder"
+version = "0.1.0"
+edition = "2021"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+mapp = { path = "../../crates/mapp" }
+
+mtool_core = { path = "../mtool_core" }
+
+# async
+tokio = { version = "1", features = ["full"] }
+async-trait = "0.1"
+
+# error handle
+anyhow = "1.0"
+thiserror = "1.0"
+
+# for cmder
+fuzzy-matcher = "*"
+
+itertools = "0.10"
+
+clap = { version = "4", features = ["derive", "cargo"] }

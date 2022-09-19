@@ -293,7 +293,9 @@ impl<'a> From<ElementRef<'a>> for DictResult {
     }
 }
 
-pub fn dict_list<'a>(doc: &'a Html) -> anyhow::Result<impl Iterator<Item = DictResult> + 'a> {
+pub fn dict_list<'a>(
+    doc: &'a Html,
+) -> Result<impl Iterator<Item = DictResult> + 'a, anyhow::Error> {
     Ok(doc
         .select(static_selector!(".dictlink"))
         .map(|n| DictResult::from(n)))
