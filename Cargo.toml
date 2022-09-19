@@ -2,6 +2,7 @@
 members = [
   "crates/msysev",
   "crates/mcloud-api",
+  "crates/manki-api",
   "crates/mkeybinding",
   "crates/mdict",
   "modules/*",

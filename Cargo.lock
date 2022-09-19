@@ -2131,6 +2131,19 @@ dependencies = [
 ]
 
 [[package]]
+name = "manki-api"
+version = "0.1.0"
+dependencies = [
+ "anyhow",
+ "reqwest",
+ "serde",
+ "serde_json",
+ "serde_repr",
+ "thiserror",
+ "tokio",
+]
+
+[[package]]
 name = "markup5ever"
 version = "0.10.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -2186,6 +2199,10 @@ checksum = "658646b21e0b72f7866c7038ab086d3d5e1cd6271f060fd37defb241949d0582"
 dependencies = [
  "digest 0.10.3",
 ]
+
+[[package]]
+name = "mdi"
+version = "0.1.0"
 
 [[package]]
 name = "mdict"
