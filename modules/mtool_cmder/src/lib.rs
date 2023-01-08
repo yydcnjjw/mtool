@@ -48,7 +48,7 @@ async fn list_command(cmder: Res<Cmder>) -> Result<(), anyhow::Error> {
 async fn setup_cmdline(cmdline: Res<Cmdline>) -> Result<(), anyhow::Error> {
     cmdline
         .setup(|cmdline| {
-            Ok(cmdline.arg(arg!(<command> ... "commands to run").trailing_var_arg(true)))
+            Ok(cmdline.arg(arg!([command] ... "commands to run").trailing_var_arg(true)))
         })
         .await?;
 
