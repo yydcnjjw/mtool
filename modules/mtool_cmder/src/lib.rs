@@ -1,10 +1,7 @@
 mod cmder;
 mod command;
 
-use std::{
-    io::{stdout, Write},
-    ops::Deref,
-};
+use std::ops::Deref;
 
 use clap::{arg, ArgMatches};
 pub use cmder::*;
