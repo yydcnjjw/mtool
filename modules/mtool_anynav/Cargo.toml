@@ -1,12 +1,11 @@
 [package]
-name = "anynav-mod"
+name = "mtool_anynav"
 version = "0.1.0"
-description = "anynav"
+description = "mtool anynav"
 authors = ["yydcnjjw"]
 license = ""
 repository = ""
 edition = "2021"
-rust-version = "1.57"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
@@ -15,9 +14,12 @@ rust-version = "1.57"
 tauri-build = { version = "1.0.0", features = [] }
 
 [dependencies]
-keybinding-mod = { path = "../keybinding" }
-cmder-mod = { path = "../cmder" }
-config-mod = { path = "../config" }
+mapp = { path = "../../crates/mapp" }
+
+mtool_core = { path = "../mtool_core" }
+
+mtool_cmder = { path = "../mtool_cmder" }
+
 
 serde_json = "1.0"
 serde = { version = "1.0", features = ["derive"] }

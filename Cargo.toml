@@ -1,11 +1,7 @@
 [workspace]
 members = [
   "crates/*",
-  "modules/mtool_core",
-  "modules/mtool_system",
-  "modules/mtool_toast",
-  "modules/mtool_translate",
-  "modules/mtool_dict",
+  "modules/*",
   "mtool",
 ]
 

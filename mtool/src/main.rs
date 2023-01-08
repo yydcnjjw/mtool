@@ -8,6 +8,7 @@ fn main() {
         .add_module(mtool_toast::Module::default())
         .add_module(mtool_translate::Module::default())
         .add_module(mtool_dict::Module::default())
+        .add_module(mtool_anynav::Module::default())
         .build()
         .run();
 }

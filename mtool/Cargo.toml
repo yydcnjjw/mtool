@@ -8,14 +8,6 @@ edition = "2021"
 [dependencies]
 mapp = { path = "../crates/mapp" }
 
-# async
-tokio = { version = "1", features = ["full"] }
-async-trait = "0.1"
-
-# error handle
-anyhow = "1.0"
-thiserror = "1.0"
-
 mtool_core = { path = "../modules/mtool_core" }
 
 mtool_system = { path = "../modules/mtool_system" }
@@ -27,6 +19,8 @@ mtool_toast = { path = "../modules/mtool_toast" }
 mtool_translate = { path = "../modules/mtool_translate" }
 
 mtool_dict = { path = "../modules/mtool_dict" }
+
+mtool_anynav = { path = "../modules/mtool_anynav" }
 
 [features]
 

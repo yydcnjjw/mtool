@@ -12,7 +12,7 @@ mtool_core = { path = "../mtool_core" }
 
 mtool_cmder = { path = "../mtool_cmder" }
 
-notify-rust = { version = "4" }
+notify-rust = { version = "4", default-features = false }
 
 clap = { version = "4", features = ["derive"] }
 
