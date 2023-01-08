@@ -127,7 +127,7 @@ pub struct Module {}
 
 #[async_trait]
 impl AppModule for Module {
-    async fn init(&self, app: &mut AppContext) -> Result<(), anyhow::Error> {
+    async fn init(&self, _app: &mut AppContext) -> Result<(), anyhow::Error> {
 
         Ok(())
     }
