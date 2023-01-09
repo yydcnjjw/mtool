@@ -1,5 +1,5 @@
 [package]
-name = "mtool_cmder"
+name = "mtool-core"
 version = "0.1.0"
 edition = "2021"
 
@@ -7,8 +7,6 @@ edition = "2021"
 
 [dependencies]
 mapp = { path = "../../crates/mapp" }
-
-mtool_core = { path = "../mtool_core" }
 
 # async
 tokio = { version = "1", features = ["full"] }
@@ -18,9 +16,14 @@ async-trait = "0.1"
 anyhow = "1.0"
 thiserror = "1.0"
 
-# for cmder
-fuzzy-matcher = "*"
+# logger
+log = "0.4"
+env_logger = "0.10"
+log4rs = "1.0"
 
-itertools = "0.10"
-
+# for cmdline module
 clap = { version = "4", features = ["derive", "cargo"] }
+
+# for config module
+toml = "0.4"
+dirs = "4.0"

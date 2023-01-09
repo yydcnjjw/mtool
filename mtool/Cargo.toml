@@ -8,19 +8,19 @@ edition = "2021"
 [dependencies]
 mapp = { path = "../crates/mapp" }
 
-mtool_core = { path = "../modules/mtool_core" }
+mtool-core = { path = "../modules/mtool-core" }
 
-mtool_system = { path = "../modules/mtool_system" }
+mtool-system = { path = "../modules/mtool-system" }
 
-mtool_cmder = { path = "../modules/mtool_cmder" }
+mtool-cmder = { path = "../modules/mtool-cmder" }
 
-mtool_toast = { path = "../modules/mtool_toast" }
+mtool-toast = { path = "../modules/mtool-toast" }
 
-mtool_translate = { path = "../modules/mtool_translate" }
+mtool-translate = { path = "../modules/mtool-translate" }
 
-mtool_dict = { path = "../modules/mtool_dict" }
+mtool-dict = { path = "../modules/mtool-dict" }
 
-mtool_anynav = { path = "../modules/mtool_anynav" }
+mtool-anynav = { path = "../modules/mtool-anynav" }
 
 [features]
 

@@ -1,5 +1,5 @@
 [package]
-name = "mtool_anynav"
+name = "mtool-anynav"
 version = "0.1.0"
 description = "mtool anynav"
 authors = ["yydcnjjw"]
@@ -11,22 +11,21 @@ edition = "2021"
 
 
 [build-dependencies]
-tauri-build = { version = "1.0.0", features = [] }
+tauri-build = { version = "1", features = [] }
 
 [dependencies]
 mapp = { path = "../../crates/mapp" }
 
-mtool_core = { path = "../mtool_core" }
+mtool-core = { path = "../mtool-core" }
 
-mtool_cmder = { path = "../mtool_cmder" }
+mtool-cmder = { path = "../mtool-cmder" }
 
-
-serde_json = "1.0"
-serde = { version = "1.0", features = ["derive"] }
-tauri = { version = "1.0.0", features = ["api-all"] }
+tauri = { version = "1", features = ["api-all"] }
 
 anyhow = "1.0"
+
 log = "0.4"
+
 sea-orm = { version = "^0", features = ["sqlx-sqlite", "runtime-tokio-rustls", "macros"] }
 
 tokio = "1"

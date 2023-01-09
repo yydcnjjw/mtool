@@ -1,5 +1,5 @@
 [package]
-name = "mtool_toast"
+name = "mtool-toast"
 version = "0.1.0"
 edition = "2021"
 
@@ -8,9 +8,9 @@ edition = "2021"
 [dependencies]
 mapp = { path = "../../crates/mapp" }
 
-mtool_core = { path = "../mtool_core" }
+mtool-core = { path = "../mtool-core" }
 
-mtool_cmder = { path = "../mtool_cmder" }
+mtool-cmder = { path = "../mtool-cmder" }
 
 notify-rust = { version = "4", default-features = false }
 

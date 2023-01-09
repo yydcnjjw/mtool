@@ -1,12 +1,13 @@
 {
   "build": {
-    "beforeBuildCommand": "yarn run --cwd=webapp build",
-    "beforeDevCommand": "yarn run --cwd=webapp start",
-    "devPath": "http://localhost:4200",
-    "distDir": "webapp/dist/anynav"
+    "beforeBuildCommand": "trunk build",
+    "beforeDevCommand": "trunk serve",
+    "devPath": "http://localhost:8188",
+    "distDir": "webapp/dist/",
+    "withGlobalTauri": true
   },
   "package": {
-    "productName": "anynav",
+    "productName": "mtool-anynav",
     "version": "0.1.0"
   },
   "tauri": {
@@ -55,7 +56,7 @@
     "windows": [
       {
         "label": "main",
-        "title": "anynav",
+        "title": "mtool anynav",
         "fullscreen": false,
         "height": 80,
         "width": 800,

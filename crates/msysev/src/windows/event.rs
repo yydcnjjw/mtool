@@ -1,4 +1,4 @@
-use std::{ptr, sync::Mutex};
+use std::sync::Mutex;
 
 use anyhow::Context as _;
 use once_cell::sync::OnceCell;
@@ -6,8 +6,8 @@ use windows::Win32::{
     Foundation::{HWND, LPARAM, LRESULT, WPARAM},
     System::Threading::GetCurrentThreadId,
     UI::WindowsAndMessaging::{
-        CallNextHookEx, DispatchMessageW, GetMessageW, PeekMessageW, TranslateMessage, WaitMessage,
-        KBDLLHOOKSTRUCT, MSG, PM_REMOVE, WH_KEYBOARD_LL, WM_KEYDOWN, WM_KEYUP, WM_SYSKEYDOWN,
+        CallNextHookEx, DispatchMessageW, GetMessageW, TranslateMessage,
+        KBDLLHOOKSTRUCT, MSG, WH_KEYBOARD_LL, WM_KEYDOWN, WM_KEYUP, WM_SYSKEYDOWN,
         WM_SYSKEYUP,
     },
 };
@@ -56,6 +56,10 @@ pub fn run_loop(cb: BoxedEventCallback) -> Result<(), anyhow::Error> {
         while GetMessageW(&mut msg, HWND::default(), 0, 0).as_bool() {
             TranslateMessage(&msg);
             DispatchMessageW(&msg);
+
+            if can_stop() {
+                break;
+            }
         }
     }
 

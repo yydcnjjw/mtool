@@ -1,5 +1,5 @@
 [package]
-name = "mtool_system"
+name = "mtool-cmder"
 version = "0.1.0"
 edition = "2021"
 
@@ -7,13 +7,8 @@ edition = "2021"
 
 [dependencies]
 mapp = { path = "../../crates/mapp" }
-mtool_core = { path = "../mtool_core" }
 
-# for event module
-msysev = { path = "../../crates/msysev" }
-
-# for keybinding module
-mkeybinding = { path = "../../crates/mkeybinding" }
+mtool-core = { path = "../mtool-core" }
 
 # async
 tokio = { version = "1", features = ["full"] }
@@ -23,6 +18,9 @@ async-trait = "0.1"
 anyhow = "1.0"
 thiserror = "1.0"
 
-log = "0.4"
+# for cmder
+fuzzy-matcher = "*"
+
+itertools = "0.10"
 
 clap = { version = "4", features = ["derive", "cargo"] }
