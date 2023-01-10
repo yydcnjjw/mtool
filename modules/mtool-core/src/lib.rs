@@ -7,7 +7,7 @@ pub mod logger;
 mod test;
 
 pub use cmdline::*;
-pub use config::Config;
+pub use config::ConfigStore;
 
 pub fn module() -> ModuleGroup {
     let mut group = ModuleGroup::default();

@@ -8,18 +8,17 @@ use clap::Parser;
 use mapp::Res;
 use mdict::decode::mdx;
 use mtool_cmder::CommandArgs;
+use mtool_core::ConfigStore;
 use serde::Deserialize;
 use tokio::fs;
 use tokio_stream::{wrappers::ReadDirStream, StreamExt};
 
-use crate::DictConfig;
-
 #[derive(Debug, Deserialize, Clone)]
-pub struct MdictConfig {
+pub struct Config {
     path: String,
 }
 
-impl MdictConfig {
+impl Config {
     async fn list_dict_paths(&self) -> Result<Vec<PathBuf>, anyhow::Error> {
         let meta = fs::metadata(&self.path).await?;
         let mut vec = Vec::new();
@@ -71,7 +70,9 @@ where
     Ok(())
 }
 
-pub async fn mdx(args: Res<CommandArgs>, cfg: Res<DictConfig>) -> Result<(), anyhow::Error> {
+pub async fn mdx_query(args: Res<CommandArgs>, cs: Res<ConfigStore>) -> Result<(), anyhow::Error> {
+    let cfg = cs.get::<Config>("dict.mdx").await?;
+
     let args = match Args::try_parse_from(args.iter()) {
         Ok(args) => args,
         Err(e) => {
@@ -81,7 +82,7 @@ pub async fn mdx(args: Res<CommandArgs>, cfg: Res<DictConfig>) -> Result<(), any
     };
 
     let mut handles = Vec::new();
-    for path in cfg.mdict.list_dict_paths().await? {
+    for path in cfg.list_dict_paths().await? {
         handles.push(tokio::spawn(query(args.query.clone(), path)));
     }
 

@@ -124,27 +124,34 @@
 // }
 
 use async_trait::async_trait;
-use mapp::{AppContext, AppModule};
+use mapp::{AppContext, AppModule, CreateTaskDescriptor};
+use mtool_core::{config::is_daemon, InitStage};
 
 #[derive(Default)]
 pub struct Module {}
-
 
 #[tauri::command]
 async fn search() {
     log::info!("search");
 }
 
+async fn init() -> Result<(), anyhow::Error> {
+    tokio::task::spawn_blocking(|| {
+        tauri::Builder::default()
+            .any_thread()
+            .invoke_handler(tauri::generate_handler![search])
+            .run(tauri::generate_context!())
+            .expect("error while running tauri application");
+    });
+    Ok(())
+}
+
 #[async_trait]
 impl AppModule for Module {
-    async fn init(&self, _app: &mut AppContext) -> Result<(), anyhow::Error> {
-        tokio::task::spawn_blocking(|| {
-            tauri::Builder::default()
-                .any_thread()
-                .invoke_handler(tauri::generate_handler![search])
-                .run(tauri::generate_context!())
-                .expect("error while running tauri application");
-        });
+    async fn init(&self, app: &mut AppContext) -> Result<(), anyhow::Error> {
+        app.schedule()
+            .add_task(InitStage::Init, init.cond(is_daemon))
+            .await;
         Ok(())
     }
 }

@@ -1,13 +1,13 @@
 use async_trait::async_trait;
-use clap::{arg, value_parser, ArgMatches};
 use mapp::{AppContext, AppModule, CreateTaskDescriptor, Res};
+use serde::Deserialize;
 use std::thread::{self, JoinHandle};
 use tokio::sync::{
     broadcast::{self, Receiver, Sender},
     Mutex,
 };
 
-use mtool_core::{config::is_daemon, Cmdline, ExitStage, StartupStage};
+use mtool_core::{config::is_daemon, ConfigStore, ExitStage};
 
 pub use msysev::Event;
 
@@ -20,12 +20,20 @@ impl AppModule for Module {
         app.injector().construct(Observer::new).await;
 
         app.schedule()
-            .add_task(StartupStage::Startup, setup_cmdline)
-            .await
             .add_task(ExitStage::Exit, exit.cond(is_daemon))
             .await;
         Ok(())
     }
+}
+
+fn default_channel_size() -> usize {
+    10
+}
+
+#[derive(Debug, Clone, Deserialize)]
+struct Config {
+    #[serde(default = "default_channel_size")]
+    channel_size: usize,
 }
 
 type Worker = JoinHandle<Result<(), anyhow::Error>>;
@@ -36,8 +44,10 @@ pub struct Observer {
 }
 
 impl Observer {
-    async fn new(args: Res<ArgMatches>) -> Result<Res<Self>, anyhow::Error> {
-        let (tx, worker) = run_loop(*args.get_one::<usize>("system-event-channel-size").unwrap());
+    async fn new(cs: Res<ConfigStore>) -> Result<Res<Self>, anyhow::Error> {
+        let config = cs.get::<Config>("system.event").await?;
+
+        let (tx, worker) = run_loop(config.channel_size);
 
         Ok(Res::new(Self {
             tx,
@@ -58,20 +68,6 @@ impl Observer {
     pub fn close(&self) -> Result<(), anyhow::Error> {
         msysev::quit()
     }
-}
-
-async fn setup_cmdline(cmdline: Res<Cmdline>) -> Result<(), anyhow::Error> {
-    cmdline
-        .setup(|cmdline| {
-            Ok(cmdline.arg(
-                arg!(--"system-event-channel-size" [usize] "system event channel size")
-                    .value_parser(value_parser!(usize))
-                    .default_value("10"),
-            ))
-        })
-        .await?;
-
-    Ok(())
 }
 
 fn run_loop(size: usize) -> (Sender<Event>, Worker) {

@@ -8,7 +8,7 @@ use log4rs::{
 };
 use mapp::{define_label, AppContext, AppModule, CreateTaskDescriptor, Label, Res};
 
-use super::{Cmdline, Config, InitStage, StartupStage};
+use super::{Cmdline, ConfigStore, InitStage, StartupStage};
 
 #[derive(Default)]
 pub struct Module {}
@@ -58,11 +58,11 @@ async fn setup_cmdline(_cmdline: Res<Cmdline>) -> Result<(), anyhow::Error> {
     Ok(())
 }
 
-async fn logger_config_file(config: &Res<Config>) -> PathBuf {
+async fn logger_config_file(config: &Res<ConfigStore>) -> PathBuf {
     config.root_path().await.join("log4rs.yaml")
 }
 
-async fn init(config: Res<Config>) -> Result<(), anyhow::Error> {
+async fn init(config: Res<ConfigStore>) -> Result<(), anyhow::Error> {
     let log_cfg_file = logger_config_file(&config).await;
 
     let cfg = log4rs::config::load_config_file(&log_cfg_file, Deserializers::default())?;

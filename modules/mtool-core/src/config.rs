@@ -15,7 +15,7 @@ pub struct Module {}
 #[async_trait]
 impl AppModule for Module {
     async fn init(&self, app: &mut AppContext) -> Result<(), anyhow::Error> {
-        app.injector().construct(Config::new).await;
+        app.injector().construct(ConfigStore::new).await;
 
         app.schedule()
             .add_task(StartupStage::Startup, setup_cmdline)
@@ -49,11 +49,18 @@ impl ConfigInner {
         Ok(Self { root_path, table })
     }
 
-    fn get<T>(&self, key: &str) -> Option<T>
+    fn get<T>(&self, key: &str) -> Result<T, anyhow::Error>
     where
         T: for<'de> Deserialize<'de>,
     {
-        self.table.get(key).and_then(|v| v.clone().try_into().ok())
+        let value = self
+            .table
+            .get(key)
+            .context(format!("{} is not exist", key))?;
+        value
+            .clone()
+            .try_into()
+            .context(format!("Failed to parse {}", key))
     }
 
     fn root_path(&self) -> &Path {
@@ -61,12 +68,12 @@ impl ConfigInner {
     }
 }
 
-pub struct Config {
+pub struct ConfigStore {
     inner: RwLock<ConfigInner>,
     daemon: bool,
 }
 
-impl Config {
+impl ConfigStore {
     async fn new(args: Res<ArgMatches>) -> Result<Res<Self>, anyhow::Error> {
         let config_dir = args.get_one::<PathBuf>("config").unwrap();
 
@@ -80,7 +87,7 @@ impl Config {
         self.inner.read().await.root_path().to_owned()
     }
 
-    pub async fn get<T>(&self, key: &str) -> Option<T>
+    pub async fn get<T>(&self, key: &str) -> Result<T, anyhow::Error>
     where
         T: for<'de> Deserialize<'de>,
     {
@@ -127,10 +134,10 @@ async fn setup_cmdline(cmdline: Res<Cmdline>) -> Result<(), anyhow::Error> {
     Ok(())
 }
 
-pub async fn is_daemon(config: Res<Config>) -> Result<bool, anyhow::Error> {
+pub async fn is_daemon(config: Res<ConfigStore>) -> Result<bool, anyhow::Error> {
     Ok(config.is_daemon())
 }
 
-pub async fn is_cli(config: Res<Config>) -> Result<bool, anyhow::Error> {
+pub async fn is_cli(config: Res<ConfigStore>) -> Result<bool, anyhow::Error> {
     Ok(config.is_cli())
 }

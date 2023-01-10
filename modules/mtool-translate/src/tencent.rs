@@ -6,14 +6,14 @@ use mcloud_api::tencent::{
     credential::Credential,
     translate::text::{self, TextTranslateRequest, TextTranslateResponse},
 };
-use mtool_core::Config;
+use mtool_core::ConfigStore;
 use serde::Deserialize;
 
 use crate::{language::LanguageType, translator};
 
 #[derive(Debug, Clone, Deserialize)]
-pub struct TranslateConfig {
-    pub credential: Credential,
+struct Config {
+    credential: Credential,
 }
 
 impl From<LanguageType> for text::LanguageType {
@@ -29,13 +29,13 @@ impl From<LanguageType> for text::LanguageType {
 
 #[derive(Debug)]
 pub struct Translator {
-    cfg: TranslateConfig,
+    cfg: Config,
 }
 
 impl Translator {
-    pub async fn new(config: Res<Config>) -> Result<Res<Self>, anyhow::Error> {
+    pub async fn new(config: Res<ConfigStore>) -> Result<Res<Self>, anyhow::Error> {
         let cfg = config
-            .get::<TranslateConfig>("translate")
+            .get::<Config>("translate")
             .await
             .context("Failed to parse translate")?;
 
