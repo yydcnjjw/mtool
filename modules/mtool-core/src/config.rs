@@ -53,19 +53,13 @@ impl ConfigInner {
     where
         T: for<'de> Deserialize<'de>,
     {
-        let mut value: Option<&toml::Value> = Some(&self.table);
+        let mut value: &toml::Value = &self.table;
 
         for key in keys.split(".") {
-            value = Some(
-                value
-                    .unwrap()
-                    .get(key)
-                    .context(format!("{} is not exist", keys))?,
-            );
+            value = value.get(key).context(format!("{} is not exist", keys))?;
         }
 
         value
-            .unwrap()
             .clone()
             .try_into()
             .context(format!("Failed to parse {}", keys))
