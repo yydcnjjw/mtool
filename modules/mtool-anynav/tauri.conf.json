@@ -1,0 +1,70 @@
+{
+  "build": {
+    "beforeBuildCommand": "trunk build",
+    "beforeDevCommand": "trunk serve",
+    "devPath": "http://localhost:8188",
+    "distDir": "webapp/dist/",
+    "withGlobalTauri": true
+  },
+  "package": {
+    "productName": "mtool-anynav",
+    "version": "0.1.0"
+  },
+  "tauri": {
+    "allowlist": {
+      "all": true
+    },
+    "bundle": {
+      "active": true,
+      "category": "DeveloperTool",
+      "copyright": "",
+      "deb": {
+        "depends": []
+      },
+      "externalBin": [],
+      "icon": [
+        "icons/32x32.png",
+        "icons/128x128.png",
+        "icons/128x128@2x.png",
+        "icons/icon.icns",
+        "icons/icon.ico"
+      ],
+      "identifier": "com.yydcnjjw.anynav.dev",
+      "longDescription": "",
+      "macOS": {
+        "entitlements": null,
+        "exceptionDomain": "",
+        "frameworks": [],
+        "providerShortName": null,
+        "signingIdentity": null
+      },
+      "resources": [],
+      "shortDescription": "",
+      "targets": "all",
+      "windows": {
+        "certificateThumbprint": null,
+        "digestAlgorithm": "sha256",
+        "timestampUrl": ""
+      }
+    },
+    "security": {
+      "csp": null
+    },
+    "updater": {
+      "active": false
+    },
+    "windows": [
+      {
+        "label": "main",
+        "title": "mtool anynav",
+        "fullscreen": false,
+        "height": 80,
+        "width": 800,
+        "resizable": true,
+        "transparent": false,
+        "decorations": false,
+        "alwaysOnTop": true
+      }
+    ]
+  }
+}

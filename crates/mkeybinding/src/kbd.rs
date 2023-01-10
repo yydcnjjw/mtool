@@ -19,6 +19,8 @@ use nom::{
 
 use thiserror::Error;
 
+use lazy_static::lazy_static;
+
 #[derive(Debug, Error)]
 pub enum Error {
     #[error("{0}")]
@@ -63,6 +65,7 @@ impl TryFromStr for KeyCode {
             ),
             map(tag_no_case("<Backspace>"), |_| KeyCode::BackSpace),
             map(tag_no_case("<Return>"), |_| KeyCode::Return),
+            map(tag_no_case("<Spacebar>"), |_| KeyCode::Spacebar),
             // TODO: more special keycode
             map_res(anychar, |c| -> Result<KeyCode> {
                 Ok(match c {
@@ -140,10 +143,27 @@ impl TryFromStr for KeyModifier {
     }
 }
 
-#[derive(Debug, Clone, Hash, PartialEq, std::cmp::Eq)]
+#[derive(Debug, Clone, std::cmp::Eq)]
 pub struct KeyCombine {
     pub key: KeyCode,
     pub mods: KeyModifier,
+}
+
+lazy_static! {
+    static ref IGNORE_MODS: KeyModifier = KeyModifier::NUMLOCK | KeyModifier::CAPSLOCK;
+}
+
+impl Hash for KeyCombine {
+    fn hash<H: std::hash::Hasher>(&self, state: &mut H) {
+        self.key.hash(state);
+        (self.mods | *IGNORE_MODS).hash(state);
+    }
+}
+
+impl PartialEq for KeyCombine {
+    fn eq(&self, other: &Self) -> bool {
+        self.key == other.key && self.mods | *IGNORE_MODS == other.mods | *IGNORE_MODS
+    }
 }
 
 impl fmt::Display for KeyCombine {

@@ -1,0 +1,25 @@
+[package]
+name = "mtool-dict"
+version = "0.1.0"
+edition = "2021"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+mapp = { path = "../../crates/mapp" }
+mdict = { path = "../../crates/mdict" }
+
+mtool-core = { path = "../mtool-core" }
+
+mtool-cmder = { path = "../mtool-cmder" }
+
+clap = { version = "3.0.5", features = ["derive"] }
+serde = { version = "1.0", features = ["derive"] }
+
+tokio = "1"
+tokio-stream = { version = "0.1", features = ["fs"] }
+async-trait = "0.1"
+
+anyhow = "1.0"
+
+log = "0.4"

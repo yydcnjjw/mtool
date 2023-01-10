@@ -1,6 +1,8 @@
 use anyhow::Context;
 use chrono::{DateTime, Utc};
-use crypto::{digest::Digest, hmac::Hmac, mac::Mac, sha2::Sha256};
+use digest::Digest;
+use hmac::{Hmac, Mac};
+use sha2::Sha256;
 use reqwest::header::{CONTENT_TYPE, HOST};
 use serde::de::DeserializeOwned;
 use serde::{Deserialize, Serialize};
@@ -74,8 +76,8 @@ where
 
     let sha256 = |input| {
         let mut sha256 = Sha256::new();
-        sha256.input_str(input);
-        sha256.result_str().to_lowercase()
+        sha256.update(input);
+        hex::encode(sha256.finalize())
     };
 
     let hashed_request_payload = sha256(&payload);
@@ -98,16 +100,17 @@ where
     );
 
     let sign = |input, key| {
-        let mut hmac = Hmac::new(Sha256::new(), key);
-        hmac.input(input);
-        hmac.result()
+        type HmacSha256 = Hmac<Sha256>;
+        let mut hmac = HmacSha256::new_from_slice(key).expect("HMAC can take key of any size");
+        hmac.update(input);
+        hmac.finalize().into_bytes()
     };
 
     let tc3_secret_key = format!("TC3{}", secret_key);
     let secret_date = sign(date.as_bytes(), tc3_secret_key.as_bytes());
-    let secret_service = sign(service.as_bytes(), secret_date.code());
-    let secret_signing = sign("tc3_request".as_bytes(), secret_service.code());
-    let signature = hex::encode(sign(string_to_sign.as_bytes(), secret_signing.code()).code());
+    let secret_service = sign(service.as_bytes(), &secret_date);
+    let secret_signing = sign("tc3_request".as_bytes(), &secret_service);
+    let signature = hex::encode(&sign(string_to_sign.as_bytes(), &secret_signing));
 
     let authorization = format!(
         "{} Credential={}/{}, SignedHeaders={}, Signature={}",

@@ -1,0 +1,42 @@
+@use 'sass:map';
+@use '@angular/material' as mat;
+
+@mixin color($theme) {
+    // Get the color config from the theme.
+    $color-config: mat.get-color-config($theme);
+
+    $foreground: map.get($color-config, foreground);
+
+    .list-item {
+        .word-detail {
+            color: mat.get-color-from-palette($foreground, secondary-text);
+        }
+    }
+}
+
+@mixin typography($theme) {
+    // Get the typography config from the theme.
+    $typography-config: mat.get-typography-config($theme);
+
+    .word {
+        font-size: mat.font-size($typography-config, 'subheading-1') !important;
+        font-family: mat.font-family($typography-config, 'subheading-1') !important;
+        font-weight: mat.font-weight($typography-config, 'subheading-1') !important;
+        line-height: mat.line-height($typography-config, 'subheading-1') !important;
+        letter-spacing: mat.letter-spacing($typography-config, 'subheading-1') !important;
+    }
+}
+
+@mixin theme($theme) {
+    $color-config: mat.get-color-config($theme);
+
+    @if $color-config  !=null {
+        @include color($theme);
+    }
+
+    $typography-config: mat.get-typography-config($theme);
+
+    @if $typography-config  !=null {
+        @include typography($theme);
+    }
+}

@@ -1,0 +1,26 @@
+[package]
+name = "mtool"
+version = "0.1.0"
+edition = "2021"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+mapp = { path = "../crates/mapp" }
+
+mtool-core = { path = "../modules/mtool-core" }
+
+mtool-system = { path = "../modules/mtool-system" }
+
+mtool-cmder = { path = "../modules/mtool-cmder" }
+
+mtool-toast = { path = "../modules/mtool-toast" }
+
+mtool-translate = { path = "../modules/mtool-translate" }
+
+mtool-dict = { path = "../modules/mtool-dict" }
+
+mtool-anynav = { path = "../modules/mtool-anynav" }
+
+[features]
+

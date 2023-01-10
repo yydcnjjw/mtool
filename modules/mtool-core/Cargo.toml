@@ -1,0 +1,29 @@
+[package]
+name = "mtool-core"
+version = "0.1.0"
+edition = "2021"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+mapp = { path = "../../crates/mapp" }
+
+# async
+tokio = { version = "1", features = ["full"] }
+async-trait = "0.1"
+
+# error handle
+anyhow = "1.0"
+thiserror = "1.0"
+
+# logger
+log = "0.4"
+env_logger = "0.10"
+log4rs = "1.0"
+
+# for cmdline module
+clap = { version = "4", features = ["derive", "cargo"] }
+
+# for config module
+toml = "0.4"
+dirs = "4.0"
