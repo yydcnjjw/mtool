@@ -1,32 +1,47 @@
-use std::{mem, ops::DerefMut, sync::Arc};
+use std::{mem, sync::Mutex};
 
-use anyhow::Context;
 use async_trait::async_trait;
 use clap::{command, Command};
-use mapp::{AppContext, AppModule, Injector, Res};
-use tokio::sync::Mutex;
+use mapp::{
+    define_label,
+    provider::{Injector, Res},
+    AppContext, AppModule, Label,
+};
 
-use super::StartupStage;
+use crate::AppStage;
 
 #[derive(Default)]
 pub struct Module {}
 
+define_label!(
+    pub enum CmdlineStage {
+        Setup,
+        Init,
+        AfterInit,
+    }
+);
+
 #[async_trait]
 impl AppModule for Module {
     async fn init(&self, ctx: &mut AppContext) -> Result<(), anyhow::Error> {
-        ctx.injector().construct(Cmdline::new).await;
+        ctx.injector().construct_once(Cmdline::new);
 
         ctx.schedule()
-            .add_task(StartupStage::PostStartup, parse_cmdline)
-            .await;
-
+            .insert_stage_vec(
+                AppStage::Startup,
+                vec![
+                    CmdlineStage::Setup,
+                    CmdlineStage::Init,
+                    CmdlineStage::AfterInit,
+                ],
+            )
+            .add_once_task(CmdlineStage::Init, parse_cmdline);
         Ok(())
     }
 }
 
-#[derive(Clone)]
 pub struct Cmdline {
-    inner: Arc<Mutex<Command>>,
+    inner: Mutex<Command>,
 }
 
 impl Cmdline {
@@ -34,42 +49,33 @@ impl Cmdline {
         Ok(Res::new(Self::default()))
     }
 
-    pub async fn setup<F>(&self, f: F) -> Result<(), anyhow::Error>
+    pub fn setup<F>(&self, f: F) -> Result<(), anyhow::Error>
     where
         F: FnOnce(Command) -> Result<Command, anyhow::Error>,
     {
-        let cmd = self.take().await;
-        self.replace(f(cmd)?).await;
+        let cmd = self.take();
+        self.replace(f(cmd)?);
         Ok(())
     }
 
-    async fn take(&self) -> Command {
-        self.replace(command!()).await
+    fn take(&self) -> Command {
+        self.replace(command!())
     }
 
-    async fn replace(&self, cmd: Command) -> Command {
-        mem::replace(self.inner.lock().await.deref_mut(), cmd)
+    fn replace(&self, cmd: Command) -> Command {
+        mem::replace(&mut self.inner.lock().unwrap(), cmd)
     }
 }
 
 impl Default for Cmdline {
     fn default() -> Self {
         Self {
-            inner: Arc::new(Mutex::new(command!())),
+            inner: Mutex::new(command!()),
         }
     }
 }
 
-async fn parse_cmdline(injector: Injector) -> Result<(), anyhow::Error> {
-    let cmdline = injector
-        .remove::<Res<Cmdline>>()
-        .await
-        .take()
-        .context("Failed to get Cmdline")?;
-
-    injector
-        .insert(Res::new(cmdline.take().await.get_matches()))
-        .await;
-
+async fn parse_cmdline(cmdline: Res<Cmdline>, injector: Injector) -> Result<(), anyhow::Error> {
+    injector.insert(Res::new(cmdline.take().get_matches()));
     Ok(())
 }

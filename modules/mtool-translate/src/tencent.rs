@@ -1,6 +1,6 @@
 use anyhow::Context;
 use async_trait::async_trait;
-use mapp::Res;
+use mapp::provider::Res;
 use mcloud_api::tencent::{
     api,
     credential::Credential,

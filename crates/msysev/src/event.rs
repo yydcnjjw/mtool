@@ -21,7 +21,7 @@ pub struct KeyEvent {
 
 pub type BoxedEventCallback = Box<dyn Fn(Event) -> Result<(), anyhow::Error> + Send + Sync>;
 
-pub fn run_loop<F>(cb: F) -> Result<(), anyhow::Error>
+pub fn run_loop<F>(#[allow(unused)] cb: F) -> Result<(), anyhow::Error>
 where
     F: Fn(Event) -> Result<(), anyhow::Error> + Send + Sync + 'static,
 {

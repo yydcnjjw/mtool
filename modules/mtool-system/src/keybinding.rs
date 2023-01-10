@@ -1,13 +1,24 @@
-use std::sync::Arc;
+use std::{
+    any::type_name,
+    future::Future,
+    marker::PhantomData,
+    sync::{Arc, RwLock},
+};
 
 use anyhow::Context;
 use async_trait::async_trait;
-use mapp::{AppContext, AppModule, CreateTaskDescriptor, Res};
+use mapp::{
+    inject::{Inject, Provide},
+    provider::{Injector, Res},
+    AppContext, AppModule, CreateOnceTaskDescriptor,
+};
 use mkeybinding::{KeyCombine, KeyDispatcher};
 use msysev::{Event, KeyAction};
-use tokio::sync::{broadcast, RwLock};
-
-use mtool_core::{config::is_daemon, InitStage};
+use mtool_core::{
+    config::{not_startup_mode, StartupMode},
+    AppStage,
+};
+use tokio::sync::broadcast::Receiver;
 
 use super::event;
 
@@ -17,79 +28,132 @@ pub struct Module {}
 #[async_trait]
 impl AppModule for Module {
     async fn init(&self, app: &mut AppContext) -> Result<(), anyhow::Error> {
-        app.injector().construct(Keybinging::new).await;
+        app.injector().construct_once({
+            let injector = app.injector().clone();
+            move || Keybinging::new(injector)
+        });
 
-        app.schedule()
-            .add_task(InitStage::Init, init.cond(is_daemon))
-            .await;
+        app.schedule().add_once_task(
+            AppStage::Run,
+            Keybinging::run.cond(not_startup_mode(StartupMode::Cli)),
+        );
         Ok(())
     }
 }
 
-struct Keybinging {
-    dispatcher: Arc<RwLock<KeyDispatcher<String>>>,
+#[async_trait]
+pub trait Action<C> {
+    async fn do_action(&self, c: &C) -> Result<(), anyhow::Error>;
+}
+
+pub struct FnAction<Func, Args> {
+    f: Func,
+    phantom: PhantomData<Args>,
+}
+
+impl<Func, Args> FnAction<Func, Args> {
+    pub fn new(f: Func) -> Self {
+        Self {
+            f,
+            phantom: PhantomData,
+        }
+    }
+}
+
+#[async_trait]
+impl<Func, Args, C> Action<C> for FnAction<Func, Args>
+where
+    Func: Inject<Args> + Send + Sync,
+    Func::Output: Future<Output = Result<(), anyhow::Error>> + Send,
+    Args: Provide<C> + Send + Sync,
+    C: Send + Sync,
+{
+    async fn do_action(&self, c: &C) -> Result<(), anyhow::Error> {
+        self.f
+            .inject(
+                Args::provide(c)
+                    .await
+                    .context(format!("Failed to inject {}", type_name::<Args>()))?,
+            )
+            .await
+            .await
+    }
+}
+
+type SharedAction = Arc<dyn Action<Injector> + Send + Sync>;
+
+pub struct Keybinging {
+    dispatcher: RwLock<KeyDispatcher<SharedAction>>,
+    injector: Injector,
 }
 
 impl Keybinging {
-    async fn new(ob: Res<event::Observer>) -> Result<Res<Self>, anyhow::Error> {
-        let dispatcher = Arc::new(RwLock::new(KeyDispatcher::new()));
+    async fn new(injector: Injector) -> Result<Res<Self>, anyhow::Error> {
+        let dispatcher = RwLock::new(KeyDispatcher::new());
 
-        let mut rx = ob.subscribe();
+        Ok(Res::new(Self {
+            dispatcher,
+            injector,
+        }))
+    }
 
-        let dispatcher_c = dispatcher.clone();
-        tokio::spawn(async move {
-            while let Ok(e) = rx.recv().await {
-                match e {
-                    Event::Key(e) if matches!(e.action, KeyAction::Press) => {
-                        log::trace!("{:?}", e);
+    async fn run(self_: Res<Self>, ob: Res<event::Observer>) -> Result<(), anyhow::Error> {
+        let rx = ob.subscribe();
+        tokio::spawn(Self::run_loop(self_.clone(), rx));
+        tokio::spawn(Self::run_action_loop(self_.clone()));
+        Ok(())
+    }
 
-                        dispatcher_c.write().await.dispatch(KeyCombine {
-                            key: e.keycode,
-                            mods: e.modifiers,
-                        });
-                    }
-                    _ => {}
+    async fn run_loop(self_: Res<Self>, mut rx: Receiver<Event>) {
+        while let Ok(e) = rx.recv().await {
+            match e {
+                Event::Key(e) if matches!(e.action, KeyAction::Press) => {
+                    self_.dispatcher.write().unwrap().dispatch(KeyCombine {
+                        key: e.keycode,
+                        mods: e.modifiers,
+                    });
                 }
+                _ => {}
             }
-        });
-
-        Ok(Res::new(Self { dispatcher }))
+        }
     }
 
-    pub async fn define_key_binding(&self, kbd: &str, cmd: String) -> Result<(), anyhow::Error> {
+    async fn run_action_loop(self_: Res<Self>) {
+        let mut rx = self_.dispatcher.read().unwrap().subscribe();
+        while let Ok(action) = rx.recv().await {
+            let injector = self_.injector.clone();
+            tokio::spawn(async move {
+                if let Err(e) = action.do_action(&injector).await {
+                    log::warn!("Failed to do action: {}", e);
+                }
+            });
+        }
+    }
+
+    pub fn define_global<Args, T>(&self, kbd: &str, action: T) -> Result<(), anyhow::Error>
+    where
+        T: Inject<Args> + Send + Sync + 'static,
+        T::Output: Future<Output = Result<(), anyhow::Error>> + Send,
+        Args: Provide<Injector> + Send + Sync + 'static,
+    {
+        self.define_global_raw(kbd, Arc::new(FnAction::new(action)))
+    }
+
+    fn define_global_raw(&self, kbd: &str, action: SharedAction) -> Result<(), anyhow::Error> {
         self.dispatcher
             .write()
-            .await
+            .unwrap()
             .keymap()
-            .add(kbd, cmd.clone())
-            .context(format!("Failed to define key binding {} <-> {}", kbd, cmd))
+            .add(kbd, action)
+            .context(format!("Failed to define key binding {}", kbd))
     }
 
-    #[allow(unused)]
-    pub async fn remove_key_binding(&self, kbd: &str) -> Result<(), anyhow::Error> {
+    pub fn remove_global(&self, kbd: &str) -> Result<(), anyhow::Error> {
         self.dispatcher
             .write()
-            .await
+            .unwrap()
             .keymap()
             .remove(kbd)
             .context(format!("Failed to remove key binding {}", kbd))
     }
-
-    pub async fn subscribe(&self) -> broadcast::Receiver<String> {
-        self.dispatcher.read().await.subscribe()
-    }
-}
-
-async fn init(keybinging: Res<Keybinging>) -> Result<(), anyhow::Error> {
-    keybinging
-        .define_key_binding("C-c c", "test".into())
-        .await?;
-    let mut ob = keybinging.subscribe().await;
-
-    tokio::spawn(async move {
-        while let Ok(s) = ob.recv().await {
-            log::info!("task: {}", s);
-        }
-    });
-    Ok(())
 }

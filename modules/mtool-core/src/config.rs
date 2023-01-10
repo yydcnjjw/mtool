@@ -3,11 +3,14 @@ use std::path::{Path, PathBuf};
 use anyhow::Context;
 use async_trait::async_trait;
 use clap::{arg, value_parser, ArgMatches};
-use mapp::{AppContext, AppModule, Res};
+use futures::{future::BoxFuture, FutureExt};
+use mapp::{provider::Res, AppContext, AppModule};
 use tokio::{fs, sync::RwLock};
 use toml::macros::Deserialize;
 
-use super::{Cmdline, StartupStage};
+use crate::CmdlineStage;
+
+use super::Cmdline;
 
 #[derive(Default)]
 pub struct Module {}
@@ -15,11 +18,10 @@ pub struct Module {}
 #[async_trait]
 impl AppModule for Module {
     async fn init(&self, app: &mut AppContext) -> Result<(), anyhow::Error> {
-        app.injector().construct(ConfigStore::new).await;
+        app.injector().construct_once(ConfigStore::new);
 
         app.schedule()
-            .add_task(StartupStage::Startup, setup_cmdline)
-            .await;
+            .add_once_task(CmdlineStage::Setup, setup_cmdline);
 
         Ok(())
     }
@@ -70,9 +72,27 @@ impl ConfigInner {
     }
 }
 
+#[derive(PartialEq, Clone, Copy)]
+pub enum StartupMode {
+    Gui,
+    Tui,
+    Cli,
+}
+
+impl From<&str> for StartupMode {
+    fn from(value: &str) -> Self {
+        match value.to_lowercase().as_str() {
+            "gui" => StartupMode::Gui,
+            "tui" => StartupMode::Tui,
+            "cli" => StartupMode::Cli,
+            _ => unreachable!(),
+        }
+    }
+}
+
 pub struct ConfigStore {
     inner: RwLock<ConfigInner>,
-    daemon: bool,
+    mode: StartupMode,
 }
 
 impl ConfigStore {
@@ -81,7 +101,7 @@ impl ConfigStore {
 
         Ok(Res::new(Self {
             inner: RwLock::new(ConfigInner::new(config_dir).await?),
-            daemon: args.get_flag("daemon"),
+            mode: StartupMode::from(args.get_one::<String>("mode").unwrap().as_str()),
         }))
     }
 
@@ -96,12 +116,8 @@ impl ConfigStore {
         self.inner.read().await.get(key)
     }
 
-    pub fn is_daemon(&self) -> bool {
-        self.daemon
-    }
-
-    pub fn is_cli(&self) -> bool {
-        !self.daemon
+    pub fn startup_mode(&self) -> StartupMode {
+        self.mode
     }
 }
 
@@ -121,25 +137,32 @@ fn init_default_config_dir() -> Result<(), anyhow::Error> {
 async fn setup_cmdline(cmdline: Res<Cmdline>) -> Result<(), anyhow::Error> {
     init_default_config_dir()?;
 
-    cmdline
-        .setup(|cmdline| {
-            Ok(cmdline
-                .arg(
-                    arg!(-c --config <FILE> "configuration directory")
-                        .value_parser(value_parser!(PathBuf))
-                        .default_value(unsafe { DEFAULT_CONFIG_DIR.unwrap().as_os_str() }),
-                )
-                .arg(arg!(--daemon "daemon mode")))
-        })
-        .await?;
+    cmdline.setup(|cmdline| {
+        Ok(cmdline
+            .arg(
+                arg!(-c --config <FILE> "configuration directory")
+                    .value_parser(value_parser!(PathBuf))
+                    .default_value(unsafe { DEFAULT_CONFIG_DIR.unwrap().as_os_str() }),
+            )
+            // .arg(arg!(--daemon "daemon mode")))
+            .arg(
+                arg!(--mode <MODE> "startup mode")
+                    .value_parser(["cli", "gui", "tui"])
+                    .default_value("cli"),
+            ))
+    })?;
 
     Ok(())
 }
 
-pub async fn is_daemon(config: Res<ConfigStore>) -> Result<bool, anyhow::Error> {
-    Ok(config.is_daemon())
+pub fn is_startup_mode(
+    mode: StartupMode,
+) -> impl Fn(Res<ConfigStore>) -> BoxFuture<'static, Result<bool, anyhow::Error>> + Clone {
+    move |config: Res<ConfigStore>| async move { Ok(config.startup_mode() == mode) }.boxed()
 }
 
-pub async fn is_cli(config: Res<ConfigStore>) -> Result<bool, anyhow::Error> {
-    Ok(config.is_cli())
+pub fn not_startup_mode(
+    mode: StartupMode,
+) -> impl Fn(Res<ConfigStore>) -> BoxFuture<'static, Result<bool, anyhow::Error>> + Clone {
+    move |config: Res<ConfigStore>| async move { Ok(config.startup_mode() != mode) }.boxed()
 }

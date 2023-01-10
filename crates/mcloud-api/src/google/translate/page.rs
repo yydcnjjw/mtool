@@ -177,10 +177,10 @@ pub async fn query(q: &str, from: &str, to: &str) -> Result<String> {
 
 #[cfg(test)]
 mod tests {
-    use super::query;
+    use super::*;
 
     #[tokio::test]
-    async fn test() -> google::Result<String> {
+    async fn test() {
         query("english", "auto", "zh-CN").await.unwrap()
     }
 }

@@ -1,17 +1,24 @@
 mod cmder;
 mod command;
+mod command_args;
+mod exec_command;
+mod list_command;
 
-use std::ops::Deref;
-
-use clap::{arg, ArgMatches};
 pub use cmder::*;
 pub use command::*;
+pub use command_args::*;
+use exec_command::*;
+use list_command::*;
 
 use async_trait::async_trait;
-use itertools::Itertools;
-use mapp::{AppContext, AppModule, CreateTaskDescriptor, Injector, Res};
+use clap::arg;
+use mapp::{provider::Res, AppContext, AppModule, CreateOnceTaskDescriptor};
 
-use mtool_core::{config::is_cli, Cmdline, InitStage, RunStage, StartupStage};
+use mtool_core::{
+    config::{is_startup_mode, not_startup_mode, StartupMode},
+    AppStage, Cmdline, CmdlineStage,
+};
+use mtool_system::keybinding::Keybinging;
 
 #[derive(Default)]
 pub struct Module {}
@@ -19,89 +26,38 @@ pub struct Module {}
 #[async_trait]
 impl AppModule for Module {
     async fn init(&self, app: &mut AppContext) -> Result<(), anyhow::Error> {
-        app.injector().construct(Cmder::new).await;
+        app.injector().construct_once(Cmder::new);
 
         app.schedule()
-            .add_task(StartupStage::Startup, setup_cmdline)
-            .await
-            .add_task(InitStage::Init, init.cond(is_cli))
-            .await
-            .add_task(RunStage::Run, exec_command.cond(is_cli))
-            .await;
+            .add_once_task(CmdlineStage::Setup, setup_cmdline)
+            .add_once_task(CmdlineStage::AfterInit, register_command)
+            .add_once_task(
+                CmdlineStage::AfterInit,
+                register_keybinding.cond(not_startup_mode(StartupMode::Cli)),
+            )
+            .add_once_task(
+                AppStage::Run,
+                exec_command.cond(is_startup_mode(StartupMode::Cli)),
+            );
 
         Ok(())
     }
 }
 
-async fn list_command(cmder: Res<Cmder>) -> Result<(), anyhow::Error> {
-    for cmd in cmder.list_command().await {
-        print!("{}", cmd.get_name());
-
-        if !cmd.get_aliases().is_empty() {
-            print!("({})", cmd.get_aliases().join(","));
-        }
-        println!();
-    }
-    Ok(())
-}
-
 async fn setup_cmdline(cmdline: Res<Cmdline>) -> Result<(), anyhow::Error> {
-    cmdline
-        .setup(|cmdline| {
-            Ok(cmdline.arg(arg!([command] ... "commands to run").trailing_var_arg(true)))
-        })
-        .await?;
+    cmdline.setup(|cmdline| {
+        Ok(cmdline.arg(arg!([command] ... "commands to run").trailing_var_arg(true)))
+    })?;
 
     Ok(())
 }
 
-async fn init(cmder: Res<Cmder>) -> Result<(), anyhow::Error> {
-    cmder
-        .add_command(list_command.name("list_command").add_alias("lc"))
-        .await;
-
+async fn register_command(cmder: Res<Cmder>) -> Result<(), anyhow::Error> {
+    cmder.add_command(list_command.name("list_command").add_alias("lc"));
     Ok(())
 }
 
-pub struct CommandArgs {
-    inner: Vec<String>,
-}
-
-impl Deref for CommandArgs {
-    type Target = Vec<String>;
-
-    fn deref(&self) -> &Self::Target {
-        &self.inner
-    }
-}
-
-impl CommandArgs {
-    pub fn new(inner: Vec<String>) -> Self {
-        Self { inner }
-    }
-}
-
-async fn exec_command(
-    cmder: Res<Cmder>,
-    args: Res<ArgMatches>,
-    injector: Injector,
-) -> Result<(), anyhow::Error> {
-    if let Some(cmd) = args
-        .get_many::<String>("command")
-        .map(|cmd| cmd.collect_vec())
-    {
-        let (cmd, args) = cmd.split_first().unwrap();
-        match cmder.get_command_exact(cmd).await {
-            Some(cmd) => {
-                injector
-                    .insert(Res::new(CommandArgs::new(
-                        args.iter().map(|arg| arg.to_string()).collect_vec(),
-                    )))
-                    .await;
-                cmd.exec(&injector).await?;
-            }
-            None => println!("{} not found", cmd),
-        };
-    }
+async fn register_keybinding(keybinding: Res<Keybinging>) -> Result<(), anyhow::Error> {
+    keybinding.define_global("C-A-<Spacebar>", exec_command_interactive)?;
     Ok(())
 }

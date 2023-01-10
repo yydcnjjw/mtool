@@ -1,4 +1,4 @@
-use std::sync::Mutex;
+use std::sync::{RwLock, RwLockReadGuard, RwLockWriteGuard};
 
 use anyhow::Context as _;
 use once_cell::sync::OnceCell;
@@ -6,9 +6,8 @@ use windows::Win32::{
     Foundation::{HWND, LPARAM, LRESULT, WPARAM},
     System::Threading::GetCurrentThreadId,
     UI::WindowsAndMessaging::{
-        CallNextHookEx, DispatchMessageW, GetMessageW, TranslateMessage,
-        KBDLLHOOKSTRUCT, MSG, WH_KEYBOARD_LL, WM_KEYDOWN, WM_KEYUP, WM_SYSKEYDOWN,
-        WM_SYSKEYUP,
+        CallNextHookEx, DispatchMessageW, GetMessageW, TranslateMessage, KBDLLHOOKSTRUCT, MSG,
+        WH_KEYBOARD_LL, WM_KEYDOWN, WM_KEYUP, WM_SYSKEYDOWN, WM_SYSKEYUP,
     },
 };
 
@@ -16,7 +15,7 @@ use crate::{
     keydef::KeyCode, modifier_state::ModifierState, BoxedEventCallback, Event, KeyAction, KeyEvent,
 };
 
-use super::{hook::GlobalHook, Error};
+use super::hook::GlobalHook;
 
 struct Context {
     #[allow(dead_code)]
@@ -27,37 +26,44 @@ struct Context {
     keyboard_hook: GlobalHook,
     modifier_state: ModifierState,
 
-    stop_guard: bool,
+    can_stop: bool,
 }
 
 impl Context {
-    fn new(cb: BoxedEventCallback) -> Result<Self, Error> {
+    fn new(cb: BoxedEventCallback) -> Result<Self, anyhow::Error> {
         Ok(Self {
             hook_thread_id: unsafe { GetCurrentThreadId() },
             event_callback: cb,
             keyboard_hook: GlobalHook::new(WH_KEYBOARD_LL, Some(keyboard_hook))
                 .context("Register Keyboard event")?,
             modifier_state: ModifierState::new(),
-            stop_guard: false,
+            can_stop: false,
         })
+    }
+
+    fn get() -> RwLockReadGuard<'static, Context> {
+        CONTEXT.get().unwrap().read().unwrap()
+    }
+
+    fn get_mut() -> RwLockWriteGuard<'static, Context> {
+        CONTEXT.get().unwrap().write().unwrap()
     }
 }
 
-static CONTEXT: OnceCell<Mutex<Context>> = OnceCell::new();
+static CONTEXT: OnceCell<RwLock<Context>> = OnceCell::new();
 
 pub fn run_loop(cb: BoxedEventCallback) -> Result<(), anyhow::Error> {
     CONTEXT
-        .set(Mutex::new(Context::new(cb)?))
+        .set(RwLock::new(Context::new(cb)?))
         .map_err(|_| anyhow::anyhow!("failed to init context"))?;
 
-    let can_stop = || CONTEXT.get().unwrap().lock().unwrap().stop_guard;
     unsafe {
         let mut msg = MSG::default();
         while GetMessageW(&mut msg, HWND::default(), 0, 0).as_bool() {
             TranslateMessage(&msg);
             DispatchMessageW(&msg);
 
-            if can_stop() {
+            if Context::get().can_stop {
                 break;
             }
         }
@@ -69,28 +75,26 @@ pub fn run_loop(cb: BoxedEventCallback) -> Result<(), anyhow::Error> {
 }
 
 pub fn quit() -> Result<(), anyhow::Error> {
-    let mut guard = CONTEXT.get().unwrap().lock().unwrap();
-    guard.keyboard_hook.uninstall()?;
+    let mut ctx = Context::get_mut();
+    ctx.keyboard_hook.uninstall()?;
 
-    guard.stop_guard = true;
+    ctx.can_stop = true;
 
     Ok(())
 }
 
 extern "system" fn keyboard_hook(code: i32, wparam: WPARAM, lparam: LPARAM) -> LRESULT {
-    let ev = unsafe { *(lparam as *const KBDLLHOOKSTRUCT) };
-    let action = match wparam as u32 {
+    let ev = unsafe { *(lparam.0 as *const KBDLLHOOKSTRUCT) };
+    let action = match wparam.0 as u32 {
         WM_KEYDOWN | WM_SYSKEYDOWN => KeyAction::Press,
         WM_KEYUP | WM_SYSKEYUP => KeyAction::Release,
-        _ => panic!("Unknown action {}", wparam),
+        _ => panic!("Unknown action {:?}", wparam),
     };
 
     let keycode = KeyCode::from(ev.clone());
     let scancode = ev.scanCode;
 
-    let mut guard = CONTEXT.get().unwrap().lock().unwrap();
-
-    let modifiers = guard.modifier_state.update(&keycode, &action);
+    let modifiers = { Context::get_mut().modifier_state.update(&keycode, &action) };
 
     let e = KeyEvent {
         scancode,
@@ -99,13 +103,17 @@ extern "system" fn keyboard_hook(code: i32, wparam: WPARAM, lparam: LPARAM) -> L
         action,
     };
 
-    if let Err(e) = (guard.event_callback)(Event::Key(e)) {
-        log::error!("quit system event loop: {}", e);
+    log::debug!("receive event: {:?}", e);
 
-        if let Err(e) = quit() {
-            log::error!("Failed to quit: {}", e);
+    {
+        if let Err(e) = (Context::get().event_callback)(Event::Key(e)) {
+            log::error!("quit system event loop: {}", e);
+
+            if let Err(e) = quit() {
+                log::error!("Failed to quit: {}", e);
+            }
         }
     }
 
-    unsafe { CallNextHookEx(guard.keyboard_hook.handle(), code, wparam, lparam) }
+    unsafe { CallNextHookEx(Context::get().keyboard_hook.handle(), code, wparam, lparam) }
 }

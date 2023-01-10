@@ -1,11 +1,10 @@
+use anyhow::Context;
 use windows::Win32::{
-    Foundation::{GetLastError, HINSTANCE},
+    Foundation::HINSTANCE,
     UI::WindowsAndMessaging::{
         SetWindowsHookExW, UnhookWindowsHookEx, HHOOK, HOOKPROC, WINDOWS_HOOK_ID,
     },
 };
-
-use super::Error;
 
 #[derive(Debug)]
 pub struct GlobalHook {
@@ -13,14 +12,13 @@ pub struct GlobalHook {
 }
 
 impl GlobalHook {
-    fn install(idhook: WINDOWS_HOOK_ID, hook: HOOKPROC) -> Result<HHOOK, Error> {
-        let hhk = unsafe { SetWindowsHookExW(idhook, hook, HINSTANCE::default(), 0) };
-        Ok(hhk)
+    fn install(idhook: WINDOWS_HOOK_ID, hook: HOOKPROC) -> Result<HHOOK, anyhow::Error> {
+        unsafe { SetWindowsHookExW(idhook, hook, HINSTANCE::default(), 0) }.context(format!("Failed to install hook: {:?}", idhook))
     }
 
-    pub fn uninstall(&self) -> Result<(), Error> {
+    pub fn uninstall(&self) -> Result<(), anyhow::Error> {
         if unsafe { !UnhookWindowsHookEx(self.inst) }.as_bool() {
-            Err(Error::UninstallHook(unsafe { GetLastError() }))
+            anyhow::bail!("Failed to uninstall hook")
         } else {
             Ok(())
         }
@@ -30,7 +28,7 @@ impl GlobalHook {
         self.inst
     }
 
-    pub fn new(idhook: WINDOWS_HOOK_ID, hook: HOOKPROC) -> Result<Self, Error> {
+    pub fn new(idhook: WINDOWS_HOOK_ID, hook: HOOKPROC) -> Result<Self, anyhow::Error> {
         Ok(Self {
             inst: GlobalHook::install(idhook, hook)?,
         })

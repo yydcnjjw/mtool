@@ -5,7 +5,7 @@ use std::{
 
 use anyhow::Context;
 use clap::Parser;
-use mapp::Res;
+use mapp::provider::Res;
 use mdict::decode::mdx;
 use mtool_cmder::CommandArgs;
 use mtool_core::ConfigStore;

@@ -1,7 +1,8 @@
 use clap::Parser;
-use mapp::Res;
+use mapp::provider::Res;
 use mdict::decode::collins::{self, output::OutputOrg};
 use mtool_cmder::CommandArgs;
+use mtool_interactive::OutputDevice;
 
 /// Dict module
 #[derive(Parser, Debug)]
@@ -12,7 +13,7 @@ struct Args {
     query: String,
 }
 
-pub async fn dict(args: Res<CommandArgs>) -> Result<(), anyhow::Error> {
+pub async fn dict(args: Res<CommandArgs>, o: Res<OutputDevice>) -> Result<(), anyhow::Error> {
     let Args { query } = match Args::try_parse_from(args.iter()) {
         Ok(args) => args,
         Err(e) => {
@@ -27,13 +28,13 @@ pub async fn dict(args: Res<CommandArgs>) -> Result<(), anyhow::Error> {
         .filter_map(|v| v.to_string_org().ok())
         .collect();
 
-    if result.is_empty() {
-        println!("Failed to query dict {}", query);
+    let plain = if result.is_empty() {
+        format!("Failed to query dict {}", query)
     } else {
-        for item in result {
-            println!("{}", item);
-        }
-    }
+        result.join("\n")
+    };
+
+    o.show_plain(&plain).await?;
 
     Ok(())
 }

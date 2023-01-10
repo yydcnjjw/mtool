@@ -1,10 +1,13 @@
-#![feature(async_closure)]
-#![feature(trait_alias)]
+#![feature(unsize)]
+#![feature(coerce_unsized)]
+#![feature(unsized_fn_params)]
+// #![feature(async_closure)]
+// #![feature(trait_alias)]
 
 mod app;
 mod label;
 mod module;
-mod provider;
+pub mod provider;
 mod schedule;
 
 pub use minject as inject;
@@ -12,7 +15,7 @@ pub use minject as inject;
 pub use app::*;
 pub use label::*;
 pub use module::{Module as AppModule, ModuleGroup};
-pub use provider::*;
+// pub use provider::*;
 pub use schedule::*;
 
 use thiserror::Error;

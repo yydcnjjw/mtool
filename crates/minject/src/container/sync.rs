@@ -1,93 +1,80 @@
+use dashmap::DashMap;
 use std::{
-    any::{Any, TypeId},
-    collections::HashMap,
+    any::{type_name, Any, TypeId},
+    ops::Deref,
 };
-use tokio::sync::{RwLock, RwLockMappedWriteGuard, RwLockReadGuard, RwLockWriteGuard};
 
-type AnyMap = HashMap<TypeId, Box<dyn Any + Send + Sync>>;
+type BoxedAny = Box<dyn Any + Send + Sync>;
+type AnyMap = DashMap<TypeId, BoxedAny>;
 
 #[derive(Debug)]
 pub struct Container {
-    inner: RwLock<AnyMap>,
+    inner: AnyMap,
 }
 
 impl Container {
     pub fn new() -> Self {
         Self {
-            inner: RwLock::new(HashMap::new()),
+            inner: DashMap::new(),
         }
     }
 
-    pub async fn insert<T>(&self, v: T) -> Option<Box<T>>
+    pub fn insert<T>(&self, v: T) -> Option<Box<T>>
     where
-        T: Send + Sync + 'static,
+        T: Send + Sync + Clone + 'static,
     {
-        self.inner
-            .write()
-            .await
-            .insert(TypeId::of::<T>(), Box::new(v))
-            .and_then(|boxed| boxed.downcast().ok().map(|boxed| *boxed))
+        self.insert_any::<T>(Box::new(v))
     }
 
-    pub async fn insert_any<T>(&self, v: Box<dyn Any + Send + Sync>) -> Option<Box<T>>
+    pub fn insert_any<T>(&self, v: Box<dyn Any + Send + Sync>) -> Option<Box<T>>
     where
         T: Send + Sync + 'static,
     {
+        log::debug!("insert {}", type_name::<T>());
+
         self.inner
-            .write()
-            .await
             .insert(TypeId::of::<T>(), v)
             .and_then(|boxed| boxed.downcast().ok().map(|boxed| *boxed))
     }
 
-    pub async fn get<T>(&self) -> Option<RwLockReadGuard<T>>
+    pub fn get<T>(&self) -> Option<T>
     where
-        T: Send + Sync + 'static,
+        T: Send + Sync + Clone + 'static,
     {
-        let guard = self.inner.read().await;
-        RwLockReadGuard::try_map(guard, |v| {
-            v.get(&TypeId::of::<T>()).and_then(|v| v.downcast_ref())
-        })
-        .ok()
+        log::debug!("get {}", type_name::<T>());
+
+        self.inner
+            .get(&TypeId::of::<T>())
+            .and_then(|v| v.downcast_ref::<T>().map(|v| v.clone()))
     }
 
-    pub async fn get_mut<T>(&self) -> Option<RwLockMappedWriteGuard<T>>
-    where
-        T: Send + Sync + 'static,
-    {
-        let guard = self.inner.write().await;
-        RwLockWriteGuard::try_map(guard, |v| {
-            v.get_mut(&TypeId::of::<T>()).and_then(|v| v.downcast_mut())
-        })
-        .ok()
-    }
-
-    pub async fn remove<T>(&self) -> Option<T>
+    pub fn remove<T>(&self) -> Option<T>
     where
         T: Send + Sync + 'static,
     {
         self.inner
-            .write()
-            .await
             .remove(&TypeId::of::<T>())
-            .and_then(|boxed| boxed.downcast().ok().map(|boxed| *boxed))
+            .and_then(|(_, v)| v.downcast::<T>().map(|v| *v).ok())
     }
 
-    pub async fn clear(&self) {
-        self.inner.write().await.clear()
-    }
-
-    pub async fn is_empty(&self) -> bool {
-        self.inner.read().await.is_empty()
-    }
-
-    pub async fn len(&self) -> usize {
-        self.inner.read().await.len()
+    pub fn contains_key<T>(&self) -> bool
+    where
+        T: Send + Sync + 'static,
+    {
+        self.inner.contains_key(&TypeId::of::<T>())
     }
 }
 
 impl Default for Container {
     fn default() -> Self {
         Self::new()
+    }
+}
+
+impl Deref for Container {
+    type Target = AnyMap;
+
+    fn deref(&self) -> &Self::Target {
+        &self.inner
     }
 }

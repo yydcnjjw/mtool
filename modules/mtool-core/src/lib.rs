@@ -1,5 +1,5 @@
 use async_trait::async_trait;
-use mapp::{define_label, AppContext, AppModule, Label, ModuleGroup};
+use mapp::{define_label, AppContext, AppModule, Label, ModuleGroup, ScheduleGraph};
 
 mod cmdline;
 pub mod config;
@@ -22,80 +22,24 @@ pub fn module() -> ModuleGroup {
     group
 }
 
-define_label!(
-    pub enum StartupStage {
-        PreStartup,
-        Startup,
-        PostStartup,
-    }
-);
-
-define_label!(
-    pub enum InitStage {
-        PreInit,
-        Init,
-        PostInit,
-    }
-);
-
-define_label!(
-    pub enum RunStage {
-        PreRun,
-        Run,
-        PostRun,
-    }
-);
-
-define_label!(
-    pub enum ExitStage {
-        PreExit,
-        Exit,
-        PostExit,
-    }
-);
+#[derive(Default)]
+struct CoreModule {}
 
 define_label!(
     pub enum AppStage {
         Startup,
+        Run,
         Exit,
     }
 );
 
-#[derive(Default)]
-struct CoreModule {}
-
 #[async_trait]
 impl AppModule for CoreModule {
     async fn init(&self, ctx: &mut AppContext) -> Result<(), anyhow::Error> {
-        ctx.schedule()
-            .add_stage(AppStage::Startup)
-            .await
-            .insert_stage(AppStage::Startup, StartupStage::PreStartup)
-            .await
-            .insert_stage(StartupStage::PreStartup, StartupStage::Startup)
-            .await
-            .insert_stage(StartupStage::Startup, StartupStage::PostStartup)
-            .await
-            .insert_stage(StartupStage::PostStartup, InitStage::PreInit)
-            .await
-            .insert_stage(InitStage::PreInit, InitStage::Init)
-            .await
-            .insert_stage(InitStage::Init, InitStage::PostInit)
-            .await
-            .insert_stage(InitStage::PostInit, RunStage::PreRun)
-            .await
-            .insert_stage(RunStage::PreRun, RunStage::Run)
-            .await
-            .insert_stage(RunStage::Run, RunStage::PostRun)
-            .await
-            .insert_stage(RunStage::PostRun, ExitStage::PreExit)
-            .await
-            .insert_stage(ExitStage::PreExit, ExitStage::Exit)
-            .await
-            .insert_stage(ExitStage::Exit, ExitStage::PostExit)
-            .await
-            .insert_stage(ExitStage::PostExit, AppStage::Exit)
-            .await;
+        ctx.schedule().insert_stage_vec(
+            ScheduleGraph::Root,
+            vec![AppStage::Startup, AppStage::Run, AppStage::Exit],
+        );
         Ok(())
     }
 }

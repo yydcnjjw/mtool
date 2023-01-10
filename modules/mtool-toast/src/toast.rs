@@ -1,7 +1,8 @@
 use anyhow::Context;
 use clap::Parser;
-use mapp::Res;
+use mapp::provider::Res;
 use mtool_cmder::CommandArgs;
+use mtool_interactive::OutputDevice;
 use notify_rust::{Notification, Timeout};
 
 /// Toast module
@@ -34,11 +35,11 @@ struct Args {
     timeout: u32,
 }
 
-pub async fn toast(args: Res<CommandArgs>) -> Result<(), anyhow::Error> {
+pub async fn toast(args: Res<CommandArgs>, o: Res<OutputDevice>) -> Result<(), anyhow::Error> {
     let args = match Args::try_parse_from(args.iter()) {
         Ok(args) => args,
         Err(e) => {
-            e.print().unwrap();
+            o.show_plain(&e.render().to_string()).await?;
             return Ok(());
         }
     };

@@ -9,7 +9,10 @@ edition = "2021"
 msysev = { path = "../msysev" }
 
 log = "0.4"
-tokio = { version = "1" }
+
+tokio = { version = "1", features = ["sync"] }
+async-trait = "0.1"
+
 anyhow = "1.0"
 thiserror = "1.0"
 

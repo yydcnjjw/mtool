@@ -2,8 +2,8 @@ use std::{collections::HashMap, sync::Arc};
 
 use fuzzy_matcher::{skim::SkimMatcherV2, FuzzyMatcher};
 use itertools::Itertools;
-use mapp::{inject::Provide, App, Label, Res};
-use tokio::sync::RwLock;
+use mapp::{inject::Provide, provider::Res, App, Label};
+use parking_lot::RwLock;
 
 use super::{CommandDescriptor, IntoCommandDescriptor};
 
@@ -87,32 +87,32 @@ impl Cmder {
         }))
     }
 
-    pub async fn add_command<Cmd, Args>(&self, cmd: Cmd) -> &Self
+    pub fn add_command<Cmd, Args>(&self, cmd: Cmd) -> &Self
     where
         Cmd: IntoCommandDescriptor<Args> + 'static,
         Args: Provide<App> + Send + Sync + 'static,
     {
-        self.inner.write().await.add_command(cmd);
+        self.inner.write().add_command(cmd);
         self
     }
 
-    pub async fn get_command_fuzzy(&self, pattern: &str) -> Vec<SharedCommandDescriptor> {
-        self.inner.read().await.get_cmd_fuzzy(pattern)
+    pub fn get_command_fuzzy(&self, pattern: &str) -> Vec<SharedCommandDescriptor> {
+        self.inner.read().get_cmd_fuzzy(pattern)
     }
 
-    pub async fn get_command_exact(&self, name_or_alias: &str) -> Option<SharedCommandDescriptor> {
-        self.inner.read().await.get_cmd_exact(name_or_alias)
+    pub fn get_command_exact(&self, name_or_alias: &str) -> Option<SharedCommandDescriptor> {
+        self.inner.read().get_cmd_exact(name_or_alias)
     }
 
-    pub async fn get_command_with_label<L>(&self, label: L) -> Option<SharedCommandDescriptor>
+    pub fn get_command_with_label<L>(&self, label: L) -> Option<SharedCommandDescriptor>
     where
         L: Into<Label>,
     {
-        self.inner.read().await.get_cmd_with_label(label)
+        self.inner.read().get_cmd_with_label(label)
     }
 
-    pub async fn list_command(&self) -> Vec<SharedCommandDescriptor> {
-        self.inner.read().await.list_command()
+    pub fn list_command(&self) -> Vec<SharedCommandDescriptor> {
+        self.inner.read().list_command()
     }
 }
 
@@ -130,10 +130,8 @@ mod tests {
 
         cmder
             .add_command(test_command.name("test").add_alias("t").add_alias("te"))
-            .await
-            .add_command(test_command.name("aebc").add_alias("a"))
-            .await;
+            .add_command(test_command.name("aebc").add_alias("a"));
 
-        assert_eq!(cmder.get_command_fuzzy("ae").await.len(), 1);
+        assert_eq!(cmder.get_command_fuzzy("ae").len(), 1);
     }
 }

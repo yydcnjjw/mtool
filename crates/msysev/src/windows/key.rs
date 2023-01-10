@@ -4,7 +4,7 @@ use crate::keydef::KeyCode;
 
 impl From<KBDLLHOOKSTRUCT> for KeyCode {
     fn from(v: KBDLLHOOKSTRUCT) -> Self {
-        match v.vkCode as VIRTUAL_KEY {
+        match VIRTUAL_KEY(v.vkCode as u16) {
             VK_OEM_3 => KeyCode::GraveAccent,
             VK_1 => KeyCode::Num1,
             VK_2 => KeyCode::Num2,

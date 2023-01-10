@@ -1,84 +1,98 @@
-use std::{collections::HashMap, mem, ops::DerefMut};
+use std::{collections::HashMap, mem};
 
 use anyhow::Context;
 use async_recursion::async_recursion;
+use futures::Future;
+use minject::{InjectOnce, Provide};
+use parking_lot::RwLock;
 use petgraph::{graph::NodeIndex, Direction, Graph};
-use tokio::sync::RwLock;
+use tokio::sync::Mutex;
 
-use crate::{define_label, App, IntoTaskDescriptor, Label, TaskDescriptor};
+use crate::{
+    define_label, App, CondLoad, FnCondLoad, IntoOnceTaskDescriptor, Label, OnceTaskDescriptor,
+};
 
 enum Node {
-    Task(TaskNode),
+    OnceTask(OnceTaskNode),
     Stage(StageNode),
 }
 
-struct TaskNode {
-    task: TaskDescriptor,
+struct OnceTaskNode {
+    task: Mutex<Option<OnceTaskDescriptor>>,
     index: NodeIndex,
 }
 
-impl TaskNode {
-    fn new(task: TaskDescriptor, idx: NodeIndex) -> Self {
-        Self { task, index: idx }
+impl OnceTaskNode {
+    fn new(task: OnceTaskDescriptor, idx: NodeIndex) -> Self {
+        Self {
+            task: Mutex::new(Some(task)),
+            index: idx,
+        }
     }
 
-    async fn run(&self, app: &App) -> Result<(), anyhow::Error> {
-        self.task.run(app).await
+    async fn run_once(&self, app: &App) -> Result<(), anyhow::Error> {
+        let task = { self.task.lock().await.take().context("task is not exist")? };
+        task.run_once(app).await
     }
 }
+
+type BoxedCondLoad = Box<dyn CondLoad + Send + Sync>;
 
 struct StageNode {
     index: NodeIndex,
+    cond_load: Mutex<Option<BoxedCondLoad>>,
 }
 
 impl StageNode {
     fn new(idx: NodeIndex) -> Self {
-        Self { index: idx }
+        Self {
+            index: idx,
+            cond_load: Mutex::new(None),
+        }
+    }
+
+    fn new_with_cond(idx: NodeIndex, cond_load: Option<BoxedCondLoad>) -> Self {
+        Self {
+            index: idx,
+            cond_load: Mutex::new(cond_load),
+        }
     }
 }
 
 type SchedGraph = Graph<Label, ()>;
 
-define_label!(ScheduleGraph, Root);
+define_label!(pub ScheduleGraph, Root);
 
 #[derive(Default)]
 pub struct ScheduleInner {
     graph: SchedGraph,
     node_index: HashMap<Label, Node>,
-    root: NodeIndex,
 }
 
 impl ScheduleInner {
     fn new() -> Self {
-        let mut graph = SchedGraph::new();
-        let root = graph.add_node(ScheduleGraph::Root.into());
+        let graph = SchedGraph::new();
+        let node_index = HashMap::new();
 
-        Self {
-            graph,
-            node_index: HashMap::new(),
-            root,
-        }
+        let mut self_ = Self { graph, node_index };
+
+        let root = ScheduleGraph::Root.into();
+        let stage = self_.graph.add_node(root);
+        self_
+            .node_index
+            .insert(root, Node::Stage(StageNode::new(stage)));
+
+        self_
     }
 }
 
 impl ScheduleInner {
-    fn add_stage<L>(&mut self, stage_label: L) -> &mut Self
-    where
-        L: Into<Label>,
-    {
-        let stage_label = stage_label.into();
-
-        let stage = self.graph.add_node(stage_label);
-
-        self.graph.add_edge(self.root, stage, ());
-
-        self.node_index
-            .insert(stage_label, Node::Stage(StageNode::new(stage)));
-
-        self
-    }
-
-    fn insert_stage<L, B>(&mut self, prev_stage_label: L, stage_label: B) -> &mut Self
+    fn insert_stage<L, B>(
+        &mut self,
+        prev_stage_label: L,
+        stage_label: B,
+        cond_load: Option<BoxedCondLoad>,
+    ) -> &mut Self
     where
         L: Into<Label>,
         B: Into<Label>,
@@ -86,17 +100,51 @@ impl ScheduleInner {
         let stage_label = stage_label.into();
 
         let stage = self.graph.add_node(stage_label);
+        self.node_index.insert(
+            stage_label,
+            Node::Stage(StageNode::new_with_cond(stage, cond_load)),
+        );
 
-        let prev_stage = self.get_stage(prev_stage_label).unwrap();
-        self.graph.add_edge(prev_stage.index, stage, ());
+        let prev_stage_index = self.get_stage(prev_stage_label).unwrap().index;
 
-        self.node_index
-            .insert(stage_label, Node::Stage(StageNode::new(stage)));
+        for next_stage in self
+            .graph
+            .neighbors_directed(prev_stage_index, Direction::Outgoing)
+            .filter(|node_index| {
+                matches!(self.get_node_with_index(node_index.clone()), Node::Stage(_))
+            })
+            .collect::<Vec<_>>()
+        {
+            let edge = self.graph.find_edge(prev_stage_index, next_stage).unwrap();
+            self.graph.remove_edge(edge);
+            self.graph.add_edge(stage, next_stage, ());
+        }
+
+        self.graph.update_edge(prev_stage_index, stage, ());
 
         self
     }
 
-    fn add_task<L>(&mut self, label: L, task: TaskDescriptor) -> &mut Self
+    fn insert_stage_vec<L, B>(
+        &mut self,
+        prev_stage: L,
+        stages: Vec<(B, Option<BoxedCondLoad>)>,
+    ) -> &mut Self
+    where
+        L: Into<Label>,
+        B: Into<Label>,
+    {
+        let mut prev = prev_stage.into();
+        for (stage, cond_load) in stages {
+            let stage = stage.into();
+            self.insert_stage(prev, stage.clone(), cond_load);
+            prev = stage;
+        }
+
+        self
+    }
+
+    fn add_once_task<L>(&mut self, label: L, task: OnceTaskDescriptor) -> &mut Self
     where
         L: Into<Label>,
     {
@@ -111,8 +159,10 @@ impl ScheduleInner {
 
         self.graph.add_edge(index, task_node, ());
 
-        self.node_index
-            .insert(task_label, Node::Task(TaskNode::new(task, task_node)));
+        self.node_index.insert(
+            task_label,
+            Node::OnceTask(OnceTaskNode::new(task, task_node)),
+        );
 
         self
     }
@@ -124,7 +174,7 @@ impl ScheduleInner {
         self.node_index
             .get(&stage_label.into())
             .and_then(|v| match v {
-                Node::Task(_) => None,
+                Node::OnceTask(_) => None,
                 Node::Stage(n) => Some(n),
             })
     }
@@ -140,18 +190,18 @@ impl ScheduleInner {
         L: Into<Label>,
     {
         self.node_index.get(&label.into()).and_then(|v| match v {
-            Node::Task(t) => Some(t.index),
+            Node::OnceTask(t) => Some(t.index),
             Node::Stage(s) => Some(s.index),
         })
     }
 
     pub async fn run(self, app: &App) -> Result<(), anyhow::Error> {
-        self.run_node_parallel(
-            app,
-            self.graph
-                .neighbors_directed(self.root, Direction::Outgoing),
-        )
-        .await
+        let root_stage = self.get_stage(ScheduleGraph::Root).unwrap();
+        let neighbors = self
+            .graph
+            .neighbors_directed(root_stage.index, Direction::Outgoing);
+
+        self.run_node_parallel(app, neighbors).await
     }
 
     async fn run_node_parallel<Iter>(&self, app: &App, iter: Iter) -> Result<(), anyhow::Error>
@@ -171,18 +221,8 @@ impl ScheduleInner {
         let label = self.graph.node_weight(index).unwrap();
         let node = self.node_index.get(&label).unwrap();
         match node {
-            Node::Task(task) => {
-                if let Some(cond) = &task.task.cond_load {
-                    if cond.load_with_cond(app).await? {
-                        task.run(app)
-                            .await
-                            .context(format!("running task: {}", label))?;
-                    }
-                } else {
-                    task.run(app)
-                        .await
-                        .context(format!("running task: {}", label))?;
-                }
+            Node::OnceTask(task) => {
+                task.run_once(app).await?;
 
                 self.run_node_parallel(
                     app,
@@ -190,15 +230,24 @@ impl ScheduleInner {
                 )
                 .await?;
             }
-            Node::Stage(_) => {
-                log::debug!("run stage: {}", label);
-                self.run_node_parallel(
-                    app,
-                    self.graph
-                        .neighbors_directed(index, Direction::Outgoing)
-                        .filter(|index| matches!(self.get_node_with_index(*index), Node::Task(_))),
-                )
-                .await?;
+            Node::Stage(stage) => {
+                let need_run_task = match stage.cond_load.lock().await.take() {
+                    Some(cond_load) => cond_load.load_with_cond(app).await?,
+                    _ => true,
+                };
+
+                if need_run_task {
+                    log::debug!("run stage: {}", label);
+                    self.run_node_parallel(
+                        app,
+                        self.graph
+                            .neighbors_directed(index, Direction::Outgoing)
+                            .filter(|index| {
+                                matches!(self.get_node_with_index(*index), Node::OnceTask(_))
+                            }),
+                    )
+                    .await?;
+                }
 
                 self.run_node_parallel(
                     app,
@@ -224,39 +273,93 @@ impl Schedule {
         }
     }
 
-    pub async fn add_stage<L>(&self, stage_label: L) -> &Self
-    where
-        L: Into<Label>,
-    {
-        self.inner.write().await.add_stage(stage_label);
-        self
-    }
-
-    pub async fn insert_stage<L, B>(&self, prev_stage_label: L, stage_label: B) -> &Self
+    pub fn insert_stage<L, B>(&self, prev_stage_label: L, stage_label: B) -> &Self
     where
         L: Into<Label>,
         B: Into<Label>,
     {
         self.inner
             .write()
-            .await
-            .insert_stage(prev_stage_label, stage_label);
+            .insert_stage(prev_stage_label, stage_label, None);
         self
     }
 
-    pub async fn add_task<L, T, Args>(&self, stage_label: L, task: T) -> &Self
+    pub fn insert_stage_with_cond<L, B, Func, Args, Output>(
+        &self,
+        prev_stage_label: L,
+        stage_label: B,
+        cond_load: Func,
+    ) -> &Self
     where
         L: Into<Label>,
-        T: IntoTaskDescriptor<Args> + 'static,
+        B: Into<Label>,
+        Func: InjectOnce<Args, Output = Output> + Send + Sync + 'static,
+        Args: Provide<App> + Send + Sync + 'static,
+        Output: Future<Output = Result<bool, anyhow::Error>> + Send,
+    {
+        self.inner.write().insert_stage(
+            prev_stage_label,
+            stage_label,
+            Some(Box::new(FnCondLoad::new(cond_load))),
+        );
+        self
+    }
+
+    pub fn insert_stage_vec<L, B>(&self, prev: L, stages: Vec<B>) -> &Self
+    where
+        L: Into<Label>,
+        B: Into<Label>,
+    {
+        self.inner.write().insert_stage_vec(
+            prev,
+            stages
+                .into_iter()
+                .map(|stage| (stage, None))
+                .collect::<Vec<_>>(),
+        );
+        self
+    }
+
+    pub fn insert_stage_vec_with_cond<L, B, Func, Args, Output>(
+        &self,
+        prev: L,
+        stages: Vec<B>,
+        cond_load: Func,
+    ) -> &Self
+    where
+        L: Into<Label>,
+        B: Into<Label>,
+        Func: InjectOnce<Args, Output = Output> + Send + Sync + Clone + 'static,
+        Args: Provide<App> + Send + Sync + 'static,
+        Output: Future<Output = Result<bool, anyhow::Error>> + Send,
+    {
+        self.inner.write().insert_stage_vec(
+            prev,
+            stages
+                .into_iter()
+                .map(|stage| {
+                    (
+                        stage,
+                        Some(Box::new(FnCondLoad::new(cond_load.clone())) as BoxedCondLoad),
+                    )
+                })
+                .collect::<Vec<_>>(),
+        );
+        self
+    }
+
+    pub fn add_once_task<L, T, Args>(&self, stage_label: L, task: T) -> &Self
+    where
+        L: Into<Label>,
+        T: IntoOnceTaskDescriptor<Args> + 'static,
     {
         self.inner
             .write()
-            .await
-            .add_task(stage_label, task.into_task_descriptor());
+            .add_once_task(stage_label, task.into_once_task_descriptor());
         self
     }
 
     pub async fn run(self, app: &App) -> Result<(), anyhow::Error> {
-        ScheduleInner::run(mem::take(self.inner.write().await.deref_mut()), app).await
+        ScheduleInner::run(mem::take(&mut self.inner.write()), app).await
     }
 }
