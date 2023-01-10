@@ -197,7 +197,7 @@ where
         Output_: Future<Output = Result<bool, anyhow::Error>> + Send,
     {
         TaskDescriptor {
-            label: Label::new::<Func_>(),
+            label: Label::new::<Func>(),
             task: Box::new(self.into_task()),
             cond_load: Some(Box::new(FnCondLoad::new(cond))),
         }

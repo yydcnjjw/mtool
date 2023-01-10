@@ -1,5 +1,6 @@
 use std::{collections::HashMap, mem, ops::DerefMut};
 
+use anyhow::Context;
 use async_recursion::async_recursion;
 use petgraph::{graph::NodeIndex, Direction, Graph};
 use tokio::sync::RwLock;
@@ -173,12 +174,14 @@ impl ScheduleInner {
             Node::Task(task) => {
                 if let Some(cond) = &task.task.cond_load {
                     if cond.load_with_cond(app).await? {
-                        log::debug!("run task: {}", label);
-                        task.run(app).await?;
+                        task.run(app)
+                            .await
+                            .context(format!("running task: {}", label))?;
                     }
                 } else {
-                    log::debug!("run task: {}", label);
-                    task.run(app).await?;
+                    task.run(app)
+                        .await
+                        .context(format!("running task: {}", label))?;
                 }
 
                 self.run_node_parallel(

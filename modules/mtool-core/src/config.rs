@@ -27,7 +27,7 @@ impl AppModule for Module {
 
 struct ConfigInner {
     root_path: PathBuf,
-    table: toml::value::Table,
+    table: toml::Value,
 }
 
 impl ConfigInner {
@@ -49,18 +49,26 @@ impl ConfigInner {
         Ok(Self { root_path, table })
     }
 
-    fn get<T>(&self, key: &str) -> Result<T, anyhow::Error>
+    fn get<T>(&self, keys: &str) -> Result<T, anyhow::Error>
     where
         T: for<'de> Deserialize<'de>,
     {
-        let value = self
-            .table
-            .get(key)
-            .context(format!("{} is not exist", key))?;
+        let mut value: Option<&toml::Value> = Some(&self.table);
+
+        for key in keys.split(".") {
+            value = Some(
+                value
+                    .unwrap()
+                    .get(key)
+                    .context(format!("{} is not exist", keys))?,
+            );
+        }
+
         value
+            .unwrap()
             .clone()
             .try_into()
-            .context(format!("Failed to parse {}", key))
+            .context(format!("Failed to parse {}", keys))
     }
 
     fn root_path(&self) -> &Path {
