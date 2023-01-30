@@ -1,5 +1,6 @@
-use mapp::Res;
+use mapp::provider::Res;
 use mtool_cmder::CommandArgs;
+use mtool_interactive::OutputDevice;
 
 use crate::{language::LanguageType, tencent, translator::Translator};
 
@@ -18,11 +19,12 @@ async fn text_translate(
     target: LanguageType,
     args: Res<CommandArgs>,
     translator: Res<tencent::Translator>,
+    o: Res<OutputDevice>,
 ) -> Result<(), anyhow::Error> {
     let args = match Args::try_parse_from(args.iter()) {
         Ok(args) => args,
         Err(e) => {
-            e.print().unwrap();
+            o.show_plain(&e.render().to_string()).await?;
             return Ok(());
         }
     };
@@ -30,7 +32,7 @@ async fn text_translate(
     let Args { text } = args;
 
     let result = translator.text_translate(text, source, target).await?;
-    println!("{}", result);
+    o.show_plain(&result).await?;
 
     Ok(())
 }
@@ -38,20 +40,23 @@ async fn text_translate(
 pub async fn tz(
     args: Res<CommandArgs>,
     translator: Res<tencent::Translator>,
+    o: Res<OutputDevice>,
 ) -> Result<(), anyhow::Error> {
-    text_translate(LanguageType::Auto, LanguageType::Zh, args, translator).await
+    text_translate(LanguageType::Auto, LanguageType::Zh, args, translator, o).await
 }
 
 pub async fn te(
     args: Res<CommandArgs>,
     translator: Res<tencent::Translator>,
+    o: Res<OutputDevice>,
 ) -> Result<(), anyhow::Error> {
-    text_translate(LanguageType::Auto, LanguageType::En, args, translator).await
+    text_translate(LanguageType::Auto, LanguageType::En, args, translator, o).await
 }
 
 pub async fn tj(
     args: Res<CommandArgs>,
     translator: Res<tencent::Translator>,
+    o: Res<OutputDevice>,
 ) -> Result<(), anyhow::Error> {
-    text_translate(LanguageType::Auto, LanguageType::Ja, args, translator).await
+    text_translate(LanguageType::Auto, LanguageType::Ja, args, translator, o).await
 }

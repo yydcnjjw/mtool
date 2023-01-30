@@ -29,31 +29,28 @@ where
         &mut self.km
     }
 
-    pub fn dispatch(&mut self, key: KeyCombine) {
+    pub fn dispatch(&mut self, key: KeyCombine) -> bool {
+        log::debug!("receive {}", key);
+
         self.keyseq.push(key);
 
         if let Ok(binding) = self.km.lookup(&self.keyseq) {
             match binding {
                 Binding::Value(v) => {
+                    log::debug!("dispatcher {}", self.keyseq.to_string());
                     if let Err(e) = self.tx.send(v.clone()) {
                         log::warn!("{}", e);
                     }
                     self.keyseq.clear();
+                    true
                 }
-                Binding::Map(_) => {}
+                Binding::Map(_) => false,
             }
         } else {
             self.keyseq.clear();
+            false
         }
     }
-
-    // pub async fn run_loop(&mut self) {
-    //     while let Ok(e) = self.rx.recv().await {
-    //         if matches!(e.action, KeyAction::Press) {
-    //             self.dispatch(KeyCombine::from(e)).await;
-    //         }
-    //     }
-    // }
 
     pub fn subscribe(&self) -> broadcast::Receiver<Value> {
         self.tx.subscribe()

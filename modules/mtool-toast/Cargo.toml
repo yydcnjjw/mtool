@@ -12,6 +12,8 @@ mtool-core = { path = "../mtool-core" }
 
 mtool-cmder = { path = "../mtool-cmder" }
 
+mtool-interactive = { path = "../mtool-interactive" }
+
 notify-rust = { version = "4", default-features = false }
 
 clap = { version = "4", features = ["derive"] }

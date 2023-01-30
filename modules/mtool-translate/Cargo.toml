@@ -7,11 +7,14 @@ edition = "2021"
 
 [dependencies]
 mapp = { path = "../../crates/mapp" }
+
 mcloud-api = { path = "../../crates/mcloud-api" }
 
 mtool-core = { path = "../mtool-core" }
 
 mtool-cmder = { path = "../mtool-cmder" }
+
+mtool-interactive = { path = "../mtool-interactive" }
 
 serde = { version = "1.0", features = ["derive"] }
 

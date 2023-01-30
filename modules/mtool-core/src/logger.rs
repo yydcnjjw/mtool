@@ -6,23 +6,24 @@ use log4rs::{
     config::{Appender, Deserializers, Root},
     Handle,
 };
-use mapp::{define_label, AppContext, AppModule, CreateTaskDescriptor, Label, Res};
+use mapp::{define_label, provider::Res, AppContext, AppModule, Label};
 
-use super::{Cmdline, ConfigStore, InitStage, StartupStage};
+use crate::CmdlineStage;
+
+use super::{Cmdline, ConfigStore};
 
 #[derive(Default)]
 pub struct Module {}
 
-define_label!(LogStage, Init);
+define_label!(LoggerStage, Init);
 
 #[async_trait]
 impl AppModule for Module {
     async fn init(&self, app: &mut AppContext) -> Result<(), anyhow::Error> {
         app.schedule()
-            .add_task(StartupStage::Startup, setup_cmdline)
-            .await
-            .add_task(InitStage::PreInit, init.label(LogStage::Init))
-            .await;
+            .insert_stage(CmdlineStage::Init, LoggerStage::Init)
+            .add_once_task(CmdlineStage::Setup, setup_cmdline)
+            .add_once_task(LoggerStage::Init, init);
         Ok(())
     }
 }

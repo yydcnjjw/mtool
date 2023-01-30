@@ -1,8 +1,10 @@
 mod schedule;
-mod task;
+mod once_task;
+mod cond_load;
 
 pub use schedule::*;
-pub use task::*;
+pub use once_task::*;
+pub use cond_load::*;
 
 #[cfg(test)]
 mod tests {
@@ -29,29 +31,20 @@ mod tests {
             .await
             .add_stage(StartupStage::PostStartup)
             .await
-            .add_task(
-                StartupStage::PreStartup,
-                async move || -> Result<(), anyhow::Error> {
-                    println!("PreStartup");
-                    Ok(())
-                },
-            )
+            .add_task(StartupStage::PreStartup, || async move {
+                println!("PreStartup");
+                Ok::<(), anyhow::Error>(())
+            })
             .await
-            .add_task(
-                StartupStage::Startup,
-                async move || -> Result<(), anyhow::Error> {
-                    println!("Startup");
-                    Ok(())
-                },
-            )
+            .add_task(StartupStage::Startup, || async move {
+                println!("Startup");
+                Ok::<(), anyhow::Error>(())
+            })
             .await
-            .add_task(
-                StartupStage::PostStartup,
-                async move || -> Result<(), anyhow::Error> {
-                    println!("PostStartup");
-                    Ok(())
-                },
-            )
+            .add_task(StartupStage::PostStartup, || async move {
+                println!("PostStartup");
+                Ok::<(), anyhow::Error>(())
+            })
             .await;
 
         schedule.run(&app).await.unwrap();

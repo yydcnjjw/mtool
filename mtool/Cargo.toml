@@ -20,7 +20,7 @@ mtool-translate = { path = "../modules/mtool-translate" }
 
 mtool-dict = { path = "../modules/mtool-dict" }
 
-mtool-anynav = { path = "../modules/mtool-anynav" }
+mtool-interactive = { path = "../modules/mtool-interactive" }
 
 [features]
 

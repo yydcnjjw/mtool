@@ -1,0 +1,62 @@
+* {
+    margin: 0;
+    padding: 0;
+    outline: 0;
+    vertical-align: baseline;
+    box-sizing: border-box;
+    font-family: Hack;
+    font-size: 16px;
+}
+
+html, body {
+    width: 100%;
+    overflow: hidden;
+}
+
+input, select, button {
+    border: 0;
+    appearance: none;
+}
+
+body {
+    background-color: rgba($color: #000000, $alpha: 0.2);
+    color: white;
+}
+
+.completion {
+    .search-box {
+        display: flex;
+        width: 100%;
+        
+        .prompt {
+            font-size: 24px;
+            line-height: 48px;
+            text-align: center;
+            padding-left: 8px;
+        }
+
+        .input {
+            font-size: 32px;
+            background-color: transparent;
+            height: 48px;
+            padding: 0 8px;
+            caret-color: gray;
+            color: white;        
+        }
+    }
+
+    
+    .completion-list {
+        .item {
+        }
+
+        .item.focus {
+            background-color: red;
+        }    
+    }    
+}
+
+
+.output-plain {
+    white-space: pre-line;
+}

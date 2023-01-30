@@ -2,7 +2,8 @@ use std::sync::Arc;
 
 use crate::{
     module::{Module, ModuleGroup},
-    Injector, Schedule,
+    provider::Injector,
+    Schedule,
 };
 
 pub struct AppBuilder {
@@ -119,7 +120,7 @@ impl App {
 mod tests {
     use async_trait::async_trait;
 
-    use crate::{define_label, Label, Res};
+    use crate::{define_label, provider::Res, Label};
 
     use super::*;
 
@@ -148,7 +149,7 @@ mod tests {
                 .await
                 .add_task(
                     TestStage::Test,
-                    async move |v1: Res<i32>, v2: Res<String>| {
+                    |v1: Res<i32>, v2: Res<String>| async move {
                         println!("test module {}, {}", *v1, *v2);
                         Ok(())
                     },

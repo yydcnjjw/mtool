@@ -1,5 +1,5 @@
 use async_trait::async_trait;
-use mapp::{AppContext, AppModule, CreateTaskDescriptor, Res};
+use mapp::{provider::Res, AppContext, AppModule};
 use serde::Deserialize;
 use std::thread::{self, JoinHandle};
 use tokio::sync::{
@@ -7,7 +7,7 @@ use tokio::sync::{
     Mutex,
 };
 
-use mtool_core::{config::is_daemon, ConfigStore, ExitStage};
+use mtool_core::{AppStage, ConfigStore};
 
 pub use msysev::Event;
 
@@ -17,11 +17,9 @@ pub struct Module {}
 #[async_trait]
 impl AppModule for Module {
     async fn init(&self, app: &mut AppContext) -> Result<(), anyhow::Error> {
-        app.injector().construct(Observer::new).await;
+        app.injector().construct_once(Observer::new);
 
-        app.schedule()
-            .add_task(ExitStage::Exit, exit.cond(is_daemon))
-            .await;
+        app.schedule().add_once_task(AppStage::Exit, wait_for_exit);
         Ok(())
     }
 }
@@ -90,12 +88,15 @@ fn run_loop(size: usize) -> (Sender<Event>, Worker) {
     (tx_, worker)
 }
 
-async fn exit(ob: Res<Observer>) -> Result<(), anyhow::Error> {
-    ob.worker
-        .lock()
-        .await
-        .take()
-        .unwrap()
-        .join()
-        .map_err(|_| anyhow::anyhow!("waiting for system event loop"))?
+async fn wait_for_exit(ob: Option<Res<Observer>>) -> Result<(), anyhow::Error> {
+    if let Some(ob) = ob {
+        ob.worker
+            .lock()
+            .await
+            .take()
+            .unwrap()
+            .join()
+            .map_err(|_| anyhow::anyhow!("waiting for system event loop"))??;
+    }
+    Ok(())
 }

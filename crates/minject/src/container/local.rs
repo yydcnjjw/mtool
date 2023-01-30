@@ -4,7 +4,8 @@ use std::{
     fmt,
 };
 
-type AnyMap = HashMap<TypeId, Box<dyn Any + Send + Sync>>;
+type BoxedAny = Box<dyn Any + Send + Sync>;
+type AnyMap = HashMap<TypeId, BoxedAny>;
 
 pub struct LocalContainer {
     inner: AnyMap,
@@ -21,8 +22,15 @@ impl LocalContainer {
     where
         T: Send + Sync + 'static,
     {
+        self.insert_any(Box::new(v))
+    }
+
+    pub fn insert_any<T>(&mut self, v: BoxedAny) -> Option<Box<T>>
+    where
+        T: Send + Sync + 'static,
+    {
         self.inner
-            .insert(TypeId::of::<T>(), Box::new(v))
+            .insert(TypeId::of::<T>(), v)
             .and_then(|boxed| boxed.downcast().ok().map(|boxed| *boxed))
     }
 
@@ -42,6 +50,13 @@ impl LocalContainer {
         self.inner
             .get_mut(&TypeId::of::<T>())
             .and_then(|v| v.downcast_mut())
+    }
+
+    pub fn contains_key<T>(&self) -> bool
+    where
+        T: Send + Sync + 'static,
+    {
+        self.inner.contains_key(&TypeId::of::<T>())
     }
 
     pub fn remove<T>(&mut self) -> Option<T>

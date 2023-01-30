@@ -13,8 +13,6 @@ members = [
   "modules/mtool-dict",
   "modules/mtool-toast",
   "modules/mtool-translate",
-  "modules/mtool-anynav",
-  "modules/mtool-anynav/webapp",
+  "modules/mtool-interactive",
   "mtool",
 ]
-

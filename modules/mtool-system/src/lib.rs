@@ -1,5 +1,5 @@
 pub mod event;
-mod keybinding;
+pub mod keybinding;
 
 use mapp::ModuleGroup;
 
