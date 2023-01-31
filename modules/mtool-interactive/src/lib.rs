@@ -9,6 +9,7 @@ mod completion;
 mod gui;
 mod output;
 mod tui;
+mod utils;
 
 use async_trait::async_trait;
 pub use complete::*;

@@ -1,3 +1,4 @@
+use gloo_console::debug;
 use mkeybinding::KeyMap;
 use serde::{Deserialize, Serialize};
 use yew::{platform::spawn_local, prelude::*, suspense::use_future_with_deps};
@@ -42,6 +43,8 @@ impl Component for BaseCompletionList {
     type Properties = BaseProps;
 
     fn create(ctx: &Context<Self>) -> Self {
+        debug!("BaseCompletionList()");
+
         let (message, _) = ctx
             .link()
             .context(ctx.link().callback(Msg::AppContext))
@@ -160,26 +163,27 @@ impl BaseCompletionList {
     }
 }
 
-#[derive(Properties, PartialEq)]
+#[derive(Properties, PartialEq, Clone)]
 pub struct Props {
+    pub id: String,
     pub input: String,
 }
 
 #[function_component]
 pub fn CompletionList(props: &Props) -> HtmlResult {
     let items = use_future_with_deps(
-        |input| async move {
+        |props| async move {
             let items: Vec<String> = tauri::invoke(
                 "plugin:completion|complete_read",
                 &CompletionArgs {
-                    completed: input.to_string(),
+                    completed: props.input.to_string(),
                 },
             )
             .await
             .unwrap();
             items
         },
-        props.input.clone(),
+        props.clone(),
     )?;
 
     Ok(html! {

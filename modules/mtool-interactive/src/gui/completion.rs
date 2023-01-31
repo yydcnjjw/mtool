@@ -51,6 +51,7 @@ impl Completion {
 #[async_trait]
 impl CompleteRead for Completion {
     async fn complete_read(&self, args: CompletionArgs) -> Result<String, anyhow::Error> {
+        let id = args.meta.id.clone();
         let (tx, rx) = oneshot::channel();
         {
             let mut ctx = self.ctx.lock().await;
@@ -59,7 +60,7 @@ impl CompleteRead for Completion {
 
         self.win.show().context("show completion window")?;
 
-        self.win.emit("route", "/completion")?;
+        self.win.emit("route", format!("/completion/{}", id))?;
 
         let result = rx.await?;
 

@@ -15,34 +15,39 @@ pub enum Msg {
     Content(OutputContent),
 }
 
+#[derive(Properties, PartialEq)]
+pub struct Props {
+    pub id: String,
+}
+
 impl Component for Output {
     type Message = Msg;
 
-    type Properties = ();
+    type Properties = Props;
 
     fn create(ctx: &Context<Self>) -> Self {
+        debug!("Output()");
         let (message, _) = ctx
             .link()
             .context(ctx.link().callback(Msg::AppContext))
             .expect("No AppContext Provided");
-
-        ctx.link().send_future(async move {
-            debug!("update view");
-            Msg::Content(
-                tauri::invoke("plugin:output|current_content", &())
-                    .await
-                    .unwrap(),
-            )
-        });
 
         let self_ = Self {
             keybinding: message.keybinding,
             content: OutputContent::None,
         };
 
+        Self::refresh(ctx);
+
         self_.register_keybinding(ctx);
 
         self_
+    }
+
+    fn changed(&mut self, ctx: &Context<Self>, _old_props: &Self::Properties) -> bool {
+        debug!("Output changed");
+        Self::refresh(ctx);
+        true
     }
 
     fn update(&mut self, _ctx: &Context<Self>, msg: Self::Message) -> bool {
@@ -76,6 +81,16 @@ impl Component for Output {
 }
 
 impl Output {
+    fn refresh(ctx: &Context<Self>) {
+        ctx.link().send_future(async move {
+            Msg::Content(
+                tauri::invoke("plugin:output|current_content", &())
+                    .await
+                    .unwrap(),
+            )
+        });
+    }
+
     fn register_keybinding(&self, ctx: &Context<Self>) {
         let _send = |msg: Msg| {
             let link = ctx.link().clone();

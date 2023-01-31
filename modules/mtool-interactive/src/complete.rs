@@ -3,6 +3,8 @@ use std::future::Future;
 use async_trait::async_trait;
 use mtool_interactive_model::CompletionMeta;
 
+use crate::utils::rand_string;
+
 #[async_trait]
 pub trait CompleteRead {
     async fn complete_read(&self, args: CompletionArgs) -> Result<String, anyhow::Error>;
@@ -20,14 +22,20 @@ impl CompletionArgs {
     {
         Self {
             complete: Box::new(c),
-            meta: CompletionMeta::default(),
+            meta: CompletionMeta {
+                id: rand_string(),
+                prompt: String::default(),
+            },
         }
     }
 
     pub fn without_completion() -> Self {
         Self {
             complete: Box::new(|_| async move { Ok(Vec::new()) }),
-            meta: CompletionMeta::default(),
+            meta: CompletionMeta {
+                id: rand_string(),
+                prompt: String::default(),
+            },
         }
     }
 
@@ -67,7 +75,7 @@ mod tests {
         #[async_trait]
         impl CompleteRead for TestCompleteRead {
             async fn complete_read(&self, args: CompletionArgs) -> Result<String, anyhow::Error> {
-                args.complete.complete(args.prompt).await?;
+                args.complete.complete(args.meta.prompt).await?;
                 Ok(String::default())
             }
         }

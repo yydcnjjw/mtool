@@ -1,3 +1,4 @@
+use gloo_console::debug;
 use mtool_interactive_model::CompletionMeta;
 use web_sys::HtmlInputElement;
 use yew::{platform::spawn_local, prelude::*};
@@ -26,47 +27,54 @@ pub enum Msg {
     Exit,
 }
 
+#[derive(Properties, PartialEq)]
+pub struct Props {
+    pub id: String,
+}
+
 impl Component for Completion {
     type Message = Msg;
 
-    type Properties = ();
+    type Properties = Props;
 
     fn create(ctx: &Context<Self>) -> Self {
+        debug!("Completion()");
+
         let (message, _) = ctx
             .link()
             .context(ctx.link().callback(Msg::AppContext))
             .expect("No AppContext Provided");
 
-        ctx.link().send_future(async move {
-            Msg::CompletionMeta(
-                tauri::invoke("plugin:completion|completion_meta", &())
-                    .await
-                    .unwrap(),
-            )
-        });
-
-        let self_ = Self {
+        let mut self_ = Self {
             input: Default::default(),
             input_node: NodeRef::default(),
             keybinding: message.keybinding,
             meta: CompletionMeta::default(),
         };
 
+        Self::refresh(&mut self_, ctx);
+
         self_.register_keybinding(ctx);
 
         self_
     }
 
+    fn changed(&mut self, ctx: &Context<Self>, _old_props: &Self::Properties) -> bool {
+        debug!("Completion changed");
+        self.refresh(ctx);
+        true
+    }
+
     fn update(&mut self, ctx: &Context<Self>, msg: Self::Message) -> bool {
         match msg {
             Msg::Input(_) => {
-                self.input = self.input_node().value();
+                self.input = self.input_node().unwrap().value();
                 true
             }
             Msg::ForwardChar => {
-                let input = self.input_node();
+                let input_node = self.input_node().unwrap();
 
-                let start = input.selection_start().unwrap().unwrap();
+                let start = input_node.selection_start().unwrap().unwrap();
 
                 let start = if start == self.input.len() as u32 {
                     start
@@ -74,33 +82,37 @@ impl Component for Completion {
                     start + 1
                 };
 
-                self.input_node().set_selection_range(start, start).unwrap();
+                input_node.set_selection_range(start, start).unwrap();
                 false
             }
             Msg::BackwardChar => {
-                let input = self.input_node();
+                let input_node = self.input_node().unwrap();
 
-                let start = input.selection_start().unwrap().unwrap();
+                let start = input_node.selection_start().unwrap().unwrap();
                 let start = if start == 0 { 0 } else { start - 1 };
 
-                self.input_node().set_selection_range(start, start).unwrap();
+                input_node.set_selection_range(start, start).unwrap();
                 false
             }
             Msg::MoveToLineBegin => {
-                self.input_node().set_selection_range(0, 0).unwrap();
+                self.input_node()
+                    .unwrap()
+                    .set_selection_range(0, 0)
+                    .unwrap();
                 false
             }
             Msg::MoveToLineEnd => {
-                let input = self.input_node();
+                let input = self.input_node().unwrap();
                 let end = input.value().len() as u32;
                 input.set_selection_range(end, end).unwrap();
                 false
             }
             Msg::Kill => {
-                let start = self.input_node().selection_start().unwrap().unwrap() as usize;
+                let input_node = self.input_node().unwrap();
+                let start = input_node.selection_start().unwrap().unwrap() as usize;
 
                 let input = &self.input[0..start];
-                self.input_node().set_value(input);
+                input_node.set_value(input);
                 ctx.link().send_message(Msg::Input(input.to_string()));
 
                 // TODO: copy value
@@ -108,6 +120,9 @@ impl Component for Completion {
             }
             Msg::Exit => {
                 let completed = self.input.clone();
+
+                self.clear_input();
+
                 spawn_local(async move {
                     let _: () = tauri::invoke(
                         "plugin:completion|complete_exit",
@@ -148,7 +163,7 @@ impl Component for Completion {
                   autofocus=true/>
                 </div>
                 <Suspense {fallback}>
-                <CompletionList input={self.input.clone()}/>
+                <CompletionList id={ctx.props().id.clone()} input={self.input.clone()}/>
                 </Suspense>
             </div>
         }
@@ -156,7 +171,7 @@ impl Component for Completion {
 
     fn rendered(&mut self, _ctx: &Context<Self>, first_render: bool) {
         if first_render {
-            self.input_node().focus().unwrap();
+            self.input_node().unwrap().focus().unwrap();
         }
     }
 
@@ -166,8 +181,30 @@ impl Component for Completion {
 }
 
 impl Completion {
-    fn input_node(&self) -> HtmlInputElement {
-        self.input_node.cast::<HtmlInputElement>().unwrap()
+    fn refresh(&mut self, ctx: &Context<Self>) {
+        Self::fetch_completion_meta(ctx);
+        self.clear_input();
+    }
+
+    fn clear_input(&mut self) {
+        if let Some(input) = self.input_node() {
+            input.set_value("");
+        }
+        self.input.clear();
+    }
+
+    fn fetch_completion_meta(ctx: &Context<Self>) {
+        ctx.link().send_future(async move {
+            Msg::CompletionMeta(
+                tauri::invoke("plugin:completion|completion_meta", &())
+                    .await
+                    .unwrap(),
+            )
+        });
+    }
+
+    fn input_node(&self) -> Option<HtmlInputElement> {
+        self.input_node.cast::<HtmlInputElement>()
     }
 
     fn register_keybinding(&self, ctx: &Context<Self>) {

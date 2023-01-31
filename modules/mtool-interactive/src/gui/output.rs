@@ -10,7 +10,7 @@ use tauri::{
     AppHandle, Manager, Runtime, State,
 };
 
-use crate::output::Output;
+use crate::{output::Output, utils::rand_string};
 
 use super::InteractiveWindow;
 
@@ -53,7 +53,8 @@ impl Output for OutputDevice {
     async fn show_plain(&self, s: &str) -> Result<(), anyhow::Error> {
         self.win.show().context("show output window")?;
 
-        self.win.emit("route", "/output")?;
+        self.win
+            .emit("route", format!("/output/{}", rand_string()))?;
 
         let mut ctx = self.ctx.write().unwrap();
         ctx.content = OutputContent::Plain(s.to_string());
