@@ -187,7 +187,7 @@ impl Completion {
             ("C-a", send(Msg::MoveToLineBegin)),
             ("C-e", send(Msg::MoveToLineEnd)),
             ("C-f", send(Msg::ForwardChar)),
-            ("C-f", send(Msg::BackwardChar)),
+            ("C-b", send(Msg::BackwardChar)),
             ("C-k", send(Msg::Kill)),
             ("<Return>", send(Msg::Exit)),
         )

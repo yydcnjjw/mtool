@@ -9,7 +9,6 @@ pub async fn exec_command_from_cli(
     args: Res<ArgMatches>,
     cmder: Res<Cmder>,
     injector: Injector,
-    o: Res<OutputDevice>,
 ) -> Result<(), anyhow::Error> {
     if let Some(cmd) = args
         .get_many::<String>("command")
@@ -25,7 +24,7 @@ pub async fn exec_command_from_cli(
                 cmd.exec(&injector).await?;
             }
             None => {
-                o.show_plain(&format!("{} not found", cmd)).await?;
+                eprintln!("{} not found", cmd);
             }
         };
     }
@@ -44,13 +43,11 @@ pub async fn exec_command_interactive(
             CompletionArgs::new(move |completed: String| {
                 let cmder = cmder.clone();
                 async move {
-                    Ok::<Vec<String>, anyhow::Error>(
-                        cmder
-                            .get_command_fuzzy(&completed)
-                            .iter()
-                            .map(|c| c.get_name().to_string())
-                            .collect::<Vec<_>>(),
-                    )
+                    Ok(cmder
+                        .get_command_fuzzy(&completed)
+                        .iter()
+                        .map(|c| c.get_name().to_string())
+                        .collect::<Vec<_>>())
                 }
             })
             .prompt(">"),
@@ -62,10 +59,7 @@ pub async fn exec_command_interactive(
         let command = command.clone();
         injector.construct_once(move || async move {
             let completed = c
-                .complete_read(
-                    CompletionArgs::new(move |_completed: String| async move { Ok(Vec::new()) })
-                        .prompt(&command),
-                )
+                .complete_read(CompletionArgs::without_completion().prompt(&command))
                 .await?;
 
             Ok(Res::new(CommandArgs::new(shellwords::split(&completed)?)))

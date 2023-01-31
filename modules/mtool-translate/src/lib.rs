@@ -6,16 +6,36 @@ mod translator;
 use async_trait::async_trait;
 use mapp::{provider::Res, AppContext, AppModule};
 use mtool_cmder::{Cmder, CreateCommandDescriptor};
-use mtool_core::CmdlineStage;
+use mtool_core::{config::StartupMode, CmdlineStage, ConfigStore};
 
 #[derive(Default)]
 pub struct Module {}
 
-async fn register_command(cmder: Res<Cmder>) -> Result<(), anyhow::Error> {
-    cmder
-        .add_command(cmd::te.name("te"))
-        .add_command(cmd::tz.name("tz"))
-        .add_command(cmd::tj.name("tj"));
+async fn register_command(cmder: Res<Cmder>, cs: Res<ConfigStore>) -> Result<(), anyhow::Error> {
+    if cs.startup_mode() == StartupMode::Cli {
+        cmder
+            .add_command(cmd::te.name("te").set_desc("Translate into English"))
+            .add_command(cmd::tz.name("tz").set_desc("Translate into Chinese"))
+            .add_command(cmd::tj.name("tj").set_desc("Translate into Japanese"));
+    } else {
+        cmder
+            .add_command(
+                cmd::te_interactive
+                    .name("te")
+                    .set_desc("Translate into English"),
+            )
+            .add_command(
+                cmd::tz_interactive
+                    .name("tz")
+                    .set_desc("Translate into Chinese"),
+            )
+            .add_command(
+                cmd::tj_interactive
+                    .name("tj")
+                    .set_desc("Translate into Japanese"),
+            );
+    }
+
     Ok(())
 }
 

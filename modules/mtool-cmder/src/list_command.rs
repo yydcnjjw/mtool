@@ -10,13 +10,14 @@ pub async fn list_command(cmder: Res<Cmder>, o: Res<OutputDevice>) -> Result<(),
         .iter()
         .map(|cmd| {
             format!(
-                "{}{}",
+                "{}{}    {}",
                 cmd.get_name(),
                 if !cmd.get_aliases().is_empty() {
                     format!("({})", cmd.get_aliases().join(","))
                 } else {
                     "".into()
-                }
+                },
+                cmd.get_desc()
             )
         })
         .join("\n");

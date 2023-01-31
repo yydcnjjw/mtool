@@ -24,6 +24,13 @@ impl CompletionArgs {
         }
     }
 
+    pub fn without_completion() -> Self {
+        Self {
+            complete: Box::new(|_| async move { Ok(Vec::new()) }),
+            meta: CompletionMeta::default(),
+        }
+    }
+
     pub fn prompt(mut self, prompt: &str) -> Self {
         self.meta.prompt = prompt.to_string();
         self
