@@ -1,8 +1,7 @@
 use std::{cell::RefCell, future::Future, rc::Rc};
 
-use anyhow::Context;
 use async_trait::async_trait;
-use mkeybinding::{KeyCombine, KeyDispatcher};
+use mkeybinding::{KeyCombine, KeyDispatcher, KeyMap};
 use wasm_bindgen_futures::spawn_local;
 
 #[async_trait(?Send)]
@@ -21,7 +20,7 @@ where
     }
 }
 
-type SharedAction = Rc<RefCell<dyn Action>>;
+pub type SharedAction = Rc<RefCell<dyn Action>>;
 
 type Dispatcher = KeyDispatcher<SharedAction>;
 
@@ -34,6 +33,22 @@ impl PartialEq for Keybinging {
     fn eq(&self, _: &Self) -> bool {
         true
     }
+}
+
+#[macro_export]
+macro_rules! generate_keymap {
+    ($(($kbd:expr, $action:expr),)+) => {
+        ::mkeybinding::KeyMap::<$crate::keybinding::SharedAction>::new_with_vec(
+            vec![
+                $(
+                    (
+                        $kbd,
+                        ::std::rc::Rc::new(::std::cell::RefCell::new($action)) as $crate::keybinding::SharedAction
+                    )
+                ),+
+            ]
+        )
+    };
 }
 
 impl Keybinging {
@@ -57,26 +72,19 @@ impl Keybinging {
         self.dispatcher.borrow_mut().dispatch(key)
     }
 
-    pub fn define<T>(&self, kbd: &str, action: T) -> Result<(), anyhow::Error>
-    where
-        T: Action + 'static,
-    {
-        self.define_raw(kbd, Rc::new(RefCell::new(action)))
+    pub fn push_keymap(&self, id: &str, km: KeyMap<SharedAction>) {
+        self.dispatcher.borrow_mut().push_keymap(id, km);
     }
 
-    fn define_raw(&self, kbd: &str, action: SharedAction) -> Result<(), anyhow::Error> {
-        self.dispatcher
-            .borrow_mut()
-            .keymap()
-            .add(kbd, action)
-            .context(format!("Failed to define key binding {}", kbd))
+    pub fn pop_keymap(&self) -> Option<(String, KeyMap<SharedAction>)> {
+        self.dispatcher.borrow_mut().pop_keymap()
     }
 
-    pub fn remove(&self, kbd: &str) -> Result<(), anyhow::Error> {
-        self.dispatcher
-            .borrow_mut()
-            .keymap()
-            .remove(kbd)
-            .context(format!("Failed to remove key binding {}", kbd))
+    pub fn contains_keymap(&self, id: &str) -> bool {
+        self.dispatcher.borrow().contains_keymap(id)
+    }
+
+    pub fn remove_keymap(&self, id: &str) -> Option<(String, KeyMap<SharedAction>)> {
+        self.dispatcher.borrow_mut().remove_keymap(id)
     }
 }

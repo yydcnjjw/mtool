@@ -2,11 +2,11 @@ use tokio::sync::broadcast;
 
 use crate::{
     kbd::{KeyCombine, KeySequence},
-    keymap::{Binding, KeyMap},
+    keymap::KeyMap,
 };
 
 pub struct KeyDispatcher<Value> {
-    km: KeyMap<Value>,
+    km_vec: Vec<(String, KeyMap<Value>)>,
     keyseq: KeySequence,
     tx: broadcast::Sender<Value>,
 }
@@ -19,14 +19,35 @@ where
         let (tx, _) = broadcast::channel(32);
 
         Self {
-            km: KeyMap::<Value>::new(),
+            km_vec: Vec::new(),
             keyseq: KeySequence::new(),
             tx,
         }
     }
 
-    pub fn keymap(&mut self) -> &mut KeyMap<Value> {
-        &mut self.km
+    pub fn push_keymap(&mut self, id: &str, km: KeyMap<Value>) {
+        self.km_vec.push((id.to_string(), km))
+    }
+
+    pub fn pop_keymap(&mut self) -> Option<(String, KeyMap<Value>)> {
+        self.km_vec.pop()
+    }
+
+    pub fn remove_keymap(&mut self, id: &str) -> Option<(String, KeyMap<Value>)> {
+        self.km_vec
+            .iter()
+            .position(|v| v.0 == id)
+            .map(|i| self.km_vec.remove(i))
+    }
+
+    pub fn contains_keymap(&self, id: &str) -> bool {
+        self.km_vec.iter().position(|v| v.0 == id).is_some()
+    }
+
+    pub fn get_keymap_mut(&mut self, id: &str) -> Option<&mut KeyMap<Value>> {
+        self.km_vec
+            .iter_mut()
+            .find_map(|v| (v.0 == id).then_some(&mut v.1))
     }
 
     pub fn dispatch(&mut self, key: KeyCombine) -> bool {
@@ -34,22 +55,22 @@ where
 
         self.keyseq.push(key);
 
-        if let Ok(binding) = self.km.lookup(&self.keyseq) {
-            match binding {
-                Binding::Value(v) => {
-                    log::debug!("dispatcher {}", self.keyseq.to_string());
-                    if let Err(e) = self.tx.send(v.clone()) {
-                        log::warn!("{}", e);
-                    }
-                    self.keyseq.clear();
-                    true
+        for (id, km) in self.km_vec.iter().rev() {
+            if let Ok(v) = km.lookup(&self.keyseq) {
+                log::debug!("dispatch {} {}", id, self.keyseq.to_string());
+
+                if let Err(e) = self.tx.send(v.clone()) {
+                    log::warn!("{}", e);
                 }
-                Binding::Map(_) => false,
+
+                self.keyseq.clear();
+                return true;
             }
-        } else {
-            self.keyseq.clear();
-            false
         }
+
+        self.keyseq.clear();
+
+        return false;
     }
 
     pub fn subscribe(&self) -> broadcast::Receiver<Value> {
@@ -87,9 +108,10 @@ mod tests {
             let mut dispatcher = dispatcher.write().await;
 
             {
-                let km = dispatcher.keymap();
+                let mut km = KeyMap::new();
                 km.add("C-a a", 0).unwrap();
                 km.add("C-a b", 1).unwrap();
+                dispatcher.push_keymap("test", km);
             }
 
             send_key_sequence(&mut dispatcher, "C-a a");

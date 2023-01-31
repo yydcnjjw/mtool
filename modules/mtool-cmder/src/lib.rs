@@ -37,7 +37,7 @@ impl AppModule for Module {
             )
             .add_once_task(
                 AppStage::Run,
-                exec_command.cond(is_startup_mode(StartupMode::Cli)),
+                exec_command_from_cli.cond(is_startup_mode(StartupMode::Cli)),
             );
 
         Ok(())
@@ -58,6 +58,6 @@ async fn register_command(cmder: Res<Cmder>) -> Result<(), anyhow::Error> {
 }
 
 async fn register_keybinding(keybinding: Res<Keybinging>) -> Result<(), anyhow::Error> {
-    keybinding.define_global("C-A-<Spacebar>", exec_command_interactive)?;
+    keybinding.define_global("M-x", exec_command_interactive)?;
     Ok(())
 }

@@ -56,3 +56,8 @@ impl InteractiveWindow {
         Ok(())
     }
 }
+
+pub async fn hide_window(window: Res<InteractiveWindow>) -> Result<(), anyhow::Error> {
+    window.hide()?;
+    Ok(())
+}

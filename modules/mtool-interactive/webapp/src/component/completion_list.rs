@@ -1,7 +1,12 @@
+use mkeybinding::KeyMap;
 use serde::{Deserialize, Serialize};
 use yew::{platform::spawn_local, prelude::*, suspense::use_future_with_deps};
 
-use crate::{keybinding::Keybinging, tauri, AppContext};
+use crate::{
+    generate_keymap,
+    keybinding::{Keybinging, SharedAction},
+    tauri, AppContext,
+};
 
 #[derive(Serialize, Deserialize)]
 pub struct CompletionArgs {
@@ -16,6 +21,7 @@ pub struct BaseProps {
 pub struct BaseCompletionList {
     focus_item: usize,
     keybinding: Keybinging,
+    km: KeyMap<SharedAction>,
 }
 
 #[derive(Clone)]
@@ -24,6 +30,10 @@ pub enum Msg {
     Next,
     Prev,
     Exit,
+}
+
+impl BaseCompletionList {
+    const COMPLETION_LIST_KEYMAP: &str = "completion_list";
 }
 
 impl Component for BaseCompletionList {
@@ -40,9 +50,8 @@ impl Component for BaseCompletionList {
         let self_ = Self {
             focus_item: 0,
             keybinding: message.keybinding,
+            km: Self::generate_keymap(ctx),
         };
-
-        self_.register_keybinding(ctx);
 
         self_
     }
@@ -99,18 +108,38 @@ impl Component for BaseCompletionList {
         }
     }
 
-    fn changed(&mut self, _ctx: &Context<Self>, _old_props: &Self::Properties) -> bool {
+    fn changed(&mut self, ctx: &Context<Self>, _old_props: &Self::Properties) -> bool {
         self.focus_item = 0;
+
+        if ctx.props().items.is_empty() {
+            self.keybinding.remove_keymap(Self::COMPLETION_LIST_KEYMAP);
+        } else {
+            if !self
+                .keybinding
+                .contains_keymap(Self::COMPLETION_LIST_KEYMAP)
+            {
+                self.keybinding
+                    .push_keymap(Self::COMPLETION_LIST_KEYMAP, self.km.clone());
+            }
+        }
+
         true
     }
 
+    fn rendered(&mut self, ctx: &Context<Self>, first_render: bool) {
+        if first_render && !ctx.props().items.is_empty() {
+            self.keybinding
+                .push_keymap(Self::COMPLETION_LIST_KEYMAP, self.km.clone());
+        }
+    }
+
     fn destroy(&mut self, _ctx: &Context<Self>) {
-        self.unregister_keybinding();
+        self.keybinding.remove_keymap(Self::COMPLETION_LIST_KEYMAP);
     }
 }
 
 impl BaseCompletionList {
-    fn register_keybinding(&self, ctx: &Context<Self>) {
+    fn generate_keymap(ctx: &Context<Self>) -> KeyMap<SharedAction> {
         let send = |msg: Msg| {
             let link = ctx.link().clone();
             move || {
@@ -122,15 +151,12 @@ impl BaseCompletionList {
                 }
             }
         };
-        self.keybinding.define("C-n", send(Msg::Next)).unwrap();
-        self.keybinding.define("C-p", send(Msg::Prev)).unwrap();
-        self.keybinding.define("<Return>", send(Msg::Exit)).unwrap();
-    }
-
-    fn unregister_keybinding(&self) {
-        self.keybinding.remove("C-n").unwrap();
-        self.keybinding.remove("C-p").unwrap();
-        self.keybinding.remove("<Return>").unwrap();
+        generate_keymap!(
+            ("C-n", send(Msg::Next)),
+            ("C-p", send(Msg::Prev)),
+            ("<Return>", send(Msg::Exit)),
+        )
+        .unwrap()
     }
 }
 
@@ -156,5 +182,7 @@ pub fn CompletionList(props: &Props) -> HtmlResult {
         props.input.clone(),
     )?;
 
-    Ok(html! {<BaseCompletionList items={(*items).clone()} />})
+    Ok(html! {
+        <BaseCompletionList items={(*items).clone()} />
+    })
 }

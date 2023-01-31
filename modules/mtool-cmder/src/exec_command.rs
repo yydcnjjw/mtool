@@ -1,12 +1,11 @@
-use anyhow::Context;
-use clap::{arg, ArgMatches};
+use clap::ArgMatches;
 use itertools::Itertools;
 use mapp::provider::{Injector, Res};
 use mtool_interactive::{Completion, CompletionArgs, OutputDevice};
 
 use crate::{Cmder, CommandArgs};
 
-pub async fn exec_command(
+pub async fn exec_command_from_cli(
     args: Res<ArgMatches>,
     cmder: Res<Cmder>,
     injector: Injector,
@@ -59,18 +58,25 @@ pub async fn exec_command_interactive(
         .await?
     };
 
-    let args = c
-        .complete_read(CompletionArgs::new(|_| async move { Ok(Vec::new()) }).prompt(&command))
-        .await?;
+    {
+        let command = command.clone();
+        injector.construct_once(move || async move {
+            let completed = c
+                .complete_read(
+                    CompletionArgs::new(move |_completed: String| async move { Ok(Vec::new()) })
+                        .prompt(&command),
+                )
+                .await?;
 
-    let args = clap::command!()
-        .arg(arg!([command] ... "commands to run").trailing_var_arg(true))
-        .no_binary_name(true)
-        .try_get_matches_from(
-            shellwords::split(&format!("{} {}", command, args))
-                .context("Failed to split command line args")?,
-        )
-        .context("Failed to parse command line args")?;
+            Ok(Res::new(CommandArgs::new(shellwords::split(&completed)?)))
+        });
+    }
 
-    exec_command(Res::new(args), cmder, injector, o).await
+    match cmder.get_command_exact(&command) {
+        Some(cmd) => cmd.exec(&injector).await?,
+        None => o.show_plain(&format!("{} not found", command)).await?,
+    }
+
+    injector.remove::<Res<CommandArgs>>();
+    Ok(())
 }

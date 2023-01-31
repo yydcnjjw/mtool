@@ -6,6 +6,7 @@ mod output;
 pub use builder::*;
 pub use completion::Completion;
 pub use interactive_windows::*;
+use mtool_system::keybinding::Keybinging;
 pub use output::OutputDevice;
 
 use async_trait::async_trait;
@@ -19,7 +20,6 @@ use mtool_core::{
     CmdlineStage,
 };
 use std::vec;
-use tauri::AppHandle;
 use tokio::sync::oneshot;
 
 #[derive(Default)]
@@ -45,7 +45,8 @@ impl AppModule for Module {
                 is_startup_mode(StartupMode::Gui),
             )
             .add_once_task(GuiStage::Setup, setup)
-            .add_once_task(GuiStage::Init, init);
+            .add_once_task(GuiStage::Init, init)
+            .add_once_task(GuiStage::AfterInit, register_keybinding);
 
         Ok(())
     }
@@ -66,7 +67,7 @@ async fn setup(builder: Res<Builder>, injector: Injector) -> Result<(), anyhow::
     })?;
 
     injector
-        .construct_once(|| async move { Ok::<Res<AppHandle>, anyhow::Error>(rx.await?) })
+        .construct_once(|| async move { Ok(rx.await?) })
         .construct_once(InteractiveWindow::new)
         .construct_once(Completion::new)
         .construct_once(OutputDevice::new);
@@ -82,5 +83,10 @@ async fn init(builder: Res<Builder>) -> Result<(), anyhow::Error> {
             .run(tauri::generate_context!())
             .expect("error while running tauri application");
     });
+    Ok(())
+}
+
+async fn register_keybinding(keybinding: Res<Keybinging>) -> Result<(), anyhow::Error>{
+    keybinding.define_global("M-q", interactive_windows::hide_window)?;
     Ok(())
 }

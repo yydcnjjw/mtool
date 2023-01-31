@@ -12,7 +12,7 @@ use mapp::{
     provider::{Injector, Res},
     AppContext, AppModule, CreateOnceTaskDescriptor,
 };
-use mkeybinding::{KeyCombine, KeyDispatcher};
+use mkeybinding::{KeyCombine, KeyDispatcher, KeyMap};
 use msysev::{Event, KeyAction};
 use mtool_core::{
     config::{not_startup_mode, StartupMode},
@@ -88,11 +88,15 @@ pub struct Keybinging {
 }
 
 impl Keybinging {
+    const GLOBAL_KEYMAP: &str = "global";
+
     async fn new(injector: Injector) -> Result<Res<Self>, anyhow::Error> {
-        let dispatcher = RwLock::new(KeyDispatcher::new());
+        let mut dispatcher = KeyDispatcher::new();
+
+        dispatcher.push_keymap(Self::GLOBAL_KEYMAP, KeyMap::new());
 
         Ok(Res::new(Self {
-            dispatcher,
+            dispatcher: RwLock::new(dispatcher),
             injector,
         }))
     }
@@ -139,20 +143,26 @@ impl Keybinging {
         self.define_global_raw(kbd, Arc::new(FnAction::new(action)))
     }
 
-    fn define_global_raw(&self, kbd: &str, action: SharedAction) -> Result<(), anyhow::Error> {
+    fn define_raw(&self, km: &str, kbd: &str, action: SharedAction) -> Result<(), anyhow::Error> {
         self.dispatcher
             .write()
             .unwrap()
-            .keymap()
+            .get_keymap_mut(km)
+            .unwrap()
             .add(kbd, action)
             .context(format!("Failed to define key binding {}", kbd))
+    }
+
+    fn define_global_raw(&self, kbd: &str, action: SharedAction) -> Result<(), anyhow::Error> {
+        self.define_raw(Self::GLOBAL_KEYMAP, kbd, action)
     }
 
     pub fn remove_global(&self, kbd: &str) -> Result<(), anyhow::Error> {
         self.dispatcher
             .write()
             .unwrap()
-            .keymap()
+            .get_keymap_mut(Self::GLOBAL_KEYMAP)
+            .unwrap()
             .remove(kbd)
             .context(format!("Failed to remove key binding {}", kbd))
     }

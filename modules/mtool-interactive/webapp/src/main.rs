@@ -111,8 +111,6 @@ impl Component for App {
     type Properties = ();
 
     fn create(ctx: &Context<Self>) -> Self {
-        log!("App()");
-
         Self::listen_route(ctx);
 
         Self {
@@ -126,7 +124,6 @@ impl Component for App {
     fn update(&mut self, _ctx: &Context<Self>, msg: Self::Message) -> bool {
         match msg {
             Msg::RegisterRouteUnListen(unlisten) => {
-                log!("RegisterRouteListener");
                 self.route_unlisten = Some(unlisten);
                 false
             }

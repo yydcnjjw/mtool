@@ -2,9 +2,9 @@ use mtool_interactive_model::CompletionMeta;
 use web_sys::HtmlInputElement;
 use yew::{platform::spawn_local, prelude::*};
 
-use crate::{keybinding::Keybinging, tauri, AppContext};
+use crate::{generate_keymap, keybinding::Keybinging, tauri, AppContext};
 
-use super::completion_list::{CompletionList, CompletionArgs};
+use super::completion_list::{CompletionArgs, CompletionList};
 
 pub struct Completion {
     input: String,
@@ -154,8 +154,10 @@ impl Component for Completion {
         }
     }
 
-    fn rendered(&mut self, _ctx: &Context<Self>, _first_render: bool) {
-        self.input_node().focus().unwrap();
+    fn rendered(&mut self, _ctx: &Context<Self>, first_render: bool) {
+        if first_render {
+            self.input_node().focus().unwrap();
+        }
     }
 
     fn destroy(&mut self, _ctx: &Context<Self>) {
@@ -180,28 +182,21 @@ impl Completion {
                 }
             }
         };
-        self.keybinding
-            .define("C-a", send(Msg::MoveToLineBegin))
-            .unwrap();
-        self.keybinding
-            .define("C-e", send(Msg::MoveToLineEnd))
-            .unwrap();
-        self.keybinding
-            .define("C-f", send(Msg::ForwardChar))
-            .unwrap();
-        self.keybinding
-            .define("C-b", send(Msg::BackwardChar))
-            .unwrap();
-        self.keybinding.define("C-k", send(Msg::Kill)).unwrap();
-        self.keybinding.define("C-A-j", send(Msg::Exit)).unwrap();
+
+        let km = generate_keymap!(
+            ("C-a", send(Msg::MoveToLineBegin)),
+            ("C-e", send(Msg::MoveToLineEnd)),
+            ("C-f", send(Msg::ForwardChar)),
+            ("C-f", send(Msg::BackwardChar)),
+            ("C-k", send(Msg::Kill)),
+            ("<Return>", send(Msg::Exit)),
+        )
+        .unwrap();
+
+        self.keybinding.push_keymap("completion", km);
     }
 
     fn unregister_keybinding(&self) {
-        self.keybinding.remove("C-a").unwrap();
-        self.keybinding.remove("C-e").unwrap();
-        self.keybinding.remove("C-f").unwrap();
-        self.keybinding.remove("C-b").unwrap();
-        self.keybinding.remove("C-k").unwrap();
-        self.keybinding.remove("C-A-j").unwrap();
+        self.keybinding.pop_keymap();
     }
 }

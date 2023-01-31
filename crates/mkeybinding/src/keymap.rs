@@ -23,7 +23,7 @@ pub enum Error {
 
 type Result<T> = std::result::Result<T, Error>;
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub enum Binding<Value> {
     Value(Value),
     Map(KeyMap<Value>),
@@ -34,11 +34,32 @@ pub struct KeyMap<Value> {
     inner: HashMap<KeyCombine, Binding<Value>>,
 }
 
+impl<Value> Clone for KeyMap<Value>
+where
+    Value: Clone,
+{
+    fn clone(&self) -> Self {
+        Self {
+            inner: self.inner.clone(),
+        }
+    }
+}
+
 impl<Value> KeyMap<Value> {
     pub fn new() -> KeyMap<Value> {
         Self {
             inner: HashMap::new(),
         }
+    }
+
+    pub fn new_with_vec(km: Vec<(&str, Value)>) -> Result<KeyMap<Value>> {
+        let mut self_ = Self {
+            inner: HashMap::new(),
+        };
+        for (kbd, value) in km {
+            self_.add(kbd, value)?;
+        }
+        Ok(self_)
     }
 
     fn parse_key_sequence<T>(kseq: T) -> Result<KeySequence>
@@ -118,7 +139,7 @@ impl<Value> KeyMap<Value> {
         Ok(())
     }
 
-    pub fn lookup<T>(&self, kseq: T) -> Result<&Binding<Value>>
+    pub fn lookup<T>(&self, kseq: T) -> Result<&Value>
     where
         T: ToKeySequence,
     {
@@ -128,16 +149,23 @@ impl<Value> KeyMap<Value> {
         let mut km = self;
 
         for key in rest {
-            km = if let Binding::Map(v) =
-                km.inner.get(key).ok_or(Error::KeySequenceNotFound(kseq.clone()))?
+            km = match km
+                .inner
+                .get(key)
+                .ok_or(Error::KeySequenceNotFound(kseq.clone()))?
             {
-                v
-            } else {
-                return Err(Error::KeySequenceNotFound(kseq.clone()));
+                Binding::Map(v) => v,
+                _ => return Err(Error::KeySequenceNotFound(kseq.clone())),
             }
         }
 
-        km.inner.get(last).ok_or(Error::KeySequenceNotFound(kseq.clone()))
+        km.inner
+            .get(last)
+            .and_then(|v| match v {
+                Binding::Value(v) => Some(v),
+                Binding::Map(_) => None,
+            })
+            .ok_or(Error::KeySequenceNotFound(kseq.clone()))
     }
 }
 
@@ -151,14 +179,14 @@ mod tests {
 
         {
             km.add("C-a b", 0).unwrap();
-            assert!(matches!(km.lookup("C-a b").unwrap(), Binding::Value(0)));
-            assert!(matches!(km.lookup("C-a").unwrap(), Binding::Map(_)));
+            assert_eq!(km.lookup("C-a b").unwrap(), &0);
+            assert!(km.lookup("C-a").is_err());
 
             km.add("C-a b", 1).unwrap();
-            assert!(matches!(km.lookup("C-a b").unwrap(), Binding::Value(1)));
+            assert_eq!(km.lookup("C-a b").unwrap(), &1);
 
             km.remove("C-a b").unwrap();
-            assert!(matches!(km.lookup("C-a").unwrap(), Binding::Map(_)));
+            assert!(km.lookup("C-a").is_err());
         }
     }
 }
