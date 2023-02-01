@@ -33,3 +33,8 @@ futures = "0.3"
 
 itertools = "0.10"
 rand = "0.8"
+
+[features]
+# default = [ "custom-protocol" ]
+
+custom-protocol = [ "tauri/custom-protocol" ]

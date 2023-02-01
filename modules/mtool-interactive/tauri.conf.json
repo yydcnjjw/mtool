@@ -1,13 +1,13 @@
 {
   "build": {
-    "beforeBuildCommand": "trunk build",
-    "beforeDevCommand": "trunk serve",
+    "beforeBuildCommand": "trunk build mtool-interactive/webapp/index.html --release",
+    "beforeDevCommand": "trunk serve --port 8188 mtool-interactive/webapp/index.html",
     "devPath": "http://localhost:8188",
     "distDir": "webapp/dist/",
     "withGlobalTauri": true
   },
   "package": {
-    "productName": "mtool-interactive",
+    "productName": "mtool",
     "version": "0.1.0"
   },
   "tauri": {
