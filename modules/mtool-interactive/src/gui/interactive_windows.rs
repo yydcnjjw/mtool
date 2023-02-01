@@ -24,13 +24,7 @@ impl InteractiveWindow {
     pub fn new_inner(app: AppHandle) -> Result<Res<Self>, anyhow::Error> {
         let window = WindowBuilder::new(&app, "interactive", WindowUrl::App("index.html".into()))
             .title("mtool interactive")
-            .transparent(if cfg!(unix) {
-                true
-            } else if cfg!(windows) {
-                false
-            } else {
-                true
-            })
+            .transparent(true)
             .decorations(false)
             .resizable(true)
             .skip_taskbar(true)
