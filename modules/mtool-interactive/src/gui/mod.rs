@@ -6,7 +6,6 @@ mod output;
 pub use builder::*;
 pub use completion::Completion;
 pub use interactive_windows::*;
-use mtool_system::keybinding::Keybinging;
 pub use output::OutputDevice;
 
 use async_trait::async_trait;
@@ -86,7 +85,31 @@ async fn init(builder: Res<Builder>) -> Result<(), anyhow::Error> {
     Ok(())
 }
 
-async fn register_keybinding(keybinding: Res<Keybinging>) -> Result<(), anyhow::Error>{
-    keybinding.define_global("M-q", interactive_windows::hide_window)?;
+#[cfg(not(windows))]
+use mtool_system::keybinding::Keybinging;
+
+#[cfg(not(windows))]
+async fn register_keybinding(keybinding: Res<Keybinging>) -> Result<(), anyhow::Error> {
+    keybinding.define_global("M-S-q", interactive_windows::hide_window)?;
+    Ok(())
+}
+
+#[cfg(windows)]
+use tauri::AppHandle;
+
+#[cfg(windows)]
+async fn register_keybinding(app: Res<AppHandle>, injector: Injector) -> Result<(), anyhow::Error> {
+    use mapp::provider::inject;
+    use tauri::{async_runtime::spawn, GlobalShortcutManager};
+
+    app.global_shortcut_manager()
+        .register("Super+Shift+Q", move || {
+            let injector = injector.clone();
+            spawn(async move {
+                if let Err(e) = inject(&injector, interactive_windows::hide_window).await {
+                    log::warn!("{}", e);
+                }
+            });
+        })?;
     Ok(())
 }

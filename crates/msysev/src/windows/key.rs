@@ -66,6 +66,9 @@ impl From<KBDLLHOOKSTRUCT> for KeyCode {
             VK_SPACE => KeyCode::Spacebar,
             VK_RMENU => KeyCode::RightAlt,
             VK_RCONTROL => KeyCode::RightControl,
+
+            VK_LWIN => KeyCode::LeftGUI,
+            VK_RWIN => KeyCode::RightGUI,
             // VK_Insert => KeyCode::Insert,
             // VK_Delete => KeyCode::Delete,
             // VK_leftarrow => KeyCode::LeftArrow,

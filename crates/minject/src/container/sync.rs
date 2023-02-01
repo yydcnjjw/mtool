@@ -41,11 +41,14 @@ impl Container {
     where
         T: Send + Sync + Clone + 'static,
     {
-        log::debug!("get {}", type_name::<T>());
-
-        self.inner
+        let v = self
+            .inner
             .get(&TypeId::of::<T>())
-            .and_then(|v| v.downcast_ref::<T>().map(|v| v.clone()))
+            .and_then(|v| v.downcast_ref::<T>().map(|v| v.clone()));
+
+        log::debug!("get {}, {}", type_name::<T>(), v.is_some());
+
+        v
     }
 
     pub fn remove<T>(&self) -> Option<T>

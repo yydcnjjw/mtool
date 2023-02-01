@@ -18,7 +18,7 @@ use mtool_core::{
     config::{is_startup_mode, not_startup_mode, StartupMode},
     AppStage, Cmdline, CmdlineStage,
 };
-use mtool_system::keybinding::Keybinging;
+use mtool_interactive::GuiStage;
 
 #[derive(Default)]
 pub struct Module {}
@@ -32,6 +32,9 @@ impl AppModule for Module {
             .add_once_task(CmdlineStage::Setup, setup_cmdline)
             .add_once_task(CmdlineStage::AfterInit, register_command)
             .add_once_task(
+                #[cfg(windows)]
+                GuiStage::AfterInit,
+                #[cfg(not(windows))]
                 CmdlineStage::AfterInit,
                 register_keybinding.cond(not_startup_mode(StartupMode::Cli)),
             )
@@ -57,7 +60,33 @@ async fn register_command(cmder: Res<Cmder>) -> Result<(), anyhow::Error> {
     Ok(())
 }
 
+#[cfg(not(windows))]
+use mtool_system::keybinding::Keybinging;
+
+#[cfg(not(windows))]
 async fn register_keybinding(keybinding: Res<Keybinging>) -> Result<(), anyhow::Error> {
-    keybinding.define_global("M-x", exec_command_interactive)?;
+    keybinding.define_global("M-S-x", exec_command_interactive)?;
+    Ok(())
+}
+
+#[cfg(windows)]
+use mapp::provider::{inject, Injector};
+#[cfg(windows)]
+use mtool_interactive::{AppHandle};
+
+#[cfg(windows)]
+async fn register_keybinding(app: Res<AppHandle>, injector: Injector) -> Result<(), anyhow::Error> {
+    use mtool_interactive::{GlobalShortcutManager, async_runtime::spawn};
+
+    app.global_shortcut_manager()
+        .register("Super+Shift+X", move || {
+            let injector = injector.clone();
+            spawn(async move {
+                if let Err(e) = inject(&injector, exec_command_interactive).await {
+                    log::warn!("{}", e);
+                }
+            });
+        })?;
+
     Ok(())
 }
