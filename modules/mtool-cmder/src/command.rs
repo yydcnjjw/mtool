@@ -1,10 +1,8 @@
-use std::{any::type_name, future::Future, hash::Hash, marker::PhantomData};
-
-use anyhow::Context;
+use std::{future::Future, hash::Hash, marker::PhantomData};
 
 use async_trait::async_trait;
 use mapp::{
-    inject::{Inject, Provide},
+    inject::{inject, Inject, Provide},
     provider::Injector,
     Label,
 };
@@ -41,15 +39,7 @@ where
     Output: Future<Output = Result<(), anyhow::Error>> + Send,
 {
     async fn exec(&self, c: &Injector) -> Result<(), anyhow::Error> {
-        Ok(self
-            .f
-            .inject(
-                Args::provide(c)
-                    .await
-                    .context(format!("Failed to inject {}", type_name::<Args>()))?,
-            )
-            .await
-            .await?)
+        inject(c, &self.f).await?.await
     }
 }
 
