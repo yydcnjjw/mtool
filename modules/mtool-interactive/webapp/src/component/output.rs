@@ -5,6 +5,7 @@ use yew::{prelude::*, platform::spawn_local};
 use crate::{keybinding::Keybinging, tauri::{self, window}, AppContext};
 
 pub struct Output {
+    #[allow(dead_code)]
     keybinding: Keybinging,
     content: OutputContent,
 }
