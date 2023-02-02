@@ -50,7 +50,7 @@ pub async fn exec_command_interactive(
                         .collect::<Vec<_>>())
                 }
             })
-            .prompt(">"),
+            .prompt("Input command..."),
         )
         .await?
     };

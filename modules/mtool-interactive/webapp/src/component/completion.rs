@@ -3,7 +3,12 @@ use mtool_interactive_model::CompletionMeta;
 use web_sys::HtmlInputElement;
 use yew::{platform::spawn_local, prelude::*};
 
-use crate::{generate_keymap, keybinding::Keybinging, tauri, AppContext};
+use crate::{
+    generate_keymap,
+    keybinding::Keybinging,
+    tauri::{self, window},
+    AppContext,
+};
 
 use super::completion_list::{CompletionArgs, CompletionList};
 
@@ -46,7 +51,7 @@ impl Component for Completion {
             .expect("No AppContext Provided");
 
         let mut self_ = Self {
-            input: Default::default(),
+            input: String::default(),
             input_node: NodeRef::default(),
             keybinding: message.keybinding,
             meta: CompletionMeta::default(),
@@ -147,24 +152,27 @@ impl Component for Completion {
             .link()
             .callback(move |e: InputEvent| Msg::Input(e.data().unwrap_or_default()));
 
-        let fallback = html! { <div>{ "Loading..." }</div> };
+        let fallback = html! { // <div>{ "Loading..." }</div>
+        };
 
         html! {
             <div class={classes!("completion")}>
                 <div class={classes!("search-box")}>
-                  if {!self.meta.prompt.is_empty()} {
-                      <div class={classes!("prompt")}>{self.meta.prompt.clone()}</div>
-                  }
-
                   <input ref={self.input_node.clone()}
                   {oninput}
                   class={classes!("input")}
                   type="text"
+                  placeholder={self.meta.prompt.clone()}
                   autofocus=true/>
                 </div>
-                <Suspense {fallback}>
-                <CompletionList id={ctx.props().id.clone()} input={self.input.clone()}/>
-                </Suspense>
+
+                <div class={classes!("content-box")}>
+                  <Suspense {fallback}>
+                  <CompletionList
+                    id={ctx.props().id.clone()} input={self.input.clone()}/>
+                  </Suspense>
+                </div>
+
             </div>
         }
     }

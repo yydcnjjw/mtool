@@ -48,7 +48,7 @@ impl ListenSwitch {
     fn listen_route(ctx: &Context<Self>) {
         let link = ctx.link().clone();
         ctx.link().send_future(async move {
-            let unlisten = tauri::listen("route", move |e: tauri::Event<String>| {
+            let unlisten = tauri::event::listen("route", move |e: tauri::Event<String>| {
                 debug!("try route to ", &e.payload);
                 if let Some(nav) = link.navigator() {
                     nav.push(&Route::recognize(&e.payload).unwrap());

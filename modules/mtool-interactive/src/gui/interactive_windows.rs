@@ -2,7 +2,7 @@ use std::ops::Deref;
 
 use anyhow::Context;
 use mapp::provider::Res;
-use tauri::{AppHandle, PhysicalPosition, PhysicalSize, WindowBuilder, WindowUrl};
+use tauri::{AppHandle, PhysicalPosition, Window, WindowBuilder, WindowUrl};
 
 pub struct InteractiveWindow {
     inner: tauri::Window,
@@ -33,20 +33,17 @@ impl InteractiveWindow {
             .build()
             .context("create interactive window")?;
 
+        Self::adjust_position(&window)?;
+
         Ok(Res::new(Self { inner: window }))
     }
 
-    pub fn show(&self) -> Result<(), tauri::Error> {
-        let primary = self.primary_monitor()?.unwrap();
+    fn adjust_position(window: &Window) -> Result<(), tauri::Error> {
+        let primary = window.primary_monitor()?.unwrap();
 
         let size = primary.size();
 
-        self.set_position(PhysicalPosition::new((size.width - 720) / 2, 200))?;
-
-        self.set_size(PhysicalSize::new(720, 48 + 16 * 10))?;
-
-        self.inner.show()?;
-
+        window.set_position(PhysicalPosition::new((size.width - 720) / 2, 200))?;
         Ok(())
     }
 }

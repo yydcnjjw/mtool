@@ -6,7 +6,8 @@ use yew::{platform::spawn_local, prelude::*, suspense::use_future_with_deps};
 use crate::{
     generate_keymap,
     keybinding::{Keybinging, SharedAction},
-    tauri, AppContext,
+    tauri::{self, window},
+    AppContext,
 };
 
 #[derive(Serialize, Deserialize)]
@@ -16,6 +17,7 @@ pub struct CompletionArgs {
 
 #[derive(Properties, PartialEq)]
 pub struct BaseProps {
+    pub id: String,
     pub items: Vec<String>,
 }
 
@@ -55,6 +57,8 @@ impl Component for BaseCompletionList {
             keybinding: message.keybinding,
             km: Self::generate_keymap(ctx),
         };
+
+        Self::adjust_window_size(ctx.props(), None);
 
         self_
     }
@@ -111,10 +115,14 @@ impl Component for BaseCompletionList {
         }
     }
 
-    fn changed(&mut self, ctx: &Context<Self>, _old_props: &Self::Properties) -> bool {
+    fn changed(&mut self, ctx: &Context<Self>, old_props: &Self::Properties) -> bool {
+        debug!("CompletionList changed");
+
         self.focus_item = 0;
 
-        if ctx.props().items.is_empty() {
+        let items = &ctx.props().items;
+
+        if items.is_empty() {
             self.keybinding.remove_keymap(Self::COMPLETION_LIST_KEYMAP);
         } else {
             if !self
@@ -125,6 +133,8 @@ impl Component for BaseCompletionList {
                     .push_keymap(Self::COMPLETION_LIST_KEYMAP, self.km.clone());
             }
         }
+
+        Self::adjust_window_size(ctx.props(), Some(old_props));
 
         true
     }
@@ -161,6 +171,31 @@ impl BaseCompletionList {
         )
         .unwrap()
     }
+
+    fn adjust_window_size(new_props: &BaseProps, old_props: Option<&BaseProps>) {
+        let need_adjust = if let Some(old_props) = old_props {
+            new_props.id != old_props.id
+                || new_props.items.len().min(5) != old_props.items.len().min(5)
+        } else {
+            true
+        };
+
+        if !need_adjust {
+            return;
+        }
+
+        let visual_item_count = new_props.items.len().min(5);
+
+        let width = 720;
+
+        let height = if visual_item_count == 0 {
+            50
+        } else {
+            visual_item_count * 48 + 2 + 50 + 16
+        };
+
+        spawn_local(window::set_size(window::PhysicalSize { width, height }));
+    }
 }
 
 #[derive(Properties, PartialEq, Clone)]
@@ -187,6 +222,6 @@ pub fn CompletionList(props: &Props) -> HtmlResult {
     )?;
 
     Ok(html! {
-        <BaseCompletionList items={(*items).clone()} />
+        <BaseCompletionList id={props.id.clone()} items={(*items).clone()} />
     })
 }
