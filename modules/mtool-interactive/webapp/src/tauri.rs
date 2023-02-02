@@ -76,8 +76,6 @@ pub mod event {
 }
 
 pub mod window {
-    use gloo_console::debug;
-
     mod ffi {
         use wasm_bindgen::prelude::*;
         #[wasm_bindgen]
