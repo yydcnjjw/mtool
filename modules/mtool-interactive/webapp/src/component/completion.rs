@@ -152,8 +152,7 @@ impl Component for Completion {
             .link()
             .callback(move |e: InputEvent| Msg::Input(e.data().unwrap_or_default()));
 
-        let fallback = html! { // <div>{ "Loading..." }</div>
-        };
+        let fallback = html! { <div>{ "Loading..." }</div> };
 
         html! {
             <div class={classes!("completion")}>
