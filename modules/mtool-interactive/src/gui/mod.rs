@@ -99,14 +99,14 @@ use tauri::AppHandle;
 
 #[cfg(windows)]
 async fn register_keybinding(app: Res<AppHandle>, injector: Injector) -> Result<(), anyhow::Error> {
-    use mapp::provider::inject;
+    use mapp::inject::inject;
     use tauri::{async_runtime::spawn, GlobalShortcutManager};
 
     app.global_shortcut_manager()
         .register("Super+Alt+Q", move || {
             let injector = injector.clone();
             spawn(async move {
-                if let Err(e) = inject(&injector, interactive_windows::hide_window).await {
+                if let Err(e) = inject(&injector, &interactive_windows::hide_window).await {
                     log::warn!("{}", e);
                 }
             });
