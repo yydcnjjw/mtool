@@ -1,8 +1,8 @@
 use gloo_console::debug;
 use mtool_interactive_model::OutputContent;
-use yew::prelude::*;
+use yew::{prelude::*, platform::spawn_local};
 
-use crate::{keybinding::Keybinging, tauri, AppContext};
+use crate::{keybinding::Keybinging, tauri::{self, window}, AppContext};
 
 pub struct Output {
     keybinding: Keybinging,
@@ -64,8 +64,10 @@ impl Component for Output {
         match &self.content {
             OutputContent::Plain(text) => {
                 html! {
-                    <div class={classes!("output-plain")}>
-                    { html_escape::encode_text(text).to_string() }
+                    <div class={classes!("output")}>
+                      <div class={classes!("output-plain")}>
+                      { html_escape::encode_text(text).to_string() }
+                      </div>
                     </div>
                 }
             }
@@ -89,6 +91,12 @@ impl Output {
                     .unwrap(),
             )
         });
+
+        Self::adjust_window_size();
+    }
+
+    fn adjust_window_size() {
+        spawn_local(window::set_size(window::PhysicalSize { width: 720, height: 480 }));
     }
 
     fn register_keybinding(&self, ctx: &Context<Self>) {
