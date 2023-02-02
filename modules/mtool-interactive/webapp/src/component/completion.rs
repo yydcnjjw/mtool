@@ -6,7 +6,7 @@ use yew::{platform::spawn_local, prelude::*};
 use crate::{
     generate_keymap,
     keybinding::Keybinging,
-    tauri::{self, window},
+    tauri::self,
     AppContext,
 };
 
