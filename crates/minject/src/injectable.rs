@@ -1,24 +1,20 @@
-use async_trait::async_trait;
 use minject_macro::{enum_params, repeat};
 
-#[async_trait]
 pub trait Inject<Args> {
     type Output;
-    async fn inject(&self, args: Args) -> Self::Output;
+    fn inject(&self, args: Args) -> Self::Output;
 }
 
 macro_rules! impl_inject_for_fn {
     ($($arg: ident),*) =>  {
-        #[async_trait]
         impl <Func, Output, $($arg,)*> Inject<($($arg,)*)> for Func
         where
-            Func: Fn($($arg),*) -> Output + Send + Sync,
-            $($arg: Send + 'static,)*
+            Func: Fn($($arg),*) -> Output,
         {
             type Output = Output;
 
             #[allow(non_snake_case)]
-            async fn inject(&self, ($($arg,)*): ($($arg,)*)) -> Self::Output {
+            fn inject(&self, ($($arg,)*): ($($arg,)*)) -> Self::Output {
                 (self)($($arg,)*)
             }
         }
@@ -27,24 +23,21 @@ macro_rules! impl_inject_for_fn {
 
 repeat!(9, enum_params, impl_inject_for_fn, Arg);
 
-#[async_trait]
 pub trait InjectOnce<Args> {
     type Output;
-    async fn inject_once(self, args: Args) -> Self::Output;
+    fn inject_once(self, args: Args) -> Self::Output;
 }
 
 macro_rules! impl_inject_once_for_fn_once {
     ($($arg: ident),*) =>  {
-        #[async_trait]
         impl <Func, Output, $($arg,)*> InjectOnce<($($arg,)*)> for Func
         where
-            Func: FnOnce($($arg),*) -> Output + Send,
-            $($arg: Send + 'static,)*
+            Func: FnOnce($($arg),*) -> Output,
         {
             type Output = Output;
 
             #[allow(non_snake_case)]
-            async fn inject_once(self, ($($arg,)*): ($($arg,)*)) -> Self::Output {
+            fn inject_once(self, ($($arg,)*): ($($arg,)*)) -> Self::Output {
                 (self)($($arg,)*)
             }
         }
@@ -53,130 +46,56 @@ macro_rules! impl_inject_once_for_fn_once {
 
 repeat!(9, enum_params, impl_inject_once_for_fn_once, Arg);
 
-#[async_trait(?Send)]
-pub trait LocalInject<Args> {
-    type Output;
-    async fn local_inject(&self, args: Args) -> Self::Output;
-}
-
-macro_rules! impl_local_inject_for_fn {
-    ($($arg: ident),*) =>  {
-        #[async_trait(?Send)]
-        impl <Func, Output, $($arg,)*> LocalInject<($($arg,)*)> for Func
-        where
-            Func: Fn($($arg),*) -> Output,
-            $($arg: 'static,)*
-        {
-            type Output = Output;
-
-            #[allow(non_snake_case)]
-            async fn local_inject(&self, ($($arg,)*): ($($arg,)*)) -> Self::Output {
-                (self)($($arg,)*)
-            }
-        }
-    }
-}
-
-repeat!(9, enum_params, impl_local_inject_for_fn, Arg);
-
-#[async_trait(?Send)]
-pub trait LocalInjectOnce<Args> {
-    type Output;
-    async fn local_inject_once(self, args: Args) -> Self::Output;
-}
-
-macro_rules! impl_local_inject_once_for_fn_once {
-    ($($arg: ident),*) =>  {
-        #[async_trait(?Send)]
-        impl <Func, Output, $($arg,)*> LocalInjectOnce<($($arg,)*)> for Func
-        where
-            Func: FnOnce($($arg),*) -> Output,
-            $($arg: 'static,)*
-        {
-            type Output = Output;
-
-            #[allow(non_snake_case)]
-            async fn local_inject_once(self, ($($arg,)*): ($($arg,)*)) -> Self::Output {
-                (self)($($arg,)*)
-            }
-        }
-    }
-}
-
-repeat!(9, enum_params, impl_local_inject_once_for_fn_once, Arg);
-
 #[cfg(test)]
 mod tests {
-    use std::{rc::Rc, sync::Arc};
+    use std::sync::Arc;
 
     use super::*;
 
+    #[test]
+    fn test_inject() {
+        assert!(|| -> bool { true }.inject(()));
+        assert!(|_: i32| -> bool { true }.inject((1i32,)));
+        assert!(|_: String| -> bool { true }.inject((String::new(),)));
+        assert!(|_: Arc<i32>| -> bool { true }.inject((Arc::new(1i32),)));
+    }
+
+    #[test]
+    fn test_inject_once() {
+        assert!(|| -> bool { true }.inject_once(()));
+        assert!(|_: i32| -> bool { true }.inject_once((1i32,)));
+        assert!(|_: String| -> bool { true }.inject_once((String::new(),)));
+        assert!(|_: Arc<i32>| -> bool { true }.inject_once((Arc::new(1i32),)));
+    }
+
     #[tokio::test]
-    async fn test_inject() {
-        assert!(|| -> bool { true }.inject(()).await);
-        assert!(|_: i32| -> bool { true }.inject((1i32,)).await);
-        assert!(|_: String| -> bool { true }.inject((String::new(),)).await);
+    async fn test_inject_with_async_fn() {
+        assert!((|| async move { true }).inject(()).await);
+        assert!((|_: i32| async move { true }).inject((1i32,)).await);
         assert!(
-            |_: Arc<i32>| -> bool { true }
+            (|_: String| async move { true })
+                .inject((String::new(),))
+                .await
+        );
+        assert!(
+            (|_: Arc<i32>| async move { true })
                 .inject((Arc::new(1i32),))
                 .await
         );
     }
 
     #[tokio::test]
-    async fn test_inject_once() {
-        assert!(|| -> bool { true }.inject_once(()).await);
-        assert!(|_: i32| -> bool { true }.inject_once((1i32,)).await);
+    async fn test_inject_once_with_async_fn_once() {
+        assert!((|| async move { true }).inject_once(()).await);
+        assert!((|_: i32| async move { true }).inject_once((1i32,)).await);
         assert!(
-            |_: String| -> bool { true }
+            (|_: String| async move { true })
                 .inject_once((String::new(),))
                 .await
         );
         assert!(
-            |_: Arc<i32>| -> bool { true }
+            (|_: Arc<i32>| async move { true })
                 .inject_once((Arc::new(1i32),))
-                .await
-        );
-    }
-
-    #[tokio::test]
-    async fn test_local_inject() {
-        assert!(|| -> bool { true }.local_inject(()).await);
-        assert!(|_: i32| -> bool { true }.local_inject((1i32,)).await);
-        assert!(
-            |_: String| -> bool { true }
-                .local_inject((String::new(),))
-                .await
-        );
-        assert!(
-            |_: Arc<i32>| -> bool { true }
-                .local_inject((Arc::new(1i32),))
-                .await
-        );
-        assert!(
-            |_: Rc<i32>| -> bool { true }
-                .local_inject((Rc::new(1i32),))
-                .await
-        );
-    }
-
-    #[tokio::test]
-    async fn test_local_inject_once() {
-        assert!(|| -> bool { true }.local_inject_once(()).await);
-        assert!(|_: i32| -> bool { true }.local_inject_once((1i32,)).await);
-        assert!(
-            |_: String| -> bool { true }
-                .local_inject_once((String::new(),))
-                .await
-        );
-        assert!(
-            |_: Arc<i32>| -> bool { true }
-                .local_inject_once((Arc::new(1i32),))
-                .await
-        );
-        assert!(
-            |_: Rc<i32>| -> bool { true }
-                .local_inject_once((Rc::new(1i32),))
                 .await
         );
     }

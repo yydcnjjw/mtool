@@ -4,11 +4,9 @@ use std::{
     sync::Arc,
 };
 
-use anyhow::Context;
 use async_trait::async_trait;
 use dashmap::DashMap;
-use futures::Future;
-use minject::{Inject, Provide};
+use minject::Provide;
 use tokio::sync::Mutex;
 
 use crate::App;
@@ -168,19 +166,4 @@ impl Deref for InjectorInner {
     fn deref(&self) -> &Self::Target {
         &self.cont
     }
-}
-
-pub async fn inject<Func, Args, Output, C>(c: &C, f: Func) -> Result<Output, anyhow::Error>
-where
-    Func: Inject<Args>,
-    Func::Output: Future<Output = Output>,
-    Args: Provide<C>,
-{
-    Ok(f.inject(
-        Args::provide(c)
-            .await
-            .context(format!("Failed to inject {}", type_name::<Args>()))?,
-    )
-    .await
-    .await)
 }

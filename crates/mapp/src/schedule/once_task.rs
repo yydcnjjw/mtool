@@ -1,9 +1,9 @@
-use std::{any::type_name, future::Future, marker::PhantomData};
+use std::{future::Future, marker::PhantomData};
 
 use anyhow::Context;
 
 use async_trait::async_trait;
-use minject::{self, InjectOnce, Provide};
+use minject::{self, inject_once, InjectOnce, Provide};
 
 use crate::{App, CondLoad, FnCondLoad, Label};
 
@@ -39,15 +39,7 @@ where
     Output: Future<Output = Result<(), anyhow::Error>> + Send,
 {
     async fn run_once(self, app: &App) -> Result<(), anyhow::Error> {
-        Ok(self
-            .f
-            .inject_once(
-                Args::provide(app)
-                    .await
-                    .context(format!("Failed to inject {}", type_name::<Args>()))?,
-            )
-            .await
-            .await?)
+        inject_once(app, self.f).await?.await
     }
 }
 

@@ -1,5 +1,4 @@
 use std::{
-    any::type_name,
     future::Future,
     marker::PhantomData,
     sync::{Arc, RwLock},
@@ -8,7 +7,7 @@ use std::{
 use anyhow::Context;
 use async_trait::async_trait;
 use mapp::{
-    inject::{Inject, Provide},
+    inject::{inject, Inject, Provide},
     provider::{Injector, Res},
     AppContext, AppModule, CreateOnceTaskDescriptor,
 };
@@ -69,14 +68,7 @@ where
     C: Send + Sync,
 {
     async fn do_action(&self, c: &C) -> Result<(), anyhow::Error> {
-        self.f
-            .inject(
-                Args::provide(c)
-                    .await
-                    .context(format!("Failed to inject {}", type_name::<Args>()))?,
-            )
-            .await
-            .await
+        inject(c, &self.f).await?.await
     }
 }
 

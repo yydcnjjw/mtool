@@ -1,12 +1,8 @@
-use std::{
-    any::{type_name, Any},
-    marker::PhantomData,
-};
+use std::{any::Any, marker::PhantomData};
 
-use anyhow::Context;
 use async_trait::async_trait;
 use futures::Future;
-use minject::{Inject, InjectOnce, Provide};
+use minject::{inject, inject_once, Inject, InjectOnce, Provide};
 
 pub type BoxedAny = Box<dyn Any + Send + Sync>;
 
@@ -44,13 +40,8 @@ where
     C: Send + Sync,
 {
     async fn construct(&self, c: &C) -> Result<BoxedAny, anyhow::Error> {
-        self.f
-            .inject(
-                Args::provide(c)
-                    .await
-                    .context(format!("Failed to inject {}", type_name::<Args>()))?,
-            )
-            .await
+        inject(c, &self.f)
+            .await?
             .await
             .map(|v| Box::new(v) as BoxedAny)
     }
@@ -105,13 +96,8 @@ where
     C: Send + Sync,
 {
     async fn construct_once(self, c: &C) -> Result<BoxedAny, anyhow::Error> {
-        self.f
-            .inject_once(
-                Args::provide(c)
-                    .await
-                    .context(format!("Failed to inject {}", type_name::<Args>()))?,
-            )
-            .await
+        inject_once(c, self.f)
+            .await?
             .await
             .map(|v| Box::new(v) as BoxedAny)
     }
