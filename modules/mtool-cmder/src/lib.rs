@@ -84,8 +84,16 @@ async fn register_keybinding(app: Res<AppHandle>, injector: Injector) -> Result<
         .register("Super+Alt+X", move || {
             let injector = injector.clone();
             spawn(async move {
-                if let Err(e) = inject(&injector, &exec_command_interactive).await {
-                    log::warn!("{}", e);
+                let result = match inject(&injector, &exec_command_interactive).await {
+                    Ok(v) => v,
+                    Err(e) => {
+                        log::debug!("inject: {}", e);
+                        return;
+                    }
+                };
+
+                if let Err(e) = result.await {
+                    log::warn!("exec command interactive: {}", e);
                 }
             });
         })?;

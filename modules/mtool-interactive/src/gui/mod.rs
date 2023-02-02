@@ -1,11 +1,11 @@
 mod builder;
 pub mod completion;
-mod interactive_windows;
+mod interactive_window;
 mod output;
 
 pub use builder::*;
 pub use completion::Completion;
-pub use interactive_windows::*;
+pub use interactive_window::*;
 pub use output::OutputDevice;
 
 use async_trait::async_trait;
@@ -90,7 +90,7 @@ use mtool_system::keybinding::Keybinging;
 
 #[cfg(not(windows))]
 async fn register_keybinding(keybinding: Res<Keybinging>) -> Result<(), anyhow::Error> {
-    keybinding.define_global("M-A-q", interactive_windows::hide_window)?;
+    keybinding.define_global("M-A-q", interactive_window::hide_window)?;
     Ok(())
 }
 
@@ -106,8 +106,16 @@ async fn register_keybinding(app: Res<AppHandle>, injector: Injector) -> Result<
         .register("Super+Alt+Q", move || {
             let injector = injector.clone();
             spawn(async move {
-                if let Err(e) = inject(&injector, &interactive_windows::hide_window).await {
-                    log::warn!("{}", e);
+                let result = match inject(&injector, &interactive_window::hide_window).await {
+                    Ok(v) => v,
+                    Err(e) => {
+                        log::debug!("inject: {}", e);
+                        return;
+                    }
+                };
+
+                if let Err(e) = result.await {
+                    log::warn!("interactive window: {}", e);
                 }
             });
         })?;
