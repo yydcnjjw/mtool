@@ -18,6 +18,8 @@ use mtool_core::{
     config::{is_startup_mode, not_startup_mode, StartupMode},
     AppStage, Cmdline, CmdlineStage,
 };
+#[allow(unused)]
+use mtool_interactive::GuiStage;
 
 #[derive(Default)]
 pub struct Module {}
@@ -69,19 +71,20 @@ async fn register_keybinding(keybinding: Res<Keybinging>) -> Result<(), anyhow::
 }
 
 #[cfg(windows)]
-use mapp::provider::{inject, Injector};
+use mapp::provider::Injector;
 #[cfg(windows)]
 use mtool_interactive::AppHandle;
 
 #[cfg(windows)]
 async fn register_keybinding(app: Res<AppHandle>, injector: Injector) -> Result<(), anyhow::Error> {
+    use mapp::inject::inject;
     use mtool_interactive::{async_runtime::spawn, GlobalShortcutManager};
 
     app.global_shortcut_manager()
         .register("Super+Alt+X", move || {
             let injector = injector.clone();
             spawn(async move {
-                if let Err(e) = inject(&injector, exec_command_interactive).await {
+                if let Err(e) = inject(&injector, &exec_command_interactive).await {
                     log::warn!("{}", e);
                 }
             });
