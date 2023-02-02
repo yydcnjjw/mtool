@@ -1,5 +1,6 @@
 use std::{
     any::{type_name, TypeId},
+    collections::HashMap,
     ops::Deref,
     sync::Arc,
 };
@@ -22,7 +23,7 @@ type BoxedConstructOnce = Box<dyn ConstructOnce<InjectorInner> + Send + Sync>;
 #[derive(Clone)]
 pub struct Injector {
     inner: Arc<InjectorInner>,
-    type_mutex: Arc<DashMap<TypeId, Mutex<()>>>,
+    type_mutex: Arc<Mutex<HashMap<TypeId, Mutex<()>>>>,
 }
 
 impl Deref for Injector {
@@ -51,7 +52,7 @@ impl Injector {
     pub fn new() -> Self {
         Self {
             inner: Arc::new(InjectorInner::new()),
-            type_mutex: Arc::new(DashMap::new()),
+            type_mutex: Arc::new(Mutex::new(HashMap::new())),
         }
     }
 
@@ -59,8 +60,8 @@ impl Injector {
     where
         T: Send + Sync + Clone + 'static,
     {
-        let mutex = self
-            .type_mutex
+        let mut type_mutex = self.type_mutex.lock().await;
+        let mutex = type_mutex
             .entry(TypeId::of::<T>())
             .or_insert(Mutex::new(()));
 
