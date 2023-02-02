@@ -64,7 +64,7 @@ use mtool_system::keybinding::Keybinging;
 
 #[cfg(not(windows))]
 async fn register_keybinding(keybinding: Res<Keybinging>) -> Result<(), anyhow::Error> {
-    keybinding.define_global("M-S-x", exec_command_interactive)?;
+    keybinding.define_global("M-A-x", exec_command_interactive)?;
     Ok(())
 }
 
@@ -78,7 +78,7 @@ async fn register_keybinding(app: Res<AppHandle>, injector: Injector) -> Result<
     use mtool_interactive::{async_runtime::spawn, GlobalShortcutManager};
 
     app.global_shortcut_manager()
-        .register("Super+Shift+X", move || {
+        .register("Super+Alt+X", move || {
             let injector = injector.clone();
             spawn(async move {
                 if let Err(e) = inject(&injector, exec_command_interactive).await {

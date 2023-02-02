@@ -22,7 +22,7 @@ type BoxedConstructOnce = Box<dyn ConstructOnce<InjectorInner> + Send + Sync>;
 #[derive(Clone)]
 pub struct Injector {
     inner: Arc<InjectorInner>,
-    mutex: Arc<Mutex<()>>,
+    type_mutex: Arc<DashMap<TypeId, Mutex<()>>>,
 }
 
 impl Deref for Injector {
@@ -51,7 +51,7 @@ impl Injector {
     pub fn new() -> Self {
         Self {
             inner: Arc::new(InjectorInner::new()),
-            mutex: Arc::new(Mutex::new(())),
+            type_mutex: Arc::new(DashMap::new()),
         }
     }
 
@@ -59,7 +59,13 @@ impl Injector {
     where
         T: Send + Sync + Clone + 'static,
     {
-        let _guard = self.mutex.lock().await;
+        let mutex = self
+            .type_mutex
+            .entry(TypeId::of::<T>())
+            .or_insert(Mutex::new(()));
+
+        let _guard = mutex.lock().await;
+
         self.inner.get::<T>().await
     }
 }
@@ -152,8 +158,6 @@ impl InjectorInner {
             log::debug!("construct once {}", type_name::<T>());
 
             v
-        } else if let Some(v) = self.cont.get::<T>() {
-            Ok(Box::new(v))
         } else {
             anyhow::bail!("{} is not exist", type_name::<T>())
         }

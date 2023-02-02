@@ -90,7 +90,7 @@ use mtool_system::keybinding::Keybinging;
 
 #[cfg(not(windows))]
 async fn register_keybinding(keybinding: Res<Keybinging>) -> Result<(), anyhow::Error> {
-    keybinding.define_global("M-S-q", interactive_windows::hide_window)?;
+    keybinding.define_global("M-A-q", interactive_windows::hide_window)?;
     Ok(())
 }
 
@@ -103,7 +103,7 @@ async fn register_keybinding(app: Res<AppHandle>, injector: Injector) -> Result<
     use tauri::{async_runtime::spawn, GlobalShortcutManager};
 
     app.global_shortcut_manager()
-        .register("Super+Shift+Q", move || {
+        .register("Super+Alt+Q", move || {
             let injector = injector.clone();
             spawn(async move {
                 if let Err(e) = inject(&injector, interactive_windows::hide_window).await {
