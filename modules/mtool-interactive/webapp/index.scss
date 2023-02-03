@@ -59,14 +59,14 @@ body {
             display: flex;
             flex-direction: column;
 
-            .item {
+            .completion-item {
                 padding: 0.5em 1em;
                 line-height: 2em;
-            }
 
-            .item.focus {
-                background-color: gray;
-            }    
+                &:focus {
+                    background-color: gray;
+                }
+            }   
         }        
     }
 }
