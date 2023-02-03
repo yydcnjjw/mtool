@@ -1,6 +1,7 @@
 use gloo_console::debug;
 use mkeybinding::KeyMap;
 use serde::{Deserialize, Serialize};
+use web_sys::HtmlElement;
 use yew::{platform::spawn_local, prelude::*, suspense::use_future_with_deps};
 
 use crate::{
@@ -22,6 +23,7 @@ pub struct BaseProps {
 }
 
 pub struct BaseCompletionList {
+    item_nodes: Vec<NodeRef>,
     focus_item: usize,
     keybinding: Keybinging,
     km: KeyMap<SharedAction>,
@@ -32,6 +34,7 @@ pub enum Msg {
     AppContext(AppContext),
     Next,
     Prev,
+    FocusChanged(usize),
     Exit,
 }
 
@@ -52,7 +55,11 @@ impl Component for BaseCompletionList {
             .context(ctx.link().callback(Msg::AppContext))
             .expect("No AppContext Provided");
 
+        let mut item_nodes = Vec::new();
+        item_nodes.resize(ctx.props().items.len(), NodeRef::default());
+
         let self_ = Self {
+            item_nodes,
             focus_item: 0,
             keybinding: message.keybinding,
             km: Self::generate_keymap(ctx),
@@ -66,20 +73,24 @@ impl Component for BaseCompletionList {
     fn update(&mut self, ctx: &Context<Self>, msg: Self::Message) -> bool {
         match msg {
             Msg::Next => {
-                if self.focus_item == ctx.props().items.len() - 1 {
-                    self.focus_item = 0;
+                let index = if self.focus_item == ctx.props().items.len() - 1 {
+                    0
                 } else {
-                    self.focus_item += 1;
-                }
+                    self.focus_item + 1
+                };
+
+                self.focus_item = index;
 
                 true
             }
             Msg::Prev => {
-                if self.focus_item == 0 {
-                    self.focus_item = ctx.props().items.len() - 1;
+                let index = if self.focus_item == 0 {
+                    ctx.props().items.len() - 1
                 } else {
-                    self.focus_item -= 1;
-                }
+                    self.focus_item - 1
+                };
+
+                self.focus_item = index;
 
                 true
             }
@@ -95,6 +106,10 @@ impl Component for BaseCompletionList {
                 });
                 false
             }
+            Msg::FocusChanged(index) => {
+                self.focus_item = index;
+                false
+            }
             Msg::AppContext(_) => {
                 unreachable!();
             }
@@ -103,36 +118,33 @@ impl Component for BaseCompletionList {
 
     fn view(&self, ctx: &Context<Self>) -> Html {
         html! {
-            <ul class={classes!("completion-list")}>
+            <div class={classes!("completion-list")}>
             {
-                ctx.props().items.iter().enumerate().map(|(i, item)|{html!{
-                    <li class={classes!("item", (i == self.focus_item).then(|| Some("focus")) )}>
-                    { item }
-                    </li>
-                }}).collect::<Html>()
+                ctx.props().items.iter().enumerate().map(|(i, item)|{
+                    html!{
+                      <div ref={&self.item_nodes[i]}
+                        class={classes!("completion-item")}
+                        tabIndex="1"
+                        onfocus={ctx.link().callback(move |_| Msg::FocusChanged(i))}
+                        onmouseover={ctx.link().callback(move |_| Msg::FocusChanged(i))}
+                        >
+                        { item }
+                      </div>
+                    }
+                }).collect::<Html>()
             }
-            </ul>
+            </div>
         }
     }
 
     fn changed(&mut self, ctx: &Context<Self>, old_props: &Self::Properties) -> bool {
         debug!("CompletionList changed");
 
+        let items = &ctx.props().items;
+        self.item_nodes.resize(items.len(), NodeRef::default());
         self.focus_item = 0;
 
-        let items = &ctx.props().items;
-
-        if items.is_empty() {
-            self.keybinding.remove_keymap(Self::COMPLETION_LIST_KEYMAP);
-        } else {
-            if !self
-                .keybinding
-                .contains_keymap(Self::COMPLETION_LIST_KEYMAP)
-            {
-                self.keybinding
-                    .push_keymap(Self::COMPLETION_LIST_KEYMAP, self.km.clone());
-            }
-        }
+        self.remap_keymap(ctx);
 
         Self::adjust_window_size(ctx.props(), Some(old_props));
 
@@ -144,6 +156,14 @@ impl Component for BaseCompletionList {
             self.keybinding
                 .push_keymap(Self::COMPLETION_LIST_KEYMAP, self.km.clone());
         }
+
+        debug!(self.focus_item);
+
+        let elm = self.item_nodes[self.focus_item]
+            .cast::<HtmlElement>()
+            .unwrap();
+        debug!(&elm);
+        elm.focus().unwrap();
     }
 
     fn destroy(&mut self, _ctx: &Context<Self>) {
@@ -172,10 +192,28 @@ impl BaseCompletionList {
         .unwrap()
     }
 
+    fn remap_keymap(&mut self, ctx: &Context<Self>) {
+        let items = &ctx.props().items;
+        if items.is_empty() {
+            self.keybinding.remove_keymap(Self::COMPLETION_LIST_KEYMAP);
+        } else {
+            if !self
+                .keybinding
+                .contains_keymap(Self::COMPLETION_LIST_KEYMAP)
+            {
+                self.keybinding
+                    .push_keymap(Self::COMPLETION_LIST_KEYMAP, self.km.clone());
+            }
+        }
+    }
+
     fn adjust_window_size(new_props: &BaseProps, old_props: Option<&BaseProps>) {
+        const MAX_ITEM_COUNT: usize = 5;
+
         let need_adjust = if let Some(old_props) = old_props {
             new_props.id != old_props.id
-                || new_props.items.len().min(5) != old_props.items.len().min(5)
+                || new_props.items.len().min(MAX_ITEM_COUNT)
+                    != old_props.items.len().min(MAX_ITEM_COUNT)
         } else {
             true
         };
@@ -184,7 +222,7 @@ impl BaseCompletionList {
             return;
         }
 
-        let visual_item_count = new_props.items.len().min(5);
+        let visual_item_count = new_props.items.len().min(MAX_ITEM_COUNT);
 
         let width = 720;
 
