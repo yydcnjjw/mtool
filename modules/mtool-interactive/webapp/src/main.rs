@@ -6,50 +6,13 @@ mod tauri;
 
 use gloo_console::debug;
 use keybinding::Keybinging;
-use mkeybinding::KeyCombine;
-use msysev::KeyAction;
 use switch::ListenSwitch;
-use wasm_bindgen::{prelude::*, JsCast};
-use web_sys::window;
-use yew::{platform::spawn_local, prelude::*};
+use yew::prelude::*;
 use yew_router::prelude::*;
-
-use crate::event::into_key_event;
 
 #[derive(Clone, PartialEq)]
 pub struct AppContext {
     pub keybinding: Keybinging,
-}
-
-fn keybinding_setup() -> Keybinging {
-    let keybinding = Keybinging::new();
-    {
-        let keybinding = keybinding.clone();
-        let a = Closure::<dyn FnMut(_)>::new(move |e: KeyboardEvent| {
-            let keyev = into_key_event(e.clone(), KeyAction::Press);
-            if keybinding.dispatch(KeyCombine {
-                key: keyev.keycode,
-                mods: keyev.modifiers,
-            }) {
-                e.prevent_default();
-            }
-        });
-
-        window()
-            .unwrap()
-            .set_onkeydown(Some(a.as_ref().unchecked_ref()));
-
-        a.forget();
-    }
-
-    {
-        let keybinding = keybinding.clone();
-        spawn_local(async move {
-            keybinding.run_loop().await;
-        });
-    }
-
-    keybinding
 }
 
 struct App {
@@ -65,7 +28,7 @@ impl Component for App {
         debug!("App()");
         Self {
             app_ctx: AppContext {
-                keybinding: keybinding_setup(),
+                keybinding: keybinding::setup(),
             },
         }
     }
