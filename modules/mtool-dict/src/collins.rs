@@ -1,4 +1,5 @@
 use clap::Parser;
+use futures::FutureExt;
 use mapp::provider::Res;
 use mdict::decode::collins::{self, output::OutputOrg};
 use mtool_cmder::CommandArgs;
@@ -22,19 +23,25 @@ pub async fn dict(args: Res<CommandArgs>, o: Res<OutputDevice>) -> Result<(), an
         }
     };
 
-    let result: Vec<String> = collins::dict::query(&query)
-        .await?
-        .iter()
-        .filter_map(|v| v.to_string_org().ok())
-        .collect();
+    o.output_future(
+        async move {
+            let result: Vec<String> = match collins::dict::query(&query).await {
+                Ok(result) => result
+                    .iter()
+                    .filter_map(|v| v.to_string_org().ok())
+                    .collect(),
+                Err(e) => return e.to_string(),
+            };
 
-    let plain = if result.is_empty() {
-        format!("Failed to query dict {}", query)
-    } else {
-        result.join("\n")
-    };
-
-    o.show_plain(&plain).await?;
+            if result.is_empty() {
+                format!("Failed to query dict {}", query)
+            } else {
+                result.join("\n")
+            }
+        }
+        .boxed(),
+    )
+    .await?;
 
     Ok(())
 }

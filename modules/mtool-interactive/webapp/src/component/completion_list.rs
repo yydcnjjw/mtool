@@ -1,7 +1,9 @@
 use gloo_console::debug;
+use gloo_utils::document;
 use mkeybinding::KeyMap;
 use serde::{Deserialize, Serialize};
-use web_sys::HtmlElement;
+use wasm_bindgen::JsCast;
+use web_sys::{HtmlElement, ScrollIntoViewOptions, ScrollLogicalPosition};
 use yew::{platform::spawn_local, prelude::*, suspense::use_future_with_deps};
 
 use crate::{
@@ -23,8 +25,7 @@ pub struct BaseProps {
 }
 
 pub struct BaseCompletionList {
-    item_nodes: Vec<NodeRef>,
-    focus_item: usize,
+    focused_item_index: usize,
     keybinding: Keybinging,
     km: KeyMap<SharedAction>,
 }
@@ -55,12 +56,8 @@ impl Component for BaseCompletionList {
             .context(ctx.link().callback(Msg::AppContext))
             .expect("No AppContext Provided");
 
-        let mut item_nodes = Vec::new();
-        item_nodes.resize(ctx.props().items.len(), NodeRef::default());
-
         let self_ = Self {
-            item_nodes,
-            focus_item: 0,
+            focused_item_index: 0,
             keybinding: message.keybinding,
             km: Self::generate_keymap(ctx),
         };
@@ -73,29 +70,29 @@ impl Component for BaseCompletionList {
     fn update(&mut self, ctx: &Context<Self>, msg: Self::Message) -> bool {
         match msg {
             Msg::Next => {
-                let index = if self.focus_item == ctx.props().items.len() - 1 {
+                let index = if self.focused_item_index == ctx.props().items.len() - 1 {
                     0
                 } else {
-                    self.focus_item + 1
+                    self.focused_item_index + 1
                 };
 
-                self.focus_item = index;
+                self.focused_item_index = index;
 
                 true
             }
             Msg::Prev => {
-                let index = if self.focus_item == 0 {
+                let index = if self.focused_item_index == 0 {
                     ctx.props().items.len() - 1
                 } else {
-                    self.focus_item - 1
+                    self.focused_item_index - 1
                 };
 
-                self.focus_item = index;
+                self.focused_item_index = index;
 
                 true
             }
             Msg::Exit => {
-                let completed = ctx.props().items[self.focus_item].to_owned();
+                let completed = ctx.props().items[self.focused_item_index].to_owned();
                 spawn_local(async move {
                     let _: () = tauri::invoke(
                         "plugin:completion|complete_exit",
@@ -107,8 +104,8 @@ impl Component for BaseCompletionList {
                 false
             }
             Msg::FocusChanged(index) => {
-                self.focus_item = index;
-                false
+                self.focused_item_index = index;
+                true
             }
             Msg::AppContext(_) => {
                 unreachable!();
@@ -117,21 +114,27 @@ impl Component for BaseCompletionList {
     }
 
     fn view(&self, ctx: &Context<Self>) -> Html {
+        let focus_class = |i| {
+            if self.focused_item_index == i {
+                "focus-item"
+            } else {
+                ""
+            }
+        };
+
         html! {
             <div class={classes!("completion-list")}>
             {
-                ctx.props().items.iter().enumerate().map(|(i, item)|{
-                    html!{
-                      <div ref={&self.item_nodes[i]}
-                        class={classes!("completion-item")}
-                        tabIndex="1"
-                        onfocus={ctx.link().callback(move |_| Msg::FocusChanged(i))}
-                        onmouseover={ctx.link().callback(move |_| Msg::FocusChanged(i))}
+                for ctx.props().items.iter().enumerate().map(|(i, item)|{
+                    html! {
+                      <div id={ Self::completion_item_id(i) }
+                        class={ classes!("completion-item", focus_class(i)) }
+                        onclick={ ctx.link().callback(move |_| Msg::FocusChanged(i)) }
                         >
                         { item }
                       </div>
                     }
-                }).collect::<Html>()
+                })
             }
             </div>
         }
@@ -140,9 +143,7 @@ impl Component for BaseCompletionList {
     fn changed(&mut self, ctx: &Context<Self>, old_props: &Self::Properties) -> bool {
         debug!("CompletionList changed");
 
-        let items = &ctx.props().items;
-        self.item_nodes.resize(items.len(), NodeRef::default());
-        self.focus_item = 0;
+        self.focused_item_index = 0;
 
         self.remap_keymap(ctx);
 
@@ -157,13 +158,7 @@ impl Component for BaseCompletionList {
                 .push_keymap(Self::COMPLETION_LIST_KEYMAP, self.km.clone());
         }
 
-        debug!(self.focus_item);
-
-        let elm = self.item_nodes[self.focus_item]
-            .cast::<HtmlElement>()
-            .unwrap();
-        debug!(&elm);
-        elm.focus().unwrap();
+        self.scroll_into_focused_item();
     }
 
     fn destroy(&mut self, _ctx: &Context<Self>) {
@@ -233,6 +228,26 @@ impl BaseCompletionList {
         };
 
         spawn_local(window::set_size(window::PhysicalSize { width, height }));
+    }
+
+    fn scroll_into_focused_item(&self) {
+        if let Some(elm) = self.focused_item() {
+            debug!(&elm);
+            let mut opt = ScrollIntoViewOptions::new();
+            opt.block(ScrollLogicalPosition::Nearest);
+
+            elm.scroll_into_view_with_scroll_into_view_options(&opt);
+        }
+    }
+
+    fn completion_item_id(i: usize) -> String {
+        format!("completion-item-{}", i)
+    }
+
+    fn focused_item(&self) -> Option<HtmlElement> {
+        document()
+            .get_element_by_id(&Self::completion_item_id(self.focused_item_index))
+            .and_then(|e| e.dyn_into::<HtmlElement>().ok())
     }
 }
 

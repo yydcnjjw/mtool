@@ -1,10 +1,12 @@
-use std::sync::{Arc, RwLock};
+use std::sync::Arc;
 
 use anyhow::Context as _;
 use async_trait::async_trait;
+use futures::future::BoxFuture;
 use mapp::provider::Res;
 use mtool_interactive_model::OutputContent;
 use tauri::{
+    async_runtime::RwLock,
     command,
     plugin::{Builder, TauriPlugin},
     AppHandle, Manager, Runtime, State,
@@ -50,14 +52,26 @@ impl OutputDevice {
 
 #[async_trait]
 impl Output for OutputDevice {
-    async fn show_plain(&self, s: &str) -> Result<(), anyhow::Error> {
+    async fn output(&self, s: &str) -> Result<(), anyhow::Error> {
         self.win.show().context("show output window")?;
 
         self.win
             .emit("route", format!("/output/{}", rand_string()))?;
 
-        let mut ctx = self.ctx.write().unwrap();
+        let mut ctx = self.ctx.write().await;
         ctx.content = OutputContent::Plain(s.to_string());
+
+        Ok(())
+    }
+
+    async fn output_future(&self, o: BoxFuture<'static, String>) -> Result<(), anyhow::Error> {
+        self.win.show().context("show output window")?;
+
+        self.win
+            .emit("route", format!("/output/{}", rand_string()))?;
+
+        let mut ctx = self.ctx.write().await;
+        ctx.content = OutputContent::Plain(o.await);
 
         Ok(())
     }
@@ -67,7 +81,7 @@ impl Output for OutputDevice {
 async fn current_content(
     c: State<'_, Arc<OutputDevice>>,
 ) -> Result<OutputContent, serde_error::Error> {
-    let ctx = c.ctx.read().unwrap();
+    let ctx = c.ctx.read().await;
     Ok(ctx.content.clone())
 }
 

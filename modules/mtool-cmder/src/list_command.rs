@@ -22,7 +22,7 @@ pub async fn list_command(cmder: Res<Cmder>, o: Res<OutputDevice>) -> Result<(),
         })
         .join("\n");
 
-    o.show_plain(&output).await?;
+    o.output(&output).await?;
 
     Ok(())
 }

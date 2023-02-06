@@ -50,7 +50,7 @@ async fn text_translate_interactive(
 
     let result = translator.text_translate(text, source, target).await?;
 
-    o.show_plain(&result).await?;
+    o.output(&result).await?;
 
     Ok(())
 }
