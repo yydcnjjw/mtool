@@ -1,3 +1,4 @@
+use futures::FutureExt;
 use mapp::provider::Res;
 use mtool_cmder::CommandArgs;
 use mtool_interactive::{Completion, CompletionArgs, OutputDevice};
@@ -48,9 +49,16 @@ async fn text_translate_interactive(
         .complete_read(CompletionArgs::without_completion().prompt("Input text: "))
         .await?;
 
-    let result = translator.text_translate(text, source, target).await?;
-
-    o.output(&result).await?;
+    o.output_future(
+        async move {
+            match translator.text_translate(text, source, target).await {
+                Ok(o) => o,
+                Err(e) => e.to_string(),
+            }
+        }
+        .boxed(),
+    )
+    .await?;
 
     Ok(())
 }
