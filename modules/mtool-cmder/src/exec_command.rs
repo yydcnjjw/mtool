@@ -68,7 +68,7 @@ pub async fn exec_command_interactive(
 
     match cmder.get_command_exact(&command) {
         Some(cmd) => cmd.exec(&injector).await?,
-        None => o.show_plain(&format!("{} not found", command)).await?,
+        None => o.output(&format!("{} not found", command)).await?,
     }
 
     injector.remove::<Res<CommandArgs>>();

@@ -63,10 +63,13 @@ body {
                 padding: 0.5em 1em;
                 line-height: 2em;
 
-                &:focus {
+                &.focus-item {
                     background-color: gray;
                 }
-            }   
+                &:hover {
+                    background-color: rgba($color: gray, $alpha: 0.8);
+                }                
+            }
         }        
     }
 }

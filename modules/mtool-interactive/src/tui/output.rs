@@ -13,7 +13,7 @@ impl OutputDevice {
 
 #[async_trait]
 impl Output for OutputDevice {
-    async fn show_plain(&self, s: &str) -> Result<(), anyhow::Error> {
+    async fn output(&self, s: &str) -> Result<(), anyhow::Error> {
         print!("{}", s);
         Ok(())
     }

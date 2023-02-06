@@ -65,15 +65,15 @@ impl Component for Output {
         match &self.content {
             OutputContent::Plain(text) => {
                 html! {
-                    <div class={classes!("output")}>
-                      <div class={classes!("output-plain")}>
+                    <div class={ classes!("output") }>
+                      <div class={ classes!("output-plain") }>
                       { html_escape::encode_text(text).to_string() }
                       </div>
                     </div>
                 }
             }
             OutputContent::None => html! {
-                <div> { "No Content" } </div>
+                <div class={ classes!("output") }> { "Loading" } </div>
             },
         }
     }

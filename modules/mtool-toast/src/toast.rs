@@ -39,7 +39,7 @@ pub async fn toast(args: Res<CommandArgs>, o: Res<OutputDevice>) -> Result<(), a
     let args = match Args::try_parse_from(args.iter()) {
         Ok(args) => args,
         Err(e) => {
-            o.show_plain(&e.render().to_string()).await?;
+            o.output(&e.render().to_string()).await?;
             return Ok(());
         }
     };

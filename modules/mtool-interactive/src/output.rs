@@ -1,12 +1,18 @@
 use std::{ops::Deref, sync::Arc};
 
 use async_trait::async_trait;
+use futures::future::BoxFuture;
 
 #[async_trait]
-pub trait Output {
-    async fn show_plain(&self, s: &str) -> Result<(), anyhow::Error>;
-    // async fn show_markdown(&self, s: &str) -> Result<(), anyhow::Error> {}
-    // async fn show_html(&self) -> Result<(), anyhow::Error> {}
+
+pub trait Output: Sync {
+    async fn output(&self, _: &str) -> Result<(), anyhow::Error> {
+        Ok(())
+    }
+
+    async fn output_future(&self, _: BoxFuture<'static, String>) -> Result<(), anyhow::Error> {
+        Ok(())
+    }
 }
 
 pub type SharedOutput = Arc<dyn Output + Send + Sync>;
