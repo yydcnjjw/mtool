@@ -2,7 +2,12 @@ use std::{cell::RefCell, future::Future, rc::Rc};
 
 use async_trait::async_trait;
 use mkeybinding::{KeyCombine, KeyDispatcher, KeyMap};
+use msysev::KeyAction;
+use wasm_bindgen::{prelude::*, JsCast};
 use wasm_bindgen_futures::spawn_local;
+use web_sys::{window, KeyboardEvent};
+
+use crate::event::into_key_event;
 
 #[async_trait(?Send)]
 pub trait Action {
@@ -87,4 +92,35 @@ impl Keybinging {
     pub fn remove_keymap(&self, id: &str) -> Option<(String, KeyMap<SharedAction>)> {
         self.dispatcher.borrow_mut().remove_keymap(id)
     }
+}
+
+pub fn setup() -> Keybinging {
+    let keybinding = Keybinging::new();
+    {
+        let keybinding = keybinding.clone();
+        let a = Closure::<dyn FnMut(_)>::new(move |e: KeyboardEvent| {
+            let keyev = into_key_event(e.clone(), KeyAction::Press);
+            if keybinding.dispatch(KeyCombine {
+                key: keyev.keycode,
+                mods: keyev.modifiers,
+            }) {
+                e.prevent_default();
+            }
+        });
+
+        window()
+            .unwrap()
+            .set_onkeydown(Some(a.as_ref().unchecked_ref()));
+
+        a.forget();
+    }
+
+    {
+        let keybinding = keybinding.clone();
+        spawn_local(async move {
+            keybinding.run_loop().await;
+        });
+    }
+
+    keybinding
 }
