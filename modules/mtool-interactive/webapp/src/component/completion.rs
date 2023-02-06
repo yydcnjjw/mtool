@@ -152,8 +152,6 @@ impl Component for Completion {
             .link()
             .callback(move |e: InputEvent| Msg::Input(e.data().unwrap_or_default()));
 
-        let fallback = html! { <div>{ "Loading..." }</div> };
-
         html! {
             <div class={classes!("completion")}>
                 <div class={classes!("search-box")}>
@@ -166,10 +164,8 @@ impl Component for Completion {
                 </div>
 
                 <div class={classes!("content-box")}>
-                  <Suspense {fallback}>
                   <CompletionList
                     id={ctx.props().id.clone()} input={self.input.clone()}/>
-                  </Suspense>
                 </div>
 
             </div>

@@ -4,7 +4,7 @@ use mkeybinding::KeyMap;
 use serde::{Deserialize, Serialize};
 use wasm_bindgen::JsCast;
 use web_sys::{HtmlElement, ScrollIntoViewOptions, ScrollLogicalPosition};
-use yew::{platform::spawn_local, prelude::*, suspense::use_future_with_deps};
+use yew::{platform::spawn_local, prelude::*};
 
 use crate::{
     generate_keymap,
@@ -19,12 +19,13 @@ pub struct CompletionArgs {
 }
 
 #[derive(Properties, PartialEq)]
-pub struct BaseProps {
+pub struct Props {
     pub id: String,
-    pub items: Vec<String>,
+    pub input: String,
 }
 
-pub struct BaseCompletionList {
+pub struct CompletionList {
+    items: Vec<String>,
     focused_item_index: usize,
     keybinding: Keybinging,
     km: KeyMap<SharedAction>,
@@ -33,20 +34,21 @@ pub struct BaseCompletionList {
 #[derive(Clone)]
 pub enum Msg {
     AppContext(AppContext),
+    FetchCompleteRead(Vec<String>),
     Next,
     Prev,
     FocusChanged(usize),
     Exit,
 }
 
-impl BaseCompletionList {
+impl CompletionList {
     const COMPLETION_LIST_KEYMAP: &str = "completion_list";
 }
 
-impl Component for BaseCompletionList {
+impl Component for CompletionList {
     type Message = Msg;
 
-    type Properties = BaseProps;
+    type Properties = Props;
 
     fn create(ctx: &Context<Self>) -> Self {
         debug!("BaseCompletionList()");
@@ -57,20 +59,35 @@ impl Component for BaseCompletionList {
             .expect("No AppContext Provided");
 
         let self_ = Self {
+            items: Vec::new(),
             focused_item_index: 0,
             keybinding: message.keybinding,
             km: Self::generate_keymap(ctx),
         };
 
-        Self::adjust_window_size(ctx.props(), None);
+        Self::fetch_complete_read(ctx);
 
         self_
     }
 
-    fn update(&mut self, ctx: &Context<Self>, msg: Self::Message) -> bool {
+    fn update(&mut self, _ctx: &Context<Self>, msg: Self::Message) -> bool {
         match msg {
+            Msg::FetchCompleteRead(items) => {
+                let need_adjust = self.items.len().min(Self::MAX_ITEM_COUNT)
+                    != items.len().min(Self::MAX_ITEM_COUNT);
+
+                self.items = items;
+
+                self.remap_keymap();
+
+                if need_adjust {
+                    self.adjust_window_size();
+                }
+
+                true
+            }
             Msg::Next => {
-                let index = if self.focused_item_index == ctx.props().items.len() - 1 {
+                let index = if self.focused_item_index == self.items.len() - 1 {
                     0
                 } else {
                     self.focused_item_index + 1
@@ -82,7 +99,7 @@ impl Component for BaseCompletionList {
             }
             Msg::Prev => {
                 let index = if self.focused_item_index == 0 {
-                    ctx.props().items.len() - 1
+                    self.items.len() - 1
                 } else {
                     self.focused_item_index - 1
                 };
@@ -92,7 +109,7 @@ impl Component for BaseCompletionList {
                 true
             }
             Msg::Exit => {
-                let completed = ctx.props().items[self.focused_item_index].to_owned();
+                let completed = self.items[self.focused_item_index].to_owned();
                 spawn_local(async move {
                     let _: () = tauri::invoke(
                         "plugin:completion|complete_exit",
@@ -125,7 +142,7 @@ impl Component for BaseCompletionList {
         html! {
             <div class={classes!("completion-list")}>
             {
-                for ctx.props().items.iter().enumerate().map(|(i, item)|{
+                for self.items.iter().enumerate().map(|(i, item)|{
                     html! {
                       <div id={ Self::completion_item_id(i) }
                         class={ classes!("completion-item", focus_class(i)) }
@@ -145,15 +162,17 @@ impl Component for BaseCompletionList {
 
         self.focused_item_index = 0;
 
-        self.remap_keymap(ctx);
+        Self::fetch_complete_read(ctx);
 
-        Self::adjust_window_size(ctx.props(), Some(old_props));
+        if old_props.id != ctx.props().id {
+            self.adjust_window_size();
+        }
 
         true
     }
 
-    fn rendered(&mut self, ctx: &Context<Self>, first_render: bool) {
-        if first_render && !ctx.props().items.is_empty() {
+    fn rendered(&mut self, _ctx: &Context<Self>, first_render: bool) {
+        if first_render && !self.items.is_empty() {
             self.keybinding
                 .push_keymap(Self::COMPLETION_LIST_KEYMAP, self.km.clone());
         }
@@ -166,7 +185,22 @@ impl Component for BaseCompletionList {
     }
 }
 
-impl BaseCompletionList {
+impl CompletionList {
+    const MAX_ITEM_COUNT: usize = 5;
+
+    fn fetch_complete_read(ctx: &Context<Self>) {
+        let input = ctx.props().input.to_string();
+        ctx.link().send_future(async move {
+            let items: Vec<String> = tauri::invoke(
+                "plugin:completion|complete_read",
+                &CompletionArgs { completed: input },
+            )
+            .await
+            .unwrap();
+            Msg::FetchCompleteRead(items)
+        });
+    }
+
     fn generate_keymap(ctx: &Context<Self>) -> KeyMap<SharedAction> {
         let send = |msg: Msg| {
             let link = ctx.link().clone();
@@ -187,8 +221,8 @@ impl BaseCompletionList {
         .unwrap()
     }
 
-    fn remap_keymap(&mut self, ctx: &Context<Self>) {
-        let items = &ctx.props().items;
+    fn remap_keymap(&mut self) {
+        let items = &self.items;
         if items.is_empty() {
             self.keybinding.remove_keymap(Self::COMPLETION_LIST_KEYMAP);
         } else {
@@ -202,22 +236,8 @@ impl BaseCompletionList {
         }
     }
 
-    fn adjust_window_size(new_props: &BaseProps, old_props: Option<&BaseProps>) {
-        const MAX_ITEM_COUNT: usize = 5;
-
-        let need_adjust = if let Some(old_props) = old_props {
-            new_props.id != old_props.id
-                || new_props.items.len().min(MAX_ITEM_COUNT)
-                    != old_props.items.len().min(MAX_ITEM_COUNT)
-        } else {
-            true
-        };
-
-        if !need_adjust {
-            return;
-        }
-
-        let visual_item_count = new_props.items.len().min(MAX_ITEM_COUNT);
+    fn adjust_window_size(&self) {
+        let visual_item_count = self.items.len().min(Self::MAX_ITEM_COUNT);
 
         let width = 720;
 
@@ -249,32 +269,4 @@ impl BaseCompletionList {
             .get_element_by_id(&Self::completion_item_id(self.focused_item_index))
             .and_then(|e| e.dyn_into::<HtmlElement>().ok())
     }
-}
-
-#[derive(Properties, PartialEq, Clone)]
-pub struct Props {
-    pub id: String,
-    pub input: String,
-}
-
-#[function_component]
-pub fn CompletionList(props: &Props) -> HtmlResult {
-    let items = use_future_with_deps(
-        |props| async move {
-            let items: Vec<String> = tauri::invoke(
-                "plugin:completion|complete_read",
-                &CompletionArgs {
-                    completed: props.input.to_string(),
-                },
-            )
-            .await
-            .unwrap();
-            items
-        },
-        props.clone(),
-    )?;
-
-    Ok(html! {
-        <BaseCompletionList id={props.id.clone()} items={(*items).clone()} />
-    })
 }
