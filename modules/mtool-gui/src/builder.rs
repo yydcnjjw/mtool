@@ -19,8 +19,7 @@ impl Builder {
     where
         F: FnOnce(GuiBuilder) -> Result<GuiBuilder, anyhow::Error>,
     {
-        let builder = self.take();
-        self.replace(f(builder)?);
+        self.replace(f(self.take())?);
         Ok(())
     }
 

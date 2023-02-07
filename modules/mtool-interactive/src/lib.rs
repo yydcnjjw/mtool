@@ -14,7 +14,6 @@ mod utils;
 use async_trait::async_trait;
 pub use complete::*;
 pub use completion::Completion;
-pub use gui::GuiStage;
 pub use output::OutputDevice;
 pub use tauri::{AppHandle, GlobalShortcutManager, async_runtime};
 

@@ -1,9 +1,7 @@
 {
   "build": {
-    "beforeBuildCommand": "trunk build mtool-interactive/webapp/index.html --release",
-    "beforeDevCommand": "trunk serve --port 8188 mtool-interactive/webapp/index.html",
     "devPath": "http://localhost:8188",
-    "distDir": "webapp/dist/",
+    "distDir": "webapp/",
     "withGlobalTauri": true
   },
   "package": {

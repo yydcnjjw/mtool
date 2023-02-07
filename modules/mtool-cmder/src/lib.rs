@@ -19,7 +19,7 @@ use mtool_core::{
     AppStage, Cmdline, CmdlineStage,
 };
 #[allow(unused)]
-use mtool_interactive::GuiStage;
+use mtool_gui::GuiStage;
 
 #[derive(Default)]
 pub struct Module {}

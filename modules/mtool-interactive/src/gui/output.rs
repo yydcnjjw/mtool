@@ -89,7 +89,7 @@ pub fn init<R>() -> TauriPlugin<R>
 where
     R: Runtime,
 {
-    Builder::new("output")
+    Builder::new("interactive::output")
         .invoke_handler(tauri::generate_handler![current_content])
         .build()
 }

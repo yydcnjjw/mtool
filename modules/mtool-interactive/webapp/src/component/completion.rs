@@ -130,7 +130,7 @@ impl Component for Completion {
 
                 spawn_local(async move {
                     let _: () = tauri::invoke(
-                        "plugin:completion|complete_exit",
+                        "plugin:interactive::completion|complete_exit",
                         &CompletionArgs { completed },
                     )
                     .await
@@ -199,7 +199,7 @@ impl Completion {
     fn fetch_completion_meta(ctx: &Context<Self>) {
         ctx.link().send_future(async move {
             Msg::CompletionMeta(
-                tauri::invoke("plugin:completion|completion_meta", &())
+                tauri::invoke("plugin:interactive::completion|completion_meta", &())
                     .await
                     .unwrap(),
             )
