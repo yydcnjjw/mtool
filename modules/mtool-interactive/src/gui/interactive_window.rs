@@ -1,8 +1,12 @@
 use std::ops::Deref;
 
 use anyhow::Context;
-use mapp::provider::Res;
-use tauri::{AppHandle, PhysicalPosition, Window, WindowBuilder, WindowUrl};
+use mapp::provider::{Injector, Res};
+use tauri::{
+    async_runtime::spawn,
+    plugin::{Builder, TauriPlugin},
+    AppHandle, PhysicalPosition, Window, WindowBuilder, WindowUrl, Wry,
+};
 
 pub struct InteractiveWindow {
     inner: tauri::Window,
@@ -22,16 +26,20 @@ impl InteractiveWindow {
     }
 
     pub fn new_inner(app: AppHandle) -> Result<Res<Self>, anyhow::Error> {
-        let window = WindowBuilder::new(&app, "interactive", WindowUrl::App("index.html".into()))
-            .title("mtool interactive")
-            .transparent(true)
-            .decorations(false)
-            .resizable(true)
-            .skip_taskbar(true)
-            .always_on_top(true)
-            .visible(false)
-            .build()
-            .context("create interactive window")?;
+        let window = WindowBuilder::new(
+            &app,
+            "interactive",
+            WindowUrl::App("interactive/index.html".into()),
+        )
+        .title("mtool interactive")
+        .transparent(true)
+        .decorations(false)
+        .resizable(true)
+        .skip_taskbar(true)
+        .always_on_top(true)
+        .visible(false)
+        .build()
+        .context("create interactive window")?;
 
         Self::adjust_position(&window)?;
 
@@ -51,4 +59,17 @@ impl InteractiveWindow {
 pub async fn hide_window(window: Res<InteractiveWindow>) -> Result<(), anyhow::Error> {
     window.hide()?;
     Ok(())
+}
+
+pub fn init(injector: Injector) -> TauriPlugin<Wry> {
+    Builder::new("interactive::window")
+        .setup(move |app| {
+            let app = app.clone();
+            spawn(async move {
+                injector.insert(InteractiveWindow::new_inner(app).unwrap());
+            });
+
+            Ok(())
+        })
+        .build()
 }

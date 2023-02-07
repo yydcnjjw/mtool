@@ -12,6 +12,8 @@ mtool-core = { path = "../mtool-core" }
 
 mtool-system = { path = "../mtool-system" }
 
+mtool-gui = { path = "../mtool-gui" }
+
 mtool-interactive = { path = "../mtool-interactive" }
 
 # async

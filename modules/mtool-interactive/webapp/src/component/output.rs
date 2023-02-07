@@ -87,7 +87,7 @@ impl Output {
     fn refresh(ctx: &Context<Self>) {
         ctx.link().send_future(async move {
             Msg::Content(
-                tauri::invoke("plugin:output|current_content", &())
+                tauri::invoke("plugin:interactive::output|current_content", &())
                     .await
                     .unwrap(),
             )

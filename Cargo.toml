@@ -14,5 +14,6 @@ members = [
   "modules/mtool-toast",
   "modules/mtool-translate",
   "modules/mtool-interactive",
+  "modules/mtool-gui",
   "mtool",
 ]

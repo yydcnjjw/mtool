@@ -12,6 +12,8 @@ mtool-core = { path = "../modules/mtool-core" }
 
 mtool-system = { path = "../modules/mtool-system" }
 
+mtool-gui = { path = "../modules/mtool-gui" }
+
 mtool-cmder = { path = "../modules/mtool-cmder" }
 
 mtool-toast = { path = "../modules/mtool-toast" }

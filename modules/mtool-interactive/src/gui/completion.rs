@@ -106,6 +106,7 @@ async fn complete_exit(
     completed: String,
     c: State<'_, Arc<Completion>>,
 ) -> Result<(), serde_error::Error> {
+    log::debug!("complete_exit");
     let mut ctx = c.ctx.lock().await;
     let ctx = ctx.take().ok_or(serde_error::Error::new(&*anyhow::anyhow!(
         "Completion context is not exist"
@@ -118,7 +119,7 @@ pub fn init<R>() -> TauriPlugin<R>
 where
     R: Runtime,
 {
-    Builder::new("completion")
+    Builder::new("interactive::completion")
         .invoke_handler(tauri::generate_handler![
             complete_read,
             complete_exit,

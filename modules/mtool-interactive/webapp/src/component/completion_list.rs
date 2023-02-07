@@ -112,7 +112,7 @@ impl Component for CompletionList {
                 let completed = self.items[self.focused_item_index].to_owned();
                 spawn_local(async move {
                     let _: () = tauri::invoke(
-                        "plugin:completion|complete_exit",
+                        "plugin:interactive::completion|complete_exit",
                         &CompletionArgs { completed },
                     )
                     .await
@@ -192,7 +192,7 @@ impl CompletionList {
         let input = ctx.props().input.to_string();
         ctx.link().send_future(async move {
             let items: Vec<String> = tauri::invoke(
-                "plugin:completion|complete_read",
+                "plugin:interactive::completion|complete_read",
                 &CompletionArgs { completed: input },
             )
             .await

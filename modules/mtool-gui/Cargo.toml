@@ -1,5 +1,5 @@
 [package]
-name = "mtool-interactive"
+name = "mtool-gui"
 version = "0.1.0"
 edition = "2021"
 
@@ -9,15 +9,9 @@ edition = "2021"
 tauri-build = { version = "1", features = [] }
 
 [dependencies]
-mtool-interactive-model = { path = "./model" }
-
 mapp = { path = "../../crates/mapp" }
 
 mtool-core = { path = "../mtool-core" }
-
-mtool-system = { path = "../mtool-system" }
-
-mtool-gui = { path = "../mtool-gui" }
 
 tauri = { version = "1", features = ["api-all"] }
 
@@ -25,16 +19,10 @@ log = "0.4"
 
 tokio = { version = "1", features = ["full"] }
 async-trait = "0.1"
+futures = "0.3"
 
 anyhow = "1.0"
 serde-error = "0.1"
-
-clap = { version = "4", features = ["derive"] }
-
-futures = "0.3"
-
-itertools = "0.10"
-rand = "0.8"
 
 [features]
 # default = [ "custom-protocol" ]
