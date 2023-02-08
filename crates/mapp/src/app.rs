@@ -1,5 +1,7 @@
 use std::sync::Arc;
 
+use ringbuf::HeapRb;
+
 use crate::{
     module::{Module, ModuleGroup},
     provider::Injector,
@@ -59,6 +61,19 @@ impl AppBuilder {
         }));
 
         app_runner
+    }
+
+    fn tracing_subscriber_init() {
+        use tracing_subscriber::prelude::*;
+
+        let mut layers = Vec::new();
+
+        #[cfg(feature = "tracing")]
+        layers.push(console_subscriber::spawn().boxed());
+
+        layers.push(tracing_subscriber::fmt::layer().with_writer(HeapRb::new(1024 * 1024 * 4)).boxed());
+
+        tracing_subscriber::registry().with(layers).init();
     }
 }
 
