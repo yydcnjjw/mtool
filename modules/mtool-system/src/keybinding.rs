@@ -4,7 +4,6 @@ use std::{
     sync::{Arc, RwLock},
 };
 
-use anyhow::Context;
 use async_trait::async_trait;
 use mapp::{
     inject::{inject, Inject, Provide},
@@ -17,6 +16,7 @@ use mtool_core::{
     config::{not_startup_mode, StartupMode},
     AppStage,
 };
+
 use tokio::sync::broadcast::Receiver;
 
 use super::event;
@@ -125,8 +125,14 @@ impl Keybinging {
             });
         }
     }
+}
 
-    pub fn define_global<Args, T>(&self, kbd: &str, action: T) -> Result<(), anyhow::Error>
+#[cfg(not(windows))]
+use anyhow::Context;
+
+#[cfg(not(windows))]
+impl Keybinging {
+    pub async fn define_global<Args, T>(&self, kbd: &str, action: T) -> Result<(), anyhow::Error>
     where
         T: Inject<Args> + Send + Sync + 'static,
         T::Output: Future<Output = Result<(), anyhow::Error>> + Send,
@@ -157,5 +163,38 @@ impl Keybinging {
             .unwrap()
             .remove(kbd)
             .context(format!("Failed to remove key binding {}", kbd))
+    }
+}
+
+#[cfg(windows)]
+impl Keybinging {
+    pub async fn define_global<Args, T>(&self, kbd: &str, action: T) -> Result<(), anyhow::Error>
+    where
+        T: Inject<Args> + Send + Sync + 'static,
+        T::Output: Future<Output = Result<(), anyhow::Error>> + Send,
+        Args: Provide<Injector> + Send + Sync + 'static,
+    {
+        use tauri::{async_runtime::spawn, AppHandle, GlobalShortcutManager};
+
+        let app = self.injector.get::<Res<AppHandle>>().await?;
+        let injector = self.injector.clone();
+        let action = Arc::new(action);
+        app.global_shortcut_manager().register(kbd, move || {
+            let injector = injector.clone();
+            let action = action.clone();
+            spawn(async move {
+                let result = match inject(&injector, action.as_ref()).await {
+                    Ok(v) => v,
+                    Err(e) => {
+                        return log::warn!("Failed to inject: {}", e);
+                    }
+                };
+
+                if let Err(e) = result.await {
+                    log::warn!("Failed to do action: {}", e);
+                }
+            });
+        })?;
+        Ok(())
     }
 }

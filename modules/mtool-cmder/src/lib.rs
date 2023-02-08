@@ -20,6 +20,7 @@ use mtool_core::{
 };
 #[allow(unused)]
 use mtool_gui::GuiStage;
+use mtool_system::keybinding::Keybinging;
 
 #[derive(Default)]
 pub struct Module {}
@@ -61,42 +62,15 @@ async fn register_command(cmder: Res<Cmder>) -> Result<(), anyhow::Error> {
     Ok(())
 }
 
-#[cfg(not(windows))]
-use mtool_system::keybinding::Keybinging;
-
-#[cfg(not(windows))]
 async fn register_keybinding(keybinding: Res<Keybinging>) -> Result<(), anyhow::Error> {
-    keybinding.define_global("M-A-x", exec_command_interactive)?;
-    Ok(())
-}
-
-#[cfg(windows)]
-use mapp::provider::Injector;
-#[cfg(windows)]
-use mtool_interactive::AppHandle;
-
-#[cfg(windows)]
-async fn register_keybinding(app: Res<AppHandle>, injector: Injector) -> Result<(), anyhow::Error> {
-    use mapp::inject::inject;
-    use mtool_interactive::{async_runtime::spawn, GlobalShortcutManager};
-
-    app.global_shortcut_manager()
-        .register("Super+Alt+X", move || {
-            let injector = injector.clone();
-            spawn(async move {
-                let result = match inject(&injector, &exec_command_interactive).await {
-                    Ok(v) => v,
-                    Err(e) => {
-                        log::debug!("inject: {}", e);
-                        return;
-                    }
-                };
-
-                if let Err(e) = result.await {
-                    log::warn!("exec command interactive: {}", e);
-                }
-            });
-        })?;
+    keybinding.define_global(
+        if cfg!(windows) {
+            "Super+Alt+X"
+        } else {
+            "M-A-x"
+        },
+        exec_command_interactive,
+    ).await?;
 
     Ok(())
 }

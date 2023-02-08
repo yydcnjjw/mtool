@@ -5,6 +5,7 @@ mod output;
 pub use completion::Completion;
 pub use interactive_window::*;
 use mtool_gui::{Builder, GuiStage};
+use mtool_system::keybinding::Keybinging;
 pub use output::OutputDevice;
 
 use async_trait::async_trait;
@@ -42,40 +43,15 @@ async fn setup(builder: Res<Builder>, injector: Injector) -> Result<(), anyhow::
     Ok(())
 }
 
-#[cfg(not(windows))]
-use mtool_system::keybinding::Keybinging;
-
-#[cfg(not(windows))]
 async fn register_keybinding(keybinding: Res<Keybinging>) -> Result<(), anyhow::Error> {
-    keybinding.define_global("M-A-q", interactive_window::hide_window)?;
-    Ok(())
-}
+    keybinding.define_global(
+        if cfg!(windows) {
+            "Super+Alt+Q"
+        } else {
+            "M-A-q"
+        },
+        interactive_window::hide_window,
+    ).await?;
 
-#[cfg(windows)]
-use tauri::AppHandle;
-
-
-#[cfg(windows)]
-async fn register_keybinding(app: Res<AppHandle>, injector: Injector) -> Result<(), anyhow::Error> {
-    use mapp::inject::inject;
-    use tauri::{async_runtime::spawn, GlobalShortcutManager};
-
-    app.global_shortcut_manager()
-        .register("Super+Alt+Q", move || {
-            let injector = injector.clone();
-            spawn(async move {
-                let result = match inject(&injector, &interactive_window::hide_window).await {
-                    Ok(v) => v,
-                    Err(e) => {
-                        log::debug!("inject: {}", e);
-                        return;
-                    }
-                };
-
-                if let Err(e) = result.await {
-                    log::warn!("interactive window: {}", e);
-                }
-            });
-        })?;
     Ok(())
 }

@@ -28,3 +28,6 @@ log = "0.4"
 clap = { version = "4", features = ["derive", "cargo"] }
 
 serde = { version = "1.0", features = ["derive"] }
+
+[target.'cfg(target_os = "windows")'.dependencies]
+tauri = "1"
