@@ -25,4 +25,5 @@ mtool-dict = { path = "../modules/mtool-dict" }
 mtool-interactive = { path = "../modules/mtool-interactive" }
 
 [features]
+tracing = ["mapp/tracing"]
 

@@ -140,20 +140,22 @@ impl Component for CompletionList {
         };
 
         html! {
-            <div class={classes!("completion-list")}>
-            {
-                for self.items.iter().enumerate().map(|(i, item)|{
-                    html! {
-                      <div id={ Self::completion_item_id(i) }
-                        class={ classes!("completion-item", focus_class(i)) }
-                        onclick={ ctx.link().callback(move |_| Msg::FocusChanged(i)) }
-                        >
-                        { item }
-                      </div>
-                    }
-                })
+            if !self.items.is_empty() {
+                <div class={classes!("completion-list")}>
+                {
+                    for self.items.iter().enumerate().map(|(i, item)|{
+                        html! {
+                            <div id={ Self::completion_item_id(i) }
+                             class={ classes!("completion-item", focus_class(i)) }
+                             onclick={ ctx.link().callback(move |_| Msg::FocusChanged(i)) }
+                             >
+                            { item }
+                            </div>
+                        }
+                    })
+                }
+                </div>
             }
-            </div>
         }
     }
 

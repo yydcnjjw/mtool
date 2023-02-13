@@ -2,6 +2,7 @@ use std::any::type_name;
 
 use anyhow::Context;
 use async_trait::async_trait;
+use tracing::Instrument;
 
 use crate::app::AppContext;
 
@@ -41,6 +42,7 @@ impl Module for ModuleGroup {
             let name = module.name();
             module
                 .init(ctx)
+                .instrument(tracing::info_span!("{} module init", name))
                 .await
                 .context(format!("Failed to init {} module", name))?;
         }

@@ -1,5 +1,5 @@
 fn main() {
-    mtool_core::logger::early_init();
+    // mtool_core::logger::early_init();
 
     mapp::AppBuilder::new()
         .add_module_group(mtool_core::module())

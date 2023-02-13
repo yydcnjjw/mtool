@@ -36,6 +36,9 @@ impl AppBuilder {
         let mut app_runner = AppRunner::new();
 
         app_runner.runner = Some(Box::new(move || {
+            #[cfg(feature = "tracing")]
+            console_subscriber::init();
+
             let mut ctx = AppContext::new();
             let builder = builder.clone();
 
@@ -137,24 +140,20 @@ mod tests {
     #[async_trait]
     impl Module for TestModule {
         async fn init(&self, app: &mut AppContext) -> Result<(), anyhow::Error> {
-            app.injector().insert(Res::new(10i32)).await;
-            app.injector().insert(Res::new(String::from("test"))).await;
+            app.injector().insert(Res::new(10i32));
+            app.injector().insert(Res::new(String::from("test")));
 
             app.schedule()
                 .add_stage(TestStage::PreTest)
-                .await
                 .add_stage(TestStage::Test)
-                .await
                 .add_stage(TestStage::PostTest)
-                .await
                 .add_task(
                     TestStage::Test,
                     |v1: Res<i32>, v2: Res<String>| async move {
                         println!("test module {}, {}", *v1, *v2);
                         Ok(())
                     },
-                )
-                .await;
+                );
 
             println!("test module init");
             Ok(())

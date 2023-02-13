@@ -16,7 +16,7 @@ pub fn module() -> ModuleGroup {
         .add_module(CoreModule::default())
         .add_module(cmdline::Module::default())
         .add_module(config::Module::default())
-        .add_module(logger::Module::default())
+        // .add_module(logger::Module::default())
         .add_module(test::Module::default());
 
     group

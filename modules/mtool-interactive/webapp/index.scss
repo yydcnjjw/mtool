@@ -50,10 +50,11 @@ body {
 
         max-height: 242px;
         
-        border: 1px solid gray;
         border-radius: 3px;
+        border: 1px solid gray;
+
         background-color: black;        
-        overflow-y: auto;
+        overflow-y: auto;        
         
         .completion-list {
             display: flex;
