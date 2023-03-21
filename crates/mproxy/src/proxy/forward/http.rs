@@ -11,9 +11,21 @@ use tracing::warn;
 pub struct ForwardHttpConn {
     pub req: Request<body::Incoming>,
     pub resp_tx: oneshot::Sender<Response<BoxBody<Bytes, hyper::Error>>>,
+    pub remove_proxy_header: bool,
 }
 
 impl ForwardHttpConn {
+    pub fn new(
+        req: Request<body::Incoming>,
+        resp_tx: oneshot::Sender<Response<BoxBody<Bytes, hyper::Error>>>,
+    ) -> Self {
+        Self {
+            req,
+            resp_tx,
+            remove_proxy_header: true,
+        }
+    }
+
     pub async fn forward<StreamIO>(mut self, s: StreamIO) -> Result<(), anyhow::Error>
     where
         StreamIO: AsyncRead + AsyncWrite + Unpin + Send + 'static,
@@ -30,7 +42,9 @@ impl ForwardHttpConn {
             }
         });
 
-        Self::remove_proxy_headers(&mut self.req);
+        if self.remove_proxy_header {
+            Self::remove_proxy_headers(&mut self.req);
+        }
 
         let resp = sender.send_request(self.req).await?;
         self.resp_tx.send(resp.map(|b| b.boxed())).unwrap();

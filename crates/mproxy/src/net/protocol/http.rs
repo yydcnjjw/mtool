@@ -93,7 +93,7 @@ impl ServerService {
         self.tx
             .send(ProxyRequest {
                 remote,
-                conn: ProxyConn::ForwardHttp(ForwardHttpConn { req, resp_tx: tx }),
+                conn: ProxyConn::ForwardHttp(ForwardHttpConn::new(req, tx)),
             })
             .unwrap();
 
@@ -157,7 +157,7 @@ impl Service<Request<hyper::body::Incoming>> for ServerService {
 
             if Method::CONNECT == req.method() {
                 ServerService::handle_https_proxy(self_, req).await
-            } else if req.headers().contains_key("Proxy-Connection") {
+            } else if req.headers().contains_key("proxy-connection") {
                 ServerService::handle_http_proxy(self_, req).await
             } else {
                 ServerService::handle_http(req).await
@@ -218,8 +218,6 @@ impl Client {
 
         let res = sender.send_request(req).await?;
 
-        debug!("{:?}", res);
-
         if res.status() != StatusCode::OK {
             bail!(
                 "{}",
@@ -233,8 +231,9 @@ impl Client {
     async fn handle_forward_http(
         &self,
         s: BoxedAsyncIO,
-        forward_conn: ForwardHttpConn,
+        mut forward_conn: ForwardHttpConn,
     ) -> Result<(), anyhow::Error> {
+        forward_conn.remove_proxy_header = false;
         forward_conn.forward(s).await
     }
 
