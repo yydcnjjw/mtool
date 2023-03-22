@@ -45,7 +45,7 @@ impl AppModule for Module {
 }
 
 pub fn module() -> ModuleGroup {
-    let mut group = ModuleGroup::default();
+    let mut group = ModuleGroup::new("gui_group");
     group.add_module(Module::default());
     group
 }

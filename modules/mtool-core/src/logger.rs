@@ -1,83 +1,94 @@
-use std::{env, path::PathBuf, str::FromStr};
+use std::{env, path::PathBuf, str::FromStr, sync::Arc};
 
 use async_trait::async_trait;
-use log4rs::{
-    append::console::ConsoleAppender,
-    config::{Appender, Deserializers, Root},
-    Handle,
+use serde::Deserialize;
+use tracing::info;
+use tracing_appender::non_blocking::WorkerGuard;
+use tracing_subscriber::{
+    fmt::{self, format::FmtSpan},
+    EnvFilter,
 };
-use mapp::{define_label, provider::Res, AppContext, AppModule, Label};
+
+use mapp::{
+    define_label,
+    provider::{Injector, Res},
+    AppContext, AppModule, Label, Tracing,
+};
 
 use crate::CmdlineStage;
 
-use super::{Cmdline, ConfigStore};
+use super::ConfigStore;
 
 #[derive(Default)]
 pub struct Module {}
 
 define_label!(LoggerStage, Init);
 
+#[derive(Debug, Clone)]
+struct Logger {
+    _guard: Arc<WorkerGuard>,
+}
+
+#[derive(Debug, Deserialize, Clone)]
+struct Config {
+    path: Option<PathBuf>,
+    name: Option<String>,
+    filter: String,
+}
+impl Config {
+    async fn get_path(&self, cs: &Res<ConfigStore>) -> PathBuf {
+        self.path
+            .as_ref()
+            .unwrap_or(&cs.root_path().await.join("log"))
+            .clone()
+    }
+
+    fn get_name(&self) -> String {
+        self.name
+            .as_ref()
+            .unwrap_or(&"mtool.log".to_string())
+            .clone()
+    }
+}
+
 #[async_trait]
 impl AppModule for Module {
     async fn init(&self, app: &mut AppContext) -> Result<(), anyhow::Error> {
         app.schedule()
             .insert_stage(CmdlineStage::Init, LoggerStage::Init)
-            .add_once_task(CmdlineStage::Setup, setup_cmdline)
             .add_once_task(LoggerStage::Init, init);
         Ok(())
     }
 }
 
-static mut LOGGER_HANDLE: Option<&'static Handle> = None;
+async fn init(
+    injector: Injector,
+    cs: Res<ConfigStore>,
+    tracing: Res<Tracing>,
+) -> Result<(), anyhow::Error> {
+    let cfg = cs.get::<Config>("logger").await?;
 
-pub fn early_init() {
-    let stdout = ConsoleAppender::builder().build();
+    let (writer, guard) = tracing_appender::non_blocking(tracing_appender::rolling::daily(
+        cfg.get_path(&cs).await,
+        cfg.get_name(),
+    ));
 
-    let level = log::LevelFilter::from_str(
-        &env::var("RUST_LOG")
-            .unwrap_or(String::from("INFO"))
-            .to_lowercase(),
-    )
-    .unwrap();
+    tracing.set_filter(EnvFilter::from_str(
+        &env::var("MTOOL_LOG").unwrap_or(cfg.filter),
+    )?)?;
+    tracing.set_layer(
+        fmt::layer()
+            .with_writer(writer)
+            .with_span_events(FmtSpan::ENTER | FmtSpan::EXIT)
+            .with_thread_ids(true)
+            .with_thread_names(true),
+    )?;
 
-    let config = log4rs::Config::builder()
-        .appender(Appender::builder().build("stdout", Box::new(stdout)))
-        .build(Root::builder().appender("stdout").build(level))
-        .unwrap();
+    injector.insert(Logger {
+        _guard: Arc::new(guard),
+    });
 
-    let handle = log4rs::init_config(config).unwrap();
-    unsafe {
-        LOGGER_HANDLE = Some(Box::leak(Box::new(handle)));
-    }
-}
-
-async fn setup_cmdline(_cmdline: Res<Cmdline>) -> Result<(), anyhow::Error> {
-    // cmdline
-    //     .setup(|cmdline| Ok(cmdline.arg(arg!(-d --debug ... "Turn debugging information on"))))
-    //     .await?;
-
-    Ok(())
-}
-
-async fn logger_config_file(config: &Res<ConfigStore>) -> PathBuf {
-    config.root_path().await.join("log4rs.yaml")
-}
-
-async fn init(config: Res<ConfigStore>) -> Result<(), anyhow::Error> {
-    let log_cfg_file = logger_config_file(&config).await;
-
-    let cfg = log4rs::config::load_config_file(&log_cfg_file, Deserializers::default())?;
-
-    let handle = unsafe { LOGGER_HANDLE.unwrap() };
-    handle.set_config(cfg);
-
-    // match args.get_count("debug") {
-    //     1 => log::set_max_level(log::LevelFilter::Debug),
-    //     2 => log::set_max_level(log::LevelFilter::Trace),
-    //     0 | _ => {}
-    // }
-
-    log::debug!("init log4rs from {}", log_cfg_file.display());
+    info!("logger is initialized");
 
     Ok(())
 }

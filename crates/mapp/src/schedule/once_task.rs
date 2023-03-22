@@ -4,6 +4,7 @@ use anyhow::Context;
 
 use async_trait::async_trait;
 use minject::{self, inject_once, InjectOnce, Provide};
+use tracing::trace;
 
 use crate::{App, CondLoad, FnCondLoad, Label};
 
@@ -73,7 +74,7 @@ impl OnceTaskDescriptor {
             None => true,
         };
         if need_load {
-            log::debug!("run once task: {}", self.label);
+            trace!("run once task: {}", self.label);
             self.task
                 .run_once(app)
                 .await

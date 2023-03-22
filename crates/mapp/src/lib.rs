@@ -9,6 +9,7 @@ mod label;
 mod module;
 pub mod provider;
 mod schedule;
+mod tracing;
 
 pub use minject as inject;
 
@@ -16,6 +17,7 @@ pub use app::*;
 pub use label::*;
 pub use module::{Module as AppModule, ModuleGroup};
 // pub use provider::*;
+pub use crate::tracing::*;
 pub use schedule::*;
 
 use thiserror::Error;

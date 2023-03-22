@@ -9,6 +9,7 @@ use async_trait::async_trait;
 use dashmap::DashMap;
 use minject::Provide;
 use tokio::sync::Mutex;
+use tracing::trace;
 
 use crate::App;
 
@@ -151,19 +152,19 @@ impl InjectorInner {
         let key = &TypeId::of::<T>();
 
         if let Some(ctor) = self.constructor.get(key) {
-            log::debug!("try construct {}", type_name::<T>());
+            trace!("try construct {}", type_name::<T>());
 
             let v = ctor.construct(self).await;
 
-            log::debug!("construct {}", type_name::<T>());
+            trace!("construct {}", type_name::<T>());
 
             v
         } else if let Some((_, ctor)) = self.constructor_once.remove(key) {
-            log::debug!("try construct once {}", type_name::<T>());
+            trace!("try construct once {}", type_name::<T>());
 
             let v = ctor.construct_once(self).await;
 
-            log::debug!("construct once {}", type_name::<T>());
+            trace!("construct once {}", type_name::<T>());
 
             v
         } else {

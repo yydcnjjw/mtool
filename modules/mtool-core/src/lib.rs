@@ -10,13 +10,13 @@ pub use cmdline::*;
 pub use config::ConfigStore;
 
 pub fn module() -> ModuleGroup {
-    let mut group = ModuleGroup::default();
+    let mut group = ModuleGroup::new("core_group");
 
     group
         .add_module(CoreModule::default())
         .add_module(cmdline::Module::default())
         .add_module(config::Module::default())
-        // .add_module(logger::Module::default())
+        .add_module(logger::Module::default())
         .add_module(test::Module::default());
 
     group

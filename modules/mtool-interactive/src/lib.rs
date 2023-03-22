@@ -30,7 +30,7 @@ impl AppModule for Module {
 }
 
 pub fn module() -> ModuleGroup {
-    let mut group = ModuleGroup::default();
+    let mut group = ModuleGroup::new("interactive_group");
     group
         .add_module(Module::default())
         .add_module(gui::Module::default())

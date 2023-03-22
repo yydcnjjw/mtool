@@ -1,21 +1,27 @@
-use std::sync::Arc;
-
-use ringbuf::HeapRb;
-
 use crate::{
     module::{Module, ModuleGroup},
-    provider::Injector,
+    provider::{Injector, Res},
+    tracing::Tracing,
     Schedule,
 };
 
 pub struct AppBuilder {
     modules: ModuleGroup,
+    tracing: Option<Tracing>,
 }
 
 impl AppBuilder {
-    pub fn new() -> Self {
+    pub fn new() -> Result<Self, anyhow::Error> {
+        Ok(Self {
+            modules: ModuleGroup::new("app_group"),
+            tracing: Some(Tracing::new()?),
+        })
+    }
+
+    fn empty() -> Self {
         Self {
             modules: Default::default(),
+            tracing: None,
         }
     }
 
@@ -33,23 +39,22 @@ impl AppBuilder {
     }
 
     pub fn build(&mut self) -> AppRunner {
-        let builder = Arc::new(std::mem::replace(self, AppBuilder::new()));
+        let builder = std::mem::replace(self, AppBuilder::empty());
 
         let mut app_runner = AppRunner::new();
 
         app_runner.runner = Some(Box::new(move || {
-            #[cfg(feature = "tracing")]
-            console_subscriber::init();
-
             let mut ctx = AppContext::new();
-            let builder = builder.clone();
 
+            ctx.injector().insert(Res::new(builder.tracing.unwrap()));
+
+            let modules = builder.modules;
             tokio::runtime::Builder::new_multi_thread()
                 .enable_all()
                 .build()
                 .unwrap()
                 .block_on(async move {
-                    builder.modules.init(&mut ctx).await.unwrap();
+                    modules.init(&mut ctx).await.unwrap();
 
                     let sche = ctx.schedule;
 
@@ -61,19 +66,6 @@ impl AppBuilder {
         }));
 
         app_runner
-    }
-
-    fn tracing_subscriber_init() {
-        use tracing_subscriber::prelude::*;
-
-        let mut layers = Vec::new();
-
-        #[cfg(feature = "tracing")]
-        layers.push(console_subscriber::spawn().boxed());
-
-        layers.push(tracing_subscriber::fmt::layer().with_writer(HeapRb::new(1024 * 1024 * 4)).boxed());
-
-        tracing_subscriber::registry().with(layers).init();
     }
 }
 
@@ -100,7 +92,7 @@ impl AppContext {
 }
 
 pub struct AppRunner {
-    runner: Option<Box<dyn Fn()>>,
+    runner: Option<Box<dyn FnOnce()>>,
 }
 
 impl AppRunner {

@@ -1,8 +1,9 @@
 use dashmap::DashMap;
 use std::{
-    any::{type_name, Any, TypeId},
+    any::{Any, TypeId, type_name},
     ops::Deref,
 };
+use tracing::trace;
 
 type BoxedAny = Box<dyn Any + Send + Sync>;
 type AnyMap = DashMap<TypeId, BoxedAny>;
@@ -30,7 +31,7 @@ impl Container {
     where
         T: Send + Sync + 'static,
     {
-        log::debug!("insert {}", type_name::<T>());
+        trace!("insert {}", type_name::<T>());
 
         self.inner
             .insert(TypeId::of::<T>(), v)
@@ -46,7 +47,7 @@ impl Container {
             .get(&TypeId::of::<T>())
             .and_then(|v| v.downcast_ref::<T>().map(|v| v.clone()));
 
-        log::debug!("get {}, {}", type_name::<T>(), v.is_some());
+        trace!("get {}, {}", type_name::<T>(), v.is_some());
 
         v
     }
