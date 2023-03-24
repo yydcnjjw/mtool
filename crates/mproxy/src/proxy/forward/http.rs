@@ -47,8 +47,9 @@ impl ForwardHttpConn {
         }
 
         let resp = sender.send_request(self.req).await?;
-        self.resp_tx.send(resp.map(|b| b.boxed())).unwrap();
-        Ok(())
+        self.resp_tx
+            .send(resp.map(|b| b.boxed()))
+            .map_err(|e| anyhow::anyhow!("{:?} is dropped", e))
     }
 
     fn remove_proxy_headers<Body>(req: &mut Request<Body>) {

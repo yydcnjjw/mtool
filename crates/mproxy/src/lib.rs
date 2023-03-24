@@ -13,7 +13,7 @@ use anyhow::Context;
 use futures::{future::try_join_all, FutureExt};
 use std::sync::Arc;
 use tokio::sync::{mpsc, Mutex};
-use tracing::{debug_span, error, warn, Instrument, info};
+use tracing::{debug_span, error, info, warn, Instrument};
 
 pub use config::AppConfig;
 use proxy::{Egress, Ingress, ProxyRequest};
@@ -75,7 +75,11 @@ impl App {
                 tokio::spawn(async move {
                     loop {
                         match ingress.proxy_accept().await {
-                            Ok(req) => tx.send((ingress.id.clone(), req)).unwrap(),
+                            Ok(req) => {
+                                if let Err(e) = tx.send((ingress.id.clone(), req)) {
+                                    warn!("{:?}", e);
+                                }
+                            }
                             Err(e) => {
                                 error!("{:?}", e);
                                 break;
@@ -101,8 +105,12 @@ impl App {
                     info!("request {}, {} => {}", req.remote, source, dest);
 
                     tokio::spawn(
-                        async move { egress.handle_proxy_request(req).await }
-                            .instrument(debug_span!("handle_proxy_request")),
+                        async move {
+                            if let Err(e) = egress.handle_proxy_request(req).await {
+                                warn!("handle proxy request failed: {:?}", e);
+                            }
+                        }
+                        .instrument(debug_span!("handle_proxy_request")),
                     );
                 }
                 Err(e) => warn!("routing failed: {}", e),

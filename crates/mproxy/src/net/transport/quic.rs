@@ -1,11 +1,11 @@
 use anyhow::Context;
 use quinn::{Connection, RecvStream, SendStream};
-use std::{io, pin::Pin, sync::Arc, task, time::Duration};
+use std::{io, net::SocketAddr, pin::Pin, sync::Arc, task, time::Duration};
 use tokio::{
     io::{AsyncRead, AsyncWrite},
-    sync::{mpsc, Mutex},
+    sync::{mpsc, Mutex, RwLock},
 };
-use tracing::{debug_span, error, info, instrument, Instrument};
+use tracing::{debug_span, error, info, instrument, warn, Instrument};
 
 use crate::config::transport::quic::{AcceptorConfig, ConnectorConfig};
 
@@ -55,7 +55,11 @@ impl Acceptor {
 
                     loop {
                         match BiStream::accept(&connection).await {
-                            Ok(s) => tx.send(s).unwrap(),
+                            Ok(s) => {
+                                if let Err(e) = tx.send(s) {
+                                    warn!("{:?}", e);
+                                }
+                            }
                             Err(e) => {
                                 error!("{:?}", e);
                                 return;
@@ -71,8 +75,11 @@ impl Acceptor {
 
 #[derive(Debug)]
 pub struct Connector {
-    _endpoint: quinn::Endpoint,
-    connection: quinn::Connection,
+    endpoint: quinn::Endpoint,
+    connection: RwLock<quinn::Connection>,
+
+    remote: SocketAddr,
+    server_name: String,
 }
 
 impl Connector {
@@ -82,27 +89,52 @@ impl Connector {
         let mut quic_config = quinn::ClientConfig::new(Arc::new(tls_config));
 
         let mut transport_config = quinn::TransportConfig::default();
-        transport_config.keep_alive_interval(Some(Duration::from_secs(5)));
+        transport_config
+            .keep_alive_interval(config.keep_alive_interval.map(|v| Duration::from_secs(v)));
+
         quic_config.transport_config(Arc::new(transport_config));
 
         let mut endpoint = quinn::Endpoint::client(config.local.clone())?;
         endpoint.set_default_client_config(quic_config);
 
+        let remote = config.endpoint.clone();
         let connection = endpoint
-            .connect(config.endpoint.clone(), &config.server_name)?
+            .connect(remote.clone(), &config.server_name)?
             .await?;
         Ok(Self {
-            _endpoint: endpoint,
-            connection,
+            endpoint,
+            connection: RwLock::new(connection),
+
+            remote,
+            server_name: config.server_name.to_string(),
         })
     }
 }
 
 impl Connector {
+    pub async fn reconnect_quic(&self) -> Result<(), anyhow::Error> {
+        let mut conn = self.connection.write().await;
+        *conn = self
+            .endpoint
+            .connect(self.remote.clone(), &self.server_name)?
+            .await?;
+        Ok(())
+    }
+
+    pub async fn open_bistream(&self) -> Result<BiStream, anyhow::Error> {
+        let conn = self.connection.read().await;
+        BiStream::open(&conn).await
+    }
+
     pub async fn connect(&self) -> Result<BiStream, anyhow::Error> {
-        BiStream::open(&self.connection)
-            .await
-            .context("Failed to create bi stream")
+        match self.open_bistream().await {
+            Ok(s) => Ok(s),
+            Err(e) => {
+                warn!("quic is disconnect: {}, reconnect", e);
+                self.reconnect_quic().await?;
+                self.open_bistream().await
+            }
+        }
     }
 }
 

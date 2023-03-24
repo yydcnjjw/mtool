@@ -95,7 +95,7 @@ impl ServerService {
                 remote,
                 conn: ProxyConn::ForwardHttp(ForwardHttpConn::new(req, tx)),
             })
-            .unwrap();
+            .map_err(|e| anyhow::anyhow!("{:?}", e))?;
 
         rx.await.context("Failed to get response")
     }
@@ -104,35 +104,48 @@ impl ServerService {
         self,
         req: Request<body::Incoming>,
     ) -> Result<Response<BoxBody<Bytes, hyper::Error>>, anyhow::Error> {
-        match host_addr(req.uri()) {
-            Ok(remote) => {
-                tokio::task::spawn(
-                    async move {
-                        match hyper::upgrade::on(req).await {
-                            Ok(upgraded) => self
-                                .tx
-                                .send(ProxyRequest {
-                                    remote,
-                                    conn: ProxyConn::ForwardTcp(ForwardTcpConn {
-                                        stream: Box::new(upgraded),
-                                    }),
-                                })
-                                .unwrap(),
-                            Err(e) => error!("upgrade error: {:?}", e),
+        let remote = host_addr(req.uri()).context("socket address is incorrect at CONNECT")?;
+
+        tokio::task::spawn(
+            async move {
+                match hyper::upgrade::on(req).await {
+                    Ok(upgraded) => {
+                        if let Err(e) = self.tx.send(ProxyRequest {
+                            remote,
+                            conn: ProxyConn::ForwardTcp(ForwardTcpConn {
+                                stream: Box::new(upgraded),
+                            }),
+                        }) {
+                            warn!("{:?}", e);
                         }
                     }
-                    .instrument(debug_span!("CONNECT")),
-                );
-
-                Ok(Response::new(empty()))
+                    Err(e) => error!("upgrade error: {:?}", e),
+                }
             }
-            Err(e) => {
-                warn!("CONNECT host is not socket addr {:?}: {}", req.uri(), e);
+            .instrument(debug_span!("CONNECT")),
+        );
 
-                let mut resp = Response::new(full("CONNECT must be to a socket address"));
-                *resp.status_mut() = http::StatusCode::BAD_REQUEST;
-                Ok(resp)
-            }
+        Ok(Response::new(empty()))
+    }
+
+    #[instrument(
+        name = "handle_request",
+        skip_all,
+        fields(http.method = req.method().to_string(),
+               http.uri = req.uri().to_string())
+    )]
+    async fn handle_request(
+        self,
+        req: Request<hyper::body::Incoming>,
+    ) -> Result<Response<BoxBody<Bytes, hyper::Error>>, anyhow::Error> {
+        debug!(monotonic_counter.http_proxy_request = 1);
+
+        if Method::CONNECT == req.method() {
+            self.handle_https_proxy(req).await
+        } else if req.headers().contains_key("proxy-connection") {
+            self.handle_http_proxy(req).await
+        } else {
+            Self::handle_http(req).await
         }
     }
 }
@@ -144,24 +157,14 @@ impl Service<Request<hyper::body::Incoming>> for ServerService {
 
     type Future = Pin<Box<dyn Future<Output = Result<Self::Response, Self::Error>> + Send>>;
 
-    #[instrument(
-        name = "handle_request",
-        skip_all,
-        fields(http.method = req.method().to_string(),
-               http.uri = req.uri().to_string())
-    )]
     fn call(&mut self, req: Request<hyper::body::Incoming>) -> Self::Future {
         let self_ = self.clone();
         Box::pin(async move {
-            debug!(monotonic_counter.http_proxy_request = 1);
-
-            if Method::CONNECT == req.method() {
-                ServerService::handle_https_proxy(self_, req).await
-            } else if req.headers().contains_key("proxy-connection") {
-                ServerService::handle_http_proxy(self_, req).await
-            } else {
-                ServerService::handle_http(req).await
-            }
+            self_.handle_request(req).await.or_else(|e| {
+                let mut resp = Response::new(full(format!("{:?}", e)));
+                *resp.status_mut() = http::StatusCode::BAD_REQUEST;
+                Ok(resp)
+            })
         })
     }
 }

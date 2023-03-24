@@ -39,6 +39,7 @@ pub mod quic {
         pub local: SocketAddr,
         pub server_name: String,
         pub tls: TlsConfig,
+        pub keep_alive_interval: Option<u64>,
     }
 }
 
