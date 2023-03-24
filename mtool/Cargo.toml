@@ -12,7 +12,7 @@ mtool-core = { path = "../modules/mtool-core" }
 
 mtool-system = { path = "../modules/mtool-system" }
 
-mtool-gui = { path = "../modules/mtool-gui" }
+mtool-wgui = { path = "../modules/mtool-wgui" }
 
 mtool-cmder = { path = "../modules/mtool-cmder" }
 
@@ -23,7 +23,3 @@ mtool-translate = { path = "../modules/mtool-translate" }
 mtool-dict = { path = "../modules/mtool-dict" }
 
 mtool-interactive = { path = "../modules/mtool-interactive" }
-
-[features]
-tracing = ["mapp/tracing"]
-

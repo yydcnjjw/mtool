@@ -1,4 +1,4 @@
-use gloo_console::debug;
+use tracing::debug;
 use mtool_interactive_model::CompletionMeta;
 use web_sys::HtmlInputElement;
 use yew::{platform::spawn_local, prelude::*};
@@ -7,7 +7,7 @@ use crate::{
     generate_keymap,
     keybinding::Keybinging,
     tauri,
-    AppContext,
+    app::AppContext,
 };
 
 use super::completion_list::{CompletionArgs, CompletionList};

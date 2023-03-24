@@ -56,7 +56,7 @@ impl Output for OutputDevice {
         self.win.show().context("show output window")?;
 
         self.win
-            .emit("route", format!("/output/{}", rand_string()))?;
+            .emit("route", format!("/interactive/output/{}", rand_string()))?;
 
         let mut ctx = self.ctx.write().await;
         ctx.content = OutputContent::Plain(s.to_string());
@@ -68,7 +68,7 @@ impl Output for OutputDevice {
         self.win.show().context("show output window")?;
 
         self.win
-            .emit("route", format!("/output/{}", rand_string()))?;
+            .emit("route", format!("/interactive/output/{}", rand_string()))?;
 
         let mut ctx = self.ctx.write().await;
         ctx.content = OutputContent::Plain(o.await);

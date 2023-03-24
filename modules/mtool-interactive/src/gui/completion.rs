@@ -60,7 +60,7 @@ impl CompleteRead for Completion {
 
         self.win.show().context("show completion window")?;
 
-        self.win.emit("route", format!("/completion/{}", id))?;
+        self.win.emit("route", format!("/interactive/completion/{}", id))?;
 
         let result = rx.await?;
 

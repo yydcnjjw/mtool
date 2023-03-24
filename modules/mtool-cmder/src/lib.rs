@@ -19,7 +19,7 @@ use mtool_core::{
     AppStage, Cmdline, CmdlineStage,
 };
 #[allow(unused)]
-use mtool_gui::GuiStage;
+use mtool_wgui::GuiStage;
 use mtool_system::keybinding::Keybinging;
 
 #[derive(Default)]

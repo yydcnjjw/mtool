@@ -1,5 +1,5 @@
 use async_trait::async_trait;
-use mapp::{define_label, AppContext, AppModule, Label, ModuleGroup, ScheduleGraph};
+use mapp::{define_label, AppContext, AppModule, ModuleGroup, ScheduleGraph};
 
 mod cmdline;
 pub mod config;

@@ -1,8 +1,12 @@
-use gloo_console::debug;
 use mtool_interactive_model::OutputContent;
-use yew::{prelude::*, platform::spawn_local};
+use tracing::debug;
+use yew::{platform::spawn_local, prelude::*};
 
-use crate::{keybinding::Keybinging, tauri::{self, window}, AppContext};
+use crate::{
+    app::AppContext,
+    keybinding::Keybinging,
+    tauri::{self, window},
+};
 
 pub struct Output {
     #[allow(dead_code)]
@@ -97,7 +101,10 @@ impl Output {
     }
 
     fn adjust_window_size() {
-        spawn_local(window::set_size(window::PhysicalSize { width: 720, height: 480 }));
+        spawn_local(window::set_size(window::PhysicalSize {
+            width: 720,
+            height: 480,
+        }));
     }
 
     fn register_keybinding(&self, ctx: &Context<Self>) {

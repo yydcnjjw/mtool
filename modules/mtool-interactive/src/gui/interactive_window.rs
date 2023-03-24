@@ -29,7 +29,7 @@ impl InteractiveWindow {
         let window = WindowBuilder::new(
             &app,
             "interactive",
-            WindowUrl::App("interactive/index.html".into()),
+            WindowUrl::App("interactive/".into()),
         )
         .title("mtool interactive")
         .transparent(true)

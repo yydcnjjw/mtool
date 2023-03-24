@@ -53,6 +53,7 @@ impl Router {
 }
 
 pub struct Rule {
+    pub id: String,
     matcher: MphMatcher,
     source: Vec<String>,
     dest: String,
@@ -108,6 +109,7 @@ impl Rule {
         matcher.build();
 
         Ok(Self {
+            id: config.id,
             matcher,
             source: config.source,
             dest: config.dest,

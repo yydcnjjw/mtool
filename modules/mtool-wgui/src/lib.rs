@@ -6,7 +6,7 @@ use async_trait::async_trait;
 use mapp::{
     define_label,
     provider::{Injector, Res},
-    AppContext, AppModule, Label, ModuleGroup,
+    AppContext, AppModule, ModuleGroup,
 };
 use mtool_core::{
     config::{is_startup_mode, StartupMode},

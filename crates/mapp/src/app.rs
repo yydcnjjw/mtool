@@ -49,20 +49,23 @@ impl AppBuilder {
             ctx.injector().insert(Res::new(builder.tracing.unwrap()));
 
             let modules = builder.modules;
-            tokio::runtime::Builder::new_multi_thread()
-                .enable_all()
-                .build()
-                .unwrap()
-                .block_on(async move {
-                    modules.init(&mut ctx).await.unwrap();
 
-                    let sche = ctx.schedule;
+            #[cfg(target_arch = "wasm32")]
+            let mut rt = tokio::runtime::Builder::new_current_thread();
 
-                    let mut app = App::new();
-                    app.injector = ctx.injector;
+            #[cfg(not(target_arch = "wasm32"))]
+            let mut rt = tokio::runtime::Builder::new_multi_thread();
 
-                    sche.run(&app).await.unwrap();
-                });
+            rt.enable_all().build().unwrap().block_on(async move {
+                modules.init(&mut ctx).await.unwrap();
+
+                let sche = ctx.schedule;
+
+                let mut app = App::new();
+                app.injector = ctx.injector;
+
+                sche.run(&app).await.unwrap();
+            });
         }));
 
         app_runner

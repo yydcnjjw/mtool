@@ -5,7 +5,7 @@ use clap::{command, Command};
 use mapp::{
     define_label,
     provider::{Injector, Res},
-    AppContext, AppModule, Label,
+    AppContext, AppModule,
 };
 
 use crate::AppStage;

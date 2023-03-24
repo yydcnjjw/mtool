@@ -1,4 +1,4 @@
-use gloo_console::debug;
+use tracing::debug;
 use gloo_utils::document;
 use mkeybinding::KeyMap;
 use serde::{Deserialize, Serialize};
@@ -10,7 +10,7 @@ use crate::{
     generate_keymap,
     keybinding::{Keybinging, SharedAction},
     tauri::{self, window},
-    AppContext,
+    app::AppContext,
 };
 
 #[derive(Serialize, Deserialize)]
@@ -254,7 +254,7 @@ impl CompletionList {
 
     fn scroll_into_focused_item(&self) {
         if let Some(elm) = self.focused_item() {
-            debug!(&elm);
+            debug!("{}", elm.to_string());
             let mut opt = ScrollIntoViewOptions::new();
             opt.block(ScrollLogicalPosition::Nearest);
 

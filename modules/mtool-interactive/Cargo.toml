@@ -14,7 +14,7 @@ mtool-core = { path = "../mtool-core" }
 
 mtool-system = { path = "../mtool-system" }
 
-mtool-gui = { path = "../mtool-gui" }
+mtool-wgui = { path = "../mtool-wgui" }
 
 tauri = { version = "1", features = ["api-all"] }
 

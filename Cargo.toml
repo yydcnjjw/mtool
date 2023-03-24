@@ -1,4 +1,5 @@
 [workspace]
+
 members = [
   "crates/manki-api",
   "crates/mapp",
@@ -8,6 +9,8 @@ members = [
   "crates/mkeybinding",
   "crates/msysev",
   "crates/mproxy",
+  "crates/mtauri-sys",
+
   "modules/mtool-core",
   "modules/mtool-system",
   "modules/mtool-cmder",
@@ -15,6 +18,17 @@ members = [
   "modules/mtool-toast",
   "modules/mtool-translate",
   "modules/mtool-interactive",
-  "modules/mtool-gui",
+  "modules/mtool-wgui",
   "mtool",
 ]
+
+[workspace.dependencies]
+tracing = "0.1"
+
+tokio = "1"
+async-trait = "0.1"
+futures = "0.3"
+
+thiserror = "1.0"
+anyhow = "1.0"
+

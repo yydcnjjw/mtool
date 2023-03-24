@@ -56,11 +56,11 @@ macro_rules! define_label {
             )*
         }
 
-        impl From<$scope> for Label {
+        impl From<$scope> for $crate::Label {
             fn from(v: $scope) -> Self {
                 match v {
                     $(
-                        $scope::$name => Label::new_with_name::<$scope>(stringify!($name)),
+                        $scope::$name => $crate::Label::new_with_name::<$scope>(stringify!($name)),
                     )*
                 }
             }
@@ -73,9 +73,9 @@ macro_rules! define_label {
             $name,
         }
 
-        impl From<$scope> for Label {
+        impl From<$scope> for $crate::Label {
             fn from(_: $scope) -> Self {
-                Label::new_with_name::<$scope>(stringify!($name))
+                Self::new_with_name::<$scope>(stringify!($name))
             }
         }
     };

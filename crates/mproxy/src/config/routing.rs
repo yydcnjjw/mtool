@@ -11,6 +11,7 @@ pub struct RoutingConfig {
 
 #[derive(Debug, Serialize, Deserialize)]
 pub struct RuleConfig {
+    pub id: String,
     pub target: Vec<String>,
     pub source: Vec<String>,
     pub dest: String,

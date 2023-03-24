@@ -12,7 +12,7 @@ use tracing_subscriber::{
 use mapp::{
     define_label,
     provider::{Injector, Res},
-    AppContext, AppModule, Label, Tracing,
+    AppContext, AppModule, Tracing,
 };
 
 use crate::CmdlineStage;

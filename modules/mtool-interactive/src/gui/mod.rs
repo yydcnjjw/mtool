@@ -4,7 +4,7 @@ mod output;
 
 pub use completion::Completion;
 pub use interactive_window::*;
-use mtool_gui::{Builder, GuiStage};
+use mtool_wgui::{Builder, GuiStage};
 use mtool_system::keybinding::Keybinging;
 pub use output::OutputDevice;
 
