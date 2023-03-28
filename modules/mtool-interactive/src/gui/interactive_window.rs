@@ -7,6 +7,7 @@ use tauri::{
     plugin::{Builder, TauriPlugin},
     AppHandle, PhysicalPosition, Window, WindowBuilder, WindowUrl, Wry,
 };
+use tracing::debug;
 
 pub struct InteractiveWindow {
     inner: tauri::Window,
@@ -26,20 +27,16 @@ impl InteractiveWindow {
     }
 
     pub fn new_inner(app: AppHandle) -> Result<Res<Self>, anyhow::Error> {
-        let window = WindowBuilder::new(
-            &app,
-            "interactive",
-            WindowUrl::App("interactive/".into()),
-        )
-        .title("mtool interactive")
-        .transparent(true)
-        .decorations(false)
-        .resizable(true)
-        .skip_taskbar(true)
-        .always_on_top(true)
-        .visible(false)
-        .build()
-        .context("create interactive window")?;
+        let window = WindowBuilder::new(&app, "interactive", WindowUrl::App("interactive/".into()))
+            .title("mtool interactive")
+            .transparent(true)
+            .decorations(false)
+            .resizable(true)
+            .skip_taskbar(true)
+            .always_on_top(true)
+            .visible(false)
+            .build()
+            .context("create interactive window")?;
 
         Self::adjust_position(&window)?;
 
@@ -51,8 +48,18 @@ impl InteractiveWindow {
 
         let size = primary.size();
 
-        window.set_position(PhysicalPosition::new((size.width - 720) / 2, 200))?;
+        window.set_position(PhysicalPosition::new((size.width - 670) / 2, 300))?;
         Ok(())
+    }
+
+    pub fn show(&self) -> Result<(), tauri::Error> {
+        debug!("interactive show window");
+        self.inner.show()
+    }
+
+    pub fn hide(&self) -> Result<(), tauri::Error> {
+        debug!("interactive hide window");
+        self.inner.hide()
     }
 }
 

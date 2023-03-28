@@ -1,8 +1,3 @@
-#![cfg_attr(
-    all(not(debug_assertions), target_os = "windows"),
-    windows_subsystem = "windows"
-)]
-
 mod cli;
 mod complete;
 mod completion;
@@ -11,13 +6,13 @@ mod output;
 mod tui;
 mod utils;
 
-use async_trait::async_trait;
 pub use complete::*;
 pub use completion::Completion;
 pub use output::OutputDevice;
 pub use tauri::{AppHandle, GlobalShortcutManager, async_runtime};
 
 use mapp::{AppContext, AppModule, ModuleGroup};
+use async_trait::async_trait;
 
 #[derive(Default)]
 pub struct Module {}

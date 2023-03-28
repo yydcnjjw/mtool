@@ -13,3 +13,8 @@ mtool-wgui-core = { path = "../core" }
 mtool-interactive-wgui = { path = "../../mtool-interactive/wgui" }
 
 [workspace]
+members = [
+  "../core",
+  "../../mtool-interactive/wgui",
+  "../../../crates/mtauri-sys"
+]

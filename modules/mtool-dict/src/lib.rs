@@ -4,8 +4,8 @@ mod mdx;
 use async_trait::async_trait;
 use mapp::{provider::Res, AppContext, AppModule};
 use mdx::mdx_query;
-use mtool_cmder::{Cmder, CreateCommandDescriptor};
 use mtool_core::CmdlineStage;
+use mtool_cmder::{Cmder, CreateCommandDescriptor};
 use mtool_system::keybinding::Keybinging;
 
 #[derive(Default)]
@@ -18,7 +18,7 @@ impl AppModule for Module {
             .add_once_task(CmdlineStage::AfterInit, register_command)
             .add_once_task(
                 #[cfg(windows)]
-                GuiStage::AfterInit,
+                mtool_wgui::GuiStage::AfterInit,
                 #[cfg(not(windows))]
                 CmdlineStage::AfterInit,
                 register_keybinding,

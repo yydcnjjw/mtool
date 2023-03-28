@@ -2,11 +2,14 @@
 name = "mtool-interactive-wgui"
 version = "0.1.0"
 edition = "2021"
+workspace = "../../mtool-wgui/wmain"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
 mapp = { path = "../../../crates/mapp" }
+
+mtauri-sys = { path = "../../../crates/mtauri-sys" }
 
 mtool-interactive-model = { path = "../model" }
 
@@ -43,5 +46,3 @@ features = [
   "ScrollIntoViewOptions",
   "ScrollLogicalPosition"
 ]
-
-[workspace]

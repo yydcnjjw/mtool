@@ -38,10 +38,11 @@ body {
         .input {
             font-size: 32px;
             background-color: transparent;
-            height: 48px;
-            padding: 0 8px;
+            height: 64px;
+            padding: 0 16px;
             caret-color: gray;
-            color: white;        
+            color: white;
+            width: 100%;
         }
     }
 

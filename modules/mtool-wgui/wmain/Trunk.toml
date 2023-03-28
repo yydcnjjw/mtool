@@ -1,0 +1,11 @@
+[watch]
+watch = [
+  "../core",
+  "../../mtool-interactive/wgui",
+  "../../../crates/mtauri-sys",
+  "./assets"
+]
+
+[serve]
+address = "127.0.0.1"
+port = 18188

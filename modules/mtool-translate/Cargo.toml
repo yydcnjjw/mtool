@@ -12,6 +12,8 @@ mcloud-api = { path = "../../crates/mcloud-api" }
 
 mtool-core = { path = "../mtool-core" }
 
+mtool-wgui = { path = "../mtool-wgui" }
+
 mtool-system = { path = "../mtool-system" }
 
 mtool-cmder = { path = "../mtool-cmder" }

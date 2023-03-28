@@ -9,7 +9,6 @@ members = [
   "crates/mkeybinding",
   "crates/msysev",
   "crates/mproxy",
-  "crates/mtauri-sys",
 
   "modules/mtool-core",
   "modules/mtool-system",

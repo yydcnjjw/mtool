@@ -1,16 +1,16 @@
-use tracing::debug;
 use gloo_utils::document;
 use mkeybinding::KeyMap;
+use mtauri_sys::window;
 use serde::{Deserialize, Serialize};
+use tracing::debug;
 use wasm_bindgen::JsCast;
 use web_sys::{HtmlElement, ScrollIntoViewOptions, ScrollLogicalPosition};
 use yew::{platform::spawn_local, prelude::*};
 
 use crate::{
+    app::AppContext,
     generate_keymap,
     keybinding::{Keybinging, SharedAction},
-    tauri::{self, window},
-    app::AppContext,
 };
 
 #[derive(Serialize, Deserialize)]
@@ -111,7 +111,7 @@ impl Component for CompletionList {
             Msg::Exit => {
                 let completed = self.items[self.focused_item_index].to_owned();
                 spawn_local(async move {
-                    let _: () = tauri::invoke(
+                    let _: () = mtauri_sys::invoke(
                         "plugin:interactive::completion|complete_exit",
                         &CompletionArgs { completed },
                     )
@@ -193,7 +193,7 @@ impl CompletionList {
     fn fetch_complete_read(ctx: &Context<Self>) {
         let input = ctx.props().input.to_string();
         ctx.link().send_future(async move {
-            let items: Vec<String> = tauri::invoke(
+            let items: Vec<String> = mtauri_sys::invoke(
                 "plugin:interactive::completion|complete_read",
                 &CompletionArgs { completed: input },
             )
@@ -241,15 +241,20 @@ impl CompletionList {
     fn adjust_window_size(&self) {
         let visual_item_count = self.items.len().min(Self::MAX_ITEM_COUNT);
 
-        let width = 720;
+        let width = 670;
+
+        let completion_height = 64 + 2;
 
         let height = if visual_item_count == 0 {
-            50
+            completion_height
         } else {
-            visual_item_count * 48 + 2 + 50 + 16
+            visual_item_count * 48 + 2 + completion_height + 16
         };
 
-        spawn_local(window::set_size(window::PhysicalSize { width, height }));
+        spawn_local(mtauri_sys::window::set_size(window::PhysicalSize {
+            width,
+            height,
+        }));
     }
 
     fn scroll_into_focused_item(&self) {

@@ -198,36 +198,3 @@ impl Keybinging {
         Ok(())
     }
 }
-
-#[cfg(windows)]
-impl Keybinging {
-    pub async fn define_global<Args, T>(&self, kbd: &str, action: T) -> Result<(), anyhow::Error>
-    where
-        T: Inject<Args> + Send + Sync + 'static,
-        T::Output: Future<Output = Result<(), anyhow::Error>> + Send,
-        Args: Provide<Injector> + Send + Sync + 'static,
-    {
-        use tauri::{async_runtime::spawn, AppHandle, GlobalShortcutManager};
-
-        let app = self.injector.get::<Res<AppHandle>>().await?;
-        let injector = self.injector.clone();
-        let action = Arc::new(action);
-        app.global_shortcut_manager().register(kbd, move || {
-            let injector = injector.clone();
-            let action = action.clone();
-            spawn(async move {
-                let result = match inject(&injector, action.as_ref()).await {
-                    Ok(v) => v,
-                    Err(e) => {
-                        return log::warn!("Failed to inject: {}", e);
-                    }
-                };
-
-                if let Err(e) = result.await {
-                    log::warn!("Failed to do action: {}", e);
-                }
-            });
-        })?;
-        Ok(())
-    }
-}

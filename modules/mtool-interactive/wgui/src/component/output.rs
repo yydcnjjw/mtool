@@ -2,11 +2,7 @@ use mtool_interactive_model::OutputContent;
 use tracing::debug;
 use yew::{platform::spawn_local, prelude::*};
 
-use crate::{
-    app::AppContext,
-    keybinding::Keybinging,
-    tauri::{self, window},
-};
+use crate::{app::AppContext, keybinding::Keybinging};
 
 pub struct Output {
     #[allow(dead_code)]
@@ -91,7 +87,7 @@ impl Output {
     fn refresh(ctx: &Context<Self>) {
         ctx.link().send_future(async move {
             Msg::Content(
-                tauri::invoke("plugin:interactive::output|current_content", &())
+                mtauri_sys::invoke("plugin:interactive::output|current_content", &())
                     .await
                     .unwrap(),
             )
@@ -101,10 +97,12 @@ impl Output {
     }
 
     fn adjust_window_size() {
-        spawn_local(window::set_size(window::PhysicalSize {
-            width: 720,
-            height: 480,
-        }));
+        spawn_local(mtauri_sys::window::set_size(
+            mtauri_sys::window::PhysicalSize {
+                width: 720,
+                height: 480,
+            },
+        ));
     }
 
     fn register_keybinding(&self, ctx: &Context<Self>) {

@@ -21,7 +21,7 @@ impl AppModule for Module {
             .add_once_task(CmdlineStage::AfterInit, register_command)
             .add_once_task(
                 #[cfg(windows)]
-                GuiStage::AfterInit,
+                mtool_wgui::GuiStage::AfterInit,
                 #[cfg(not(windows))]
                 CmdlineStage::AfterInit,
                 register_keybinding,

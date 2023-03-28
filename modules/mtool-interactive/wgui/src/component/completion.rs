@@ -1,14 +1,9 @@
-use tracing::debug;
 use mtool_interactive_model::CompletionMeta;
+use tracing::debug;
 use web_sys::HtmlInputElement;
 use yew::{platform::spawn_local, prelude::*};
 
-use crate::{
-    generate_keymap,
-    keybinding::Keybinging,
-    tauri,
-    app::AppContext,
-};
+use crate::{app::AppContext, generate_keymap, keybinding::Keybinging};
 
 use super::completion_list::{CompletionArgs, CompletionList};
 
@@ -129,7 +124,7 @@ impl Component for Completion {
                 self.clear_input();
 
                 spawn_local(async move {
-                    let _: () = tauri::invoke(
+                    let _: () = mtauri_sys::invoke(
                         "plugin:interactive::completion|complete_exit",
                         &CompletionArgs { completed },
                     )
@@ -199,7 +194,7 @@ impl Completion {
     fn fetch_completion_meta(ctx: &Context<Self>) {
         ctx.link().send_future(async move {
             Msg::CompletionMeta(
-                tauri::invoke("plugin:interactive::completion|completion_meta", &())
+                mtauri_sys::invoke("plugin:interactive::completion|completion_meta", &())
                     .await
                     .unwrap(),
             )

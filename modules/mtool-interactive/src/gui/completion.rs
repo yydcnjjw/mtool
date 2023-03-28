@@ -11,6 +11,7 @@ use tauri::{
     AppHandle, Manager, Runtime, State,
 };
 use tokio::sync::oneshot;
+use tracing::debug;
 
 use crate::complete::{CompleteRead, CompletionArgs};
 
@@ -106,7 +107,7 @@ async fn complete_exit(
     completed: String,
     c: State<'_, Arc<Completion>>,
 ) -> Result<(), serde_error::Error> {
-    log::debug!("complete_exit");
+    debug!("complete_exit");
     let mut ctx = c.ctx.lock().await;
     let ctx = ctx.take().ok_or(serde_error::Error::new(&*anyhow::anyhow!(
         "Completion context is not exist"

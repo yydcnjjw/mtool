@@ -3,7 +3,6 @@ mod component;
 mod event;
 mod keybinding;
 mod route;
-mod tauri;
 
 use app::App;
 use async_trait::async_trait;
