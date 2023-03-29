@@ -28,8 +28,8 @@ struct CoreModule {}
 define_label!(
     pub enum AppStage {
         Startup,
+        Init,
         Run,
-        Exit,
     }
 );
 
@@ -38,7 +38,7 @@ impl AppModule for CoreModule {
     async fn init(&self, ctx: &mut AppContext) -> Result<(), anyhow::Error> {
         ctx.schedule().insert_stage_vec(
             ScheduleGraph::Root,
-            vec![AppStage::Startup, AppStage::Run, AppStage::Exit],
+            vec![AppStage::Startup, AppStage::Init, AppStage::Run],
         );
         Ok(())
     }

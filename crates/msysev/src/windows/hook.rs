@@ -1,6 +1,6 @@
 use anyhow::Context;
 use windows::Win32::{
-    Foundation::HINSTANCE,
+    Foundation::HMODULE,
     UI::WindowsAndMessaging::{
         SetWindowsHookExW, UnhookWindowsHookEx, HHOOK, HOOKPROC, WINDOWS_HOOK_ID,
     },
@@ -13,7 +13,8 @@ pub struct GlobalHook {
 
 impl GlobalHook {
     fn install(idhook: WINDOWS_HOOK_ID, hook: HOOKPROC) -> Result<HHOOK, anyhow::Error> {
-        unsafe { SetWindowsHookExW(idhook, hook, HINSTANCE::default(), 0) }.context(format!("Failed to install hook: {:?}", idhook))
+        unsafe { SetWindowsHookExW(idhook, hook, HMODULE::default(), 0) }
+            .context(format!("Failed to install hook: {:?}", idhook))
     }
 
     pub fn uninstall(&self) -> Result<(), anyhow::Error> {
@@ -22,10 +23,6 @@ impl GlobalHook {
         } else {
             Ok(())
         }
-    }
-
-    pub fn handle(&self) -> HHOOK {
-        self.inst
     }
 
     pub fn new(idhook: WINDOWS_HOOK_ID, hook: HOOKPROC) -> Result<Self, anyhow::Error> {

@@ -7,7 +7,7 @@ use minject::{InjectOnce, Provide};
 use parking_lot::RwLock;
 use petgraph::{graph::NodeIndex, Direction, Graph};
 use tokio::sync::Mutex;
-use tracing::trace;
+use tracing::debug;
 
 use crate::{
     define_label, App, CondLoad, FnCondLoad, IntoOnceTaskDescriptor, Label, OnceTaskDescriptor,
@@ -238,7 +238,7 @@ impl ScheduleInner {
                 };
 
                 if need_run_task {
-                    trace!("run stage: {}", label);
+                    debug!("run stage: {}", label);
                     self.run_node_parallel(
                         app,
                         self.graph

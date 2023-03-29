@@ -10,7 +10,7 @@ use mapp::{
 };
 use mtool_core::{
     config::{is_startup_mode, StartupMode},
-    AppStage, CmdlineStage,
+    CmdlineStage,
 };
 use tokio::sync::oneshot;
 
@@ -37,8 +37,7 @@ impl AppModule for Module {
                 is_startup_mode(StartupMode::Gui),
             )
             .add_once_task(GuiStage::Setup, setup)
-            .add_once_task(GuiStage::Init, init)
-            .add_once_task(AppStage::Run, run);
+            .add_once_task(GuiStage::Init, init);
 
         Ok(())
     }
@@ -72,9 +71,5 @@ async fn init(builder: Res<Builder>) -> Result<(), anyhow::Error> {
             .run(tauri::generate_context!())
             .expect("error while running tauri application");
     });
-    Ok(())
-}
-
-async fn run() -> Result<(), anyhow::Error> {
     Ok(())
 }

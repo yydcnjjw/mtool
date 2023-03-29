@@ -9,5 +9,3 @@ mod modifier_state;
 pub mod keydef;
 
 pub use event::*;
-
-

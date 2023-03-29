@@ -2,9 +2,10 @@
 
 mod config;
 mod io;
-pub mod net;
+mod net;
 mod proxy;
 mod router;
+mod admin;
 
 #[cfg(feature = "telemetry")]
 pub mod metrics;

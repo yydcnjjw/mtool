@@ -19,9 +19,8 @@ x11 = {version = "2", features = ["xlib", "xrecord"]}
 xproto = "2"
 
 [target.'cfg(target_os = "windows")'.dependencies]
-
 [target.'cfg(target_os = "windows")'.dependencies.windows]
-version = "0.44"
+version = "0.48"
 features = [
     "Win32_Foundation",
     "Win32_UI_WindowsAndMessaging",

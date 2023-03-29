@@ -18,8 +18,8 @@ use super::{
     BoxedAny, ConstructOnce, IntoOnceConstructor,
 };
 
-type BoxedConstruct = Box<dyn Construct<InjectorInner> + Send + Sync>;
-type BoxedConstructOnce = Box<dyn ConstructOnce<InjectorInner> + Send + Sync>;
+type BoxedConstruct = Box<dyn Construct<Injector> + Send + Sync>;
+type BoxedConstructOnce = Box<dyn ConstructOnce<Injector> + Send + Sync>;
 
 #[derive(Clone)]
 pub struct Injector {
@@ -71,7 +71,7 @@ impl Injector {
 
         let _guard = mutex.lock().await;
 
-        self.inner.get::<T>().await
+        self.inner.get::<T>(self).await
     }
 }
 
@@ -93,7 +93,7 @@ impl InjectorInner {
     pub fn construct<Ctor, Args, Output>(&self, ctor: Ctor) -> &Self
     where
         Ctor: IntoConstructor<Args, Output, Injector>,
-        Ctor::Constructor: Construct<InjectorInner> + Send + Sync + 'static,
+        Ctor::Constructor: Construct<Injector> + Send + Sync + 'static,
         Output: Send + Sync + 'static,
     {
         self.constructor
@@ -105,7 +105,7 @@ impl InjectorInner {
     pub fn construct_once<Ctor, Args, Output>(&self, ctor: Ctor) -> &Self
     where
         Ctor: IntoOnceConstructor<Args, Output, Injector>,
-        Ctor::OnceConstructor: ConstructOnce<InjectorInner> + Send + Sync + 'static,
+        Ctor::OnceConstructor: ConstructOnce<Injector> + Send + Sync + 'static,
         Output: Send + Sync + 'static,
     {
         self.constructor_once.insert(
@@ -123,14 +123,14 @@ impl InjectorInner {
         self.cont.insert(v)
     }
 
-    pub async fn get<T>(&self) -> Result<T, anyhow::Error>
+    pub async fn get<T>(&self, injector: &Injector) -> Result<T, anyhow::Error>
     where
         T: Send + Sync + Clone + 'static,
     {
         match self.cont.get::<T>() {
             Some(v) => Ok(v),
             None => {
-                let v = self.construct_init::<T>().await?;
+                let v = self.construct_init::<T>(injector).await?;
                 let v = *v.downcast::<T>().unwrap();
                 self.cont.insert(v.clone());
                 Ok(v)
@@ -145,7 +145,7 @@ impl InjectorInner {
         self.cont.get::<T>()
     }
 
-    async fn construct_init<T>(&self) -> Result<BoxedAny, anyhow::Error>
+    async fn construct_init<T>(&self, injector: &Injector) -> Result<BoxedAny, anyhow::Error>
     where
         T: Send + Sync + Clone + 'static,
     {
@@ -154,7 +154,7 @@ impl InjectorInner {
         if let Some(ctor) = self.constructor.get(key) {
             trace!("try construct {}", type_name::<T>());
 
-            let v = ctor.construct(self).await;
+            let v = ctor.construct(injector).await;
 
             trace!("construct {}", type_name::<T>());
 
@@ -162,7 +162,7 @@ impl InjectorInner {
         } else if let Some((_, ctor)) = self.constructor_once.remove(key) {
             trace!("try construct once {}", type_name::<T>());
 
-            let v = ctor.construct_once(self).await;
+            let v = ctor.construct_once(injector).await;
 
             trace!("construct once {}", type_name::<T>());
 

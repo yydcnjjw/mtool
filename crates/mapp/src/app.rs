@@ -1,3 +1,5 @@
+use tracing::debug;
+
 use crate::{
     module::{Module, ModuleGroup},
     provider::{Injector, Res},
@@ -65,6 +67,8 @@ impl AppBuilder {
                 app.injector = ctx.injector;
 
                 sche.run(&app).await.unwrap();
+
+                debug!("App running!");
             });
         }));
 

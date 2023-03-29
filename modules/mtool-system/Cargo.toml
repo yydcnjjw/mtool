@@ -19,15 +19,25 @@ mkeybinding = { path = "../../crates/mkeybinding" }
 tokio = { version = "1", features = ["full"] }
 async-trait = "0.1"
 
+tauri = { version = "1", features = ["api-all"] }
+
 # error handle
 anyhow = "1.0"
 thiserror = "1.0"
 
-log = "0.4"
+tracing = "0.1"
 
 clap = { version = "4", features = ["derive", "cargo"] }
 
 serde = { version = "1.0", features = ["derive"] }
 
 [target.'cfg(target_os = "windows")'.dependencies]
-tauri = "1"
+[target.'cfg(target_os = "windows")'.dependencies.windows]
+version = "0.48"
+features = [
+  "Win32_Foundation",
+  "Win32_UI_Input_KeyboardAndMouse",
+  "Win32_UI_WindowsAndMessaging",
+  "Win32_System_DataExchange",
+  "Win32_System_LibraryLoader",
+]

@@ -4,8 +4,9 @@ mod output;
 
 pub use completion::Completion;
 pub use interactive_window::*;
+use mtool_core::AppStage;
+use mtool_system::keybinding::Keybinding;
 use mtool_wgui::{Builder, GuiStage};
-use mtool_system::keybinding::Keybinging;
 pub use output::OutputDevice;
 
 use async_trait::async_trait;
@@ -22,7 +23,7 @@ impl AppModule for Module {
     async fn init(&self, app: &mut AppContext) -> Result<(), anyhow::Error> {
         app.schedule()
             .add_once_task(GuiStage::Setup, setup)
-            .add_once_task(GuiStage::AfterInit, register_keybinding);
+            .add_once_task(AppStage::Init, register_keybinding);
 
         Ok(())
     }
@@ -43,15 +44,9 @@ async fn setup(builder: Res<Builder>, injector: Injector) -> Result<(), anyhow::
     Ok(())
 }
 
-async fn register_keybinding(keybinding: Res<Keybinging>) -> Result<(), anyhow::Error> {
-    keybinding.define_global(
-        if cfg!(windows) {
-            "Super+Alt+Q"
-        } else {
-            "M-A-q"
-        },
-        interactive_window::hide_window,
-    ).await?;
-
+async fn register_keybinding(keybinding: Res<Keybinding>) -> Result<(), anyhow::Error> {
+    keybinding
+        .define_global("M-A-q", interactive_window::hide_window)
+        .await?;
     Ok(())
 }

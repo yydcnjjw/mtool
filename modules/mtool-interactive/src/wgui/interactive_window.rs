@@ -73,6 +73,8 @@ pub fn init(injector: Injector) -> TauriPlugin<Wry> {
         .setup(move |app| {
             let app = app.clone();
             spawn(async move {
+                debug!("insert interactive window");
+                
                 injector.insert(InteractiveWindow::new_inner(app).unwrap());
             });
 

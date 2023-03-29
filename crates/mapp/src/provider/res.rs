@@ -12,9 +12,7 @@ use minject::Provide;
 
 use crate::{provider::Injector, App};
 
-use super::InjectorInner;
-
-pub struct Res<T: ?Sized>(Arc<T>);
+pub struct Res<T: ?Sized>(pub Arc<T>);
 
 impl<T: ?Sized + Unsize<U>, U: ?Sized> CoerceUnsized<Res<U>> for Res<T> {}
 
@@ -43,11 +41,11 @@ impl Res<dyn Any + Send + Sync> {
     }
 }
 
-impl<T> Deref for Res<T> {
+impl<T: ?Sized> Deref for Res<T> {
     type Target = T;
 
     fn deref(&self) -> &Self::Target {
-        &self.0
+        self.0.deref()
     }
 }
 
@@ -85,18 +83,6 @@ where
     T: Send + Sync + 'static,
 {
     async fn provide(c: &Injector) -> Result<Self, anyhow::Error> {
-        c.get::<Self>()
-            .await
-            .context(format!("Failed to provide {}", type_name::<Self>()))
-    }
-}
-
-#[async_trait]
-impl<T> Provide<InjectorInner> for Res<T>
-where
-    T: Send + Sync + 'static,
-{
-    async fn provide(c: &InjectorInner) -> Result<Self, anyhow::Error> {
         c.get::<Self>()
             .await
             .context(format!("Failed to provide {}", type_name::<Self>()))

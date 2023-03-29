@@ -1,13 +1,14 @@
 use async_trait::async_trait;
 use mapp::{provider::Res, AppContext, AppModule};
 use serde::Deserialize;
-use std::thread::{self, JoinHandle};
-use tokio::sync::{
-    broadcast::{self, Receiver, Sender},
-    Mutex,
+use std::{
+    mem,
+    thread::{self, JoinHandle},
 };
+use tokio::sync::broadcast::{self, Receiver, Sender};
+use tracing::warn;
 
-use mtool_core::{AppStage, ConfigStore};
+use mtool_core::ConfigStore;
 
 pub use msysev::Event;
 
@@ -18,8 +19,6 @@ pub struct Module {}
 impl AppModule for Module {
     async fn init(&self, app: &mut AppContext) -> Result<(), anyhow::Error> {
         app.injector().construct_once(Observer::new);
-
-        app.schedule().add_once_task(AppStage::Exit, wait_for_exit);
         Ok(())
     }
 }
@@ -38,7 +37,7 @@ type Worker = JoinHandle<Result<(), anyhow::Error>>;
 
 pub struct Observer {
     tx: Sender<Event>,
-    worker: Mutex<Option<Worker>>,
+    worker: Option<Worker>,
 }
 
 impl Observer {
@@ -49,7 +48,7 @@ impl Observer {
 
         Ok(Res::new(Self {
             tx,
-            worker: Mutex::new(Some(worker)),
+            worker: Some(worker),
         }))
     }
 
@@ -62,9 +61,18 @@ impl Observer {
         self.tx.receiver_count()
     }
 
-    #[allow(dead_code)]
     pub fn close(&self) -> Result<(), anyhow::Error> {
         msysev::quit()
+    }
+}
+
+impl Drop for Observer {
+    fn drop(&mut self) {
+        let _ = self.close();
+        let worker = mem::take(&mut self.worker);
+        if let Some(worker) = worker {
+            let _ = worker.join();
+        }
     }
 }
 
@@ -75,7 +83,7 @@ fn run_loop(size: usize) -> (Sender<Event>, Worker) {
     let worker = thread::spawn(move || {
         msysev::run_loop(move |e| {
             if let Err(e) = tx.send(e) {
-                log::warn!(
+                warn!(
                     "send system event error: {}, receiver count {}",
                     e,
                     tx.receiver_count()
@@ -86,17 +94,4 @@ fn run_loop(size: usize) -> (Sender<Event>, Worker) {
     });
 
     (tx_, worker)
-}
-
-async fn wait_for_exit(ob: Option<Res<Observer>>) -> Result<(), anyhow::Error> {
-    if let Some(ob) = ob {
-        ob.worker
-            .lock()
-            .await
-            .take()
-            .unwrap()
-            .join()
-            .map_err(|_| anyhow::anyhow!("waiting for system event loop"))??;
-    }
-    Ok(())
 }

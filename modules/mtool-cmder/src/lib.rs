@@ -18,9 +18,7 @@ use mtool_core::{
     config::{is_startup_mode, not_startup_mode, StartupMode},
     AppStage, Cmdline, CmdlineStage,
 };
-#[allow(unused)]
-use mtool_wgui::GuiStage;
-use mtool_system::keybinding::Keybinging;
+use mtool_system::keybinding::Keybinding;
 
 #[derive(Default)]
 pub struct Module {}
@@ -34,10 +32,7 @@ impl AppModule for Module {
             .add_once_task(CmdlineStage::Setup, setup_cmdline)
             .add_once_task(CmdlineStage::AfterInit, register_command)
             .add_once_task(
-                #[cfg(windows)]
-                GuiStage::AfterInit,
-                #[cfg(not(windows))]
-                CmdlineStage::AfterInit,
+                AppStage::Init,
                 register_keybinding.cond(not_startup_mode(StartupMode::Cli)),
             )
             .add_once_task(
@@ -62,15 +57,9 @@ async fn register_command(cmder: Res<Cmder>) -> Result<(), anyhow::Error> {
     Ok(())
 }
 
-async fn register_keybinding(keybinding: Res<Keybinging>) -> Result<(), anyhow::Error> {
-    keybinding.define_global(
-        if cfg!(windows) {
-            "Super+Alt+X"
-        } else {
-            "M-A-x"
-        },
-        exec_command_interactive,
-    ).await?;
-
+async fn register_keybinding(keybinding: Res<Keybinding>) -> Result<(), anyhow::Error> {
+    keybinding
+        .define_global("M-A-x", exec_command_interactive)
+        .await?;
     Ok(())
 }

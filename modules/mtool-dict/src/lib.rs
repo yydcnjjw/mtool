@@ -4,9 +4,9 @@ mod mdx;
 use async_trait::async_trait;
 use mapp::{provider::Res, AppContext, AppModule};
 use mdx::mdx_query;
-use mtool_core::CmdlineStage;
 use mtool_cmder::{Cmder, CreateCommandDescriptor};
-use mtool_system::keybinding::Keybinging;
+use mtool_core::CmdlineStage;
+use mtool_system::keybinding::Keybinding;
 
 #[derive(Default)]
 pub struct Module {}
@@ -35,7 +35,7 @@ async fn register_command(cmder: Res<Cmder>) -> Result<(), anyhow::Error> {
     Ok(())
 }
 
-async fn register_keybinding(_keybinding: Res<Keybinging>) -> Result<(), anyhow::Error> {
+async fn register_keybinding(_keybinding: Res<Keybinding>) -> Result<(), anyhow::Error> {
     // keybinding
     //     .define_global(
     //         if cfg!(windows) {

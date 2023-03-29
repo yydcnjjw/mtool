@@ -4,10 +4,13 @@ mod tencent;
 mod translator;
 
 use async_trait::async_trait;
-use mapp::{provider::Res, AppContext, AppModule};
+use mapp::{provider::Res, AppContext, AppModule, CreateOnceTaskDescriptor};
 use mtool_cmder::{Cmder, CreateCommandDescriptor};
-use mtool_core::{config::StartupMode, CmdlineStage, ConfigStore};
-use mtool_system::keybinding::Keybinging;
+use mtool_core::{
+    config::{not_startup_mode, StartupMode},
+    AppStage, CmdlineStage, ConfigStore,
+};
+use mtool_system::keybinding::Keybinding;
 
 #[derive(Default)]
 pub struct Module {}
@@ -20,11 +23,8 @@ impl AppModule for Module {
         app.schedule()
             .add_once_task(CmdlineStage::AfterInit, register_command)
             .add_once_task(
-                #[cfg(windows)]
-                mtool_wgui::GuiStage::AfterInit,
-                #[cfg(not(windows))]
-                CmdlineStage::AfterInit,
-                register_keybinding,
+                AppStage::Init,
+                register_keybinding.cond(not_startup_mode(StartupMode::Cli)),
             );
         Ok(())
     }
@@ -58,26 +58,12 @@ async fn register_command(cmder: Res<Cmder>, cs: Res<ConfigStore>) -> Result<(),
     Ok(())
 }
 
-async fn register_keybinding(keybinding: Res<Keybinging>) -> Result<(), anyhow::Error> {
+async fn register_keybinding(keybinding: Res<Keybinding>) -> Result<(), anyhow::Error> {
     keybinding
-        .define_global(
-            if cfg!(windows) {
-                "Super+Alt+E"
-            } else {
-                "M-A-e"
-            },
-            cmd::te_interactive,
-        )
+        .define_global("M-A-e", cmd::te_interactive)
         .await?;
     keybinding
-        .define_global(
-            if cfg!(windows) {
-                "Super+Alt+Z"
-            } else {
-                "M-A-z"
-            },
-            cmd::tz_interactive,
-        )
+        .define_global("M-A-z", cmd::tz_interactive)
         .await?;
     Ok(())
 }

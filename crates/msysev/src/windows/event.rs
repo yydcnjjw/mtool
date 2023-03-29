@@ -5,10 +5,10 @@ use once_cell::sync::OnceCell;
 use windows::Win32::{
     Foundation::{HWND, LPARAM, LRESULT, WPARAM},
     System::Threading::GetCurrentThreadId,
-    UI::WindowsAndMessaging::{
+    UI::{WindowsAndMessaging::{
         CallNextHookEx, DispatchMessageW, GetMessageW, TranslateMessage, KBDLLHOOKSTRUCT, MSG,
-        WH_KEYBOARD_LL, WM_KEYDOWN, WM_KEYUP, WM_SYSKEYDOWN, WM_SYSKEYUP,
-    },
+        WH_KEYBOARD_LL, WM_KEYDOWN, WM_KEYUP, WM_SYSKEYDOWN, WM_SYSKEYUP, HHOOK,
+    }, Input::KeyboardAndMouse::VIRTUAL_KEY},
 };
 
 use crate::{
@@ -91,7 +91,7 @@ extern "system" fn keyboard_hook(code: i32, wparam: WPARAM, lparam: LPARAM) -> L
         _ => panic!("Unknown action {:?}", wparam),
     };
 
-    let keycode = KeyCode::from(ev.clone());
+    let keycode = KeyCode::from(VIRTUAL_KEY(ev.vkCode as u16));
     let scancode = ev.scanCode;
 
     let modifiers = { Context::get_mut().modifier_state.update(&keycode, &action) };
@@ -115,5 +115,5 @@ extern "system" fn keyboard_hook(code: i32, wparam: WPARAM, lparam: LPARAM) -> L
         }
     }
 
-    unsafe { CallNextHookEx(Context::get().keyboard_hook.handle(), code, wparam, lparam) }
+    unsafe { CallNextHookEx(HHOOK::default(), code, wparam, lparam) }
 }

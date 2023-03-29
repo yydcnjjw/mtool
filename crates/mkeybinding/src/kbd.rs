@@ -1,5 +1,5 @@
-use core::fmt;
 use std::{
+    fmt,
     hash::Hash,
     ops::{ControlFlow, Deref, DerefMut},
     str::FromStr,
@@ -143,7 +143,7 @@ impl TryFromStr for KeyModifier {
     }
 }
 
-#[derive(Debug, Clone, std::cmp::Eq)]
+#[derive(Debug, Clone, Eq)]
 pub struct KeyCombine {
     pub key: KeyCode,
     pub mods: KeyModifier,
@@ -198,7 +198,7 @@ impl fmt::Display for KeyCombine {
     }
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Hash, PartialEq, Eq)]
 pub struct KeySequence {
     inner: Vec<KeyCombine>,
 }

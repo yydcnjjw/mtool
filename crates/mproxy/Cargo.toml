@@ -58,6 +58,8 @@ domain_matcher = { git = "https://github.com/Qv2ray/DomainMatcher" }
 
 protobuf = "3"
 
+warp = "0.3"
+
 [build-dependencies]
 protobuf-codegen = "3"
 
