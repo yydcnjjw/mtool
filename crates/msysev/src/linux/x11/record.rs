@@ -6,6 +6,7 @@ use std::{
 };
 
 use once_cell::sync::OnceCell;
+use tracing::{error, warn};
 use x11::{
     xlib::{self, _XDisplay},
     xrecord::{self, XRecordFreeContext, XRecordRange},
@@ -176,9 +177,9 @@ unsafe extern "C" fn record_cb(_: *mut c_char, raw_data: *mut xrecord::XRecordIn
 
     if let Some(e) = ev {
         if let Err(e) = (record.cb)(e) {
-            log::warn!("event callback error: {}", e);
+            warn!("event callback error: {}", e);
             if let Err(e) = quit() {
-                log::error!("Failed to quit system event loop: {}", e);
+                error!("Failed to quit system event loop: {}", e);
             }
         }
     }
