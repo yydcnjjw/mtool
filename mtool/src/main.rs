@@ -1,6 +1,4 @@
 fn main() {
-    // mtool_core::logger::early_init();
-
     mapp::AppBuilder::new().unwrap()
         .add_module_group(mtool_core::module())
         .add_module_group(mtool_system::module())
