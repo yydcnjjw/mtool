@@ -1,34 +1,26 @@
 [package]
 name = "mtool-interactive"
-version = "0.1.0"
-edition = "2021"
+version.workspace = true
+authors.workspace = true
+edition.workspace = true
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-mtool-interactive-model = { path = "./model" }
-
 mapp = { path = "../../crates/mapp" }
-
+mtool-interactive-model = { path = "./model" }
 mtool-core = { path = "../mtool-core" }
-
 mtool-system = { path = "../mtool-system" }
-
 mtool-wgui = { path = "../mtool-wgui" }
 
-tauri = { version = "1", features = ["api-all"] }
+tauri = { workspace = true }
+tokio = { workspace = true }
+async-trait = { workspace = true }
+anyhow = { workspace = true }
+clap = { workspace = true }
+futures = { workspace = true }
+itertools = { workspace = true }
+tracing = { workspace = true }
+serde-error = { workspace = true }
 
-tokio = { version = "1", features = ["full"] }
-async-trait = "0.1"
-
-anyhow = "1.0"
-serde-error = "0.1"
-
-clap = { version = "4", features = ["derive"] }
-
-futures = "0.3"
-
-itertools = "0.10"
 rand = "0.8"
-
-tracing = "0.1"

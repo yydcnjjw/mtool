@@ -2,6 +2,7 @@ use std::sync::{RwLock, RwLockReadGuard, RwLockWriteGuard};
 
 use anyhow::Context as _;
 use once_cell::sync::OnceCell;
+use tracing::{debug, error};
 use windows::Win32::{
     Foundation::{HWND, LPARAM, LRESULT, WPARAM},
     System::Threading::GetCurrentThreadId,
@@ -69,7 +70,7 @@ pub fn run_loop(cb: BoxedEventCallback) -> Result<(), anyhow::Error> {
         }
     }
 
-    log::debug!("system loop exited");
+    debug!("system loop exited");
 
     Ok(())
 }
@@ -103,14 +104,14 @@ extern "system" fn keyboard_hook(code: i32, wparam: WPARAM, lparam: LPARAM) -> L
         action,
     };
 
-    log::debug!("receive event: {:?}", e);
+    debug!("receive event: {:?}", e);
 
     {
         if let Err(e) = (Context::get().event_callback)(Event::Key(e)) {
-            log::error!("quit system event loop: {}", e);
+            error!("quit system event loop: {}", e);
 
             if let Err(e) = quit() {
-                log::error!("Failed to quit: {}", e);
+                error!("Failed to quit: {}", e);
             }
         }
     }

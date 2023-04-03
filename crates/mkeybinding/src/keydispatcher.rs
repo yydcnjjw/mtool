@@ -1,4 +1,5 @@
 use tokio::sync::broadcast;
+use tracing::{debug, warn};
 
 use crate::{
     kbd::{KeyCombine, KeySequence},
@@ -51,16 +52,16 @@ where
     }
 
     pub fn dispatch(&mut self, key: KeyCombine) -> bool {
-        log::debug!("receive {}", key);
+        debug!("receive {}", key);
 
         self.keyseq.push(key);
 
         for (id, km) in self.km_vec.iter().rev() {
             if let Ok(v) = km.lookup(&self.keyseq) {
-                log::debug!("dispatch {} {}", id, self.keyseq.to_string());
+                debug!("dispatch {} {}", id, self.keyseq.to_string());
 
                 if let Err(e) = self.tx.send(v.clone()) {
-                    log::warn!("{}", e);
+                    warn!("{}", e);
                 }
 
                 self.keyseq.clear();

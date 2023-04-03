@@ -70,11 +70,9 @@ pub async fn hide_window(window: Res<InteractiveWindow>) -> Result<(), anyhow::E
 
 pub fn init(injector: Injector) -> TauriPlugin<Wry> {
     Builder::new("interactive::window")
-        .setup(move |app| {
+        .setup(move |app, _| {
             let app = app.clone();
             spawn(async move {
-                debug!("insert interactive window");
-                
                 injector.insert(InteractiveWindow::new_inner(app).unwrap());
             });
 

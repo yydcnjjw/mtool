@@ -1,39 +1,29 @@
 [package]
 name = "mtool-system"
-version = "0.1.0"
-edition = "2021"
+version.workspace = true
+authors.workspace = true
+edition.workspace = true
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
 mapp = { path = "../../crates/mapp" }
+msysev = { path = "../../crates/msysev" } # for event module
+mkeybinding = { path = "../../crates/mkeybinding" } # for keybinding module
 mtool-core = { path = "../mtool-core" }
 
-# for event module
-msysev = { path = "../../crates/msysev" }
-
-# for keybinding module
-mkeybinding = { path = "../../crates/mkeybinding" }
-
-# async
-tokio = { version = "1", features = ["full"] }
-async-trait = "0.1"
-
-tauri = { version = "1", features = ["api-all"] }
-
-# error handle
-anyhow = "1.0"
-thiserror = "1.0"
-
-tracing = "0.1"
-
-clap = { version = "4", features = ["derive", "cargo"] }
-
-serde = { version = "1.0", features = ["derive"] }
+tokio = { workspace = true }
+async-trait = { workspace = true }
+tauri = { workspace = true }
+anyhow = { workspace = true }
+thiserror = { workspace = true }
+tracing = { workspace = true }
+clap = { workspace = true }
+serde = { workspace = true }
 
 [target.'cfg(target_os = "windows")'.dependencies]
 [target.'cfg(target_os = "windows")'.dependencies.windows]
-version = "0.48"
+workspace = true
 features = [
   "Win32_Foundation",
   "Win32_UI_Input_KeyboardAndMouse",

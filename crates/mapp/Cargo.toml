@@ -1,31 +1,28 @@
 [package]
 name = "mapp"
-version = "0.1.0"
-edition = "2021"
+version.workspace = true
+authors.workspace = true
+edition.workspace = true
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
 minject = { path = "../minject" }
 
-thiserror = "1.0"
-anyhow = "1.0"
-
-cfg-if = "0.1"
-
-async-trait = "0.1"
-tokio = { version = "1", features = ["rt"] }
-futures = "0.3"
-async-recursion = "1.0.0"
-parking_lot = "0.12"
-dashmap = "5.4"
+thiserror = { workspace = true }
+anyhow = { workspace = true }
+cfg-if = { workspace = true }
+async-trait = { workspace = true }
+tokio = { workspace = true }
+futures = { workspace = true }
+async-recursion = { workspace = true }
+parking_lot = { workspace = true }
+tracing = { workspace = true }
+dashmap = { workspace = true }
+tracing-subscriber = { workspace = true }
+tracing-appender = { workspace = true }
 
 petgraph = "0.6"
-
-tracing = "0.1"
-tracing-subscriber = "0.3"
-tracing-appender = "0.2"
-
 ringbuf = "0.3"
 rand = "0.8"
 
@@ -34,4 +31,4 @@ getrandom = { version = "0.2", features = ["js"] }
 tracing-web = "0.1"
 
 [dev-dependencies]
-tokio = { version = "1.0", features = ["rt", "macros"] }
+tokio = { workspace = true }

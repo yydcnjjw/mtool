@@ -2,8 +2,9 @@ use std::{collections::HashMap, sync::Arc};
 
 use fuzzy_matcher::{skim::SkimMatcherV2, FuzzyMatcher};
 use itertools::Itertools;
-use mapp::{inject::Provide, provider::Res, App, Label};
 use parking_lot::RwLock;
+
+use mapp::{inject::Provide, provider::Res, App, Label};
 
 use super::{CommandDescriptor, IntoCommandDescriptor};
 

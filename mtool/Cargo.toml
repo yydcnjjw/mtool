@@ -7,19 +7,11 @@ edition = "2021"
 
 [dependencies]
 mapp = { path = "../crates/mapp" }
-
 mtool-core = { path = "../modules/mtool-core" }
-
 mtool-system = { path = "../modules/mtool-system" }
-
 mtool-wgui = { path = "../modules/mtool-wgui" }
-
 mtool-cmder = { path = "../modules/mtool-cmder" }
-
 mtool-toast = { path = "../modules/mtool-toast" }
-
 mtool-translate = { path = "../modules/mtool-translate" }
-
 mtool-dict = { path = "../modules/mtool-dict" }
-
 mtool-interactive = { path = "../modules/mtool-interactive" }

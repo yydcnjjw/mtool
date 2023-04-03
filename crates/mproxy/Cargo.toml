@@ -1,7 +1,8 @@
 [package]
 name = "mproxy"
-version = "0.1.0"
-edition = "2021"
+version.workspace = true
+authors.workspace = true
+edition.workspace = true
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
@@ -15,49 +16,36 @@ telemetry = [
 ]
 
 [dependencies]
-tokio = { version = "1", features = ["full"] }
-futures = "0.3"
-
-tracing = "0.1"
-tracing-subscriber = "0.3"
+tokio = { workspace = true }
+futures = { workspace = true }
+tracing = { workspace = true }
+tracing-subscriber = { workspace = true }
+serde = { workspace = true }
+clap = { workspace = true }
+itertools = { workspace = true }
+thiserror = { workspace = true }
+anyhow = { workspace = true }
+cfg-if = { workspace = true }
 
 opentelemetry = { version = "0.18", features = ["rt-tokio"], optional = true }
 opentelemetry-jaeger = { version = "0.17", features = ["rt-tokio"], optional = true }
 tracing-opentelemetry = { version = "0.18", features = ["metrics"], optional = true }
 opentelemetry-prometheus = { version = "0.11", optional = true }
 prometheus = { version = "0.13", optional = true }
-
-thiserror = "1.0"
-anyhow = "1.0"
-
 libc = "0.2"
 nix = "0.26"
-
 neli = { git = "https://github.com/jbaublitz/neli" }
-
-cfg-if = "0.1"
-
 quinn = "*"
 rustls = { version = "*", features = ["dangerous_configuration", "quic"] }
 rustls-pemfile = "1"
-
-
 hyper = { version = "1.0.0-rc.2", features = ["full"] }
 http-body-util = "0.1.0-rc.2" 
 bytes = "1.4"
-
-serde = { version = "1.0", features = ["derive", "rc"] }
 toml = "0.4"
-clap = { version = "4", features = ["derive"] }
-
 strum = { version = "0.24", features = ["derive"] }
 enum_dispatch = "0.3"
-itertools = "0.10"
-
 domain_matcher = { git = "https://github.com/Qv2ray/DomainMatcher" }
-
 protobuf = "3"
-
 warp = "0.3"
 
 [build-dependencies]

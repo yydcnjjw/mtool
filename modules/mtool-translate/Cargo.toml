@@ -1,33 +1,23 @@
 [package]
 name = "mtool-translate"
-version = "0.1.0"
-edition = "2021"
+version.workspace = true
+authors.workspace = true
+edition.workspace = true
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
 mapp = { path = "../../crates/mapp" }
-
 mcloud-api = { path = "../../crates/mcloud-api" }
-
 mtool-core = { path = "../mtool-core" }
-
 mtool-wgui = { path = "../mtool-wgui" }
-
 mtool-system = { path = "../mtool-system" }
-
 mtool-cmder = { path = "../mtool-cmder" }
-
 mtool-interactive = { path = "../mtool-interactive" }
 
-serde = { version = "1.0", features = ["derive"] }
-
-clap = { version = "4", features = ["derive"] }
-
-log = "0.4"
-
-tokio = "1"
-async-trait = "0.1"
-futures = "0.3"
-
-anyhow = "1.0"
+serde = { workspace = true }
+clap = { workspace = true }
+tokio = { workspace = true }
+async-trait = { workspace = true }
+futures = { workspace = true }
+anyhow = { workspace = true }

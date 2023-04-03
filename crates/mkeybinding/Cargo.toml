@@ -1,20 +1,19 @@
 [package]
 name = "mkeybinding"
-version = "0.1.0"
-edition = "2021"
+version.workspace = true
+authors.workspace = true
+edition.workspace = true
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
 msysev = { path = "../msysev" }
 
-log = "0.4"
+tokio = { workspace = true }
+async-trait = { workspace = true }
+anyhow = { workspace = true }
+thiserror = { workspace = true }
+nom = { workspace = true }
+tracing = { workspace = true }
 
-tokio = { version = "1", features = ["sync"] }
-async-trait = "0.1"
-
-anyhow = "1.0"
-thiserror = "1.0"
-
-nom = "7"
 lazy_static = "1.4.0"
