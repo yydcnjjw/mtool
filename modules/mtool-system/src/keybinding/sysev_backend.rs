@@ -4,7 +4,7 @@ use anyhow::Context;
 
 use async_trait::async_trait;
 use mapp::{
-    provider::Res,
+    provider::{Injector, Res},
     AppContext, AppModule, CreateOnceTaskDescriptor,
 };
 use mkeybinding::{KeyCombine, KeyDispatcher, KeyMap, KeySequence};
@@ -31,7 +31,7 @@ impl AppModule for Module {
 
         app.schedule().add_once_task(
             AppStage::Init,
-            GlobalHotKeyMgr::run.cond(not_startup_mode(StartupMode::Cli)),
+            GlobalHotKeyMgr::init.cond(not_startup_mode(StartupMode::Cli)),
         );
         Ok(())
     }
@@ -45,12 +45,16 @@ pub struct GlobalHotKeyMgr {
 impl GlobalHotKeyMgr {
     const GLOBAL_KEYMAP: &str = "global";
 
-    async fn construct() -> Result<Res<Keybinding>, anyhow::Error> {
+    async fn construct(injector: Injector) -> Result<Res<Keybinding>, anyhow::Error> {
         let (tx, rx) = mpsc::unbounded_channel();
 
-        let this = Res::new(Self::new(tx));
+        let hotkey_mgr = Res::new(Self::new(tx));
+        injector.insert(hotkey_mgr.clone());
 
-        Ok(Res::new(Keybinding::new(this, rx)))
+        let keybinding = Res::new(Keybinding::new(hotkey_mgr, rx));
+        tokio::spawn(keybinding.clone().handle_event_loop(injector));
+
+        Ok(keybinding)
     }
 
     fn new(sender: mpsc::UnboundedSender<GlobalHotKeyEvent>) -> Self {
@@ -64,14 +68,16 @@ impl GlobalHotKeyMgr {
         }
     }
 
-    async fn run(this: Res<Self>, ob: Res<event::Observer>) -> Result<(), anyhow::Error> {
-        let ob = ob.subscribe();
+    async fn init(this: Res<Self>, ob: Res<event::Observer>) -> Result<(), anyhow::Error> {
         {
+            let ob = ob.subscribe();
             let this = this.clone();
             tokio::spawn(async move { this.dispatch_key_loop(ob).await });
         }
 
-        tokio::spawn(async move { this.handle_hotkey_loop().await });
+        {
+            tokio::spawn(async move { this.handle_hotkey_loop().await });
+        }
 
         Ok(())
     }

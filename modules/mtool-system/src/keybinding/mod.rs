@@ -27,12 +27,13 @@ pub struct Module {}
 pub fn module() -> ModuleGroup {
     let mut group = ModuleGroup::new("keybinding_group");
 
-    // #[cfg(not(windows))]
-    // group.add_module(sysev_backend::Module::default());
+    #[cfg(not(windows))]
+    group.add_module(sysev_backend::Module::default());
 
     // #[cfg(windows)]
     // group.add_module(windows_backend::Module::default());
 
+    #[cfg(windows)]
     group.add_module(tauri_backend::Module::default());
 
     group
@@ -86,6 +87,7 @@ impl Keybinding {
 
     pub async fn handle_event_loop(self: Res<Keybinding>, injector: Injector) {
         while let Some(ev) = { self.rx.lock().await.recv().await } {
+            debug!("handle action {}", ev.0.to_string());
             if let Some(action) = { self.kbs.read().await.get(&ev.0).cloned() } {
                 if let Err(e) = action.do_action(&injector).await {
                     warn!("do {} action failed: {:?}", ev.0.to_string(), e);
