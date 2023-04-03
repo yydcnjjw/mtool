@@ -5,7 +5,7 @@ use async_trait::async_trait;
 use mapp::{provider::Res, AppContext, AppModule};
 use mdx::mdx_query;
 use mtool_cmder::{Cmder, CreateCommandDescriptor};
-use mtool_core::CmdlineStage;
+use mtool_core::{AppStage, CmdlineStage};
 use mtool_system::keybinding::Keybinding;
 
 #[derive(Default)]
@@ -16,13 +16,7 @@ impl AppModule for Module {
     async fn init(&self, app: &mut AppContext) -> Result<(), anyhow::Error> {
         app.schedule()
             .add_once_task(CmdlineStage::AfterInit, register_command)
-            .add_once_task(
-                #[cfg(windows)]
-                mtool_wgui::GuiStage::AfterInit,
-                #[cfg(not(windows))]
-                CmdlineStage::AfterInit,
-                register_keybinding,
-            );
+            .add_once_task(AppStage::Init, register_keybinding);
         Ok(())
     }
 }
