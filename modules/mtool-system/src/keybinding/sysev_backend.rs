@@ -30,7 +30,7 @@ impl AppModule for Module {
         app.injector().construct_once(GlobalHotKeyMgr::construct);
 
         app.schedule().add_once_task(
-            AppStage::Run,
+            AppStage::Init,
             GlobalHotKeyMgr::run.cond(not_startup_mode(StartupMode::Cli)),
         );
         Ok(())

@@ -97,6 +97,7 @@ impl Keybinding {
     }
 }
 
+#[derive(Debug)]
 struct GlobalHotKeyEvent(KeySequence);
 
 #[async_trait]

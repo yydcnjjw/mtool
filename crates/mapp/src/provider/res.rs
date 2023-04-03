@@ -24,12 +24,6 @@ impl<T> Res<T> {
     pub fn new_raw(val: Arc<T>) -> Self {
         Self(val)
     }
-
-    pub fn unwrap(self) -> T {
-        Arc::try_unwrap(self.0)
-            .map_err(|_| anyhow::anyhow!(format!("{}", type_name::<T>())))
-            .unwrap()
-    }
 }
 
 impl Res<dyn Any + Send + Sync> {

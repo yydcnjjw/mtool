@@ -8,7 +8,7 @@ use mkeybinding::KeySequence;
 use msysev::keydef::{KeyCode, KeyModifier};
 use tauri::GlobalShortcutManager;
 use tokio::sync::mpsc;
-use tracing::{debug, warn};
+use tracing::warn;
 
 use super::{GlobalHotKeyEvent, Keybinding, SetGlobalHotKey};
 
@@ -53,12 +53,9 @@ impl GlobalHotKeyMgr {
         let ks = ks.clone();
         let accelerator = &convert_kbd_to_accelerator(&ks)?;
 
-        debug!("tauri hotkey {}", accelerator);
-
         self.app
             .global_shortcut_manager()
             .register(accelerator, move || {
-                debug!("tauri global key event {}", ks);
                 if let Err(e) = sender.send(GlobalHotKeyEvent(ks.clone())) {
                     warn!("send global hotkey event failed: {}", e);
                 }
@@ -79,6 +76,7 @@ impl SetGlobalHotKey for GlobalHotKeyMgr {
     async fn register(&self, ks: &KeySequence) -> Result<(), anyhow::Error> {
         self.define(ks)
     }
+
     async fn unregister(&self, ks: &KeySequence) -> Result<(), anyhow::Error> {
         self.remove(ks)
     }

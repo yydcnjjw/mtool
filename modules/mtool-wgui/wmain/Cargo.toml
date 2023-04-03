@@ -1,6 +1,6 @@
 [package]
 name = "mtool-wgui-main"
-version = "0.0.1"
+version = "0.0.0"
 authors = ["yydcnjjw <yydcnjjw@gmail.com>"]
 edition = "2021"
 
@@ -20,6 +20,11 @@ members = [
   "../../../crates/mtauri-sys"
 ]
 
+[workspace.package]
+version = "0.0.0"
+authors = ["yydcnjjw <yydcnjjw@gmail.com>"]
+edition = "2021"
+
 [workspace.dependencies]
 yew = { version = "*", features = ["csr"] }
 yew-router = "*"
@@ -27,10 +32,10 @@ js-sys = "*"
 web-sys = "*"
 wasm-bindgen = { version = "*", features = ["serde-serialize"] }
 wasm-bindgen-futures = "*"
+serde = { version = "*", features = ["derive"] }
 serde-wasm-bindgen = "*"
 async-trait = "*"
 anyhow = "*"
 thiserror = "*"
 once_cell = "*"
 tracing = "*"
-

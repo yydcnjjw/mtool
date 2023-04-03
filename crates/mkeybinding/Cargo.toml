@@ -9,7 +9,7 @@ edition.workspace = true
 [dependencies]
 msysev = { path = "../msysev" }
 
-tokio = { workspace = true }
+tokio = { workspace = true, features = ["sync", "rt"] }
 async-trait = { workspace = true }
 anyhow = { workspace = true }
 thiserror = { workspace = true }

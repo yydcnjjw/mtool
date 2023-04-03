@@ -1,16 +1,17 @@
 mod builder;
 
+use anyhow::Context;
 pub use builder::*;
 
 use async_trait::async_trait;
 use mapp::{
     define_label,
-    provider::{Injector, Res},
+    provider::{Injector, Res, Take},
     AppContext, AppModule, ModuleGroup,
 };
 use mtool_core::{
     config::{is_startup_mode, StartupMode},
-    CmdlineStage,
+    AppStage, CmdlineStage,
 };
 use tokio::sync::oneshot;
 
@@ -37,7 +38,8 @@ impl AppModule for Module {
                 is_startup_mode(StartupMode::Gui),
             )
             .add_once_task(GuiStage::Setup, setup)
-            .add_once_task(GuiStage::Init, init);
+            .add_once_task(GuiStage::Init, init)
+            .add_once_task(AppStage::Run, run);
 
         Ok(())
     }
@@ -62,14 +64,24 @@ async fn setup(builder: Res<Builder>, injector: Injector) -> Result<(), anyhow::
     Ok(())
 }
 
-async fn init(builder: Res<Builder>) -> Result<(), anyhow::Error> {
+struct TauriWorker(tokio::task::JoinHandle<Result<(), anyhow::Error>>);
+
+async fn init(builder: Res<Builder>, injector: Injector) -> Result<(), anyhow::Error> {
     let builder = builder.take();
 
-    tokio::task::spawn_blocking(move || {
+    let worker = tokio::task::spawn_blocking(move || {
         builder
             .any_thread()
             .run(tauri::generate_context!())
-            .expect("error while running tauri application");
+            .context("error while running tauri application")
     });
+
+    injector.insert(Take::new(TauriWorker(worker)));
+
+    Ok(())
+}
+
+async fn run(worker: Take<TauriWorker>) -> Result<(), anyhow::Error> {
+    worker.take()?.0.await??;
     Ok(())
 }
