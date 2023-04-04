@@ -8,7 +8,6 @@ use serde::{Deserialize, Serialize};
 
 use self::{
     admin::AdminServerConfig, egress::EgressConfig, ingress::IngressConfig, routing::RoutingConfig,
-    transport::AcceptorConfig,
 };
 
 pub mod protos {

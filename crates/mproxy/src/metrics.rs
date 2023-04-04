@@ -21,7 +21,7 @@ use std::sync::Arc;
 use tokio::net::TcpListener;
 use tracing::{error, info_span, instrument, Instrument, Subscriber};
 use tracing_opentelemetry::MetricsLayer;
-use tracing_subscriber::{prelude::__tracing_subscriber_SubscriberExt, Layer};
+use tracing_subscriber::Layer;
 
 #[instrument(name = "metrics_request", skip_all)]
 async fn serve_req(
@@ -93,7 +93,7 @@ pub async fn prometheus_server(controller: BasicController) -> Result<(), anyhow
     }
 }
 
-struct TelemetryDrop;
+pub struct TelemetryDrop;
 
 impl Drop for TelemetryDrop {
     fn drop(&mut self) {

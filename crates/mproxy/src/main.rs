@@ -2,7 +2,7 @@ use std::path::PathBuf;
 
 use clap::Parser;
 
-use mproxy::{metrics::new_metrics_layer, App, AppConfig};
+use mproxy::{App, AppConfig};
 use tokio::fs;
 use tracing::debug;
 
@@ -23,17 +23,18 @@ async fn main() -> Result<(), anyhow::Error> {
 
     #[cfg(feature = "telemetry")]
     let (registry, _) = {
-        let (layer, _) = new_metrics_layer()?;
-        (registry.with(layer)?, _)
+        use mproxy::metrics::new_metrics_layer;
+        let (layer, drop) = new_metrics_layer()?;
+        (registry.with(layer), drop)
     };
 
     registry.try_init()?;
 
     let args = Args::parse();
 
-    let buf = fs::read(args.config).await?;
+    let buf = fs::read_to_string(args.config).await?;
 
-    let config = toml::from_slice::<AppConfig>(&buf)?;
+    let config = toml::from_str::<AppConfig>(&buf)?;
 
     debug!("{:?}", config);
 

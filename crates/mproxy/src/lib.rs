@@ -7,7 +7,7 @@ mod proxy;
 mod router;
 mod admin;
 
-// #[cfg(feature = "telemetry")]
+#[cfg(feature = "telemetry")]
 pub mod metrics;
 
 use anyhow::Context;
