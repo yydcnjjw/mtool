@@ -3,12 +3,25 @@ use http_body_util::{combinators::BoxBody, BodyExt, Full};
 use hyper::{
     header::CONTENT_TYPE, server::conn::http1, service::service_fn, Method, Request, Response,
 };
-use opentelemetry::sdk::metrics::controllers::BasicController;
+use opentelemetry::{
+    global,
+    sdk::{
+        export::metrics::aggregation,
+        metrics::{
+            controllers::{self, BasicController},
+            processors, selectors,
+        },
+        Resource,
+    },
+    KeyValue,
+};
 use opentelemetry_prometheus::PrometheusExporter;
 use prometheus::{Encoder, TextEncoder};
 use std::sync::Arc;
 use tokio::net::TcpListener;
-use tracing::{error, info_span, instrument, Instrument};
+use tracing::{error, info_span, instrument, Instrument, Subscriber};
+use tracing_opentelemetry::MetricsLayer;
+use tracing_subscriber::{prelude::__tracing_subscriber_SubscriberExt, Layer};
 
 #[instrument(name = "metrics_request", skip_all)]
 async fn serve_req(
@@ -40,12 +53,6 @@ async fn serve_req(
 
     Ok(response)
 }
-
-// fn empty() -> BoxBody<Bytes, hyper::Error> {
-//     Empty::<Bytes>::new()
-//         .map_err(|never| match never {})
-//         .boxed()
-// }
 
 fn full<T: Into<Bytes>>(chunk: T) -> BoxBody<Bytes, hyper::Error> {
     Full::new(chunk.into())
@@ -84,4 +91,54 @@ pub async fn prometheus_server(controller: BasicController) -> Result<(), anyhow
             .instrument(info_span!("handle_connection")),
         );
     }
+}
+
+struct TelemetryDrop;
+
+impl Drop for TelemetryDrop {
+    fn drop(&mut self) {
+        opentelemetry::global::shutdown_tracer_provider();
+    }
+}
+
+pub fn new_metrics_layer<S>() -> Result<
+    (
+        Vec<Box<dyn Layer<S> + Send + Sync + 'static>>,
+        TelemetryDrop,
+    ),
+    anyhow::Error,
+>
+where
+    S: Subscriber + for<'span> tracing_subscriber::registry::LookupSpan<'span> + Sync + Send,
+{
+    let mut layers = Vec::new();
+
+    {
+        global::set_text_map_propagator(opentelemetry_jaeger::Propagator::new());
+
+        let tracer = opentelemetry_jaeger::new_agent_pipeline()
+            .with_service_name("mproxy")
+            .install_batch(opentelemetry::runtime::Tokio)?;
+
+        let telemetry = tracing_opentelemetry::layer().with_tracer(tracer);
+
+        layers.push(telemetry.boxed());
+    }
+
+    {
+        let controller = controllers::basic(
+            processors::factory(
+                selectors::simple::histogram([1.0, 2.0, 5.0, 10.0, 20.0, 50.0]),
+                aggregation::cumulative_temporality_selector(),
+            )
+            .with_memory(true),
+        )
+        .with_resource(Resource::new(vec![KeyValue::new("service.name", "mproxy")]))
+        .build();
+
+        tokio::spawn(prometheus_server(controller.clone()));
+        layers.push(MetricsLayer::new(controller).boxed())
+    }
+
+    Ok((layers, TelemetryDrop))
 }

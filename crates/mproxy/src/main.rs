@@ -2,7 +2,7 @@ use std::path::PathBuf;
 
 use clap::Parser;
 
-use mproxy::{App, AppConfig};
+use mproxy::{metrics::new_metrics_layer, App, AppConfig};
 use tokio::fs;
 use tracing::debug;
 
@@ -22,40 +22,9 @@ async fn main() -> Result<(), anyhow::Error> {
         .with(EnvFilter::from_default_env());
 
     #[cfg(feature = "telemetry")]
-    let registry = {
-        use mproxy::metrics::prometheus_server;
-        use opentelemetry::{
-            global,
-            sdk::{
-                export::metrics::aggregation,
-                metrics::{controllers, processors, selectors},
-                Resource,
-            },
-            KeyValue,
-        };
-        use tracing_opentelemetry::MetricsLayer;
-
-        global::set_text_map_propagator(opentelemetry_jaeger::Propagator::new());
-
-        let tracer = opentelemetry_jaeger::new_agent_pipeline()
-            .with_service_name("mproxy")
-            .install_batch(opentelemetry::runtime::Tokio)?;
-
-        let telemetry = tracing_opentelemetry::layer().with_tracer(tracer);
-
-        let controller = controllers::basic(
-            processors::factory(
-                selectors::simple::histogram([1.0, 2.0, 5.0, 10.0, 20.0, 50.0]),
-                aggregation::cumulative_temporality_selector(),
-            )
-            .with_memory(true),
-        )
-        .with_resource(Resource::new(vec![KeyValue::new("service.name", "mproxy")]))
-        .build();
-
-        tokio::spawn(prometheus_server(controller.clone()));
-
-        registry.with(telemetry).with(MetricsLayer::new(controller))
+    let (registry, _) = {
+        let (layer, _) = new_metrics_layer()?;
+        (registry.with(layer)?, _)
     };
 
     registry.try_init()?;
@@ -71,9 +40,6 @@ async fn main() -> Result<(), anyhow::Error> {
     let app = App::new(config).await?;
 
     app.run().await?;
-
-    #[cfg(feature = "telemetry")]
-    opentelemetry::global::shutdown_tracer_provider();
 
     Ok(())
 }
