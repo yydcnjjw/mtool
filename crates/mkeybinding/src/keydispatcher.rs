@@ -52,7 +52,7 @@ where
     }
 
     pub fn dispatch(&mut self, key: KeyCombine) -> bool {
-        trace!("receive {}", key);
+        trace!("receive key: {}", key);
 
         self.keyseq.push(key);
 

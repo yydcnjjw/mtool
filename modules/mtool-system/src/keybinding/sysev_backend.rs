@@ -83,24 +83,38 @@ impl GlobalHotKeyMgr {
     }
 
     async fn dispatch_key_loop(&self, mut rx: Receiver<Event>) {
-        while let Ok(e) = rx.recv().await {
-            match e {
-                Event::Key(e) if matches!(e.action, KeyAction::Press) => {
-                    self.dispatcher.write().unwrap().dispatch(KeyCombine {
-                        key: e.keycode,
-                        mods: e.modifiers,
-                    });
+        loop {
+            match rx.recv().await {
+                Ok(e) => match e {
+                    Event::Key(e) if matches!(e.action, KeyAction::Press) => {
+                        self.dispatcher.write().unwrap().dispatch(KeyCombine {
+                            key: e.keycode,
+                            mods: e.modifiers,
+                        });
+                    }
+                    _ => {}
+                },
+                Err(e) => {
+                    warn!("dispatch key loop is exited: {:?}", e);
+                    break;
                 }
-                _ => {}
             }
         }
     }
 
     async fn handle_hotkey_loop(&self) {
         let mut rx = self.dispatcher.read().unwrap().subscribe();
-        while let Ok(ks) = rx.recv().await {
-            if let Err(e) = self.sender.send(GlobalHotKeyEvent(ks)) {
-                warn!("send global hotkey event failed: {}", e);
+        loop {
+            match rx.recv().await {
+                Ok(ks) => {
+                    if let Err(e) = self.sender.send(GlobalHotKeyEvent(ks)) {
+                        warn!("send global hotkey event failed: {}", e);
+                    }
+                }
+                Err(e) => {
+                    warn!("handle hotkey loop is exited: {:?}", e);
+                    break;
+                }
             }
         }
     }

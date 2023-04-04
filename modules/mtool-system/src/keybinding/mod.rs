@@ -89,9 +89,12 @@ impl Keybinding {
         while let Some(ev) = { self.rx.lock().await.recv().await } {
             debug!("handle action {}", ev.0.to_string());
             if let Some(action) = { self.kbs.read().await.get(&ev.0).cloned() } {
-                if let Err(e) = action.do_action(&injector).await {
-                    warn!("do {} action failed: {:?}", ev.0.to_string(), e);
-                }
+                let injector = injector.clone();
+                tokio::spawn(async move {
+                    if let Err(e) = action.do_action(&injector).await {
+                        warn!("do {} action failed: {:?}", ev.0.to_string(), e);
+                    }
+                });
             }
         }
 

@@ -1,14 +1,16 @@
 use async_trait::async_trait;
-use mapp::{provider::Res, AppContext, AppModule};
-use serde::Deserialize;
-use std::{
-    mem,
-    thread::{self, JoinHandle},
+use mapp::{
+    provider::{Injector, Res, Take},
+    AppContext, AppModule,
 };
-use tokio::sync::broadcast::{self, Receiver, Sender};
+use serde::Deserialize;
+use tokio::{
+    sync::broadcast::{self, Receiver, Sender},
+    task::JoinHandle,
+};
 use tracing::warn;
 
-use mtool_core::ConfigStore;
+use mtool_core::{AppStage, ConfigStore};
 
 pub use msysev::Event;
 
@@ -19,6 +21,8 @@ pub struct Module {}
 impl AppModule for Module {
     async fn init(&self, app: &mut AppContext) -> Result<(), anyhow::Error> {
         app.injector().construct_once(Observer::new);
+
+        app.schedule().add_once_task(AppStage::Run, wait_for_exit);
         Ok(())
     }
 }
@@ -33,23 +37,21 @@ struct Config {
     channel_size: usize,
 }
 
-type Worker = JoinHandle<Result<(), anyhow::Error>>;
-
 pub struct Observer {
     tx: Sender<Event>,
-    worker: Option<Worker>,
 }
 
+struct Worker(JoinHandle<Result<(), anyhow::Error>>);
+
 impl Observer {
-    async fn new(cs: Res<ConfigStore>) -> Result<Res<Self>, anyhow::Error> {
+    async fn new(injector: Injector, cs: Res<ConfigStore>) -> Result<Res<Self>, anyhow::Error> {
         let config = cs.get::<Config>("system.event").await?;
 
         let (tx, worker) = run_loop(config.channel_size);
 
-        Ok(Res::new(Self {
-            tx,
-            worker: Some(worker),
-        }))
+        injector.insert(Take::new(worker));
+
+        Ok(Res::new(Self { tx }))
     }
 
     pub fn subscribe(&self) -> Receiver<Event> {
@@ -66,21 +68,11 @@ impl Observer {
     }
 }
 
-impl Drop for Observer {
-    fn drop(&mut self) {
-        let _ = self.close();
-        let worker = mem::take(&mut self.worker);
-        if let Some(worker) = worker {
-            let _ = worker.join();
-        }
-    }
-}
-
 fn run_loop(size: usize) -> (Sender<Event>, Worker) {
     let (tx, _) = broadcast::channel(size);
     let tx_ = tx.clone();
 
-    let worker = thread::spawn(move || {
+    let worker = tokio::task::spawn_blocking(move || {
         msysev::run_loop(move |e| {
             if let Err(e) = tx.send(e) {
                 warn!(
@@ -93,5 +85,10 @@ fn run_loop(size: usize) -> (Sender<Event>, Worker) {
         })
     });
 
-    (tx_, worker)
+    (tx_, Worker(worker))
+}
+
+async fn wait_for_exit(worker: Take<Worker>) -> Result<(), anyhow::Error> {
+    worker.take()?.0.await??;
+    Ok(())
 }

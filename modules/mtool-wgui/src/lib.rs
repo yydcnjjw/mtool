@@ -1,6 +1,5 @@
 mod builder;
 
-use anyhow::Context;
 pub use builder::*;
 
 use async_trait::async_trait;
@@ -14,6 +13,7 @@ use mtool_core::{
     AppStage, CmdlineStage,
 };
 use tokio::sync::oneshot;
+use tracing::{warn, info};
 
 define_label! {
     pub enum GuiStage {
@@ -39,7 +39,7 @@ impl AppModule for Module {
             )
             .add_once_task(GuiStage::Setup, setup)
             .add_once_task(GuiStage::Init, init)
-            .add_once_task(AppStage::Run, run);
+            .add_once_task(AppStage::Run, wait_for_exit);
 
         Ok(())
     }
@@ -64,16 +64,20 @@ async fn setup(builder: Res<Builder>, injector: Injector) -> Result<(), anyhow::
     Ok(())
 }
 
-struct TauriWorker(tokio::task::JoinHandle<Result<(), anyhow::Error>>);
+struct TauriWorker(tokio::task::JoinHandle<()>);
 
 async fn init(builder: Res<Builder>, injector: Injector) -> Result<(), anyhow::Error> {
     let builder = builder.take();
 
     let worker = tokio::task::spawn_blocking(move || {
-        builder
-            .any_thread()
-            .run(tauri::generate_context!())
-            .context("error while running tauri application")
+        match builder.any_thread().run(tauri::generate_context!()) {
+            Ok(_) => {
+                info!("tauri run loop is exited");
+            }
+            Err(e) => {
+                warn!("tauri run loop is exited: {:?}", e);
+            }
+        }
     });
 
     injector.insert(Take::new(TauriWorker(worker)));
@@ -81,7 +85,7 @@ async fn init(builder: Res<Builder>, injector: Injector) -> Result<(), anyhow::E
     Ok(())
 }
 
-async fn run(worker: Take<TauriWorker>) -> Result<(), anyhow::Error> {
-    worker.take()?.0.await??;
+async fn wait_for_exit(worker: Take<TauriWorker>) -> Result<(), anyhow::Error> {
+    worker.take()?.0.await?;
     Ok(())
 }

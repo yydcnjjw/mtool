@@ -21,6 +21,7 @@ async-trait = { workspace = true }
 futures = { workspace = true }
 anyhow = { workspace = true }
 serde-error = { workspace = true }
+tracing = { workspace = true }
 
 [build-dependencies]
 tauri-build = { workspace = true }
