@@ -88,7 +88,9 @@ fn run_loop(size: usize) -> (Sender<Event>, Worker) {
     (tx_, Worker(worker))
 }
 
-async fn wait_for_exit(worker: Take<Worker>) -> Result<(), anyhow::Error> {
-    worker.take()?.0.await??;
+async fn wait_for_exit(worker: Option<Take<Worker>>) -> Result<(), anyhow::Error> {
+    if let Some(worker) = worker {
+        worker.take()?.0.await??;
+    }
     Ok(())
 }
