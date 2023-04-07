@@ -12,9 +12,7 @@ use mtool_core::{
     config::{is_startup_mode, StartupMode},
     AppStage, CmdlineStage,
 };
-use tauri::{
-    CustomMenuItem, Manager, SystemTray, SystemTrayEvent, SystemTrayMenu, SystemTrayMenuItem,
-};
+use tauri::{CustomMenuItem, SystemTray, SystemTrayEvent, SystemTrayMenu};
 use tokio::sync::oneshot;
 use tracing::{info, warn};
 
