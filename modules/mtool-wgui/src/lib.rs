@@ -12,8 +12,11 @@ use mtool_core::{
     config::{is_startup_mode, StartupMode},
     AppStage, CmdlineStage,
 };
+use tauri::{
+    CustomMenuItem, Manager, SystemTray, SystemTrayEvent, SystemTrayMenu, SystemTrayMenuItem,
+};
 use tokio::sync::oneshot;
-use tracing::{warn, info};
+use tracing::{info, warn};
 
 define_label! {
     pub enum GuiStage {
@@ -54,10 +57,26 @@ pub fn module() -> ModuleGroup {
 async fn setup(builder: Res<Builder>, injector: Injector) -> Result<(), anyhow::Error> {
     let (tx, rx) = oneshot::channel();
     builder.setup(|builder| {
-        Ok(builder.setup(move |app| {
-            tx.send(Res::new(app.handle())).unwrap();
-            Ok(())
-        }))
+        let quit = CustomMenuItem::new("quit".to_string(), "Quit");
+        let tray_menu = SystemTrayMenu::new().add_item(quit);
+
+        let tray = SystemTray::new().with_menu(tray_menu);
+
+        Ok(builder
+            .system_tray(tray)
+            .on_system_tray_event(|_, event| match event {
+                SystemTrayEvent::MenuItemClick { id, .. } => match id.as_str() {
+                    "quit" => {
+                        std::process::exit(0);
+                    }
+                    _ => {}
+                },
+                _ => {}
+            })
+            .setup(move |app| {
+                tx.send(Res::new(app.handle())).unwrap();
+                Ok(())
+            }))
     })?;
 
     injector.construct_once(|| async move { Ok(rx.await?) });

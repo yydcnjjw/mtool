@@ -15,7 +15,7 @@ custom-protocol = [ "tauri/custom-protocol" ]
 mapp = { path = "../../crates/mapp" }
 mtool-core = { path = "../mtool-core" }
 
-tauri = { workspace = true, features = ["api-all"] }
+tauri = { workspace = true, features = ["api-all", "system-tray"] }
 tokio = { workspace = true }
 async-trait = { workspace = true }
 futures = { workspace = true }

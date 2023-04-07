@@ -12,6 +12,10 @@
     "allowlist": {
       "all": true
     },
+    "systemTray": {
+      "iconPath": "icons/icon.png",
+      "iconAsTemplate": true
+    },
     "bundle": {
       "active": true,
       "category": "DeveloperTool",
@@ -27,7 +31,7 @@
         "icons/icon.icns",
         "icons/icon.ico"
       ],
-      "identifier": "com.yydcnjjw.mtool.dev",
+      "identifier": "com.yydcnjjw.mtool",
       "longDescription": "",
       "macOS": {
         "entitlements": null,
