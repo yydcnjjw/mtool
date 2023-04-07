@@ -1,11 +1,11 @@
 #![feature(trait_alias)]
 
+mod admin;
 mod config;
 mod io;
 mod net;
 mod proxy;
-mod router;
-mod admin;
+pub mod router;
 
 #[cfg(feature = "telemetry")]
 pub mod metrics;
@@ -56,6 +56,10 @@ impl App {
     pub async fn run(&self) -> Result<(), anyhow::Error> {
         self.run_ingress();
         self.dispatch().await
+    }
+
+    pub fn router(&self) -> &Router {
+        &self.router
     }
 
     fn run_ingress(&self) {

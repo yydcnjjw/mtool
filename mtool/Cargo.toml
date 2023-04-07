@@ -5,6 +5,10 @@ edition = "2021"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
+[features]
+# default = [ "custom-protocol" ]
+custom-protocol = [ "mtool-wgui/custom-protocol" ]
+
 [dependencies]
 mapp = { path = "../crates/mapp" }
 mtool-core = { path = "../modules/mtool-core" }
@@ -15,3 +19,4 @@ mtool-toast = { path = "../modules/mtool-toast" }
 mtool-translate = { path = "../modules/mtool-translate" }
 mtool-dict = { path = "../modules/mtool-dict" }
 mtool-interactive = { path = "../modules/mtool-interactive" }
+mtool-proxy = { path = "../modules/mtool-proxy" }

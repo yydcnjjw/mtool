@@ -18,6 +18,7 @@ members = [
   "modules/mtool-translate",
   "modules/mtool-interactive",
   "modules/mtool-wgui",
+  "modules/mtool-proxy",
   "mtool",
 ]
 
@@ -78,3 +79,4 @@ regex = "*"
 nom = "*"
 dashmap = "*"
 clap = { version = "*", features = ["derive", "cargo"] }
+toml = "*"

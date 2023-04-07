@@ -33,8 +33,8 @@ pub struct Translator {
 }
 
 impl Translator {
-    pub async fn new(config: Res<ConfigStore>) -> Result<Res<Self>, anyhow::Error> {
-        let cfg = config
+    pub async fn new(cs: Res<ConfigStore>) -> Result<Res<Self>, anyhow::Error> {
+        let cfg = cs
             .get::<Config>("translate")
             .await
             .context("Failed to parse translate")?;

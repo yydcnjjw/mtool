@@ -1,7 +1,7 @@
 {
   "build": {
     "devPath": "http://localhost:18188",
-    "distDir": "webapp/dist",
+    "distDir": "wmain/dist",
     "withGlobalTauri": true
   },
   "package": {

@@ -27,7 +27,7 @@ impl InteractiveWindow {
     }
 
     pub fn new_inner(app: AppHandle) -> Result<Res<Self>, anyhow::Error> {
-        let window = WindowBuilder::new(&app, "interactive", WindowUrl::App("interactive/".into()))
+        let window = WindowBuilder::new(&app, "interactive", WindowUrl::App("index.html".into()))
             .title("mtool interactive")
             .transparent(true)
             .decorations(false)
