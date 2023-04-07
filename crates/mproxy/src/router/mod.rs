@@ -128,6 +128,7 @@ impl Resource {
 pub struct Router {
     _res: Arc<Resource>,
     rules: DashMap<String, Rule>,
+    default_rule: String,
 }
 
 impl Router {
@@ -142,18 +143,29 @@ impl Router {
             })
             .try_collect()?;
 
-        Ok(Self { _res: res, rules })
+        Ok(Self {
+            _res: res,
+            rules,
+            default_rule: config.default_rule,
+        })
     }
 
     #[instrument(skip(self))]
     pub fn route(&self, src: &String, remote: &NetLocation) -> Result<String, anyhow::Error> {
-        self.rules
+        Ok(self
+            .rules
             .iter()
-            .find_or_first(|rule| {
+            .find(|rule| {
                 rule.src.contains(src) && rule.matcher.reverse_query(&remote.address.to_string())
             })
             .map(|rule| rule.dest.clone())
-            .context(format!("{}-{} is not matched", src, remote.to_string()))
+            .unwrap_or(
+                self.rules
+                    .get(&self.default_rule)
+                    .context("default rule is not exist")?
+                    .dest
+                    .clone(),
+            ))
     }
 
     pub fn add_rule_target(&self, id: &str, target: &str) -> Result<(), anyhow::Error> {

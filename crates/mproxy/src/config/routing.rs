@@ -5,9 +5,9 @@ use serde::{Deserialize, Serialize};
 #[derive(Debug, Serialize, Deserialize)]
 pub struct RoutingConfig {
     pub resource: Vec<PathBuf>,
-    pub rule: Vec<RuleConfig>
+    pub rule: Vec<RuleConfig>,
+    pub default_rule: String,
 }
-
 
 #[derive(Debug, Serialize, Deserialize)]
 pub struct RuleConfig {
