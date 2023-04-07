@@ -5,7 +5,7 @@ use serde::Deserialize;
 use tracing::info;
 use tracing_appender::non_blocking::WorkerGuard;
 use tracing_subscriber::{
-    fmt::{self, format::FmtSpan},
+    fmt,
     EnvFilter,
 };
 
@@ -79,7 +79,6 @@ async fn init(
     tracing.set_layer(
         fmt::layer()
             .with_writer(writer)
-            .with_span_events(FmtSpan::ENTER | FmtSpan::EXIT)
             .with_thread_ids(true)
             .with_thread_names(true),
     )?;
