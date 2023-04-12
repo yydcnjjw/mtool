@@ -36,34 +36,34 @@ async fn register_command(cmder: Res<Cmder>, cs: Res<ConfigStore>) -> Result<(),
             .add_command(cmd::te.name("te").set_desc("Translate into English"))
             .add_command(cmd::tz.name("tz").set_desc("Translate into Chinese"))
             .add_command(cmd::tj.name("tj").set_desc("Translate into Japanese"));
-    } else {
-        cmder
-            .add_command(
-                cmd::te_interactive
-                    .name("te")
-                    .set_desc("Translate into English"),
-            )
-            .add_command(
-                cmd::tz_interactive
-                    .name("tz")
-                    .set_desc("Translate into Chinese"),
-            )
-            .add_command(
-                cmd::tj_interactive
-                    .name("tj")
-                    .set_desc("Translate into Japanese"),
-            );
-    }
+    } // else {
+      //     cmder
+      //         .add_command(
+      //             cmd::te_interactive
+      //                 .name("te")
+      //                 .set_desc("Translate into English"),
+      //         )
+      //         .add_command(
+      //             cmd::tz_interactive
+      //                 .name("tz")
+      //                 .set_desc("Translate into Chinese"),
+      //         )
+      //         .add_command(
+      //             cmd::tj_interactive
+      //                 .name("tj")
+      //                 .set_desc("Translate into Japanese"),
+      //         );
+      // }
 
     Ok(())
 }
 
-async fn register_keybinding(keybinding: Res<Keybinding>) -> Result<(), anyhow::Error> {
-    keybinding
-        .define_global("M-A-e", cmd::te_interactive)
-        .await?;
-    keybinding
-        .define_global("M-A-z", cmd::tz_interactive)
-        .await?;
+async fn register_keybinding(_keybinding: Res<Keybinding>) -> Result<(), anyhow::Error> {
+    // keybinding
+    //     .define_global("M-A-e", cmd::te_interactive)
+    //     .await?;
+    // keybinding
+    //     .define_global("M-A-z", cmd::tz_interactive)
+    //     .await?;
     Ok(())
 }

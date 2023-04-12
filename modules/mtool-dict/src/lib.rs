@@ -21,11 +21,11 @@ impl AppModule for Module {
     }
 }
 
-async fn register_command(cmder: Res<Cmder>) -> Result<(), anyhow::Error> {
-    cmder
-        .add_command(mdx_query.name("mdx"))
-        .add_command(collins::dict.name("dict").add_alias("d"))
-        .add_command(collins::thesaures.name("thesaures").add_alias("dt"));
+async fn register_command(_cmder: Res<Cmder>) -> Result<(), anyhow::Error> {
+    // cmder
+    //     .add_command(mdx_query.name("mdx"))
+    //     .add_command(collins::dict.name("dict").add_alias("d"))
+    //     .add_command(collins::thesaures.name("thesaures").add_alias("dt"));
     Ok(())
 }
 
