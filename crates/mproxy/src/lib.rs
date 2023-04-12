@@ -125,7 +125,7 @@ impl App {
                                     );
                                 }
                                 Err(e) => {
-                                    warn!("{:?}", e);
+                                    warn!("proxy request error: {:?}", e);
                                 }
                             }
                         }
