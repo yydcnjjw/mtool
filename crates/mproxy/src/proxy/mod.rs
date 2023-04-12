@@ -18,6 +18,12 @@ pub struct ProxyRequest {
 }
 
 #[derive(Debug)]
+pub struct ProxyResponse {
+    pub upload_bytes: u64,
+    pub download_bytes: u64,
+}
+
+#[derive(Debug)]
 pub enum ProxyConn {
     ForwardTcp(ForwardTcpConn),
     ForwardHttp(ForwardHttpConn),

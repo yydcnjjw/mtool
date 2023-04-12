@@ -8,7 +8,7 @@ use tracing::instrument;
 
 use crate::{
     config::{egress::ClientConfig, ingress::ServerConfig},
-    proxy::ProxyRequest,
+    proxy::{ProxyRequest, ProxyResponse},
 };
 
 #[derive(Debug)]
@@ -62,10 +62,10 @@ impl Client {
     }
 
     #[instrument(skip_all)]
-    pub async fn handle_proxy_request(&self, req: ProxyRequest) -> Result<(), anyhow::Error> {
+    pub async fn send(&self, req: ProxyRequest) -> Result<ProxyResponse, anyhow::Error> {
         match &self {
-            Client::Http(c) => c.handle_proxy_request(req).await,
-            Client::Direct(c) => c.handle_proxy_request(req).await,
+            Client::Http(c) => c.send(req).await,
+            Client::Direct(c) => c.send(req).await,
         }
     }
 }

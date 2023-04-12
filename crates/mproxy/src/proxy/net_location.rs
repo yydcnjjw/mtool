@@ -32,7 +32,7 @@ impl FromStr for Address {
     }
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct NetLocation {
     pub address: Address,
     pub port: u16,

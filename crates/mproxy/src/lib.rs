@@ -12,13 +12,15 @@ pub mod metrics;
 
 use anyhow::Context;
 use futures::{future::try_join_all, FutureExt};
-use std::sync::Arc;
+use std::{sync::Arc, time::Instant};
 use tokio::sync::{mpsc, Mutex};
-use tracing::{debug_span, error, info, warn, Instrument};
+use tracing::{error, info, info_span, warn, Instrument};
 
 pub use config::AppConfig;
 use proxy::{Egress, Ingress, ProxyRequest};
 use router::Router;
+
+use crate::proxy::ProxyResponse;
 
 #[derive(Debug)]
 pub struct App {
@@ -107,15 +109,32 @@ impl App {
                         .context(format!("Egress {} isn't exist", dest))?
                         .clone();
 
-                    info!("request {}, {} => {}", req.remote, source, dest);
-
+                    let remote = req.remote.clone();
                     tokio::spawn(
                         async move {
-                            if let Err(e) = egress.handle_proxy_request(req).await {
-                                warn!("handle proxy request failed: {:?}", e);
+                            info!("start processing proxy request");
+                            let now = Instant::now();
+                            match egress.send(req).await {
+                                Ok(ProxyResponse {
+                                    upload_bytes,
+                                    download_bytes,
+                                }) => {
+                                    info!(
+                                        spent_time = format!("{}ms", now.elapsed().as_millis()),
+                                        upload_bytes, download_bytes, "proxy request finished"
+                                    );
+                                }
+                                Err(e) => {
+                                    warn!("{:?}", e);
+                                }
                             }
                         }
-                        .instrument(debug_span!("handle_proxy_request")),
+                        .instrument(info_span!(
+                            "handle_proxy_request",
+                            remote = remote.to_string(),
+                            source,
+                            dest,
+                        )),
                     );
                 }
                 Err(e) => warn!("routing failed: {}", e),

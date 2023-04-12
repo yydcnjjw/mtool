@@ -41,7 +41,6 @@ rustls = { version = "0.20.8", features = ["quic"] }
 rustls-pemfile = "*"
 hyper = { version = "1.0.0-rc.2", features = ["full"] }
 http-body-util = "0.1.0-rc.2" 
-bytes = "*"
 strum = { version = "*", features = ["derive"] }
 enum_dispatch = "*"
 domain_matcher = { git = "https://github.com/Qv2ray/DomainMatcher" }

@@ -1,11 +1,14 @@
 use std::{pin::Pin, str::FromStr};
 
 use anyhow::{bail, Context};
-use bytes::Bytes;
 use futures::Future;
 use http_body_util::{combinators::BoxBody, BodyExt, Empty, Full};
 use hyper::{
-    body, http, server::conn::http1, service::Service, Method, Request, Response, StatusCode,
+    body::{self, Bytes},
+    http,
+    server::conn::http1,
+    service::Service,
+    Method, Request, Response, StatusCode,
 };
 use tokio::sync::{mpsc, oneshot, Mutex};
 use tracing::{debug, debug_span, error, instrument, warn, Instrument};
@@ -14,7 +17,10 @@ use crate::{
     config::{egress::http::ClientConfig, ingress::http::ServerConfig},
     io::BoxedAsyncIO,
     net::transport,
-    proxy::{Address, ForwardHttpConn, ForwardTcpConn, NetLocation, ProxyConn, ProxyRequest},
+    proxy::{
+        Address, ForwardHttpConn, ForwardTcpConn, NetLocation, ProxyConn, ProxyRequest,
+        ProxyResponse,
+    },
 };
 
 #[derive(Debug)]
@@ -43,8 +49,7 @@ impl Server {
             .title_case_headers(true)
             .serve_connection(stream, ServerService { tx })
             .with_upgrades()
-            .await
-            .context("")?;
+            .await?;
         Ok(())
     }
 
@@ -97,7 +102,7 @@ impl ServerService {
             })
             .map_err(|e| anyhow::anyhow!("{:?}", e))?;
 
-        rx.await.context("Failed to get response")
+        rx.await.context("Failed to get response")?
     }
 
     async fn handle_https_proxy(
@@ -206,7 +211,7 @@ impl Client {
         s: BoxedAsyncIO,
         remote: NetLocation,
         forward_conn: ForwardTcpConn,
-    ) -> Result<(), anyhow::Error> {
+    ) -> Result<(u64, u64), anyhow::Error> {
         let (mut sender, conn) = hyper::client::conn::http1::handshake(s).await?;
         tokio::task::spawn(async move {
             if let Err(err) = conn.await {
@@ -235,21 +240,26 @@ impl Client {
         &self,
         s: BoxedAsyncIO,
         mut forward_conn: ForwardHttpConn,
-    ) -> Result<(), anyhow::Error> {
+    ) -> Result<(u64, u64), anyhow::Error> {
         forward_conn.remove_proxy_header = false;
         forward_conn.forward(s).await
     }
 
-    pub async fn handle_proxy_request(&self, req: ProxyRequest) -> Result<(), anyhow::Error> {
+    pub async fn send(&self, req: ProxyRequest) -> Result<ProxyResponse, anyhow::Error> {
         let s = self
             .connector
             .connect()
             .await
             .context("Failed to connect")?;
 
-        match req.conn {
-            ProxyConn::ForwardTcp(conn) => self.handle_forward_tcp(s, req.remote, conn).await,
-            ProxyConn::ForwardHttp(conn) => self.handle_forward_http(s, conn).await,
-        }
+        let (upload_bytes, download_bytes) = match req.conn {
+            ProxyConn::ForwardTcp(conn) => self.handle_forward_tcp(s, req.remote, conn).await?,
+            ProxyConn::ForwardHttp(conn) => self.handle_forward_http(s, conn).await?,
+        };
+
+        Ok(ProxyResponse {
+            upload_bytes,
+            download_bytes,
+        })
     }
 }

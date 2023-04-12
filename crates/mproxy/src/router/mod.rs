@@ -246,6 +246,7 @@ impl Rule {
             RuleType::SubStr => self.matcher.reverse_insert(value, MatchType::SubStr(true)),
             RuleType::Geosite => self.insert_geosite(value)?,
         }
+        self.matcher.build();
         Ok(())
     }
 

@@ -2,7 +2,7 @@ use tokio::net::TcpStream;
 
 use crate::{
     config::egress::direct::ClientConfig,
-    proxy::{ProxyConn, ProxyRequest},
+    proxy::{ProxyConn, ProxyRequest, ProxyResponse},
 };
 
 #[derive(Debug)]
@@ -13,11 +13,15 @@ impl Client {
         Self {}
     }
 
-    pub async fn handle_proxy_request(&self, req: ProxyRequest) -> Result<(), anyhow::Error> {
+    pub async fn send(&self, req: ProxyRequest) -> Result<ProxyResponse, anyhow::Error> {
         let remote = req.remote.to_string();
-        match req.conn {
-            ProxyConn::ForwardTcp(conn) => conn.forward(TcpStream::connect(remote).await?).await,
-            ProxyConn::ForwardHttp(conn) => conn.forward(TcpStream::connect(remote).await?).await,
-        }
+        let (upload_bytes, download_bytes) = match req.conn {
+            ProxyConn::ForwardTcp(conn) => conn.forward(TcpStream::connect(remote).await?).await?,
+            ProxyConn::ForwardHttp(conn) => conn.forward(TcpStream::connect(remote).await?).await?,
+        };
+        Ok(ProxyResponse {
+            upload_bytes,
+            download_bytes,
+        })
     }
 }
