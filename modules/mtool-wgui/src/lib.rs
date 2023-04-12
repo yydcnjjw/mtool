@@ -5,7 +5,7 @@ pub use builder::*;
 use async_trait::async_trait;
 use mapp::{
     define_label,
-    provider::{Injector, Res, Take},
+    provider::{Injector, Res, Take, TakeOpt},
     AppContext, AppModule, ModuleGroup,
 };
 use mtool_core::{
@@ -102,7 +102,10 @@ async fn init(builder: Res<Builder>, injector: Injector) -> Result<(), anyhow::E
     Ok(())
 }
 
-async fn wait_for_exit(worker: Take<TauriWorker>) -> Result<(), anyhow::Error> {
-    worker.take()?.0.await?;
+async fn wait_for_exit(worker: TakeOpt<TauriWorker>) -> Result<(), anyhow::Error> {
+    if let Some(worker) = worker.unwrap() {
+        worker.take()?.0.await?;
+    }
+
     Ok(())
 }
