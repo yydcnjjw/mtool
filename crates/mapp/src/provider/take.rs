@@ -14,7 +14,7 @@ impl<T> Take<T> {
     }
 
     pub fn take(self) -> Result<T, anyhow::Error> {
-        Arc::try_unwrap(self.0).map_err(|_| anyhow::anyhow!(format!("{}", type_name::<T>())))
+        Arc::try_unwrap(self.0).map_err(|_| anyhow::anyhow!(format!("take {}", type_name::<T>())))
     }
 }
 
@@ -40,7 +40,7 @@ where
 {
     async fn provide(app: &App) -> Result<Self, anyhow::Error> {
         app.injector()
-            .remove::<Self>()
+            .remove::<Take<T>>()
             .context(format!("Failed to provide {}", type_name::<Self>()))
     }
 }
@@ -51,7 +51,35 @@ where
     T: Send + Sync + 'static,
 {
     async fn provide(c: &Injector) -> Result<Self, anyhow::Error> {
-        c.remove::<Self>()
+        c.remove::<Take<T>>()
             .context(format!("Failed to provide {}", type_name::<Self>()))
+    }
+}
+
+pub struct TakeOpt<T>(Option<Take<T>>);
+
+impl<T> TakeOpt<T> {
+    pub fn unwrap(self) -> Option<Take<T>> {
+        self.0
+    }
+}
+
+#[async_trait]
+impl<T> Provide<App> for TakeOpt<T>
+where
+    T: Send + Sync + 'static,
+{
+    async fn provide(app: &App) -> Result<Self, anyhow::Error> {
+        Ok(TakeOpt(app.injector().remove::<Take<T>>()))
+    }
+}
+
+#[async_trait]
+impl<T> Provide<Injector> for TakeOpt<T>
+where
+    T: Send + Sync + 'static,
+{
+    async fn provide(c: &Injector) -> Result<Self, anyhow::Error> {
+        Ok(TakeOpt(c.remove::<Take<T>>()))
     }
 }

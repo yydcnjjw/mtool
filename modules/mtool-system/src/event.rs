@@ -1,6 +1,6 @@
 use async_trait::async_trait;
 use mapp::{
-    provider::{Injector, Res, Take},
+    provider::{Injector, Res, Take, TakeOpt},
     AppContext, AppModule,
 };
 use serde::Deserialize;
@@ -88,8 +88,8 @@ fn run_loop(size: usize) -> (Sender<Event>, Worker) {
     (tx_, Worker(worker))
 }
 
-async fn wait_for_exit(worker: Option<Take<Worker>>) -> Result<(), anyhow::Error> {
-    if let Some(worker) = worker {
+async fn wait_for_exit(worker: TakeOpt<Worker>) -> Result<(), anyhow::Error> {
+    if let Some(worker) = worker.unwrap() {
         worker.take()?.0.await??;
     }
     Ok(())

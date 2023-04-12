@@ -3,7 +3,7 @@ use minject::Provide;
 
 use crate::App;
 
-use super::{Injector, InjectorInner};
+use super::Injector;
 
 #[async_trait]
 impl<T> Provide<App> for Option<T>
@@ -21,16 +21,6 @@ where
     T: Send + Sync + Clone + 'static,
 {
     async fn provide(c: &Injector) -> Result<Self, anyhow::Error> {
-        Ok(c.get_without_construct::<T>().await)
-    }
-}
-
-#[async_trait]
-impl<T> Provide<InjectorInner> for Option<T>
-where
-    T: Send + Sync + Clone + 'static,
-{
-    async fn provide(c: &InjectorInner) -> Result<Self, anyhow::Error> {
         Ok(c.get_without_construct::<T>().await)
     }
 }
