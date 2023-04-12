@@ -15,9 +15,10 @@ impl Client {
 
     pub async fn send(&self, req: ProxyRequest) -> Result<ProxyResponse, anyhow::Error> {
         let remote = req.remote.to_string();
+        let s = TcpStream::connect(remote).await?;
         let (upload_bytes, download_bytes) = match req.conn {
-            ProxyConn::ForwardTcp(conn) => conn.forward(TcpStream::connect(remote).await?).await?,
-            ProxyConn::ForwardHttp(conn) => conn.forward(TcpStream::connect(remote).await?).await?,
+            ProxyConn::ForwardTcp(conn) => conn.forward(s).await?,
+            ProxyConn::ForwardHttp(conn) => conn.forward(s).await?,
         };
         Ok(ProxyResponse {
             upload_bytes,
