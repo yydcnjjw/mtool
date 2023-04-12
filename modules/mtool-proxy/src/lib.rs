@@ -3,9 +3,12 @@ mod proxy;
 
 use async_trait::async_trait;
 use cmd::add_proxy_rule;
-use mapp::{provider::Res, AppContext, AppModule};
+use mapp::{provider::Res, AppContext, AppModule, CreateOnceTaskDescriptor};
 use mtool_cmder::{Cmder, CreateCommandDescriptor};
-use mtool_core::{AppStage, CmdlineStage};
+use mtool_core::{
+    config::{not_startup_mode, StartupMode},
+    AppStage, CmdlineStage,
+};
 use proxy::ProxyApp;
 use tracing::log::warn;
 
@@ -33,8 +36,11 @@ impl AppModule for Module {
         app.injector().construct_once(ProxyApp::new);
 
         app.schedule()
-            .add_once_task(CmdlineStage::AfterInit, register_command)
-            .add_once_task(AppStage::Run, run);
+            .add_once_task(
+                CmdlineStage::AfterInit,
+                register_command.cond(not_startup_mode(StartupMode::Cli)),
+            )
+            .add_once_task(AppStage::Run, run.cond(not_startup_mode(StartupMode::Cli)));
         Ok(())
     }
 }

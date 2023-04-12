@@ -74,7 +74,7 @@ impl ConfigInner {
 
 #[derive(PartialEq, Clone, Copy)]
 pub enum StartupMode {
-    Gui,
+    WGui,
     Tui,
     Cli,
 }
@@ -82,7 +82,7 @@ pub enum StartupMode {
 impl From<&str> for StartupMode {
     fn from(value: &str) -> Self {
         match value.to_lowercase().as_str() {
-            "gui" => StartupMode::Gui,
+            "wgui" => StartupMode::WGui,
             "tui" => StartupMode::Tui,
             "cli" => StartupMode::Cli,
             _ => unreachable!(),
@@ -147,7 +147,7 @@ async fn setup_cmdline(cmdline: Res<Cmdline>) -> Result<(), anyhow::Error> {
             // .arg(arg!(--daemon "daemon mode")))
             .arg(
                 arg!(--mode <MODE> "startup mode")
-                    .value_parser(["cli", "gui", "tui"])
+                    .value_parser(["cli", "wgui", "tui"])
                     .default_value("cli"),
             ))
     })?;

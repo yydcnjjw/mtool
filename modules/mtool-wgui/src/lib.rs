@@ -36,7 +36,7 @@ impl AppModule for Module {
             .insert_stage_vec_with_cond(
                 CmdlineStage::AfterInit,
                 vec![GuiStage::Setup, GuiStage::Init, GuiStage::AfterInit],
-                is_startup_mode(StartupMode::Gui),
+                is_startup_mode(StartupMode::WGui),
             )
             .add_once_task(GuiStage::Setup, setup)
             .add_once_task(GuiStage::Init, init)

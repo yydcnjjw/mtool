@@ -65,6 +65,7 @@ async fn text_translate_interactive(
 
 macro_rules! quick_translate_interactive {
     ($name:ident, $source:ident, $target:ident) => {
+        #[allow(unused)]
         pub async fn $name(
             translator: Res<tencent::Translator>,
             c: Res<Completion>,
