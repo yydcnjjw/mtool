@@ -22,7 +22,10 @@ impl AppModule for Module {
                 CmdlineStage::AfterInit,
                 register_command.cond(is_startup_mode(StartupMode::Cli)),
             )
-            .add_once_task(AppStage::Init, register_keybinding);
+            .add_once_task(
+                AppStage::Init,
+                register_keybinding.cond(is_startup_mode(StartupMode::WGui)),
+            );
         Ok(())
     }
 }

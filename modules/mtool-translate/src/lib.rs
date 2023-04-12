@@ -7,7 +7,7 @@ use async_trait::async_trait;
 use mapp::{provider::Res, AppContext, AppModule, CreateOnceTaskDescriptor};
 use mtool_cmder::{Cmder, CreateCommandDescriptor};
 use mtool_core::{
-    config::{not_startup_mode, StartupMode},
+    config::{StartupMode, is_startup_mode},
     AppStage, CmdlineStage, ConfigStore,
 };
 use mtool_system::keybinding::Keybinding;
@@ -24,7 +24,7 @@ impl AppModule for Module {
             .add_once_task(CmdlineStage::AfterInit, register_command)
             .add_once_task(
                 AppStage::Init,
-                register_keybinding.cond(not_startup_mode(StartupMode::Cli)),
+                register_keybinding.cond(is_startup_mode(StartupMode::WGui)),
             );
         Ok(())
     }

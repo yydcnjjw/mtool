@@ -4,7 +4,10 @@ mod output;
 
 pub use completion::Completion;
 pub use interactive_window::*;
-use mtool_core::AppStage;
+use mtool_core::{
+    config::{is_startup_mode, StartupMode},
+    AppStage,
+};
 use mtool_system::keybinding::Keybinding;
 use mtool_wgui::{Builder, GuiStage};
 pub use output::OutputDevice;
@@ -12,7 +15,7 @@ pub use output::OutputDevice;
 use async_trait::async_trait;
 use mapp::{
     provider::{Injector, Res},
-    AppContext, AppModule,
+    AppContext, AppModule, CreateOnceTaskDescriptor,
 };
 
 #[derive(Default)]
@@ -23,7 +26,10 @@ impl AppModule for Module {
     async fn init(&self, app: &mut AppContext) -> Result<(), anyhow::Error> {
         app.schedule()
             .add_once_task(GuiStage::Setup, setup)
-            .add_once_task(AppStage::Init, register_keybinding);
+            .add_once_task(
+                AppStage::Init,
+                register_keybinding.cond(is_startup_mode(StartupMode::WGui)),
+            );
 
         Ok(())
     }
