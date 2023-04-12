@@ -14,7 +14,6 @@ members = [
   "modules/mtool-system",
   "modules/mtool-cmder",
   "modules/mtool-dict",
-  "modules/mtool-toast",
   "modules/mtool-translate",
   "modules/mtool-interactive",
   "modules/mtool-wgui",
@@ -52,6 +51,7 @@ edition = "2021"
 # regex = "1"
 # nom = "7"
 # dashmap = "5.4"
+# notify-rust = { version = "4", default-features = false }
 
 tracing = "*"
 tracing-subscriber = "*"
@@ -80,3 +80,4 @@ nom = "*"
 dashmap = "*"
 clap = { version = "*", features = ["derive", "cargo"] }
 toml = "*"
+notify-rust = { version = "*", default-features = false }
