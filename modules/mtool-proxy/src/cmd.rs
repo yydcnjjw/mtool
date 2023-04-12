@@ -24,18 +24,19 @@ async fn add_proxy_target_inner(
     app.inner.router().add_rule_target(&app.proxy_id, &target)
 }
 
-pub async fn add_proxy_target(app: Res<ProxyApp>, c: Res<Completion>) -> Result<(), anyhow::Error> {
-    let mut notify = Notification::new()
+pub async fn add_proxy_rule(app: Res<ProxyApp>, c: Res<Completion>) -> Result<(), anyhow::Error> {
+    let mut notify = Notification::new();
+    notify
         .appname("mtool proxy")
         .summary("add proxy rule")
-        .timeout(Timeout::Milliseconds(1000));
+        .timeout(Timeout::Milliseconds(2000));
 
     match add_proxy_target_inner(app, c).await {
         Ok(_) => {
             notify.body("successfully");
         }
         Err(e) => {
-            notify.body(&format!("{:?}", e));
+            notify.body(&format!("Error:\n{:?}", e));
         }
     }
 

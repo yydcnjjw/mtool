@@ -2,7 +2,7 @@ mod cmd;
 mod proxy;
 
 use async_trait::async_trait;
-use cmd::add_proxy_target;
+use cmd::add_proxy_rule;
 use mapp::{provider::Res, AppContext, AppModule};
 use mtool_cmder::{Cmder, CreateCommandDescriptor};
 use mtool_core::{AppStage, CmdlineStage};
@@ -13,7 +13,7 @@ use tracing::log::warn;
 pub struct Module {}
 
 async fn register_command(cmder: Res<Cmder>) -> Result<(), anyhow::Error> {
-    cmder.add_command(add_proxy_target.name("add_proxy_target"));
+    cmder.add_command(add_proxy_rule.name("add_proxy_rule"));
     Ok(())
 }
 
