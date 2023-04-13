@@ -17,6 +17,8 @@ mtool-wgui-core = { path = "../../mtool-wgui/core" }
 
 yew = { workspace = true }
 yew-router = { workspace = true }
+# stylist = { workspace = true }
+grass = { workspace = true }
 js-sys = { workspace = true }
 async-trait = { workspace = true }
 wasm-bindgen = { workspace = true }
@@ -36,5 +38,3 @@ features = [
   "ScrollIntoViewOptions",
   "ScrollLogicalPosition"
 ]
-
-

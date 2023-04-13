@@ -28,6 +28,8 @@ edition = "2021"
 [workspace.dependencies]
 yew = { version = "*", features = ["csr"] }
 yew-router = "*"
+# stylist = { version = "*", features = ["yew"] }
+grass = { version = "*", features = ["macro", "nightly"] }
 js-sys = "*"
 web-sys = "*"
 wasm-bindgen = { version = "*", features = ["serde-serialize"] }

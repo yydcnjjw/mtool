@@ -19,7 +19,7 @@ impl Component for App {
     fn view(&self, _ctx: &Context<Self>) -> Html {
         html! {
             <BrowserRouter>
-                <ListenSwitch<Route> render={switch} />
+              <ListenSwitch<Route> render={switch} />
             </BrowserRouter>
         }
     }

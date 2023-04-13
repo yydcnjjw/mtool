@@ -9,3 +9,8 @@ watch = [
 [serve]
 address = "127.0.0.1"
 port = 18188
+
+[[hooks]]
+stage = "build"
+command = "sh"
+command_arguments = ["-c", "tailwindcss -i assets/style.css -o $TRUNK_STAGING_DIR/tailwind.css"]

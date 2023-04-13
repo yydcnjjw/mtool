@@ -1,17 +1,20 @@
 mod builder;
+mod window;
 
 pub use builder::*;
+pub use window::*;
 
 use async_trait::async_trait;
 use mapp::{
     define_label,
     provider::{Injector, Res, Take, TakeOpt},
-    AppContext, AppModule, ModuleGroup,
+    AppContext, AppModule, CreateOnceTaskDescriptor, ModuleGroup,
 };
 use mtool_core::{
     config::{is_startup_mode, StartupMode},
     AppStage, CmdlineStage,
 };
+use mtool_system::keybinding::Keybinding;
 use tauri::{CustomMenuItem, SystemTray, SystemTrayEvent, SystemTrayMenu};
 use tokio::sync::oneshot;
 use tracing::{info, warn};
@@ -40,6 +43,10 @@ impl AppModule for Module {
             )
             .add_once_task(GuiStage::Setup, setup)
             .add_once_task(GuiStage::Init, init)
+            .add_once_task(
+                AppStage::Init,
+                register_keybinding.cond(is_startup_mode(StartupMode::WGui)),
+            )
             .add_once_task(AppStage::Run, wait_for_exit);
 
         Ok(())
@@ -54,7 +61,10 @@ pub fn module() -> ModuleGroup {
 
 async fn setup(builder: Res<Builder>, injector: Injector) -> Result<(), anyhow::Error> {
     let (tx, rx) = oneshot::channel();
-    builder.setup(|builder| {
+
+    injector.construct_once(|| async move { Ok(rx.await?) });
+
+    builder.setup(move |builder| {
         let quit = CustomMenuItem::new("quit".to_string(), "Quit");
         let tray_menu = SystemTrayMenu::new().add_item(quit);
 
@@ -71,13 +81,13 @@ async fn setup(builder: Res<Builder>, injector: Injector) -> Result<(), anyhow::
                 },
                 _ => {}
             })
+            .plugin(window::init(injector))
             .setup(move |app| {
                 tx.send(Res::new(app.handle())).unwrap();
                 Ok(())
             }))
     })?;
 
-    injector.construct_once(|| async move { Ok(rx.await?) });
     Ok(())
 }
 
@@ -107,5 +117,15 @@ async fn wait_for_exit(worker: TakeOpt<TauriWorker>) -> Result<(), anyhow::Error
         worker.take()?.0.await?;
     }
 
+    Ok(())
+}
+
+async fn register_keybinding(keybinding: Res<Keybinding>) -> Result<(), anyhow::Error> {
+    keybinding
+        .define_global("M-A-q", window::hide_window)
+        .await?;
+    // keybinding
+    //     .define_global("M-A-w", window::show_window)
+    //     .await?;
     Ok(())
 }

@@ -1,4 +1,5 @@
 use mtool_interactive_model::OutputContent;
+use mtool_wgui_core::{AutoResizeWindow, WindowProps};
 use tracing::debug;
 use yew::{platform::spawn_local, prelude::*};
 
@@ -65,15 +66,28 @@ impl Component for Output {
         match &self.content {
             OutputContent::Plain(text) => {
                 html! {
-                    <div class={ classes!("output") }>
-                      <div class={ classes!("output-plain") }>
+                    <AutoResizeWindow
+                      window={
+                          WindowProps{
+                              horizontal_center: true,
+                              x: 350,
+                              ..Default::default()}}>
+                    <div class={classes!(
+                        "bg-black",
+                        "w-[48rem]",
+                        "h-[48rem]",
+                        "text-white",
+                        "rounded-xl",
+                        "overflow-hidden")}>
+                      <div class={classes!("w-full", "h-full")}>
                       { html_escape::encode_text(text).to_string() }
                       </div>
                     </div>
+                    </AutoResizeWindow>
                 }
             }
             OutputContent::None => html! {
-                <div class={ classes!("output") }> { "Loading" } </div>
+                <div class={classes!("text-xl")}> { "Loading" } </div>
             },
         }
     }

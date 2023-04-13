@@ -1,4 +1,5 @@
 use mtool_interactive_model::CompletionMeta;
+use mtool_wgui_core::{AutoResizeWindow, WindowProps};
 use tracing::debug;
 use web_sys::HtmlInputElement;
 use yew::{platform::spawn_local, prelude::*};
@@ -148,22 +149,48 @@ impl Component for Completion {
             .callback(move |e: InputEvent| Msg::Input(e.data().unwrap_or_default()));
 
         html! {
-            <div class={classes!("completion")}>
-                <div class={classes!("search-box")}>
+            <>
+                <AutoResizeWindow
+                  window={
+                      WindowProps{
+                          horizontal_center: true,
+                          x: 350,
+                          ..Default::default()}}>
+                <div class={classes!("w-[48rem]",
+                                     "text-white")}>
+                <div class={classes!("flex",
+                                     "w-full")}>
                   <input ref={self.input_node.clone()}
-                  {oninput}
-                  class={classes!("input")}
-                  type="text"
-                  placeholder={self.meta.prompt.clone()}
-                  autofocus=true/>
+                    class={classes!("w-full",
+                                    "h-16",
+                                    "rounded-xl",
+                                    "overflow-hidden",
+                                    "text-3xl",
+                                    "bg-black",
+                                    "appearance-none",
+                                    "caret-white",
+                                    "px-4",
+                                    "font-mono",
+                                    "outline-none")}
+                    {oninput}
+                    type="text"
+                    placeholder={self.meta.prompt.clone()}
+                    autofocus=true/>
                 </div>
 
-                <div class={classes!("content-box")}>
-                  <CompletionList
-                    id={ctx.props().id.clone()} input={self.input.clone()}/>
-                </div>
+                <div class={classes!("w-full", "h-2", "bg-transparent")} />
 
-            </div>
+                <CompletionList
+                  class={classes!("flex",
+                                  "flex-col",
+                                  "bg-black",
+                                  "rounded-xl",
+                                  "overflow-hidden")}
+                  id={ctx.props().id.clone()}
+                  input={self.input.clone()}/>
+                </div>
+                </AutoResizeWindow>
+            </>
         }
     }
 

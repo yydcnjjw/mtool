@@ -1,12 +1,14 @@
 mod app;
 mod route;
 mod switch;
+mod auto_resize_window;
 
 use async_trait::async_trait;
 use mapp::{define_label, provider::Res, AppContext, AppModule, ModuleGroup, ScheduleGraph};
 use route::global_router;
 
 pub use route::{Router, RouteParams};
+pub use auto_resize_window::*;
 
 #[derive(Default)]
 struct CoreModule {}

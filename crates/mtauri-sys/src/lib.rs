@@ -85,19 +85,50 @@ pub mod window {
             #[wasm_bindgen(constructor, js_namespace = ["window", "__TAURI__", "window"])]
             pub fn new(width: usize, height: usize) -> PhysicalSize;
 
+            pub type PhysicalPosition;
+            #[wasm_bindgen(constructor, js_namespace = ["window", "__TAURI__", "window"])]
+            pub fn new(x: usize, y: usize) -> PhysicalPosition;
+
             #[wasm_bindgen(js_namespace = ["window", "__TAURI__", "window", "appWindow"], catch)]
             pub async fn setSize(size: PhysicalSize) -> Result<(), JsValue>;
+
+            #[wasm_bindgen(js_namespace = ["window", "__TAURI__", "window", "appWindow"], catch)]
+            pub async fn setPosition(pos: PhysicalPosition) -> Result<(), JsValue>;
         }
     }
 
-    #[derive(Debug)]
+    #[derive(Debug, Clone, Copy, PartialEq, Eq)]
     pub struct PhysicalSize {
         pub width: usize,
         pub height: usize,
     }
 
+    impl PhysicalSize {
+        pub fn new(width: usize, height: usize) -> Self {
+            Self { width, height }
+        }
+    }
+
     pub async fn set_size(size: PhysicalSize) {
         ffi::setSize(ffi::PhysicalSize::new(size.width, size.height))
+            .await
+            .unwrap();
+    }
+
+    #[derive(Debug, Clone, Copy, PartialEq, Eq)]
+    pub struct PhysicalPosition {
+        pub x: usize,
+        pub y: usize,
+    }
+
+    impl PhysicalPosition {
+        pub fn new(x: usize, y: usize) -> Self {
+            Self { x, y }
+        }
+    }
+
+    pub async fn set_position(pos: PhysicalPosition) {
+        ffi::setPosition(ffi::PhysicalPosition::new(pos.x, pos.y))
             .await
             .unwrap();
     }

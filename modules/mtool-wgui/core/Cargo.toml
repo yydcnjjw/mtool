@@ -13,7 +13,6 @@ mtauri-sys = { path = "../../../crates/mtauri-sys" }
 yew = { workspace = true }
 yew-router = { workspace = true }
 js-sys = { workspace = true }
-web-sys = { workspace = true }
 wasm-bindgen = { workspace = true }
 async-trait = { workspace = true }
 anyhow = { workspace = true }
@@ -22,3 +21,12 @@ tracing = { workspace = true }
 once_cell = { workspace = true }
 
 route-recognizer = "*"
+
+[dependencies.web-sys]
+workspace = true
+features = [
+  "ResizeObserver",
+  "ResizeObserverEntry",
+  "HtmlDivElement",
+  "Screen",
+]

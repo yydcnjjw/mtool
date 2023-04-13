@@ -1,6 +1,5 @@
 use gloo_utils::document;
 use mkeybinding::KeyMap;
-use mtauri_sys::window;
 use serde::{Deserialize, Serialize};
 use tracing::debug;
 use wasm_bindgen::JsCast;
@@ -20,6 +19,8 @@ pub struct CompletionArgs {
 
 #[derive(Properties, PartialEq)]
 pub struct Props {
+    #[prop_or_default]
+    pub class: Classes,
     pub id: String,
     pub input: String,
 }
@@ -73,16 +74,9 @@ impl Component for CompletionList {
     fn update(&mut self, _ctx: &Context<Self>, msg: Self::Message) -> bool {
         match msg {
             Msg::FetchCompleteRead(items) => {
-                let need_adjust = self.items.len().min(Self::MAX_ITEM_COUNT)
-                    != items.len().min(Self::MAX_ITEM_COUNT);
-
                 self.items = items;
 
                 self.remap_keymap();
-
-                if need_adjust {
-                    self.adjust_window_size();
-                }
 
                 true
             }
@@ -133,7 +127,7 @@ impl Component for CompletionList {
     fn view(&self, ctx: &Context<Self>) -> Html {
         let focus_class = |i| {
             if self.focused_item_index == i {
-                "focus-item"
+                "bg-gray-800"
             } else {
                 ""
             }
@@ -141,34 +135,39 @@ impl Component for CompletionList {
 
         html! {
             if !self.items.is_empty() {
-                <div class={classes!("completion-list")}>
-                {
-                    for self.items.iter().enumerate().map(|(i, item)|{
-                        html! {
-                            <div id={ Self::completion_item_id(i) }
-                             class={ classes!("completion-item", focus_class(i)) }
-                             onclick={ ctx.link().callback(move |_| Msg::FocusChanged(i)) }
-                             >
-                            { item }
-                            </div>
-                        }
-                    })
-                }
-                </div>
+                <>
+                    <div class={ctx.props().class.clone()}>
+                    {
+                      for self.items.iter().enumerate().map(|(i, item)|{
+                          html! {
+                              <div id={ Self::completion_item_id(i) }
+                                class={classes!("flex",
+                                                "h-14",
+                                                "items-center",
+                                                "px-4",
+                                                focus_class(i))}
+                                onclick={ ctx.link().callback(move |_| Msg::FocusChanged(i)) }>
+                                <div class={classes!("font-mono",
+                                                     "text-2xl")}>
+                                  { item }
+                                </div>
+                              </div>
+                          }
+                      })
+                    }
+                    </div>
+                </>
+
             }
         }
     }
 
-    fn changed(&mut self, ctx: &Context<Self>, old_props: &Self::Properties) -> bool {
+    fn changed(&mut self, ctx: &Context<Self>, _old_props: &Self::Properties) -> bool {
         debug!("CompletionList changed");
 
         self.focused_item_index = 0;
 
         Self::fetch_complete_read(ctx);
-
-        if old_props.id != ctx.props().id {
-            self.adjust_window_size();
-        }
 
         true
     }
@@ -188,7 +187,7 @@ impl Component for CompletionList {
 }
 
 impl CompletionList {
-    const MAX_ITEM_COUNT: usize = 5;
+    // const MAX_ITEM_COUNT: usize = 5;
 
     fn fetch_complete_read(ctx: &Context<Self>) {
         let input = ctx.props().input.to_string();
@@ -238,28 +237,8 @@ impl CompletionList {
         }
     }
 
-    fn adjust_window_size(&self) {
-        let visual_item_count = self.items.len().min(Self::MAX_ITEM_COUNT);
-
-        let width = 670;
-
-        let completion_height = 64 + 2;
-
-        let height = if visual_item_count == 0 {
-            completion_height
-        } else {
-            visual_item_count * 48 + 2 + completion_height + 16
-        };
-
-        spawn_local(mtauri_sys::window::set_size(window::PhysicalSize {
-            width,
-            height,
-        }));
-    }
-
     fn scroll_into_focused_item(&self) {
         if let Some(elm) = self.focused_item() {
-            debug!("{}", elm.to_string());
             let mut opt = ScrollIntoViewOptions::new();
             opt.block(ScrollLogicalPosition::Nearest);
 

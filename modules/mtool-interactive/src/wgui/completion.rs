@@ -5,6 +5,7 @@ use async_trait::async_trait;
 use futures::lock::Mutex;
 use mapp::provider::Res;
 use mtool_interactive_model::CompletionMeta;
+use mtool_wgui::WGuiWindow;
 use tauri::{
     command,
     plugin::{Builder, TauriPlugin},
@@ -14,8 +15,6 @@ use tokio::sync::oneshot;
 use tracing::debug;
 
 use crate::complete::{CompleteRead, CompletionArgs};
-
-use super::InteractiveWindow;
 
 struct Context {
     args: CompletionArgs,
@@ -29,14 +28,14 @@ impl Context {
 }
 
 pub struct Completion {
-    win: Res<InteractiveWindow>,
+    win: Res<WGuiWindow>,
     ctx: Mutex<Option<Context>>,
 }
 
 impl Completion {
     pub async fn new(
         app: Res<AppHandle<tauri::Wry>>,
-        win: Res<InteractiveWindow>,
+        win: Res<WGuiWindow>,
     ) -> Result<Res<crate::Completion>, anyhow::Error> {
         let self_ = Arc::new(Self {
             win,
@@ -61,7 +60,8 @@ impl CompleteRead for Completion {
 
         self.win.show().context("show completion window")?;
 
-        self.win.emit("route", format!("/interactive/completion/{}", id))?;
+        self.win
+            .emit("route", format!("/interactive/completion/{}", id))?;
 
         let result = rx.await?;
 
