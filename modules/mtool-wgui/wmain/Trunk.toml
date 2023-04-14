@@ -12,5 +12,5 @@ port = 18188
 
 [[hooks]]
 stage = "build"
-command = "sh"
-command_arguments = ["-c", "tailwindcss -i assets/style.css -o $TRUNK_STAGING_DIR/tailwind.css"]
+command = "tailwindcss"
+command_arguments = ["-i", "assets/style.css", "-o", "dist/.stage/tailwind.css"]
