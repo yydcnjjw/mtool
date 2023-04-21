@@ -13,6 +13,7 @@ pub enum Msg {
 pub struct WindowProps {
     pub vertical_center: bool,
     pub horizontal_center: bool,
+    pub center: bool,
     pub x: usize,
     pub y: usize,
     pub width: usize,
@@ -24,6 +25,7 @@ impl Default for WindowProps {
         Self {
             vertical_center: false,
             horizontal_center: false,
+            center: false,
             x: 0,
             y: 0,
             width: 800,
@@ -51,6 +53,7 @@ impl AutoResizeWindow {
         let WindowProps {
             vertical_center,
             horizontal_center,
+            center,
             mut x,
             mut y,
             width,
@@ -59,15 +62,15 @@ impl AutoResizeWindow {
 
         Self::set_window_size(width, height);
 
-        if vertical_center || horizontal_center {
+        if vertical_center || horizontal_center || center {
             let screen = window().unwrap().screen()?;
 
-            if vertical_center {
+            if vertical_center || center {
                 let screen_height = screen.height()?;
                 x = ((screen_height - height as i32) / 2) as usize;
             }
 
-            if horizontal_center {
+            if horizontal_center || center {
                 let screen_width = screen.width()?;
                 y = ((screen_width - width as i32) / 2) as usize;
             }

@@ -65,7 +65,7 @@ impl CompleteRead for Completion {
 
         let result = rx.await?;
 
-        self.win.hide()?;
+        // self.win.hide()?;
 
         Ok(result)
     }

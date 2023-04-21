@@ -8,7 +8,7 @@ module.exports = {
   theme: {
     extend: {},
     fontFamily: {
-      'mono': ['Hack', 'ui-monospace']
+      'mono': ['Hack', 'Consolas', 'ui-monospace']
     }
   },
   plugins: [

@@ -6,7 +6,7 @@ use notify_rust::{Notification, Timeout};
 
 use crate::proxy::ProxyApp;
 
-async fn add_proxy_target_inner(
+async fn add_proxy_rule_inner(
     app: Res<ProxyApp>,
     c: Res<Completion>,
 ) -> Result<(), anyhow::Error> {
@@ -31,7 +31,7 @@ pub async fn add_proxy_rule(app: Res<ProxyApp>, c: Res<Completion>) -> Result<()
         .summary("add proxy rule")
         .timeout(Timeout::Milliseconds(2000));
 
-    match add_proxy_target_inner(app, c).await {
+    match add_proxy_rule_inner(app, c).await {
         Ok(_) => {
             notify.body("successfully");
         }

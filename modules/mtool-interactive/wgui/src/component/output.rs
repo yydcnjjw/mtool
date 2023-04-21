@@ -69,8 +69,8 @@ impl Component for Output {
                     <AutoResizeWindow
                       window={
                           WindowProps{
-                              horizontal_center: true,
-                              x: 350,
+                              center: true,
+b                              x: 350,
                               ..Default::default()}}>
                     <div class={classes!(
                         "bg-black",
