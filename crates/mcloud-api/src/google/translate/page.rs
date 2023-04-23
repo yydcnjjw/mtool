@@ -181,6 +181,6 @@ mod tests {
 
     #[tokio::test]
     async fn test() {
-        query("english", "auto", "zh-CN").await.unwrap()
+        query("english", "auto", "zh-CN").await.unwrap();
     }
 }
