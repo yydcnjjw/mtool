@@ -18,6 +18,7 @@ telemetry = [
 
 [dependencies]
 tokio = { workspace = true, features = ["full"] }
+async-trait = { workspace = true }
 futures = { workspace = true }
 tracing = { workspace = true }
 tracing-subscriber = { workspace = true }

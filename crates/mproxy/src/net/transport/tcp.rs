@@ -1,9 +1,14 @@
 use std::net::SocketAddr;
 
-use tokio::net::{TcpListener, TcpStream};
-use tracing::info;
+use tokio::{
+    net::{TcpListener, TcpStream},
+    sync::RwLock,
+};
+use tracing::{info, instrument};
 
 use crate::config::transport::tcp::{AcceptorConfig, ConnectorConfig};
+
+use super::{dynamic_port, Connect};
 
 #[derive(Debug)]
 pub struct Acceptor {
@@ -26,17 +31,46 @@ impl Acceptor {
 
 #[derive(Debug)]
 pub struct Connector {
-    endpoint: SocketAddr,
+    inner: dynamic_port::Connector<ConnectorInner, TcpStream>,
 }
 
 impl Connector {
     pub async fn new(config: ConnectorConfig) -> Result<Self, anyhow::Error> {
         Ok(Self {
-            endpoint: config.endpoint,
+            inner: dynamic_port::Connector::new(ConnectorInner::new(), config.endpoint)?,
         })
     }
 
+    #[instrument(skip_all, fields(transport = "tcp"))]
     pub async fn connect(&self) -> Result<TcpStream, anyhow::Error> {
-        Ok(TcpStream::connect(&self.endpoint).await?)
+        self.inner.connect().await
+    }
+}
+
+#[derive(Debug)]
+struct ConnectorInner {
+    endpoint: RwLock<Option<SocketAddr>>,
+}
+
+impl ConnectorInner {
+    fn new() -> Self {
+        Self {
+            endpoint: RwLock::new(None),
+        }
+    }
+}
+
+impl Connect<TcpStream> for ConnectorInner {
+    async fn connect(&self, endpoint: SocketAddr) -> Result<(), anyhow::Error> {
+        *self.endpoint.write().await = Some(endpoint);
+        Ok(())
+    }
+
+    async fn open_stream(&self) -> Result<TcpStream, anyhow::Error> {
+        if let Some(endpoint) = *self.endpoint.read().await {
+            Ok(TcpStream::connect(endpoint).await?)
+        } else {
+            anyhow::bail!("connection is invalid")
+        }
     }
 }

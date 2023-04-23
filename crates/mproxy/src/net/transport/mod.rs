@@ -1,9 +1,8 @@
+mod dynamic_port;
 mod quic;
 mod tcp;
 
-use core::fmt;
-
-use tracing::instrument;
+use std::net::SocketAddr;
 
 use crate::{
     config::transport::{AcceptorConfig, ConnectorConfig},
@@ -38,15 +37,6 @@ pub enum Connector {
     Tcp(tcp::Connector),
 }
 
-impl fmt::Display for Connector {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        match self {
-            Connector::Quic(_) => write!(f, "quic"),
-            Connector::Tcp(_) => write!(f, "tcp"),
-        }
-    }
-}
-
 impl Connector {
     pub async fn new(config: ConnectorConfig) -> Result<Connector, anyhow::Error> {
         Ok(match config {
@@ -55,11 +45,15 @@ impl Connector {
         })
     }
 
-    #[instrument(skip_all, fields(transport = self.to_string()))]
     pub async fn connect(&self) -> Result<BoxedAsyncIO, anyhow::Error> {
         Ok(match self {
-            Self::Quic(connector) => Box::new(connector.connect().await?),
-            Self::Tcp(connector) => Box::new(connector.connect().await?),
+            Connector::Quic(connector) => Box::new(connector.connect().await?),
+            Connector::Tcp(connector) => Box::new(connector.connect().await?),
         })
     }
+}
+
+pub trait Connect<S> {
+    async fn connect(&self, endpoint: SocketAddr) -> Result<(), anyhow::Error>;
+    async fn open_stream(&self) -> Result<S, anyhow::Error>;
 }

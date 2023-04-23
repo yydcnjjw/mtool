@@ -1,5 +1,5 @@
 use anyhow::Context;
-use quinn::{Connection, RecvStream, SendStream};
+use quinn::{RecvStream, SendStream};
 use std::{io, net::SocketAddr, pin::Pin, sync::Arc, task, time::Duration};
 use tokio::{
     io::{AsyncRead, AsyncWrite},
@@ -8,6 +8,8 @@ use tokio::{
 use tracing::{debug_span, error, info, instrument, warn, Instrument};
 
 use crate::config::transport::quic::{AcceptorConfig, ConnectorConfig};
+
+use super::{dynamic_port, Connect};
 
 #[derive(Debug)]
 pub struct Acceptor {
@@ -75,14 +77,31 @@ impl Acceptor {
 
 #[derive(Debug)]
 pub struct Connector {
-    endpoint: quinn::Endpoint,
-    connection: RwLock<quinn::Connection>,
-
-    remote: SocketAddr,
-    server_name: String,
+    inner: dynamic_port::Connector<ConnectorInner, BiStream>,
 }
 
 impl Connector {
+    pub async fn new(config: ConnectorConfig) -> Result<Self, anyhow::Error> {
+        let endpoint = config.endpoint.clone();
+        Ok(Self {
+            inner: dynamic_port::Connector::new(ConnectorInner::new(config).await?, endpoint)?,
+        })
+    }
+
+    #[instrument(skip_all, fields(transport = "quic"))]
+    pub async fn connect(&self) -> Result<BiStream, anyhow::Error> {
+        self.inner.connect().await
+    }
+}
+
+#[derive(Debug)]
+pub struct ConnectorInner {
+    endpoint: quinn::Endpoint,
+    conn: RwLock<Option<quinn::Connection>>,
+    server_name: String,
+}
+
+impl ConnectorInner {
     pub async fn new(config: ConnectorConfig) -> Result<Self, anyhow::Error> {
         let tls_config = rustls::ClientConfig::try_from(&config.tls)?;
 
@@ -95,45 +114,34 @@ impl Connector {
         quic_config.transport_config(Arc::new(transport_config));
 
         let mut endpoint = quinn::Endpoint::client(config.local.clone())?;
-        endpoint.set_default_client_config(quic_config);
+        endpoint.set_default_client_config(quic_config.clone());
 
-        let remote = config.endpoint.clone();
-        let connection = endpoint
-            .connect(remote.clone(), &config.server_name)?
-            .await?;
         Ok(Self {
             endpoint,
-            connection: RwLock::new(connection),
-
-            remote,
+            conn: RwLock::new(None),
             server_name: config.server_name.to_string(),
         })
     }
 }
 
-impl Connector {
-    pub async fn reconnect_quic(&self) -> Result<(), anyhow::Error> {
-        let mut conn = self.connection.write().await;
-        *conn = self
-            .endpoint
-            .connect(self.remote.clone(), &self.server_name)?
-            .await?;
+impl Connect<BiStream> for ConnectorInner {
+    async fn connect(&self, endpoint: SocketAddr) -> Result<(), anyhow::Error> {
+        let conn = self.endpoint.connect(endpoint, &self.server_name)?.await?;
+        *self.conn.write().await = Some(conn);
         Ok(())
     }
 
-    pub async fn open_bistream(&self) -> Result<BiStream, anyhow::Error> {
-        let conn = self.connection.read().await;
-        BiStream::open(&conn).await
+    async fn open_stream(&self) -> Result<BiStream, anyhow::Error> {
+        self.open_bistream().await
     }
+}
 
-    pub async fn connect(&self) -> Result<BiStream, anyhow::Error> {
-        match self.open_bistream().await {
-            Ok(s) => Ok(s),
-            Err(e) => {
-                warn!("quic is disconnect: {}, reconnect", e);
-                self.reconnect_quic().await?;
-                self.open_bistream().await
-            }
+impl ConnectorInner {
+    async fn open_bistream(&self) -> Result<BiStream, anyhow::Error> {
+        if let Some(conn) = self.conn.read().await.as_ref() {
+            BiStream::open(conn).await
+        } else {
+            anyhow::bail!("connection is invalid")
         }
     }
 }
@@ -145,12 +153,12 @@ pub struct BiStream {
 }
 
 impl BiStream {
-    pub async fn accept(conn: &Connection) -> Result<Self, anyhow::Error> {
+    pub async fn accept(conn: &quinn::Connection) -> Result<Self, anyhow::Error> {
         let (w, r) = conn.accept_bi().await?;
         Ok(Self { r, w })
     }
 
-    pub async fn open(conn: &Connection) -> Result<Self, anyhow::Error> {
+    pub async fn open(conn: &quinn::Connection) -> Result<Self, anyhow::Error> {
         let (w, r) = conn.open_bi().await?;
         Ok(Self { r, w })
     }

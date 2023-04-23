@@ -1,4 +1,6 @@
 #![feature(trait_alias)]
+#![allow(incomplete_features)]
+#![feature(async_fn_in_trait)]
 
 mod admin;
 mod config;

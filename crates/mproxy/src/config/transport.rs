@@ -20,12 +20,19 @@ pub enum ConnectorConfig {
     Tcp(tcp::ConnectorConfig),
 }
 
+#[derive(Debug, Serialize, Deserialize, Clone)]
+#[serde(untagged)]
+pub enum Endpoint {
+    Single { address: String, port: u16 },
+    Multi { address: String, port_range: String },
+}
+
 pub mod quic {
     use std::net::SocketAddr;
 
     use serde::{Deserialize, Serialize};
 
-    use super::TlsConfig;
+    use super::{Endpoint, TlsConfig};
 
     #[derive(Serialize, Deserialize, Debug, Clone)]
     pub struct AcceptorConfig {
@@ -35,7 +42,7 @@ pub mod quic {
 
     #[derive(Serialize, Deserialize, Debug, Clone)]
     pub struct ConnectorConfig {
-        pub endpoint: SocketAddr,
+        pub endpoint: Endpoint,
         pub local: SocketAddr,
         pub server_name: String,
         pub tls: TlsConfig,
@@ -48,6 +55,8 @@ pub mod tcp {
 
     use serde::{Deserialize, Serialize};
 
+    use super::Endpoint;
+
     #[derive(Serialize, Deserialize, Debug, Clone)]
     pub struct AcceptorConfig {
         pub listen: SocketAddr,
@@ -55,7 +64,7 @@ pub mod tcp {
 
     #[derive(Serialize, Deserialize, Debug, Clone)]
     pub struct ConnectorConfig {
-        pub endpoint: SocketAddr,
+        pub endpoint: Endpoint,
     }
 }
 
