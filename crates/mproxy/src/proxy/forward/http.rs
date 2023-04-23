@@ -1,10 +1,10 @@
-use std::{pin::Pin, task};
+use std::{pin::Pin, task, str::FromStr};
 
 use http_body_util::{combinators::BoxBody, BodyExt};
 use hyper::{
     body::{self, Bytes},
     client::conn::http1,
-    header, Request, Response,
+    header, Request, Response, Uri,
 };
 use tokio::{
     io::{AsyncRead, AsyncWrite},
@@ -52,6 +52,7 @@ impl ForwardHttpConn {
         });
 
         if remove_proxy_header {
+            *req.uri_mut() = Uri::from_str(req.uri().path())?;
             Self::remove_proxy_headers(&mut req);
         }
 
