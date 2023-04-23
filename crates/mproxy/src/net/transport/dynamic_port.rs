@@ -22,7 +22,9 @@ pub struct Connector<T, S> {
     _phantom: PhantomData<S>,
 }
 
-impl<T, S> Connector<T, S> {
+impl<T, S> Connector<T, S>
+where
+    T: Connect<S>, {
     pub fn new(connector: T, endpoint: Endpoint) -> Result<Self, anyhow::Error> {
         let (address, start, end) = match endpoint {
             Endpoint::Single { address, port } => (address, port, port),
@@ -50,6 +52,11 @@ impl<T, S> Connector<T, S> {
             connector,
             _phantom: PhantomData,
         };
+
+        if let Err(e) = this.connector.connect(this.endpoint()?).await {
+            warn!("connect with {} failed: {:?}", endpoint, e);
+            this.set_next_endpoint()?;
+        }
 
         Ok(this)
     }
