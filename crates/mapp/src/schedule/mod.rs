@@ -1,10 +1,10 @@
-mod schedule;
-mod once_task;
 mod cond_load;
+mod once_task;
+mod schedule;
 
-pub use schedule::*;
-pub use once_task::*;
 pub use cond_load::*;
+pub use once_task::*;
+pub use schedule::*;
 
 #[cfg(test)]
 mod tests {

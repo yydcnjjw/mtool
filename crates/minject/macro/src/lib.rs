@@ -23,7 +23,6 @@ pub fn enum_params(input: TokenStream) -> TokenStream {
         .into()
 }
 
-
 // #[proc_macro]
 // pub fn inject(input: TokenStream) -> TokenStream {
 //     parse_macro_input!(input as Inject)

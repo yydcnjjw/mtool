@@ -1,4 +1,4 @@
-use std::{fmt, sync::Arc, ops::Deref};
+use std::{fmt, ops::Deref, sync::Arc};
 
 use crate::complete::CompleteRead;
 

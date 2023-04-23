@@ -6,10 +6,7 @@ use notify_rust::{Notification, Timeout};
 
 use crate::proxy::ProxyApp;
 
-async fn add_proxy_rule_inner(
-    app: Res<ProxyApp>,
-    c: Res<Completion>,
-) -> Result<(), anyhow::Error> {
+async fn add_proxy_rule_inner(app: Res<ProxyApp>, c: Res<Completion>) -> Result<(), anyhow::Error> {
     let target = c
         .complete_read(CompletionArgs::without_completion().prompt("Add proxy target: "))
         .await?;

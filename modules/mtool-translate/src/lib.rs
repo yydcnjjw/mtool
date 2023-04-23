@@ -7,7 +7,7 @@ use async_trait::async_trait;
 use mapp::{provider::Res, AppContext, AppModule, CreateOnceTaskDescriptor};
 use mtool_cmder::{Cmder, CreateCommandDescriptor};
 use mtool_core::{
-    config::{StartupMode, is_startup_mode},
+    config::{is_startup_mode, StartupMode},
     AppStage, CmdlineStage, ConfigStore,
 };
 use mtool_system::keybinding::Keybinding;

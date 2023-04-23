@@ -1,5 +1,5 @@
-mod copy_bidirectional;
 mod copy;
+mod copy_bidirectional;
 
-pub use copy_bidirectional::*;
 pub use copy::*;
+pub use copy_bidirectional::*;

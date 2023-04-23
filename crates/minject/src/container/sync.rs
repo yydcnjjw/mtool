@@ -1,6 +1,6 @@
 use dashmap::DashMap;
 use std::{
-    any::{Any, TypeId, type_name},
+    any::{type_name, Any, TypeId},
     ops::Deref,
 };
 use tracing::trace;

@@ -12,7 +12,7 @@ pub struct EgressConfig {
 #[serde(rename_all = "lowercase")]
 pub enum ClientConfig {
     Http(http::ClientConfig),
-    Direct(direct::ClientConfig)
+    Direct(direct::ClientConfig),
 }
 
 pub mod http {

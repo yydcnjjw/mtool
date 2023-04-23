@@ -6,10 +6,13 @@ use tracing::{debug, error};
 use windows::Win32::{
     Foundation::{HWND, LPARAM, LRESULT, WPARAM},
     System::Threading::GetCurrentThreadId,
-    UI::{WindowsAndMessaging::{
-        CallNextHookEx, DispatchMessageW, GetMessageW, TranslateMessage, KBDLLHOOKSTRUCT, MSG,
-        WH_KEYBOARD_LL, WM_KEYDOWN, WM_KEYUP, WM_SYSKEYDOWN, WM_SYSKEYUP, HHOOK,
-    }, Input::KeyboardAndMouse::VIRTUAL_KEY},
+    UI::{
+        Input::KeyboardAndMouse::VIRTUAL_KEY,
+        WindowsAndMessaging::{
+            CallNextHookEx, DispatchMessageW, GetMessageW, TranslateMessage, HHOOK,
+            KBDLLHOOKSTRUCT, MSG, WH_KEYBOARD_LL, WM_KEYDOWN, WM_KEYUP, WM_SYSKEYDOWN, WM_SYSKEYUP,
+        },
+    },
 };
 
 use crate::{

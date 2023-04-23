@@ -56,7 +56,7 @@ impl WGuiWindow {
         let pos = self.pos.read().unwrap();
         self.inner.set_position(pos.clone())?;
 
-        info!("restore position: {:?}", pos);        
+        info!("restore position: {:?}", pos);
         Ok(())
     }
 

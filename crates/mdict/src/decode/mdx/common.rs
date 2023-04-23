@@ -1,4 +1,4 @@
-use std::{ops::RangeFrom, cell::Ref};
+use std::{cell::Ref, ops::RangeFrom};
 
 use nom::{
     bytes::streaming::tag,

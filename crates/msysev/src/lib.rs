@@ -5,7 +5,7 @@ mod windows;
 mod linux;
 
 mod event;
-mod modifier_state;
 pub mod keydef;
+mod modifier_state;
 
 pub use event::*;

@@ -5,13 +5,13 @@
 // use crate::config::admin::AdminServerConfig;
 
 // pub struct AdminServer {
-    
+
 // }
 
 // impl AdminServer {
 //     pub fn run(
 //         config: AdminServerConfig
-//     ) -> Self { 
+//     ) -> Self {
 
 //         let listener = UnixListener::bind("/tmp/warp.sock").unwrap();
 //         let incoming = UnixListenerStream::new(listener);
@@ -19,8 +19,7 @@
 //             .run_incoming(incoming)
 //             .await;
 
-
-//         Self { 
+//         Self {
 //             sock
 //         }
 //     }

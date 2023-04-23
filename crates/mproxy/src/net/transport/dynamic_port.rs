@@ -51,7 +51,6 @@ impl<T, S> Connector<T, S> {
             _phantom: PhantomData,
         };
 
-
         Ok(this)
     }
 }

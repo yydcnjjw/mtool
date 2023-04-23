@@ -2,10 +2,7 @@ use std::{path::PathBuf, sync::Mutex};
 
 use anyhow::Context;
 use mapp::provider::Res;
-use mproxy::{
-    router::GeositeFile,
-    App, AppConfig,
-};
+use mproxy::{router::GeositeFile, App, AppConfig};
 use mtool_core::ConfigStore;
 use serde::Deserialize;
 use tokio::fs;

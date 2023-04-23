@@ -4,10 +4,7 @@ use async_trait::async_trait;
 use serde::Deserialize;
 use tracing::info;
 use tracing_appender::non_blocking::WorkerGuard;
-use tracing_subscriber::{
-    fmt,
-    EnvFilter,
-};
+use tracing_subscriber::{fmt, EnvFilter};
 
 use mapp::{
     define_label,

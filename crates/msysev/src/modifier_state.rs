@@ -16,7 +16,7 @@ impl ModifierState {
         }
     }
 
-    #[allow(dead_code)]    
+    #[allow(dead_code)]
     pub fn update(&mut self, code: &KeyCode, action: &KeyAction) -> KeyModifier {
         let modifer = match code {
             KeyCode::LeftShift | KeyCode::RightShift => KeyModifier::SHIFT,

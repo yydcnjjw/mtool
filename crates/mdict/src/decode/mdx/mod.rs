@@ -9,9 +9,4 @@ mod record_block;
 
 type Result<T> = std::result::Result<T, Error>;
 
-pub use self::{
-    common::Resource,
-    dict::Dict,
-    error::Error,
-    parser::parse,
-};
+pub use self::{common::Resource, dict::Dict, error::Error, parser::parse};

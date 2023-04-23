@@ -1,5 +1,5 @@
 use tokio::sync::broadcast;
-use tracing::{warn, trace};
+use tracing::{trace, warn};
 
 use crate::{
     kbd::{KeyCombine, KeySequence},

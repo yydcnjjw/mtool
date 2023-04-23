@@ -2,10 +2,10 @@ use anyhow::Context;
 use chrono::{DateTime, Utc};
 use digest::Digest;
 use hmac::{Hmac, Mac};
-use sha2::Sha256;
 use reqwest::header::{CONTENT_TYPE, HOST};
 use serde::de::DeserializeOwned;
 use serde::{Deserialize, Serialize};
+use sha2::Sha256;
 
 use super::credential::Credential;
 use super::{Error, Result};

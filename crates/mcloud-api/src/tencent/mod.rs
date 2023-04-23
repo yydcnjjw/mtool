@@ -12,7 +12,7 @@ pub enum Error {
     #[error("{0:?}")]
     Api(ApiError),
     #[error(transparent)]
-    Other(#[from] anyhow::Error),    
+    Other(#[from] anyhow::Error),
 }
 
 pub type Result<T> = std::result::Result<T, Error>;

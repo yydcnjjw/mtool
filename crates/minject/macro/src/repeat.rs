@@ -47,4 +47,3 @@ impl ToTokens for Repeat {
         tokens.extend([self.gen()]);
     }
 }
-
