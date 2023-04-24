@@ -10,9 +10,56 @@ use tokio::{
 };
 use tracing::{debug_span, error, info, instrument, warn, Instrument};
 
-use crate::config::transport::quic::{AcceptorConfig, CongrestionType, ConnectorConfig};
+use crate::config::transport::quic::{
+    AcceptorConfig, CongestionType, ConnectorConfig, StatsConfig, TransportConfig,
+};
 
 use super::{dynamic_port, Connect};
+
+impl From<TransportConfig> for quinn::TransportConfig {
+    fn from(config: TransportConfig) -> Self {
+        let mut transport_config = quinn::TransportConfig::default();
+        if let Some(t) = config.congestion {
+            match t {
+                CongestionType::Bbr => {
+                    transport_config.congestion_controller_factory(Arc::new(BbrConfig::default()))
+                }
+                CongestionType::Cubic => {
+                    transport_config.congestion_controller_factory(Arc::new(CubicConfig::default()))
+                }
+                CongestionType::NewReno => transport_config
+                    .congestion_controller_factory(Arc::new(NewRenoConfig::default())),
+            };
+        }
+
+        transport_config
+            .keep_alive_interval(config.keep_alive_interval.map(|v| Duration::from_secs(v)));
+        transport_config
+    }
+}
+
+fn record_stats(stats: Option<StatsConfig>, conn: Arc<quinn::Connection>) {
+    if let Some(stats) = &stats {
+        let interval = Duration::from_secs(stats.interval as u64);
+
+        tokio::spawn(async move {
+            loop {
+                tokio::time::sleep(interval).await;
+
+                if let Some(_) = conn.close_reason() {
+                    break;
+                }
+
+                let congestion = conn.congestion_state();
+                info!(
+                    stats = format!("{:?}", conn.stats()),
+                    window = congestion.window(),
+                    "quic connection"
+                );
+            }
+        });
+    }
+}
 
 #[derive(Debug)]
 pub struct Acceptor {
@@ -24,14 +71,17 @@ impl Acceptor {
     pub async fn new(config: AcceptorConfig) -> Result<Self, anyhow::Error> {
         let tls_config = rustls::ServerConfig::try_from(&config.tls)?;
 
-        let quic_config = quinn::ServerConfig::with_crypto(Arc::new(tls_config));
+        let mut quic_config = quinn::ServerConfig::with_crypto(Arc::new(tls_config));
+
+        quic_config.transport_config(Arc::new(quinn::TransportConfig::from(config.transport)));
+
         let endpoint = quinn::Endpoint::server(quic_config, config.listen)?;
 
         info!("Listening on {}", config.listen);
 
         let (tx, rx) = mpsc::unbounded_channel();
 
-        tokio::spawn(Self::run(tx, endpoint.clone()));
+        tokio::spawn(Self::run(tx, endpoint.clone(), config.stats));
 
         Ok(Self {
             _endpoint: endpoint,
@@ -45,9 +95,14 @@ impl Acceptor {
     }
 
     #[instrument(skip_all)]
-    pub async fn run(tx: mpsc::UnboundedSender<BiStream>, endpoint: quinn::Endpoint) {
+    pub async fn run(
+        tx: mpsc::UnboundedSender<BiStream>,
+        endpoint: quinn::Endpoint,
+        stats: Option<StatsConfig>,
+    ) {
         while let Some(conn) = endpoint.accept().await {
             let tx = tx.clone();
+            let stats = stats.clone();
             tokio::spawn(
                 async move {
                     let connection = match conn.await {
@@ -58,8 +113,12 @@ impl Acceptor {
                         }
                     };
 
+                    let conn = Arc::new(connection);
+
+                    record_stats(stats, conn.clone());
+
                     loop {
-                        match BiStream::accept(&connection).await {
+                        match BiStream::accept(&conn).await {
                             Ok(s) => {
                                 if let Err(e) = tx.send(s) {
                                     warn!("{:?}", e);
@@ -101,8 +160,9 @@ impl Connector {
 #[derive(Debug)]
 pub struct ConnectorInner {
     endpoint: quinn::Endpoint,
-    conn: RwLock<Option<quinn::Connection>>,
+    conn: RwLock<Option<Arc<quinn::Connection>>>,
     server_name: String,
+    stats: Option<StatsConfig>,
 }
 
 impl ConnectorInner {
@@ -110,27 +170,7 @@ impl ConnectorInner {
         let tls_config = rustls::ClientConfig::try_from(&config.tls)?;
 
         let mut quic_config = quinn::ClientConfig::new(Arc::new(tls_config));
-
-        let mut transport_config = quinn::TransportConfig::default();
-
-        if let Some(t) = config.congrestion {
-            match t {
-                CongrestionType::Bbr => {
-                    transport_config.congestion_controller_factory(Arc::new(BbrConfig::default()))
-                }
-                CongrestionType::Cubic => {
-                    transport_config.congestion_controller_factory(Arc::new(CubicConfig::default()))
-                }
-                CongrestionType::NewReno => {
-                    transport_config.congestion_controller_factory(Arc::new(NewRenoConfig::default()))
-                }
-            };
-        }
-
-        transport_config
-            .keep_alive_interval(config.keep_alive_interval.map(|v| Duration::from_secs(v)));
-
-        quic_config.transport_config(Arc::new(transport_config));
+        quic_config.transport_config(Arc::new(quinn::TransportConfig::from(config.transport)));
 
         let mut endpoint = quinn::Endpoint::client(config.local.clone())?;
         endpoint.set_default_client_config(quic_config.clone());
@@ -139,14 +179,19 @@ impl ConnectorInner {
             endpoint,
             conn: RwLock::new(None),
             server_name: config.server_name.to_string(),
+            stats: config.stats,
         })
     }
 }
 
 impl Connect<BiStream> for ConnectorInner {
     async fn connect(&self, endpoint: SocketAddr) -> Result<(), anyhow::Error> {
-        let conn = self.endpoint.connect(endpoint, &self.server_name)?.await?;
+        let conn = Arc::new(self.endpoint.connect(endpoint, &self.server_name)?.await?);
+
+        record_stats(self.stats.clone(), conn.clone());
+
         *self.conn.write().await = Some(conn);
+
         Ok(())
     }
 

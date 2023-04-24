@@ -34,19 +34,34 @@ pub mod quic {
 
     use super::{Endpoint, TlsConfig};
 
+    #[derive(Debug, Serialize, Deserialize, Clone)]
+    #[serde(rename_all = "lowercase")]
+    pub enum CongestionType {
+        Bbr,
+        Cubic,
+        NewReno,
+    }
+
+    #[derive(Serialize, Deserialize, Debug, Clone)]
+    pub struct TransportConfig {
+        pub keep_alive_interval: Option<u64>,
+        pub congestion: Option<CongestionType>,
+    }
+
+    #[derive(Serialize, Deserialize, Debug, Clone)]
+    pub struct StatsConfig {
+        pub interval: usize,
+    }
+
     #[derive(Serialize, Deserialize, Debug, Clone)]
     pub struct AcceptorConfig {
         pub listen: SocketAddr,
         pub tls: TlsConfig,
-    }
 
+        #[serde(flatten)]
+        pub transport: TransportConfig,
 
-    #[derive(Debug, Serialize, Deserialize, Clone)]
-    #[serde(rename_all = "lowercase")]
-    pub enum CongrestionType {
-        Bbr,
-        Cubic,
-        NewReno,
+        pub stats: Option<StatsConfig>,
     }
 
     #[derive(Serialize, Deserialize, Debug, Clone)]
@@ -55,8 +70,11 @@ pub mod quic {
         pub local: SocketAddr,
         pub server_name: String,
         pub tls: TlsConfig,
-        pub keep_alive_interval: Option<u64>,
-        pub congrestion: Option<CongrestionType>,
+
+        #[serde(flatten)]
+        pub transport: TransportConfig,
+
+        pub stats: Option<StatsConfig>,
     }
 }
 
