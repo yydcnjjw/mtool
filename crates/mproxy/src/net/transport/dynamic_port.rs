@@ -25,7 +25,7 @@ pub struct Connector<T, S> {
 impl<T, S> Connector<T, S>
 where
     T: Connect<S>, {
-    pub fn new(connector: T, endpoint: Endpoint) -> Result<Self, anyhow::Error> {
+    pub async fn new(connector: T, endpoint: Endpoint) -> Result<Self, anyhow::Error> {
         let (address, start, end) = match endpoint {
             Endpoint::Single { address, port } => (address, port, port),
             Endpoint::Multi {
@@ -53,7 +53,8 @@ where
             _phantom: PhantomData,
         };
 
-        if let Err(e) = this.connector.connect(this.endpoint()?).await {
+        let endpoint = this.endpoint()?;
+        if let Err(e) = this.connector.connect(endpoint.clone()).await {
             warn!("connect with {} failed: {:?}", endpoint, e);
             this.set_next_endpoint()?;
         }

@@ -40,6 +40,15 @@ pub mod quic {
         pub tls: TlsConfig,
     }
 
+
+    #[derive(Debug, Serialize, Deserialize, Clone)]
+    #[serde(rename_all = "lowercase")]
+    pub enum CongrestionType {
+        Bbr,
+        Cubic,
+        NewReno,
+    }
+
     #[derive(Serialize, Deserialize, Debug, Clone)]
     pub struct ConnectorConfig {
         pub endpoint: Endpoint,
@@ -47,6 +56,7 @@ pub mod quic {
         pub server_name: String,
         pub tls: TlsConfig,
         pub keep_alive_interval: Option<u64>,
+        pub congrestion: Option<CongrestionType>,
     }
 }
 

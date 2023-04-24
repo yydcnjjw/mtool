@@ -37,7 +37,7 @@ pub struct Connector {
 impl Connector {
     pub async fn new(config: ConnectorConfig) -> Result<Self, anyhow::Error> {
         Ok(Self {
-            inner: dynamic_port::Connector::new(ConnectorInner::new(), config.endpoint)?,
+            inner: dynamic_port::Connector::new(ConnectorInner::new(), config.endpoint).await?,
         })
     }
 

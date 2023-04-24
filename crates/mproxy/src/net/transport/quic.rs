@@ -1,5 +1,8 @@
 use anyhow::Context;
-use quinn::{RecvStream, SendStream};
+use quinn::{
+    congestion::{BbrConfig, CubicConfig, NewRenoConfig},
+    RecvStream, SendStream,
+};
 use std::{io, net::SocketAddr, pin::Pin, sync::Arc, task, time::Duration};
 use tokio::{
     io::{AsyncRead, AsyncWrite},
@@ -7,7 +10,7 @@ use tokio::{
 };
 use tracing::{debug_span, error, info, instrument, warn, Instrument};
 
-use crate::config::transport::quic::{AcceptorConfig, ConnectorConfig};
+use crate::config::transport::quic::{AcceptorConfig, CongrestionType, ConnectorConfig};
 
 use super::{dynamic_port, Connect};
 
@@ -84,7 +87,8 @@ impl Connector {
     pub async fn new(config: ConnectorConfig) -> Result<Self, anyhow::Error> {
         let endpoint = config.endpoint.clone();
         Ok(Self {
-            inner: dynamic_port::Connector::new(ConnectorInner::new(config).await?, endpoint)?,
+            inner: dynamic_port::Connector::new(ConnectorInner::new(config).await?, endpoint)
+                .await?,
         })
     }
 
@@ -108,6 +112,21 @@ impl ConnectorInner {
         let mut quic_config = quinn::ClientConfig::new(Arc::new(tls_config));
 
         let mut transport_config = quinn::TransportConfig::default();
+
+        if let Some(t) = config.congrestion {
+            match t {
+                CongrestionType::Bbr => {
+                    transport_config.congestion_controller_factory(Arc::new(BbrConfig::default()))
+                }
+                CongrestionType::Cubic => {
+                    transport_config.congestion_controller_factory(Arc::new(CubicConfig::default()))
+                }
+                CongrestionType::NewReno => {
+                    transport_config.congestion_controller_factory(Arc::new(NewRenoConfig::default()))
+                }
+            };
+        }
+
         transport_config
             .keep_alive_interval(config.keep_alive_interval.map(|v| Duration::from_secs(v)));
 
