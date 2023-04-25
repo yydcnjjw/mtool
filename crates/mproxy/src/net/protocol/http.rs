@@ -133,6 +133,14 @@ impl ServerService {
         Ok(Response::new(empty()))
     }
 
+    fn is_https_proxy_request(req: &Request<hyper::body::Incoming>) -> bool {
+        req.method() == Method::CONNECT
+    }
+
+    fn is_http_proxy_request(req: &Request<hyper::body::Incoming>) -> bool {
+        req.headers().contains_key("proxy-connection") || req.uri().scheme().is_some()
+    }
+
     #[instrument(
         name = "handle_request",
         skip_all,
@@ -145,9 +153,9 @@ impl ServerService {
     ) -> Result<Response<BoxBody<Bytes, hyper::Error>>, anyhow::Error> {
         debug!(monotonic_counter.http_proxy_request = 1);
 
-        if Method::CONNECT == req.method() {
+        if Self::is_https_proxy_request(&req) {
             self.handle_https_proxy(req).await
-        } else if req.headers().contains_key("proxy-connection") {
+        } else if Self::is_http_proxy_request(&req) {
             self.handle_http_proxy(req).await
         } else {
             Self::handle_http(req).await
