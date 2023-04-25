@@ -1,5 +1,6 @@
-use std::{pin::Pin, task, str::FromStr};
+use std::{pin::Pin, task};
 
+use anyhow::Context;
 use http_body_util::{combinators::BoxBody, BodyExt};
 use hyper::{
     body::{self, Bytes},
@@ -52,7 +53,14 @@ impl ForwardHttpConn {
         });
 
         if remove_proxy_header {
-            *req.uri_mut() = Uri::from_str(req.uri().path())?;
+            *req.uri_mut() = Uri::builder()
+                .path_and_query(
+                    req.uri()
+                        .path_and_query()
+                        .context(format!("get path and query from {}", req.uri().to_string()))?
+                        .to_string(),
+                )
+                .build()?;
             Self::remove_proxy_headers(&mut req);
         }
 
