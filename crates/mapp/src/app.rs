@@ -1,4 +1,4 @@
-use tracing::debug;
+use tracing::{debug, error};
 
 use crate::{
     module::{Module, ModuleGroup},
@@ -45,7 +45,7 @@ impl AppBuilder {
 
         let mut app_runner = AppRunner::new();
 
-        app_runner.runner = Some(Box::new(move || {
+        app_runner.runner = Some(Box::new(move || -> Result<(), anyhow::Error> {
             let mut ctx = AppContext::new();
 
             ctx.injector().insert(Res::new(builder.tracing.unwrap()));
@@ -58,18 +58,19 @@ impl AppBuilder {
             #[cfg(not(target_arch = "wasm32"))]
             let mut rt = tokio::runtime::Builder::new_multi_thread();
 
-            rt.enable_all().build().unwrap().block_on(async move {
-                modules.init(&mut ctx).await.unwrap();
+            rt.enable_all().build()?.block_on(async move {
+                modules.init(&mut ctx).await?;
 
                 let sche = ctx.schedule;
 
                 let mut app = App::new();
                 app.injector = ctx.injector;
 
-                sche.run(&app).await.unwrap();
+                sche.run(&app).await?;
 
                 debug!("App running!");
-            });
+                Ok::<(), anyhow::Error>(())
+            })
         }));
 
         app_runner
@@ -99,7 +100,7 @@ impl AppContext {
 }
 
 pub struct AppRunner {
-    runner: Option<Box<dyn FnOnce()>>,
+    runner: Option<Box<dyn FnOnce() -> Result<(), anyhow::Error>>>,
 }
 
 impl AppRunner {
@@ -108,7 +109,9 @@ impl AppRunner {
     }
 
     pub fn run(self) {
-        (self.runner.unwrap())();
+        if let Err(e) = (self.runner.unwrap())() {
+            error!("{:?}", e);
+        }
     }
 }
 
