@@ -21,8 +21,27 @@ impl From<TransportConfig> for quinn::TransportConfig {
         let mut transport_config = quinn::TransportConfig::default();
         if let Some(t) = config.congestion {
             match t {
-                CongestionType::Bbr => {
-                    transport_config.congestion_controller_factory(Arc::new(BbrConfig::default()))
+                CongestionType::Bbr {
+                    max_datagram_size,
+                    initial_window,
+                    minimum_window,
+                } => {
+                    let mut bbr = BbrConfig::default();
+                    if let Some(max_datagram_size) = max_datagram_size {
+                        bbr.max_datagram_size(max_datagram_size);
+                    }
+
+                    if let Some(initial_window) = initial_window {
+                        bbr.initial_window(initial_window);
+                    }
+
+                    if let Some(minimum_window) = minimum_window {
+                        bbr.minimum_window(minimum_window);
+                    }
+
+                    info!("congestion params: {:?}", bbr);
+
+                    transport_config.congestion_controller_factory(Arc::new(bbr))
                 }
                 CongestionType::Cubic => {
                     transport_config.congestion_controller_factory(Arc::new(CubicConfig::default()))

@@ -36,8 +36,13 @@ pub mod quic {
 
     #[derive(Debug, Serialize, Deserialize, Clone)]
     #[serde(rename_all = "lowercase")]
+    #[serde(tag = "type")]
     pub enum CongestionType {
-        Bbr,
+        Bbr {
+            max_datagram_size: Option<u64>,
+            initial_window: Option<u64>,
+            minimum_window: Option<u64>,
+        },
         Cubic,
         NewReno,
     }
