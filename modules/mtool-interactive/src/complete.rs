@@ -13,6 +13,7 @@ pub trait CompleteRead {
 pub struct CompletionArgs {
     pub complete: Box<dyn Complete + Send + Sync>,
     pub meta: CompletionMeta,
+    pub hide_window: bool,
 }
 
 impl CompletionArgs {
@@ -26,6 +27,7 @@ impl CompletionArgs {
                 id: rand_string(),
                 prompt: String::default(),
             },
+            hide_window: false,
         }
     }
 
@@ -36,11 +38,17 @@ impl CompletionArgs {
                 id: rand_string(),
                 prompt: String::default(),
             },
+            hide_window: false,
         }
     }
 
     pub fn prompt(mut self, prompt: &str) -> Self {
         self.meta.prompt = prompt.to_string();
+        self
+    }
+
+    pub fn close_window(mut self) -> Self {
+        self.hide_window = true;
         self
     }
 

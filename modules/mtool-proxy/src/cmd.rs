@@ -8,7 +8,11 @@ use crate::proxy::ProxyApp;
 
 async fn add_proxy_rule_inner(app: Res<ProxyApp>, c: Res<Completion>) -> Result<(), anyhow::Error> {
     let target = c
-        .complete_read(CompletionArgs::without_completion().prompt("Add proxy target: "))
+        .complete_read(
+            CompletionArgs::without_completion()
+                .prompt("Add proxy target: ")
+                .close_window(),
+        )
         .await?;
 
     {

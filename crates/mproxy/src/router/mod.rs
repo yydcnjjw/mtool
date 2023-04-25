@@ -12,7 +12,7 @@ use crate::{
         protos::geosite,
         routing::{RoutingConfig, RuleConfig},
     },
-    proxy::NetLocation,
+    proxy::Address,
 };
 
 #[derive(Debug)]
@@ -65,8 +65,7 @@ impl GeositeFile {
         value: &str,
     ) -> Result<(), anyhow::Error> {
         let sg = self.get_site_group_or_create_mut(tag);
-
-        sg.domain.push(geosite::Domain {
+        let domain = geosite::Domain {
             type_: match rule_type {
                 RuleType::Domain => geosite::domain::Type::Domain,
                 RuleType::Full => geosite::domain::Type::Full,
@@ -76,7 +75,14 @@ impl GeositeFile {
             .into(),
             value: value.to_string(),
             ..Default::default()
-        });
+        };
+
+        if !sg.domain.contains(&domain) {
+            sg.domain.push(domain);
+        } else {
+            anyhow::bail!("{} is exist", value);
+        }
+
         Ok(())
     }
 
@@ -151,13 +157,11 @@ impl Router {
     }
 
     #[instrument(skip(self))]
-    pub fn route(&self, src: &String, remote: &NetLocation) -> Result<String, anyhow::Error> {
+    pub fn route(&self, src: &String, address: &Address) -> Result<String, anyhow::Error> {
         Ok(self
             .rules
             .iter()
-            .find(|rule| {
-                rule.src.contains(src) && rule.matcher.reverse_query(&remote.address.to_string())
-            })
+            .find(|rule| rule.src.contains(src) && rule.matcher.reverse_query(&address.to_string()))
             .map(|rule| rule.dest.clone())
             .unwrap_or(
                 self.rules

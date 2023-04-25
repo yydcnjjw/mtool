@@ -52,6 +52,8 @@ impl Completion {
 impl CompleteRead for Completion {
     async fn complete_read(&self, args: CompletionArgs) -> Result<String, anyhow::Error> {
         let id = args.meta.id.clone();
+        let hide_window = args.hide_window;
+
         let (tx, rx) = oneshot::channel();
         {
             let mut ctx = self.ctx.lock().await;
@@ -65,7 +67,9 @@ impl CompleteRead for Completion {
 
         let result = rx.await?;
 
-        // self.win.hide()?;
+        if hide_window {
+            self.win.hide()?;
+        }
 
         Ok(result)
     }

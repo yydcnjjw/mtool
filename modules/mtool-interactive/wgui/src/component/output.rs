@@ -70,7 +70,7 @@ impl Component for Output {
                       window={
                           WindowProps{
                               center: true,
-b                              x: 350,
+                              x: 350,
                               ..Default::default()}}>
                     <div class={classes!(
                         "bg-black",

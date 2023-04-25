@@ -6,7 +6,7 @@ mod admin;
 mod config;
 mod io;
 mod net;
-mod proxy;
+pub mod proxy;
 pub mod router;
 
 #[cfg(feature = "telemetry")]
@@ -102,7 +102,7 @@ impl App {
 
     async fn dispatch(&self) -> Result<(), anyhow::Error> {
         while let Some((source, req)) = self.rx.lock().await.recv().await {
-            match self.router.route(&source, &req.remote) {
+            match self.router.route(&source, &req.remote.address) {
                 Ok(dest) => {
                     let egress = self
                         .egress
