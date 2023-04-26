@@ -1,6 +1,6 @@
 pub mod direct;
 pub mod http;
-// mod socks5;
+pub mod socks5;
 
 use core::fmt;
 
@@ -14,12 +14,14 @@ use crate::{
 #[derive(Debug)]
 pub enum Server {
     Http(http::Server),
+    Socks5(socks5::Server),
 }
 
 impl Server {
     pub async fn new(config: ServerConfig) -> Result<Self, anyhow::Error> {
         Ok(match config {
             ServerConfig::Http(config) => Self::Http(http::Server::new(config).await?),
+            ServerConfig::Socks5(config) => Self::Socks5(socks5::Server::new(config).await?),
         })
     }
 
@@ -27,6 +29,7 @@ impl Server {
     pub async fn run(&self) -> Result<(), anyhow::Error> {
         match &self {
             Server::Http(s) => s.run().await,
+            Server::Socks5(s) => s.run().await,
         }
     }
 
@@ -34,6 +37,7 @@ impl Server {
     pub async fn proxy_accept(&self) -> Result<ProxyRequest, anyhow::Error> {
         match &self {
             Server::Http(s) => s.proxy_accept().await,
+            Server::Socks5(s) => s.proxy_accept().await,
         }
     }
 }

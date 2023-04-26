@@ -1,10 +1,11 @@
 use core::fmt;
 use std::{
-    net::{IpAddr, SocketAddr},
+    net::{IpAddr, Ipv4Addr, SocketAddr, Ipv6Addr},
     str::FromStr,
 };
 
 use anyhow::Context;
+use socksv5::v5::SocksV5Host;
 
 #[derive(Debug, Clone, Eq, PartialEq, Hash)]
 pub enum Address {
@@ -67,6 +68,18 @@ impl FromStr for NetLocation {
                     port,
                 }
             }
+        })
+    }
+}
+
+impl TryFrom<SocksV5Host> for Address {
+    type Error = anyhow::Error;
+
+    fn try_from(value: SocksV5Host) -> Result<Self, Self::Error> {
+        Ok(match value {
+            SocksV5Host::Domain(domain) => Address::Hostname(String::from_utf8(domain)?),
+            SocksV5Host::Ipv4(v4) => Address::Ip(IpAddr::V4(Ipv4Addr::from(v4))),
+            SocksV5Host::Ipv6(v6) => Address::Ip(IpAddr::V6(Ipv6Addr::from(v6))),
         })
     }
 }

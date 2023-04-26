@@ -13,6 +13,7 @@ pub struct IngressConfig {
 #[serde(rename_all = "lowercase")]
 pub enum ServerConfig {
     Http(http::ServerConfig),
+    Socks5(socks5::ServerConfig),
 }
 
 pub mod http {
@@ -24,5 +25,32 @@ pub mod http {
     pub struct ServerConfig {
         #[serde(flatten)]
         pub acceptor: AcceptorConfig,
+    }
+}
+
+pub mod socks5 {
+    use serde::{Deserialize, Serialize};
+
+    use crate::config::transport::AcceptorConfig;
+    #[derive(Debug, Serialize, Deserialize)]
+    #[serde(tag = "type")]
+    #[serde(rename_all = "lowercase")]
+    pub enum AuthType {
+        Simple { user: String, password: String },
+    }
+
+    #[derive(Debug, Serialize, Deserialize)]
+    pub struct Socks5Config {
+        pub allow_udp: Option<bool>,
+        pub auth: Option<AuthType>,
+    }
+
+    #[derive(Debug, Serialize, Deserialize)]
+    pub struct ServerConfig {
+        #[serde(flatten)]
+        pub acceptor: AcceptorConfig,
+
+        #[serde(flatten)]
+        pub socks5: Socks5Config,
     }
 }

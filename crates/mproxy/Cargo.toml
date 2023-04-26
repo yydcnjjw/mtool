@@ -18,6 +18,7 @@ telemetry = [
 
 [dependencies]
 tokio = { workspace = true, features = ["full"] }
+tokio-util = { version = "*", features = ["compat"] }
 async-trait = { workspace = true }
 futures = { workspace = true }
 tracing = { workspace = true }
@@ -41,7 +42,8 @@ quinn = "*"
 rustls = { version = "0.20.8", features = ["quic"] }
 rustls-pemfile = "*"
 hyper = { version = "1.0.0-rc.2", features = ["full"] }
-http-body-util = "0.1.0-rc.2" 
+http-body-util = "0.1.0-rc.2"
+socksv5 = "*"
 strum = { version = "*", features = ["derive"] }
 enum_dispatch = "*"
 domain_matcher = { git = "https://github.com/Qv2ray/DomainMatcher" }

@@ -5,7 +5,7 @@ use futures::Future;
 use http_body_util::{combinators::BoxBody, BodyExt, Empty, Full};
 use hyper::{
     body::{self, Bytes},
-    http,
+    http::{self, uri::Scheme},
     server::conn::http1,
     service::Service,
     Method, Request, Response, StatusCode,
@@ -138,7 +138,12 @@ impl ServerService {
     }
 
     fn is_http_proxy_request(req: &Request<hyper::body::Incoming>) -> bool {
-        req.headers().contains_key("proxy-connection") || req.uri().scheme().is_some()
+        req.headers().contains_key("proxy-connection")
+            || req
+                .uri()
+                .scheme()
+                .and_then(|v| if v == &Scheme::HTTP { Some(v) } else { None })
+                .is_some()
     }
 
     #[instrument(
