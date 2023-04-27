@@ -109,7 +109,7 @@ impl RequestMeta for ChatRequest {
 
 #[cfg(test)]
 mod tests {
-    use crate::openai::Client;
+    // use crate::openai::Client;
 
     use super::*;
 

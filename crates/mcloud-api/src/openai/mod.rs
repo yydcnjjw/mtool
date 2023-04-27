@@ -4,6 +4,7 @@ use anyhow::Context;
 use serde::{de::DeserializeOwned, Serialize};
 
 pub mod chat;
+// pub mod phind;
 
 pub trait RequestMeta {
     fn path() -> &'static str;

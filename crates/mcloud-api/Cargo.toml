@@ -15,9 +15,10 @@ thiserror = { workspace = true }
 regex = { workspace = true }
 serde_json = { workspace = true }
 
-hex = "0.4"
-base64 = "0.13"
-chrono = "0.4"
-digest = "0.10"
-hmac = "0.12"
-sha2 = "0.10"
+hex = "*"
+base64 = "*"
+chrono = "*"
+digest = "*"
+hmac = "*"
+sha2 = "*"
+eventsource-stream = "*"
