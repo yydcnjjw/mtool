@@ -1,11 +1,20 @@
 use futures::FutureExt;
-use mapp::provider::Res;
+use mapp::provider::{Injector, Res};
 use mtool_cmder::CommandArgs;
 use mtool_interactive::{Completion, CompletionArgs, OutputDevice};
 
-use crate::{language::LanguageType, tencent, translator::Translator};
+use crate::{
+    openai, tencent,
+    translator::{LanguageType, Translator},
+};
 
-use clap::Parser;
+use clap::{Parser, ValueEnum};
+
+#[derive(ValueEnum, Debug, Clone)]
+enum Backend {
+    Tencent,
+    Openai,
+}
 
 /// Translate module
 #[derive(Parser, Debug)]
@@ -13,13 +22,16 @@ use clap::Parser;
 #[clap(no_binary_name = true)]
 struct Args {
     text: String,
+    #[clap(value_enum)]
+    #[arg(default_value_t = Backend::Openai)]
+    backend: Backend,
 }
 
 async fn text_translate_from_cli(
     source: LanguageType,
     target: LanguageType,
-    translator: Res<tencent::Translator>,
     args: Res<CommandArgs>,
+    injector: Injector,
 ) -> Result<(), anyhow::Error> {
     let args = match Args::try_parse_from(args.iter()) {
         Ok(args) => args,
@@ -29,7 +41,12 @@ async fn text_translate_from_cli(
         }
     };
 
-    let Args { text } = args;
+    let Args { text, backend } = args;
+
+    let translator: Res<dyn Translator + Send + Sync> = match backend {
+        Backend::Tencent => injector.get::<Res<tencent::Translator>>().await?,
+        Backend::Openai => injector.get::<Res<openai::Translator>>().await?,
+    };
 
     let result = translator.text_translate(text, source, target).await?;
 
@@ -90,20 +107,15 @@ quick_translate_interactive!(tj_interactive, Auto, Ja);
 macro_rules! quick_translate {
     ($name:ident, $source:ident, $target:ident) => {
         pub async fn $name(
-            translator: Res<tencent::Translator>,
             args: Res<CommandArgs>,
+            injector: Injector,
         ) -> Result<(), anyhow::Error> {
-            text_translate_from_cli(
-                LanguageType::$source,
-                LanguageType::$target,
-                translator,
-                args,
-            )
-            .await
+            text_translate_from_cli(LanguageType::$source, LanguageType::$target, args, injector)
+                .await
         }
     };
 }
 
-quick_translate!(tz, Auto, Zh);
-quick_translate!(te, Auto, En);
-quick_translate!(tj, Auto, Ja);
+quick_translate!(text_translate_into_chinese, Auto, Zh);
+quick_translate!(text_translate_into_english, Auto, En);
+quick_translate!(text_translate_into_japanese, Auto, Ja);

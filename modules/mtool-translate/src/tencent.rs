@@ -9,22 +9,12 @@ use mcloud_api::tencent::{
 use mtool_core::ConfigStore;
 use serde::Deserialize;
 
-use crate::{language::LanguageType, translator};
+use crate::translator::{self, LanguageType};
 
 #[derive(Debug, Clone, Deserialize)]
 struct Config {
+    #[serde(flatten)]
     credential: Credential,
-}
-
-impl From<LanguageType> for text::LanguageType {
-    fn from(val: LanguageType) -> Self {
-        match val {
-            LanguageType::Auto => text::LanguageType::Auto,
-            LanguageType::En => text::LanguageType::En,
-            LanguageType::Zh => text::LanguageType::Zh,
-            LanguageType::Ja => text::LanguageType::Ja,
-        }
-    }
 }
 
 #[derive(Debug)]
@@ -33,9 +23,9 @@ pub struct Translator {
 }
 
 impl Translator {
-    pub async fn new(cs: Res<ConfigStore>) -> Result<Res<Self>, anyhow::Error> {
+    pub async fn construct(cs: Res<ConfigStore>) -> Result<Res<Self>, anyhow::Error> {
         let cfg = cs
-            .get::<Config>("translate")
+            .get::<Config>("translate.tencent")
             .await
             .context("Failed to parse translate")?;
 
@@ -56,5 +46,16 @@ impl translator::Translator for Translator {
             .await
             .context(format!("Failed to request tencent cloud api: {:?}", req))?;
         Ok(resp.target_text)
+    }
+}
+
+impl From<LanguageType> for text::LanguageType {
+    fn from(val: LanguageType) -> Self {
+        match val {
+            LanguageType::Auto => text::LanguageType::Auto,
+            LanguageType::En => text::LanguageType::En,
+            LanguageType::Zh => text::LanguageType::Zh,
+            LanguageType::Ja => text::LanguageType::Ja,
+        }
     }
 }

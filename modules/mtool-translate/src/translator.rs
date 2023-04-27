@@ -1,6 +1,12 @@
 use async_trait::async_trait;
 
-use crate::language::LanguageType;
+#[derive(PartialEq, Debug, Clone)]
+pub enum LanguageType {
+    Auto,
+    En,
+    Zh,
+    Ja,
+}
 
 #[async_trait]
 pub trait Translator {

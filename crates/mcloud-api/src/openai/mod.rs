@@ -17,6 +17,15 @@ pub struct Client {
     key: String,
 }
 
+impl Debug for Client {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.debug_struct("Client")
+            .field("basic_url", &self.basic_url)
+            .field("key", &self.key)
+            .finish()
+    }
+}
+
 impl Client {
     pub fn new(key: &str) -> Result<Self, anyhow::Error> {
         Ok(Self {

@@ -1,5 +1,5 @@
 mod cmd;
-mod language;
+mod openai;
 mod tencent;
 mod translator;
 
@@ -18,7 +18,9 @@ pub struct Module {}
 #[async_trait]
 impl AppModule for Module {
     async fn init(&self, app: &mut AppContext) -> Result<(), anyhow::Error> {
-        app.injector().construct_once(tencent::Translator::new);
+        app.injector()
+            .construct_once(tencent::Translator::construct);
+        app.injector().construct_once(openai::Translator::construct);
 
         app.schedule()
             .add_once_task(CmdlineStage::AfterInit, register_command)
@@ -33,9 +35,24 @@ impl AppModule for Module {
 async fn register_command(cmder: Res<Cmder>, cs: Res<ConfigStore>) -> Result<(), anyhow::Error> {
     if cs.startup_mode() == StartupMode::Cli {
         cmder
-            .add_command(cmd::te.name("te").set_desc("Translate into English"))
-            .add_command(cmd::tz.name("tz").set_desc("Translate into Chinese"))
-            .add_command(cmd::tj.name("tj").set_desc("Translate into Japanese"));
+            .add_command(
+                cmd::text_translate_into_english
+                    .name("text_translate_into_english")
+                    .add_alias("te")
+                    .set_desc("Translate into English"),
+            )
+            .add_command(
+                cmd::text_translate_into_chinese
+                    .name("text_translate_into_chinese")
+                    .add_alias("tz")
+                    .set_desc("Translate into Chinese"),
+            )
+            .add_command(
+                cmd::text_translate_into_japanese
+                    .name("text_translate_into_japanese")
+                    .add_alias("tj")
+                    .set_desc("Translate into Japanese"),
+            );
     } // else {
       //     cmder
       //         .add_command(

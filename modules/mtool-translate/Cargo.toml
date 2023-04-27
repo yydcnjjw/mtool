@@ -21,3 +21,4 @@ tokio = { workspace = true }
 async-trait = { workspace = true }
 futures = { workspace = true }
 anyhow = { workspace = true }
+itertools = { workspace = true }
