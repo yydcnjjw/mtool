@@ -36,11 +36,11 @@ impl Server {
     async fn serve_inner(
         tx: mpsc::UnboundedSender<ProxyRequest>,
         stream: BoxedAsyncIO,
-        config: Arc<Socks5Config>,
+        _config: Arc<Socks5Config>,
     ) -> Result<(), anyhow::Error> {
         let mut stream = stream.compat();
 
-        let methods = socksv5::v5::read_handshake(&mut stream).await?;
+        let _methods = socksv5::v5::read_handshake(&mut stream).await?;
 
         // if let Some(_auth) = &config.auth {
         //     anyhow::bail!("auth is not supported {:?}", methods)
