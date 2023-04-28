@@ -60,7 +60,7 @@ impl AppBuilder {
             #[cfg(not(target_arch = "wasm32"))]
             let mut rt = tokio::runtime::Builder::new_multi_thread();
 
-            rt.enable_all().build()?.block_on(async move {
+            let run = || async move {
                 modules.init(&mut ctx).await?;
 
                 let sche = ctx.schedule;
@@ -72,7 +72,15 @@ impl AppBuilder {
 
                 debug!("App running!");
                 Ok::<(), anyhow::Error>(())
-            })
+            };
+
+            rt.enable_all().build()?.block_on(async move {
+                if let Err(e) = run().await {
+                    error!("{:?}", e);
+                    std::process::exit(-1);
+                }
+            });
+            Ok(())
         }));
 
         app_runner
@@ -113,7 +121,6 @@ impl AppRunner {
     pub fn run(self) {
         if let Err(e) = (self.runner.unwrap())() {
             error!("{:?}", e);
-            eprintln!("{:?}", e);
         }
     }
 }

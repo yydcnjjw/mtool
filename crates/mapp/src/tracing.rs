@@ -43,7 +43,7 @@ impl Tracing {
         let (logger_layer, logger) = reload::Layer::new(
             fmt::layer()
                 .without_time()
-                .with_ansi(false)
+                .with_ansi(true)
                 // .with_timer(UtcTime::rfc_3339())
                 .with_file(true)
                 .with_line_number(true)
