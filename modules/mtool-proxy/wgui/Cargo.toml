@@ -1,0 +1,45 @@
+[package]
+name = "mtool-proxy-wgui"
+version.workspace = true
+authors.workspace = true
+edition.workspace = true
+workspace = "../../mtool-wgui/wmain"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+mtool-proxy-model = { path = "../model" }
+mapp = { path = "../../../crates/mapp" }
+mtauri-sys = { path = "../../../crates/mtauri-sys" }
+msysev = { path = "../../../crates/msysev" }
+# mkeybinding = { path = "../../../crates/mkeybinding" }
+mtool-wgui-core = { path = "../../mtool-wgui/core" }
+
+yew = { workspace = true }
+yew-router = { workspace = true }
+grass = { workspace = true }
+js-sys = { workspace = true }
+async-trait = { workspace = true }
+wasm-bindgen = { workspace = true }
+wasm-bindgen-futures = { workspace = true }
+serde = { workspace = true }
+serde-wasm-bindgen = { workspace = true }
+tracing = { workspace = true }
+anyhow = { workspace = true }
+
+gloo-utils = "*"
+async-stream = "*"
+
+[dependencies.web-sys]
+workspace = true
+# features = [
+#   "KeyboardEvent",
+#   "ScrollIntoViewOptions",
+#   "ScrollLogicalPosition"
+# ]
+[dependencies.yew_icons]
+workspace = true
+features = [
+  "OcticonsDownload16",
+  "OcticonsUpload16"
+]

@@ -1,6 +1,8 @@
 use std::future::Future;
 use std::io;
 use std::pin::Pin;
+use std::sync::atomic::AtomicU64;
+use std::sync::Arc;
 use std::task::{Context, Poll};
 
 use futures::ready;
@@ -31,7 +33,22 @@ impl<'a, A: ?Sized, B: ?Sized> CopyBidirectional<'a, A, B> {
         }
     }
 
-    pub fn copyed(&self) -> (u64, u64) {
+    pub fn copyed_ref(&self) -> (Arc<AtomicU64>, Arc<AtomicU64>) {
+        (
+            Self::copyed_ref_from_state(&self.a_to_b),
+            Self::copyed_ref_from_state(&self.b_to_a),
+        )
+    }
+
+    fn copyed_ref_from_state(s: &TransferState) -> Arc<AtomicU64> {
+        match s {
+            TransferState::Running(buf) => buf.copyed_ref(),
+            TransferState::ShuttingDown(n) => Arc::new(AtomicU64::new(*n)),
+            TransferState::Done(n) => Arc::new(AtomicU64::new(*n)),
+        }
+    }
+
+    fn copyed(&self) -> (u64, u64) {
         (
             Self::copyed_from_state(&self.a_to_b),
             Self::copyed_from_state(&self.b_to_a),
@@ -81,10 +98,11 @@ where
     A: AsyncRead + AsyncWrite + Unpin + ?Sized,
     B: AsyncRead + AsyncWrite + Unpin + ?Sized,
 {
-    type Output = io::Result<(u64, u64)>;
+    type Output = Result<(u64, u64), (io::Error, (u64, u64))>;
 
     fn poll(mut self: Pin<&mut Self>, cx: &mut Context<'_>) -> Poll<Self::Output> {
         // Unpack self into mut refs to each field to avoid borrow check issues.
+        let copyed = self.copyed();
         let CopyBidirectional {
             a,
             b,
@@ -92,8 +110,10 @@ where
             b_to_a,
         } = &mut *self;
 
-        let a_to_b = transfer_one_direction(cx, a_to_b, &mut *a, &mut *b)?;
-        let b_to_a = transfer_one_direction(cx, b_to_a, &mut *b, &mut *a)?;
+        let a_to_b =
+            transfer_one_direction(cx, a_to_b, &mut *a, &mut *b).map_err(|e| (e, copyed))?;
+        let b_to_a =
+            transfer_one_direction(cx, b_to_a, &mut *b, &mut *a).map_err(|e| (e, copyed))?;
 
         // It is not a problem if ready! returns early because transfer_one_direction for the
         // other direction will keep returning TransferState::Done(count) in future calls to poll

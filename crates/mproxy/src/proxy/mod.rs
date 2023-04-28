@@ -9,6 +9,7 @@ pub use net_location::*;
 use crate::{
     config::{egress::EgressConfig, ingress::IngressConfig},
     net::protocol,
+    stats::TransferStats,
 };
 
 #[derive(Debug)]
@@ -25,8 +26,8 @@ pub struct ProxyResponse {
 
 #[derive(Debug)]
 pub enum ProxyConn {
-    ForwardTcp(ForwardTcpConn),
-    ForwardHttp(ForwardHttpConn),
+    ForwardTcp(TcpForwarder),
+    ForwardHttp(HttpForwarder),
 }
 
 #[derive(Debug)]
@@ -65,6 +66,13 @@ impl Egress {
             id: config.id,
             client: protocol::Client::new(config.client).await?,
         })
+    }
+
+    pub async fn get_transfor_stats(&self) -> Result<TransferStats, anyhow::Error> {
+        match &self.client {
+            protocol::Client::Http(c) => c.get_transfer_stats().await,
+            protocol::Client::Direct(c) => c.get_transfer_stats().await,
+        }
     }
 }
 

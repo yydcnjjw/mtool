@@ -1,9 +1,10 @@
 mod cmd;
 mod proxy;
+mod wgui;
 
 use async_trait::async_trait;
 use cmd::add_proxy_rule;
-use mapp::{provider::Res, AppContext, AppModule, CreateOnceTaskDescriptor};
+use mapp::{provider::Res, AppContext, AppModule, CreateOnceTaskDescriptor, ModuleGroup};
 use mtool_cmder::{Cmder, CreateCommandDescriptor};
 use mtool_core::{
     config::{not_startup_mode, StartupMode},
@@ -43,4 +44,12 @@ impl AppModule for Module {
             .add_once_task(AppStage::Run, run.cond(not_startup_mode(StartupMode::Cli)));
         Ok(())
     }
+}
+
+pub fn module() -> ModuleGroup {
+    let mut group = ModuleGroup::new("proxy_group");
+    group
+        .add_module(Module::default())
+        .add_module(wgui::Module::default());
+    group
 }

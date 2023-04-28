@@ -7,16 +7,20 @@ edition.workspace = true
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
+mtool-proxy-model = { path = "./model" }
 mapp = { path = "../../crates/mapp" }
 mproxy = { path = "../../crates/mproxy" }
 mtool-cmder = { path = "../mtool-cmder" }
 mtool-core = { path = "../mtool-core" }
 mtool-interactive = { path = "../mtool-interactive" }
+mtool-wgui = { path = "../mtool-wgui" }
 
+tauri = { workspace = true }
 tokio = { workspace = true }
 async-trait = { workspace = true }
 anyhow = { workspace = true }
 tracing = { workspace = true }
 serde = { workspace = true }
+serde-error = { workspace = true }
 toml = { workspace = true }
 notify-rust = { workspace = true }

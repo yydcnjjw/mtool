@@ -1,4 +1,4 @@
-use mtauri_sys::window::{PhysicalSize, PhysicalPosition};
+use mtauri_sys::window::{PhysicalPosition, PhysicalSize};
 use tracing::debug;
 use wasm_bindgen::prelude::*;
 use web_sys::{window, HtmlDivElement, ResizeObserver, ResizeObserverEntry};
@@ -10,26 +10,36 @@ pub enum Msg {
 }
 
 #[derive(Debug, Clone, PartialEq)]
+pub enum Vertical {
+    TopAlign,
+    Center,
+    BottomAlign,
+    Absolute(usize),
+}
+
+#[derive(Debug, Clone, PartialEq)]
+pub enum Horizontal {
+    LeftAlign,
+    Center,
+    RightAlign,
+    Absolute(usize),
+}
+
+#[derive(Debug, Clone, PartialEq)]
 pub struct WindowProps {
-    pub vertical_center: bool,
-    pub horizontal_center: bool,
-    pub center: bool,
-    pub x: usize,
-    pub y: usize,
-    pub width: usize,
-    pub height: usize,
+    pub vertical: Vertical,
+    pub horizontal: Horizontal,
+    pub initial_width: usize,
+    pub initial_height: usize,
 }
 
 impl Default for WindowProps {
     fn default() -> Self {
         Self {
-            vertical_center: false,
-            horizontal_center: false,
-            center: false,
-            x: 0,
-            y: 0,
-            width: 800,
-            height: 600,
+            vertical: Vertical::Absolute(0),
+            horizontal: Horizontal::Absolute(0),
+            initial_width: 800,
+            initial_height: 600,
         }
     }
 }
@@ -47,41 +57,38 @@ pub struct AutoResizeWindow {
     window_props: WindowProps,
 }
 impl AutoResizeWindow {
-    fn adjust_window(&self) -> Result<(), JsValue> {
+    fn adjust_window(&self, width: usize, height: usize) -> Result<(), JsValue> {
         debug!("{:?}", self.window_props);
 
         let WindowProps {
-            vertical_center,
-            horizontal_center,
-            center,
-            mut x,
-            mut y,
-            width,
-            height,
-        } = self.window_props;
+            vertical,
+            horizontal,
+            ..
+        } = &self.window_props;
 
         Self::set_window_size(width, height);
 
-        if vertical_center || horizontal_center || center {
-            let screen = window().unwrap().screen()?;
+        let screen = window().unwrap().screen()?;
+        let x = match horizontal {
+            Horizontal::LeftAlign => 0 as usize,
+            Horizontal::Center => ((screen.width()? - width as i32) / 2) as usize,
+            Horizontal::RightAlign => (screen.width()? - width as i32) as usize,
+            Horizontal::Absolute(x) => *x,
+        };
 
-            if vertical_center || center {
-                let screen_height = screen.height()?;
-                x = ((screen_height - height as i32) / 2) as usize;
-            }
+        let y = match vertical {
+            Vertical::TopAlign => 0 as usize,
+            Vertical::Center => ((screen.height()? - height as i32) / 2) as usize,
+            Vertical::BottomAlign => (screen.height()? - height as i32) as usize,
+            Vertical::Absolute(y) => *y,
+        };
 
-            if horizontal_center || center {
-                let screen_width = screen.width()?;
-                y = ((screen_width - width as i32) / 2) as usize;
-            }
-        }
-
-        Self::set_window_position(y, x);
+        Self::set_window_position(x, y);
         Ok(())
     }
 
     fn set_window_size(width: usize, height: usize) {
-        spawn_local(mtauri_sys::window::set_size(PhysicalSize { width, height }));
+        spawn_local(mtauri_sys::window::set_size(PhysicalSize::new(width, height)));
     }
 
     fn set_window_position(x: usize, y: usize) {
@@ -102,16 +109,18 @@ impl Component for AutoResizeWindow {
             cont: NodeRef::default(),
             window_props,
         };
-        this.adjust_window().unwrap();
+        this.adjust_window(
+            this.window_props.initial_width,
+            this.window_props.initial_height,
+        )
+        .unwrap();
         this
     }
 
     fn update(&mut self, _ctx: &Context<Self>, msg: Self::Message) -> bool {
         match msg {
             Msg::Resize(size) => {
-                self.window_props.width = size.width;
-                self.window_props.height = size.height;
-                self.adjust_window().unwrap();
+                self.adjust_window(size.width, size.height).unwrap();
                 false
             }
         }

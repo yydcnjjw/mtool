@@ -10,7 +10,7 @@ use crate::{
     config::ingress::socks5::{ServerConfig, Socks5Config},
     io::BoxedAsyncIO,
     net::transport,
-    proxy::{Address, ForwardTcpConn, NetLocation, ProxyConn, ProxyRequest},
+    proxy::{Address, TcpForwarder, NetLocation, ProxyConn, ProxyRequest},
 };
 
 #[derive(Debug)]
@@ -65,7 +65,7 @@ impl Server {
                         address: Address::try_from(request.host)?,
                         port: request.port,
                     },
-                    conn: ProxyConn::ForwardTcp(ForwardTcpConn {
+                    conn: ProxyConn::ForwardTcp(TcpForwarder {
                         stream: stream.into_inner(),
                     }),
                 }

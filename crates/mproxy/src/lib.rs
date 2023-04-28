@@ -2,27 +2,27 @@
 #![allow(incomplete_features)]
 #![feature(async_fn_in_trait)]
 
-mod admin;
 mod config;
 mod io;
 mod net;
 pub mod proxy;
 pub mod router;
+pub mod stats;
 
 #[cfg(feature = "telemetry")]
 pub mod metrics;
 
 use anyhow::Context;
 use futures::{future::try_join_all, FutureExt};
+use stats::Stats;
+
 use std::{sync::Arc, time::Instant};
 use tokio::sync::{mpsc, Mutex};
 use tracing::{error, info, info_span, warn, Instrument};
 
 pub use config::AppConfig;
-use proxy::{Egress, Ingress, ProxyRequest};
+use proxy::{Egress, Ingress, ProxyRequest, ProxyResponse};
 use router::Router;
-
-use crate::proxy::ProxyResponse;
 
 #[derive(Debug)]
 pub struct App {
@@ -64,6 +64,16 @@ impl App {
 
     pub fn router(&self) -> &Router {
         &self.router
+    }
+
+    pub async fn stats(&self) -> Result<Stats, anyhow::Error> {
+        let mut stats = Stats::default();
+        for egress in self.egress.iter() {
+            stats
+                .transfer
+                .insert(egress.id.clone(), egress.get_transfor_stats().await?);
+        }
+        Ok(stats)
     }
 
     fn run_ingress(&self) {
@@ -112,6 +122,16 @@ impl App {
                         .clone();
 
                     let remote = req.remote.clone();
+
+                    let span = {
+                        let dest = dest.clone();
+                        info_span!(
+                            "handle_proxy_request",
+                            remote = remote.to_string(),
+                            source,
+                            dest,
+                        )
+                    };
                     tokio::spawn(
                         async move {
                             info!("start processing proxy request");
@@ -131,12 +151,7 @@ impl App {
                                 }
                             }
                         }
-                        .instrument(info_span!(
-                            "handle_proxy_request",
-                            remote = remote.to_string(),
-                            source,
-                            dest,
-                        )),
+                        .instrument(span),
                     );
                 }
                 Err(e) => warn!("routing failed: {}", e),
