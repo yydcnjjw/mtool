@@ -28,7 +28,7 @@ impl AppModule for Module {
 }
 
 fn default_channel_size() -> usize {
-    10
+    1024
 }
 
 #[derive(Debug, Clone, Deserialize)]
