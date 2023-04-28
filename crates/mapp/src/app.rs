@@ -52,6 +52,8 @@ impl AppBuilder {
 
             let modules = builder.modules;
 
+            modules.early_init(&mut ctx)?;
+
             #[cfg(target_arch = "wasm32")]
             let mut rt = tokio::runtime::Builder::new_current_thread();
 

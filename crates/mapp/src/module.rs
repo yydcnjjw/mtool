@@ -8,6 +8,10 @@ use crate::app::AppContext;
 
 #[async_trait]
 pub trait Module {
+    fn early_init(&self, _ctx: &mut AppContext) -> Result<(), anyhow::Error> {
+        Ok(())
+    }
+
     async fn init(&self, ctx: &mut AppContext) -> Result<(), anyhow::Error>;
 
     fn name(&self) -> &'static str {
@@ -45,6 +49,23 @@ impl ModuleGroup {
 
 #[async_trait]
 impl Module for ModuleGroup {
+    #[instrument(name = "module_group", skip_all, fields(name = self.name()))]
+    fn early_init(&self, ctx: &mut AppContext) -> Result<(), anyhow::Error> {
+        trace!(target: "module", "group early_init");
+
+        for module in &self.modules {
+            let name = module.name();
+
+            trace!(target: "module", "early_init {}", name);
+
+            module
+                .early_init(ctx)
+                .context(format!("Failed to early init {} module", name))?;
+        }
+
+        Ok(())
+    }
+
     #[instrument(name = "module_group", skip_all, fields(name = self.name()))]
     async fn init(&self, ctx: &mut AppContext) -> Result<(), anyhow::Error> {
         trace!(target: "module", "group init");

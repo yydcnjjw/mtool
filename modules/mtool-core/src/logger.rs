@@ -2,13 +2,17 @@ use std::{env, path::PathBuf, str::FromStr, sync::Arc};
 
 use async_trait::async_trait;
 use serde::Deserialize;
+use time::{format_description::well_known::Rfc3339, UtcOffset};
 use tracing::info;
 use tracing_appender::non_blocking::WorkerGuard;
-use tracing_subscriber::{fmt, EnvFilter};
+use tracing_subscriber::{
+    fmt::{self, time::OffsetTime},
+    EnvFilter,
+};
 
 use mapp::{
     define_label,
-    provider::{Injector, Res},
+    provider::{Injector, Res, Take},
     AppContext, AppModule, Tracing,
 };
 
@@ -50,6 +54,15 @@ impl Config {
 
 #[async_trait]
 impl AppModule for Module {
+    fn early_init(&self, app: &mut AppContext) -> Result<(), anyhow::Error> {
+        app.injector()
+            .insert(Take::new(OffsetTime::local_rfc_3339().unwrap_or(
+                OffsetTime::new(UtcOffset::from_hms(8, 0, 0)?, Rfc3339),
+            )));
+
+        Ok(())
+    }
+
     async fn init(&self, app: &mut AppContext) -> Result<(), anyhow::Error> {
         app.schedule()
             .insert_stage(CmdlineStage::Init, LoggerStage::Init)
@@ -62,6 +75,7 @@ async fn init(
     injector: Injector,
     cs: Res<ConfigStore>,
     tracing: Res<Tracing>,
+    time: Take<OffsetTime<Rfc3339>>,
 ) -> Result<(), anyhow::Error> {
     let cfg = cs.get::<Config>("logger").await?;
 
@@ -75,6 +89,7 @@ async fn init(
     )?)?;
     tracing.set_layer(
         fmt::layer()
+            .with_timer(time.take()?)
             .with_writer(writer)
             .with_thread_ids(true)
             .with_thread_names(true),
