@@ -58,7 +58,7 @@ impl ConfigInner {
         let mut value: &toml::Value = &self.table;
 
         for key in keys.split(".") {
-            value = value.get(key).context(format!("{} is not exist", keys))?;
+            value = value.get(key).context(format!("{} field is not exist", keys))?;
         }
 
         value
