@@ -111,6 +111,7 @@ impl AppRunner {
     pub fn run(self) {
         if let Err(e) = (self.runner.unwrap())() {
             error!("{:?}", e);
+            eprintln!("{:?}", e);
         }
     }
 }

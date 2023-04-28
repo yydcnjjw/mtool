@@ -30,7 +30,7 @@ struct Logger {
 struct Config {
     path: Option<PathBuf>,
     name: Option<String>,
-    filter: String,
+    filter: Option<String>,
 }
 impl Config {
     async fn get_path(&self, cs: &Res<ConfigStore>) -> PathBuf {
@@ -71,7 +71,7 @@ async fn init(
     ));
 
     tracing.set_filter(EnvFilter::from_str(
-        &env::var("MTOOL_LOG").unwrap_or(cfg.filter),
+        &env::var("MTOOL_LOG").unwrap_or(cfg.filter.unwrap_or("info".into())),
     )?)?;
     tracing.set_layer(
         fmt::layer()
