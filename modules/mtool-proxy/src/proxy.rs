@@ -21,7 +21,7 @@ pub struct ProxyApp {
 }
 
 impl ProxyApp {
-    pub async fn new(cs: Res<ConfigStore>) -> Result<Res<ProxyApp>, anyhow::Error> {
+    pub async fn construct(cs: Res<ConfigStore>) -> Result<Res<ProxyApp>, anyhow::Error> {
         let config = cs
             .get::<Config>("proxy")
             .await

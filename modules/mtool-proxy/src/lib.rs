@@ -33,7 +33,7 @@ async fn run(app: Res<ProxyApp>) -> Result<(), anyhow::Error> {
 #[async_trait]
 impl AppModule for Module {
     async fn init(&self, app: &mut AppContext) -> Result<(), anyhow::Error> {
-        app.injector().construct_once(ProxyApp::new);
+        app.injector().construct_once(ProxyApp::construct);
 
         app.schedule()
             .add_once_task(

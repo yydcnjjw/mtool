@@ -1,6 +1,7 @@
 use std::{env, path::PathBuf, str::FromStr, sync::Arc};
 
 use async_trait::async_trait;
+use clap::{arg, ArgMatches};
 use serde::Deserialize;
 use time::{format_description::well_known::Rfc3339, UtcOffset};
 use tracing::info;
@@ -16,7 +17,7 @@ use mapp::{
     AppContext, AppModule, Tracing,
 };
 
-use crate::CmdlineStage;
+use crate::{Cmdline, CmdlineStage};
 
 use super::ConfigStore;
 
@@ -36,6 +37,7 @@ struct Config {
     name: Option<String>,
     filter: Option<String>,
 }
+
 impl Config {
     async fn get_path(&self, cs: &Res<ConfigStore>) -> PathBuf {
         self.path
@@ -66,9 +68,14 @@ impl AppModule for Module {
     async fn init(&self, app: &mut AppContext) -> Result<(), anyhow::Error> {
         app.schedule()
             .insert_stage(CmdlineStage::Init, LoggerStage::Init)
+            .add_once_task(CmdlineStage::Setup, setup_cmdline)
             .add_once_task(LoggerStage::Init, init);
         Ok(())
     }
+}
+
+async fn setup_cmdline(cmdline: Res<Cmdline>) -> Result<(), anyhow::Error> {
+    cmdline.setup(|cmdline| Ok(cmdline.arg(arg!(--stdout "log output to stdout"))))
 }
 
 async fn init(
@@ -76,7 +83,13 @@ async fn init(
     cs: Res<ConfigStore>,
     tracing: Res<Tracing>,
     time: Take<OffsetTime<Rfc3339>>,
+    args: Res<ArgMatches>,
 ) -> Result<(), anyhow::Error> {
+    if args.get_flag("stdout") {
+        info!("Redirecting the logs to the standard output stream.");
+        return Ok(());
+    }
+
     let cfg = cs.get::<Config>("logger").await?;
 
     let (writer, guard) = tracing_appender::non_blocking(tracing_appender::rolling::daily(
@@ -89,6 +102,7 @@ async fn init(
     )?)?;
     tracing.set_layer(
         fmt::layer()
+            .with_ansi(false)
             .with_timer(time.take()?)
             .with_writer(writer)
             .with_thread_ids(true)
