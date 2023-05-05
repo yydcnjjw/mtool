@@ -125,7 +125,7 @@ impl App {
             _ => (n as f32 / GB as f32, "GB"),
         };
         html! {
-            <span class={classes!("w-[5rem]")}>{format!("{:.1}{}/s", n, unit)}</span>
+            <span class={classes!("w-[6rem]")}>{format!("{:.1}{}/s", n, unit)}</span>
         }
     }
 

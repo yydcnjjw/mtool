@@ -9,8 +9,13 @@ pub struct TransferStats {
 
 impl ops::SubAssign for TransferStats {
     fn sub_assign(&mut self, rhs: Self) {
-        self.tx -= rhs.tx;
-        self.rx -= rhs.rx;
+        if self.tx >= rhs.tx {
+            self.tx -= rhs.tx;
+        }
+
+        if self.rx >= rhs.tx {
+            self.rx -= rhs.rx;
+        }
     }
 }
 
