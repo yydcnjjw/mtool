@@ -33,7 +33,7 @@ pub struct Completion {
 }
 
 impl Completion {
-    pub async fn new(
+    pub async fn construct(
         app: Res<AppHandle<tauri::Wry>>,
         win: Res<WGuiWindow>,
     ) -> Result<Res<crate::Completion>, anyhow::Error> {

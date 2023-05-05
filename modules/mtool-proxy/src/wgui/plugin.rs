@@ -16,7 +16,6 @@ async fn stats(proxy_app: State<'_, Res<ProxyApp>>) -> Result<Stats, serde_error
         .stats()
         .await
         .map_err(|e| serde_error::Error::new(&*e))?;
-    debug!("{:?}", stats);
     Ok(Stats {
         transfer: stats
             .transfer

@@ -23,10 +23,6 @@ impl Deref for WGuiWindow {
 }
 
 impl WGuiWindow {
-    // pub async fn construct(app: Res<AppHandle>) -> Result<Res<Self>, anyhow::Error> {
-    //     Self::new(&app).map(|win| Res::new(win))
-    // }
-
     fn new(app: &AppHandle) -> Result<Self, anyhow::Error> {
         let window = WindowBuilder::new(app, "mtool", WindowUrl::App("index.html".into()))
             .title("mtool")

@@ -27,7 +27,7 @@ async fn setup(builder: Res<Builder>, injector: Injector) -> Result<(), anyhow::
     builder.setup(|builder| Ok(builder.plugin(completion::init()).plugin(output::init())))?;
 
     injector
-        .construct_once(Completion::new)
-        .construct_once(OutputDevice::new);
+        .construct_once(Completion::construct)
+        .construct_once(OutputDevice::construct);
     Ok(())
 }

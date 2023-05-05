@@ -34,7 +34,7 @@ pub struct OutputDevice {
 }
 
 impl OutputDevice {
-    pub async fn new(
+    pub async fn construct(
         app: Res<AppHandle<tauri::Wry>>,
         win: Res<WGuiWindow>,
     ) -> Result<Res<crate::OutputDevice>, anyhow::Error> {
