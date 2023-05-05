@@ -18,6 +18,7 @@ telemetry = [
 
 [dependencies]
 tokio = { workspace = true, features = ["full"] }
+tokio-stream = { workspace = true }
 tokio-util = { version = "*", features = ["compat"] }
 async-trait = { workspace = true }
 futures = { workspace = true }
@@ -49,6 +50,7 @@ enum_dispatch = "*"
 domain_matcher = { git = "https://github.com/Qv2ray/DomainMatcher" }
 protobuf = "*"
 warp = "*"
+weak-table = "*"
 
 [target.'cfg(target_family = "unix")'.dependencies]
 nix = "*"

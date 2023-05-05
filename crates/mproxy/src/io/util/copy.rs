@@ -1,6 +1,8 @@
 use std::future::Future;
 use std::io;
 use std::pin::Pin;
+use std::sync::atomic::{AtomicU64, Ordering};
+use std::sync::Arc;
 use std::task::{Context, Poll};
 
 use futures::ready;
@@ -12,7 +14,7 @@ pub struct CopyBuffer {
     need_flush: bool,
     pos: usize,
     cap: usize,
-    amt: u64,
+    amt: Arc<AtomicU64>,
     buf: Box<[u8]>,
 }
 
@@ -25,14 +27,18 @@ impl CopyBuffer {
             need_flush: false,
             pos: 0,
             cap: 0,
-            amt: 0,
+            amt: Arc::new(AtomicU64::new(0)),
             buf: vec![0; DEFAULT_BUF_SIZE].into_boxed_slice(),
         }
     }
 
-    pub fn copyed(&self) -> u64 {
-        self.amt
+    pub fn copyed_ref(&self) -> Arc<AtomicU64> {
+        self.amt.clone()
     }
+
+    pub fn copyed(&self) -> u64 {
+        self.amt.load(Ordering::Relaxed)
+    }    
 
     fn poll_fill_buf<R>(
         &mut self,
@@ -122,7 +128,7 @@ impl CopyBuffer {
                     )));
                 } else {
                     self.pos += i;
-                    self.amt += i as u64;
+                    self.amt.fetch_add(i as u64, Ordering::Relaxed);
                     self.need_flush = true;
                 }
             }
@@ -139,7 +145,7 @@ impl CopyBuffer {
             // data and finish the transfer.
             if self.pos == self.cap && self.read_done {
                 ready!(writer.as_mut().poll_flush(cx))?;
-                return Poll::Ready(Ok(self.amt));
+                return Poll::Ready(Ok(self.copyed()));
             }
         }
     }

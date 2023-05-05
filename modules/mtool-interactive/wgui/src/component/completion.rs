@@ -1,5 +1,5 @@
 use mtool_interactive_model::CompletionMeta;
-use mtool_wgui_core::{AutoResizeWindow, WindowProps};
+use mtool_wgui_core::{AutoResizeWindow, Horizontal, Vertical, WindowProps};
 use tracing::debug;
 use web_sys::HtmlInputElement;
 use yew::{platform::spawn_local, prelude::*};
@@ -153,8 +153,8 @@ impl Component for Completion {
                 <AutoResizeWindow
                   window={
                       WindowProps{
-                          horizontal_center: true,
-                          x: 350,
+                          horizontal: Horizontal::Center,
+                          vertical: Vertical::Absolute(350),
                           ..Default::default()}}>
                 <div class={classes!("w-[48rem]",
                                      "text-white")}>

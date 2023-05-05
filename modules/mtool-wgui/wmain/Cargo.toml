@@ -8,15 +8,15 @@ edition = "2021"
 
 [dependencies]
 mapp = { path = "../../../crates/mapp" }
-
 mtool-wgui-core = { path = "../core" }
-
 mtool-interactive-wgui = { path = "../../mtool-interactive/wgui" }
+mtool-proxy-wgui = { path = "../../mtool-proxy/wgui" }
 
 [workspace]
 members = [
   "../core",
   "../../mtool-interactive/wgui",
+  "../../mtool-proxy/wgui",
   "../../../crates/mtauri-sys"
 ]
 
@@ -28,7 +28,7 @@ edition = "2021"
 [workspace.dependencies]
 yew = { version = "*", features = ["csr"] }
 yew-router = "*"
-# stylist = { version = "*", features = ["yew"] }
+yew_icons = "*"
 grass = { version = "*", features = ["macro", "nightly"] }
 js-sys = "*"
 web-sys = "*"
@@ -41,3 +41,5 @@ anyhow = "*"
 thiserror = "*"
 once_cell = "*"
 tracing = "*"
+futures = "*"
+tokio = "*"

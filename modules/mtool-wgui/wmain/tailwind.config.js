@@ -3,7 +3,8 @@ module.exports = {
   content: [
     "./src/**/*.rs",
     "../core/src/**/*.rs",
-    "../../mtool-interactive/wgui/src/**/*.rs"
+    "../../mtool-interactive/wgui/src/**/*.rs",
+    "../../mtool-proxy/wgui/src/**/*.rs"
   ],
   theme: {
     extend: {},

@@ -2,7 +2,7 @@ use std::{path::PathBuf, sync::Mutex};
 
 use anyhow::Context;
 use mapp::provider::Res;
-use mproxy::{router::GeositeFile, App, AppConfig};
+use mproxy::{router::GeositeFile, stats::Stats, App, AppConfig};
 use mtool_core::ConfigStore;
 use serde::Deserialize;
 use tokio::fs;
@@ -47,5 +47,9 @@ impl ProxyApp {
 
     pub async fn run(&self) -> Result<(), anyhow::Error> {
         self.inner.run().await
+    }
+
+    pub async fn stats(&self) -> Result<Stats, anyhow::Error> {
+        self.inner.stats().await
     }
 }

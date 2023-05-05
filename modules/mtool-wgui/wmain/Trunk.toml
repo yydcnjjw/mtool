@@ -1,7 +1,9 @@
 [watch]
 watch = [
+  "./src",
   "../core",
   "../../mtool-interactive/wgui",
+  "../../mtool-proxy/wgui",
   "../../../crates/mtauri-sys",
   "./assets"
 ]

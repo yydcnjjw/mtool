@@ -13,7 +13,7 @@ fn main() {
         .add_module(mtool_translate::Module::default())
         .add_module(mtool_dict::Module::default())
         .add_module(mtool_interactive::module())
-        .add_module(mtool_proxy::Module::default())
+        .add_module(mtool_proxy::module())
         .add_module(mtool_toast::Module::default())
         .build()
         .run();

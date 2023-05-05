@@ -18,9 +18,9 @@ use crate::{
     io::BoxedAsyncIO,
     net::transport,
     proxy::{
-        Address, ForwardHttpConn, ForwardTcpConn, NetLocation, ProxyConn, ProxyRequest,
-        ProxyResponse,
+        Address, HttpForwarder, NetLocation, ProxyConn, ProxyRequest, ProxyResponse, TcpForwarder,
     },
+    stats::{TransferMonitor, TransferStats},
 };
 
 #[derive(Debug)]
@@ -98,7 +98,7 @@ impl ServerService {
         self.tx
             .send(ProxyRequest {
                 remote,
-                conn: ProxyConn::ForwardHttp(ForwardHttpConn::new(req, tx)),
+                conn: ProxyConn::ForwardHttp(HttpForwarder::new(req, tx)),
             })
             .map_err(|e| anyhow::anyhow!("{:?}", e))?;
 
@@ -117,7 +117,7 @@ impl ServerService {
                     Ok(upgraded) => {
                         if let Err(e) = self.tx.send(ProxyRequest {
                             remote,
-                            conn: ProxyConn::ForwardTcp(ForwardTcpConn {
+                            conn: ProxyConn::ForwardTcp(TcpForwarder {
                                 stream: Box::new(upgraded),
                             }),
                         }) {
@@ -210,12 +210,14 @@ fn full<T: Into<Bytes>>(chunk: T) -> BoxBody<Bytes, hyper::Error> {
 #[derive(Debug)]
 pub struct Client {
     connector: transport::Connector,
+    monitor: TransferMonitor,
 }
 
 impl Client {
     pub async fn new(config: ClientConfig) -> Result<Self, anyhow::Error> {
         Ok(Self {
             connector: transport::Connector::new(config.connector).await?,
+            monitor: TransferMonitor::new(),
         })
     }
 
@@ -223,7 +225,7 @@ impl Client {
         &self,
         s: BoxedAsyncIO,
         remote: NetLocation,
-        forward_conn: ForwardTcpConn,
+        forward_conn: TcpForwarder,
     ) -> Result<(u64, u64), anyhow::Error> {
         let (mut sender, conn) = hyper::client::conn::http1::handshake(s).await?;
         tokio::task::spawn(async move {
@@ -246,13 +248,15 @@ impl Client {
             )
         }
 
-        forward_conn.forward(hyper::upgrade::on(res).await?).await
+        forward_conn
+            .forward_with_monitor(hyper::upgrade::on(res).await?, &self.monitor)
+            .await
     }
 
     async fn handle_forward_http(
         &self,
         s: BoxedAsyncIO,
-        mut forward_conn: ForwardHttpConn,
+        mut forward_conn: HttpForwarder,
     ) -> Result<(u64, u64), anyhow::Error> {
         forward_conn.remove_proxy_header = false;
         forward_conn.forward(s).await
@@ -274,5 +278,9 @@ impl Client {
             upload_bytes,
             download_bytes,
         })
+    }
+
+    pub async fn get_transfer_stats(&self) -> Result<TransferStats, anyhow::Error> {
+        self.monitor.get_transfer_stats().await
     }
 }
