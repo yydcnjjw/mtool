@@ -122,10 +122,10 @@ async fn wait_for_exit(worker: TakeOpt<TauriWorker>) -> Result<(), anyhow::Error
 
 async fn register_keybinding(keybinding: Res<Keybinding>) -> Result<(), anyhow::Error> {
     keybinding
-        .define_global("M-A-m", window::show_window)
+        .define_global("M-A-o", window::show_window)
         .await?;
     keybinding
-        .define_global("M-A-S-m", window::hide_window)
+        .define_global("M-A-S-o", window::hide_window)
         .await?;
     Ok(())
 }
