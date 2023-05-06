@@ -74,8 +74,8 @@ impl Component for Output {
                               ..Default::default()}}>
                     <div class={classes!(
                         "bg-black",
-                        "w-[48rem]",
-                        "h-[48rem]",
+                        "w-[32rem]",
+                        "h-[32rem]",
                         "text-white",
                         "rounded-xl",
                         "overflow-hidden")}>
