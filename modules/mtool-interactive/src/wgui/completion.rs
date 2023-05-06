@@ -5,7 +5,7 @@ use async_trait::async_trait;
 use futures::lock::Mutex;
 use mapp::provider::Res;
 use mtool_interactive_model::CompletionMeta;
-use mtool_wgui::WGuiWindow;
+use mtool_wgui::MtoolWindow;
 use tauri::{
     command,
     plugin::{Builder, TauriPlugin},
@@ -28,14 +28,14 @@ impl Context {
 }
 
 pub struct Completion {
-    win: Res<WGuiWindow>,
+    win: Res<MtoolWindow>,
     ctx: Mutex<Option<Context>>,
 }
 
 impl Completion {
     pub async fn construct(
         app: Res<AppHandle<tauri::Wry>>,
-        win: Res<WGuiWindow>,
+        win: Res<MtoolWindow>,
     ) -> Result<Res<crate::Completion>, anyhow::Error> {
         let self_ = Arc::new(Self {
             win,

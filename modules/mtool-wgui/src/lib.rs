@@ -2,7 +2,7 @@ mod builder;
 mod window;
 
 pub use builder::*;
-pub use window::*;
+pub use window::{MtoolWindow, WGuiWindow};
 
 use async_trait::async_trait;
 use mapp::{
@@ -122,10 +122,10 @@ async fn wait_for_exit(worker: TakeOpt<TauriWorker>) -> Result<(), anyhow::Error
 
 async fn register_keybinding(keybinding: Res<Keybinding>) -> Result<(), anyhow::Error> {
     keybinding
-        .define_global("M-A-q", window::hide_window)
+        .define_global("M-A-m", window::show_window)
         .await?;
-    // keybinding
-    //     .define_global("M-A-w", window::show_window)
-    //     .await?;
+    keybinding
+        .define_global("M-A-S-m", window::hide_window)
+        .await?;
     Ok(())
 }

@@ -1,6 +1,5 @@
 use std::{ops::Deref, sync::RwLock};
 
-use anyhow::Context;
 use mapp::provider::{Injector, Res};
 use tauri::{
     async_runtime::spawn,
@@ -23,22 +22,11 @@ impl Deref for WGuiWindow {
 }
 
 impl WGuiWindow {
-    fn new(app: &AppHandle) -> Result<Self, anyhow::Error> {
-        let window = WindowBuilder::new(app, "mtool", WindowUrl::App("index.html".into()))
-            .title("mtool")
-            .transparent(true)
-            .decorations(false)
-            .resizable(false)
-            .skip_taskbar(true)
-            .always_on_top(true)
-            .visible(true)
-            .build()
-            .context("create window")?;
-
-        Ok(Self {
+    pub fn new(window: tauri::Window) -> Self {
+        Self {
             inner: window,
             pos: RwLock::new(PhysicalPosition::new(0, 0)),
-        })
+        }
     }
 
     fn save_position(&self) -> Result<(), anyhow::Error> {
@@ -68,14 +56,39 @@ impl WGuiWindow {
     }
 }
 
-#[allow(dead_code)]
-pub(crate) async fn show_window(window: Res<WGuiWindow>) -> Result<(), anyhow::Error> {
+pub struct MtoolWindow(WGuiWindow);
+
+impl MtoolWindow {
+    fn new(app: AppHandle) -> Self {
+        Self(WGuiWindow::new(
+            WindowBuilder::new(&app, "mtool", WindowUrl::App("index.html".into()))
+                .title("mtool")
+                .transparent(true)
+                .decorations(false)
+                .resizable(false)
+                .skip_taskbar(true)
+                .always_on_top(true)
+                .visible(true)
+                .build()
+                .expect("create mtool window failed"),
+        ))
+    }
+}
+
+impl Deref for MtoolWindow {
+    type Target = WGuiWindow;
+
+    fn deref(&self) -> &Self::Target {
+        &self.0
+    }
+}
+
+pub async fn show_window(window: Res<MtoolWindow>) -> Result<(), anyhow::Error> {
     window.show()
 }
 
-pub(crate) async fn hide_window(window: Res<WGuiWindow>) -> Result<(), anyhow::Error> {
-    window.hide()?;
-    Ok(())
+pub async fn hide_window(window: Res<MtoolWindow>) -> Result<(), anyhow::Error> {
+    window.hide()
 }
 
 pub(crate) fn init(injector: Injector) -> TauriPlugin<Wry> {
@@ -83,9 +96,8 @@ pub(crate) fn init(injector: Injector) -> TauriPlugin<Wry> {
         .setup(move |app, _| {
             let app = app.clone();
             spawn(async move {
-                injector.insert(Res::new(WGuiWindow::new(&app).unwrap()));
+                injector.insert(Res::new(MtoolWindow::new(app)));
             });
-
             Ok(())
         })
         .build()

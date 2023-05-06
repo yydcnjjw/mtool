@@ -10,8 +10,9 @@ edition.workspace = true
 mtool-proxy-model = { path = "./model" }
 mapp = { path = "../../crates/mapp" }
 mproxy = { path = "../../crates/mproxy" }
-mtool-cmder = { path = "../mtool-cmder" }
 mtool-core = { path = "../mtool-core" }
+mtool-system = { path = "../mtool-system" }
+mtool-cmder = { path = "../mtool-cmder" }
 mtool-interactive = { path = "../mtool-interactive" }
 mtool-wgui = { path = "../mtool-wgui" }
 

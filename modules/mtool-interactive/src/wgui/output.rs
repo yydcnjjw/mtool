@@ -5,7 +5,7 @@ use async_trait::async_trait;
 use futures::future::BoxFuture;
 use mapp::provider::Res;
 use mtool_interactive_model::OutputContent;
-use mtool_wgui::WGuiWindow;
+use mtool_wgui::MtoolWindow;
 use tauri::{
     async_runtime::RwLock,
     command,
@@ -29,14 +29,14 @@ impl Context {
 }
 
 pub struct OutputDevice {
-    win: Res<WGuiWindow>,
+    win: Res<MtoolWindow>,
     ctx: RwLock<Context>,
 }
 
 impl OutputDevice {
     pub async fn construct(
         app: Res<AppHandle<tauri::Wry>>,
-        win: Res<WGuiWindow>,
+        win: Res<MtoolWindow>,
     ) -> Result<Res<crate::OutputDevice>, anyhow::Error> {
         let self_ = Arc::new(Self {
             win,
