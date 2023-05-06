@@ -37,7 +37,7 @@ where
         let link = ctx.link().clone();
         ctx.link().send_future(async move {
             let unlisten =
-                match mtauri_sys::event::listen("route", move |e: mtauri_sys::Event<String>| {
+                match mtauri_sys::window::listen("route", move |e: mtauri_sys::Event<String>| {
                     debug!("try route to {}", &e.payload);
                     if let Some(nav) = link.navigator() {
                         if let Some(r) = R::recognize(&e.payload) {

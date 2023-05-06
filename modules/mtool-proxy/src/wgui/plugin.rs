@@ -6,7 +6,6 @@ use tauri::{
     plugin::{Builder, TauriPlugin},
     Manager, State, WindowBuilder, WindowUrl, Wry,
 };
-use tracing::debug;
 
 use crate::proxy::ProxyApp;
 

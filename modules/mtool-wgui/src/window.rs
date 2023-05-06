@@ -31,7 +31,7 @@ impl WGuiWindow {
             .resizable(false)
             .skip_taskbar(true)
             .always_on_top(true)
-            .visible(false)
+            .visible(true)
             .build()
             .context("create window")?;
 
@@ -42,17 +42,16 @@ impl WGuiWindow {
     }
 
     fn save_position(&self) -> Result<(), anyhow::Error> {
-        *self.pos.write().unwrap() = self.inner.outer_position()?;
-
-        info!("save position: {:?}", self.pos);
+        let mut pos = self.pos.write().unwrap();
+        *pos = self.inner.outer_position()?;
+        info!("save position: {:?}", &pos);
         Ok(())
     }
 
     fn restore_position(&self) -> Result<(), anyhow::Error> {
         let pos = self.pos.read().unwrap();
         self.inner.set_position(pos.clone())?;
-
-        info!("restore position: {:?}", pos);
+        info!("restore position: {:?}", &pos);
         Ok(())
     }
 
