@@ -66,8 +66,7 @@ impl MtoolWindow {
                 .transparent(true)
                 .decorations(false)
                 .resizable(false)
-                .skip_taskbar(true)
-                .always_on_top(true)
+                .skip_taskbar(false)
                 .visible(false)
                 .build()
                 .expect("create mtool window failed"),

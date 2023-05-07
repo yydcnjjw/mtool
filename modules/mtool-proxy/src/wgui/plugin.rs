@@ -23,7 +23,6 @@ impl ProxyMonitorWindow {
                 .decorations(false)
                 .resizable(false)
                 .skip_taskbar(true)
-                .always_on_top(true)
                 .visible(true)
                 .build()
                 .expect("create proxy monitor window failed"),
