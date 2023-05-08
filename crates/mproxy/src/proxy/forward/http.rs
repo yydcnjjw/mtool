@@ -124,7 +124,7 @@ impl HttpForwarder {
             )
             .map_err(|e| anyhow::anyhow!("{:?} is dropped", e))?;
 
-        let _ = rx.await.unwrap();
+        let _ = rx.await.context("Waiting for forwarding to be completed")?;
 
         let stats = copyed.get_transfer_stats();
         Ok((stats.tx as u64, stats.rx as u64))
@@ -164,7 +164,9 @@ impl<StreamIO> StreamWrapper<StreamIO> {
 
 impl<StreamIO> Drop for StreamWrapper<StreamIO> {
     fn drop(&mut self) {
-        let _ = self.tx.take().unwrap().send(()).unwrap();
+        if let Some(tx) = self.tx.take() {
+            let _ = tx.send(());
+        }
     }
 }
 
