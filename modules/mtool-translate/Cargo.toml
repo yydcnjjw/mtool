@@ -9,6 +9,7 @@ edition.workspace = true
 [dependencies]
 mapp = { path = "../../crates/mapp" }
 mcloud-api = { path = "../../crates/mcloud-api" }
+mllama-sys = { path = "../../crates/mllama-sys" }
 mtool-core = { path = "../mtool-core" }
 mtool-wgui = { path = "../mtool-wgui" }
 mtool-system = { path = "../mtool-system" }

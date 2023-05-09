@@ -11,7 +11,7 @@ async fn add_proxy_rule_inner(app: Res<ProxyApp>, c: Res<Completion>) -> Result<
         .complete_read(
             CompletionArgs::without_completion()
                 .prompt("Add proxy target: ")
-                .close_window(),
+                .hide_window(),
         )
         .await?;
 
