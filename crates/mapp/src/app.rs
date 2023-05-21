@@ -77,6 +77,7 @@ impl AppBuilder {
             rt.enable_all().build()?.block_on(async move {
                 if let Err(e) = run().await {
                     error!("{:?}", e);
+                    eprintln!("{:?}", e);
                     std::process::exit(-1);
                 }
             });

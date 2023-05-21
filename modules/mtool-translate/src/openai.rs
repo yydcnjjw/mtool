@@ -47,7 +47,7 @@ impl translator::Translator for Translator {
         let target = match target {
             LanguageType::Auto => "English",
             LanguageType::En => "English",
-            LanguageType::Zh => "China",
+            LanguageType::Zh => "Chinese",
             LanguageType::Ja => "Japanese",
         };
 

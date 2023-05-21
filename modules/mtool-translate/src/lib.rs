@@ -1,4 +1,5 @@
 mod cmd;
+mod llama;
 mod openai;
 mod tencent;
 mod translator;
@@ -21,6 +22,7 @@ impl AppModule for Module {
         app.injector()
             .construct_once(tencent::Translator::construct);
         app.injector().construct_once(openai::Translator::construct);
+        app.injector().construct_once(llama::Translator::construct);
 
         app.schedule()
             .add_once_task(CmdlineStage::AfterInit, register_command)
@@ -53,24 +55,27 @@ async fn register_command(cmder: Res<Cmder>, cs: Res<ConfigStore>) -> Result<(),
                     .add_alias("tj")
                     .set_desc("Translate into Japanese"),
             );
-    } // else {
-      //     cmder
-      //         .add_command(
-      //             cmd::te_interactive
-      //                 .name("te")
-      //                 .set_desc("Translate into English"),
-      //         )
-      //         .add_command(
-      //             cmd::tz_interactive
-      //                 .name("tz")
-      //                 .set_desc("Translate into Chinese"),
-      //         )
-      //         .add_command(
-      //             cmd::tj_interactive
-      //                 .name("tj")
-      //                 .set_desc("Translate into Japanese"),
-      //         );
-      // }
+    } else {
+        cmder
+            .add_command(
+                cmd::text_translate_into_english_wgui
+                    .name("text_translate_into_english")
+                    .add_alias("te")
+                    .set_desc("Translate into English"),
+            )
+            .add_command(
+                cmd::text_translate_into_chinese_wgui
+                    .name("text_translate_into_chinese")
+                    .add_alias("tz")
+                    .set_desc("Translate into Chinese"),
+            )
+            .add_command(
+                cmd::text_translate_into_japanese_wgui
+                    .name("text_translate_into_japanese")
+                    .add_alias("tj")
+                    .set_desc("Translate into Japanese"),
+            );
+    }
 
     Ok(())
 }

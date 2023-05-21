@@ -1,4 +1,4 @@
-use std::{fs::File, io::BufReader, path::PathBuf};
+use std::{fs::File, io::BufReader, path::PathBuf, sync::Arc};
 
 use anyhow::Context;
 use rustls::server::AllowAnyAuthenticatedClient;
@@ -39,9 +39,7 @@ pub mod quic {
     #[serde(tag = "type")]
     pub enum CongestionType {
         Bbr {
-            max_datagram_size: Option<u64>,
             initial_window: Option<u64>,
-            minimum_window: Option<u64>,
         },
         Cubic,
         NewReno,
@@ -156,7 +154,7 @@ impl TryFrom<&TlsConfig> for rustls::ServerConfig {
 
         Ok(rustls::ServerConfig::builder()
             .with_safe_defaults()
-            .with_client_cert_verifier(AllowAnyAuthenticatedClient::new(roots))
+            .with_client_cert_verifier(Arc::new(AllowAnyAuthenticatedClient::new(roots)))
             .with_single_cert(certs, key)?)
     }
 }

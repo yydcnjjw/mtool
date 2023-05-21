@@ -11,9 +11,9 @@ pub trait CompleteRead {
 }
 
 pub struct CompletionArgs {
-    pub complete: Box<dyn Complete + Send + Sync>,
+    complete: Box<dyn Complete + Send + Sync>,
     pub meta: CompletionMeta,
-    pub hide_window: bool,
+    pub(crate) hide_window: bool,
 }
 
 impl CompletionArgs {
@@ -47,7 +47,7 @@ impl CompletionArgs {
         self
     }
 
-    pub fn close_window(mut self) -> Self {
+    pub fn hide_window(mut self) -> Self {
         self.hide_window = true;
         self
     }

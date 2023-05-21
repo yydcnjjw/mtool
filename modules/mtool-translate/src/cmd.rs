@@ -1,10 +1,12 @@
+use std::io::{stdin, stdout, Write};
+
 use futures::FutureExt;
 use mapp::provider::{Injector, Res};
 use mtool_cmder::CommandArgs;
 use mtool_interactive::{Completion, CompletionArgs, OutputDevice};
 
 use crate::{
-    openai, tencent,
+    llama, openai, tencent,
     translator::{LanguageType, Translator},
 };
 
@@ -14,6 +16,7 @@ use clap::{Parser, ValueEnum};
 enum Backend {
     Tencent,
     Openai,
+    Llama,
 }
 
 /// Translate module
@@ -21,10 +24,12 @@ enum Backend {
 #[clap(about, version, author)]
 #[clap(no_binary_name = true)]
 struct Args {
-    text: String,
-    #[clap(value_enum)]
+    text: Option<String>,
+    #[clap(short, long, value_enum)]
     #[arg(default_value_t = Backend::Openai)]
     backend: Backend,
+    #[clap(short, long)]
+    interactive: bool,
 }
 
 async fn text_translate_from_cli(
@@ -41,24 +46,50 @@ async fn text_translate_from_cli(
         }
     };
 
-    let Args { text, backend } = args;
+    let Args {
+        text,
+        backend,
+        interactive,
+    } = args;
 
     let translator: Res<dyn Translator + Send + Sync> = match backend {
         Backend::Tencent => injector.get::<Res<tencent::Translator>>().await?,
         Backend::Openai => injector.get::<Res<openai::Translator>>().await?,
+        Backend::Llama => injector.get::<Res<llama::Translator>>().await?,
     };
 
-    let result = translator.text_translate(text, source, target).await?;
+    if interactive {
+        loop {
+            print!("> ");
+            stdout().flush()?;
+            let input = tokio::task::spawn_blocking(|| {
+                let mut input = String::new();
+                stdin().read_line(&mut input).unwrap();
+                input
+            })
+            .await?;
 
-    println!("{}", result);
+            let result = translator
+                .text_translate(input, source.clone(), target.clone())
+                .await?;
+            println!("{}", result);
+        }
+    } else if let Some(text) = text {
+        let result = translator
+            .text_translate(text, source.clone(), target.clone())
+            .await?;
+        println!("{}", result);
+    } else {
+        println!("Please input required content");
+    }
 
     Ok(())
 }
 
-async fn text_translate_interactive(
+async fn text_translate_wgui(
     source: LanguageType,
     target: LanguageType,
-    translator: Res<tencent::Translator>,
+    translator: Res<llama::Translator>,
     c: Res<Completion>,
     o: Res<OutputDevice>,
 ) -> Result<(), anyhow::Error> {
@@ -80,15 +111,15 @@ async fn text_translate_interactive(
     Ok(())
 }
 
-macro_rules! quick_translate_interactive {
+macro_rules! quick_translate_wgui {
     ($name:ident, $source:ident, $target:ident) => {
         #[allow(unused)]
         pub async fn $name(
-            translator: Res<tencent::Translator>,
+            translator: Res<llama::Translator>,
             c: Res<Completion>,
             o: Res<OutputDevice>,
         ) -> Result<(), anyhow::Error> {
-            text_translate_interactive(
+            text_translate_wgui(
                 LanguageType::$source,
                 LanguageType::$target,
                 translator,
@@ -100,9 +131,9 @@ macro_rules! quick_translate_interactive {
     };
 }
 
-quick_translate_interactive!(tz_interactive, Auto, Zh);
-quick_translate_interactive!(te_interactive, Auto, En);
-quick_translate_interactive!(tj_interactive, Auto, Ja);
+quick_translate_wgui!(text_translate_into_chinese_wgui, Auto, Zh);
+quick_translate_wgui!(text_translate_into_english_wgui, Auto, En);
+quick_translate_wgui!(text_translate_into_japanese_wgui, Auto, Ja);
 
 macro_rules! quick_translate {
     ($name:ident, $source:ident, $target:ident) => {
