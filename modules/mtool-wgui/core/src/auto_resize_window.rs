@@ -1,4 +1,4 @@
-use mtauri_sys::window::{PhysicalPosition, PhysicalSize};
+use mtauri_sys::window::{Position, Size, Window};
 use tracing::debug;
 use wasm_bindgen::prelude::*;
 use web_sys::{window, HtmlDivElement, ResizeObserver, ResizeObserverEntry};
@@ -6,7 +6,7 @@ use yew::{platform::spawn_local, prelude::*};
 
 #[derive(Clone)]
 pub enum Msg {
-    Resize(PhysicalSize),
+    Resize(Size),
 }
 
 #[derive(Debug, Clone, PartialEq)]
@@ -55,6 +55,7 @@ pub struct Props {
 pub struct AutoResizeWindow {
     cont: NodeRef,
     window_props: WindowProps,
+    window: Window,
 }
 impl AutoResizeWindow {
     fn adjust_window(&self, width: usize, height: usize) -> Result<(), JsValue> {
@@ -66,7 +67,7 @@ impl AutoResizeWindow {
             ..
         } = &self.window_props;
 
-        Self::set_window_size(width, height);
+        self.set_window_size(width, height);
 
         let screen = window().unwrap().screen()?;
         let x = match horizontal {
@@ -83,17 +84,18 @@ impl AutoResizeWindow {
             Vertical::Absolute(y) => *y,
         };
 
-        Self::set_window_position(x, y);
+        self.set_window_position(x, y);
         Ok(())
     }
 
-    fn set_window_size(width: usize, height: usize) {
-        spawn_local(mtauri_sys::window::set_size(PhysicalSize::new(width, height)));
+    fn set_window_size(&self, width: usize, height: usize) {
+        let window = self.window.clone();
+        spawn_local(async move { window.set_size(Size::new_physical(width, height)).await.unwrap() });
     }
 
-    fn set_window_position(x: usize, y: usize) {
-        spawn_local(mtauri_sys::window::set_position(PhysicalPosition { x, y }));
-        // window().unwrap().move_to(x as i32, y as i32).unwrap();
+    fn set_window_position(&self, x: usize, y: usize) {
+        let window = self.window.clone();
+        spawn_local(async move { window.set_position(Position::new_physical(x, y)).await.unwrap() });
     }
 }
 
@@ -108,6 +110,7 @@ impl Component for AutoResizeWindow {
         let this = Self {
             cont: NodeRef::default(),
             window_props,
+            window: Window::current().unwrap(),
         };
         this.adjust_window(
             this.window_props.initial_width,
@@ -120,7 +123,8 @@ impl Component for AutoResizeWindow {
     fn update(&mut self, _ctx: &Context<Self>, msg: Self::Message) -> bool {
         match msg {
             Msg::Resize(size) => {
-                self.adjust_window(size.width, size.height).unwrap();
+                let (width, height) = size.get();
+                self.adjust_window(width, height).unwrap();
                 false
             }
         }
@@ -143,7 +147,7 @@ impl Component for AutoResizeWindow {
                     let (width, height) =
                         (elem.client_width() as usize, elem.client_height() as usize);
 
-                    link.send_message(Msg::Resize(PhysicalSize { width, height }));
+                    link.send_message(Msg::Resize(Size::new_physical(width, height)));
                 },
             );
 

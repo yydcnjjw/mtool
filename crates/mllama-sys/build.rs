@@ -20,14 +20,13 @@ fn main() {
         println!("cargo:rustc-link-lib=dylib={}", cpp_stdlib);
     }
 
-    // println!("cargo:rustc-link-search=native=/opt/cuda/targets/x86_64-linux/lib");
-    // println!("cargo:rustc-link-lib=dylib=cublas");
-    // println!("cargo:rustc-link-lib=dylib=cublasLt");
-    // println!("cargo:rustc-link-lib=dylib=cudart");
+    let build_type = "Release";
 
     let dst = cmake::Config::new("llama.cpp")
         .profile("Release")
         .define("LLAMA_OPENBLAS", "ON")
+        .profile(build_type)
+        // .define("LLAMA_OPENBLAS", "ON")
         .build_target("llama")
         .build();
 
@@ -35,6 +34,18 @@ fn main() {
         "cargo:rustc-link-search=native={}",
         dst.join("build").display()
     );
+    if cfg!(windows) {
+        println!(
+            "cargo:rustc-link-search=native={}",
+            dst.join("build").join(build_type).display()
+        );
+    } else {
+        println!(
+            "cargo:rustc-link-search=native={}",
+            dst.join("build").display()
+        );
+    }
+
     println!("cargo:rustc-link-lib=static=llama");
 
     println!("cargo:rerun-if-changed=wrapper.h");

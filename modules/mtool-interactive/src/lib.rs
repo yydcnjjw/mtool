@@ -9,7 +9,7 @@ mod wgui;
 pub use complete::*;
 pub use completion::Completion;
 pub use output::OutputDevice;
-pub use tauri::{async_runtime, AppHandle, GlobalShortcutManager};
+pub use tauri::{async_runtime, AppHandle};
 
 use mapp::ModuleGroup;
 

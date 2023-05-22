@@ -1,3 +1,4 @@
+use mtauri_sys::window::Window;
 use tracing::{debug, warn};
 use wasm_bindgen::JsValue;
 use yew::prelude::*;
@@ -36,8 +37,9 @@ where
     fn listen_route(ctx: &Context<Self>) {
         let link = ctx.link().clone();
         ctx.link().send_future(async move {
-            let unlisten =
-                match mtauri_sys::window::listen("route", move |e: mtauri_sys::Event<String>| {
+            let unlisten = match Window::current()
+                .unwrap()
+                .listen("route", move |e: mtauri_sys::event::Event<String>| {
                     debug!("try route to {}", &e.payload);
                     if let Some(nav) = link.navigator() {
                         if let Some(r) = R::recognize(&e.payload) {
@@ -49,13 +51,13 @@ where
                     Ok(())
                 })
                 .await
-                {
-                    Ok(v) => Some(Box::new(v) as Box<dyn Fn() -> Result<(), JsValue>>),
-                    Err(e) => {
-                        warn!("listen route event failed: {:?}", e);
-                        None
-                    }
-                };
+            {
+                Ok(v) => Some(Box::new(v) as Box<dyn Fn() -> Result<(), JsValue>>),
+                Err(e) => {
+                    warn!("listen route event failed: {:?}", e);
+                    None
+                }
+            };
 
             Msg::RegisterRouteListener(RouteListener { unlisten })
         });

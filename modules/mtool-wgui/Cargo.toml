@@ -13,16 +13,23 @@ custom-protocol = [ "tauri/custom-protocol" ]
 
 [dependencies]
 mapp = { path = "../../crates/mapp" }
+msysev = { path = "../../crates/msysev" }
+mkeybinding = { path = "../../crates/mkeybinding" }
 mtool-core = { path = "../mtool-core" }
 mtool-system = { path = "../mtool-system" }
 
-tauri = { workspace = true, features = ["api-all", "system-tray"] }
+tauri = { workspace = true, features = ["system-tray"] }
 tokio = { workspace = true }
 async-trait = { workspace = true }
 futures = { workspace = true }
 anyhow = { workspace = true }
 serde-error = { workspace = true }
 tracing = { workspace = true }
+dashmap = {  workspace = true }
+
+[target.'cfg(not(any(target_os = "android", target_os = "ios")))'.dependencies]
+tauri-plugin-global-shortcut = { git = "https://github.com/tauri-apps/plugins-workspace", branch = "v2" }
+tauri-plugin-window = { git = "https://github.com/tauri-apps/plugins-workspace", branch = "v2" }
 
 [build-dependencies]
 tauri-build = { workspace = true }

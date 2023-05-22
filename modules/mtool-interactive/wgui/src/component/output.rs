@@ -1,7 +1,7 @@
 use mtool_interactive_model::OutputContent;
 use mtool_wgui_core::{AutoResizeWindow, Horizontal, Vertical, WindowProps};
 use tracing::debug;
-use yew::{platform::spawn_local, prelude::*};
+use yew::prelude::*;
 
 use crate::{app::AppContext, keybinding::Keybinging};
 
@@ -106,17 +106,6 @@ impl Output {
                     .unwrap(),
             )
         });
-
-        Self::adjust_window_size();
-    }
-
-    fn adjust_window_size() {
-        spawn_local(mtauri_sys::window::set_size(
-            mtauri_sys::window::PhysicalSize {
-                width: 720,
-                height: 480,
-            },
-        ));
     }
 
     fn register_keybinding(&self, ctx: &Context<Self>) {

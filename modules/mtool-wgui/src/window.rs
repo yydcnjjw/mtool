@@ -91,7 +91,7 @@ pub async fn hide_window(window: Res<MtoolWindow>) -> Result<(), anyhow::Error> 
 }
 
 pub(crate) fn init(injector: Injector) -> TauriPlugin<Wry> {
-    Builder::new("window")
+    Builder::new("mtool_window")
         .setup(move |app, _| {
             let app = app.clone();
             spawn(async move {

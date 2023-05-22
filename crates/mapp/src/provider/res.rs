@@ -27,11 +27,13 @@ impl<T> Res<T> {
 }
 
 impl Res<dyn Any + Send + Sync> {
-    pub fn downcast<T>(self) -> Result<Res<T>, Self>
+    pub fn downcast<T>(self) -> Result<Res<T>, anyhow::Error>
     where
-        T: Any + Send + Sync,
+        T: Send + Sync + 'static,
     {
-        Ok(Res(self.0.downcast().unwrap()))
+        Ok(Res(self.0.downcast().map_err(|_| {
+            anyhow::anyhow!("can not downcast to {}", type_name::<T>())
+        })?))
     }
 }
 

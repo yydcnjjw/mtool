@@ -2,8 +2,6 @@ mod action;
 
 mod sysev_backend;
 
-mod tauri_backend;
-
 // #[cfg(windows)]
 // mod windows_backend;
 
@@ -33,9 +31,6 @@ pub fn module() -> ModuleGroup {
     // #[cfg(windows)]
     // group.add_module(windows_backend::Module::default());
 
-    #[cfg(windows)]
-    group.add_module(tauri_backend::Module::default());
-
     group
 }
 
@@ -46,7 +41,7 @@ pub struct Keybinding {
 }
 
 impl Keybinding {
-    fn new<T>(hotkey_mgr: Res<T>, rx: mpsc::UnboundedReceiver<GlobalHotKeyEvent>) -> Self
+    pub fn new<T>(hotkey_mgr: Res<T>, rx: mpsc::UnboundedReceiver<GlobalHotKeyEvent>) -> Self
     where
         T: SetGlobalHotKey + Send + Sync + 'static,
     {
@@ -103,10 +98,10 @@ impl Keybinding {
 }
 
 #[derive(Debug)]
-struct GlobalHotKeyEvent(KeySequence);
+pub struct GlobalHotKeyEvent(pub KeySequence);
 
 #[async_trait]
-trait SetGlobalHotKey {
+pub trait SetGlobalHotKey {
     async fn register(&self, ks: &KeySequence) -> Result<(), anyhow::Error>;
     async fn unregister(&self, ks: &KeySequence) -> Result<(), anyhow::Error>;
 }

@@ -67,8 +67,8 @@ futures = "*"
 parking_lot = "*"
 thiserror = "*"
 anyhow = "*"
-tauri = "2.0.0-alpha.4"
-tauri-build = "2.0.0-alpha.2"
+tauri = "2.0.0-alpha.9"
+tauri-build = "2.0.0-alpha.5"
 serde = { version = "*", features = ["derive"] }
 serde_json = "*"
 serde-error = "*"
@@ -82,4 +82,4 @@ nom = "*"
 dashmap = "*"
 clap = { version = "*", features = ["derive", "cargo"] }
 toml = "*"
-notify-rust = { version = "*", default-features = false }
+notify-rust = { version = "*", features = ["zbus"] }

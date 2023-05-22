@@ -1,4 +1,5 @@
 mod builder;
+mod global_hotkey;
 mod window;
 
 pub use builder::*;
@@ -56,6 +57,8 @@ impl AppModule for Module {
 pub fn module() -> ModuleGroup {
     let mut group = ModuleGroup::new("wgui_group");
     group.add_module(Module::default());
+    #[cfg(windows)]
+    group.add_module(global_hotkey::Module::default());
     group
 }
 
@@ -81,6 +84,7 @@ async fn setup(builder: Res<Builder>, injector: Injector) -> Result<(), anyhow::
                 },
                 _ => {}
             })
+            .plugin(tauri_plugin_window::init())
             .plugin(window::init(injector))
             .setup(move |app| {
                 tx.send(Res::new(app.handle())).unwrap();
