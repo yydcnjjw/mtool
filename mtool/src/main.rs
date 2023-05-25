@@ -15,6 +15,7 @@ fn main() {
         .add_module(mtool_interactive::module())
         .add_module(mtool_proxy::module())
         .add_module(mtool_toast::Module::default())
+        .add_module(mtool_ai::Module::default())
         .build()
         .run();
 }

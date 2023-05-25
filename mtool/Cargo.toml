@@ -20,3 +20,4 @@ mtool-dict = { path = "../modules/mtool-dict" }
 mtool-interactive = { path = "../modules/mtool-interactive" }
 mtool-proxy = { path = "../modules/mtool-proxy" }
 mtool-toast = { path = "../modules/mtool-toast" }
+mtool-ai = { path = "../modules/mtool-ai" }

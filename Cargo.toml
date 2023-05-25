@@ -20,6 +20,7 @@ members = [
   "modules/mtool-wgui",
   "modules/mtool-proxy",
   "modules/mtool-toast",
+  "modules/mtool-ai",
   "mtool",
 ]
 
