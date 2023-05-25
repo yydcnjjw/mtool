@@ -1,5 +1,5 @@
 [package]
-name = "mtool-translate"
+name = "mtool-ai"
 version.workspace = true
 authors.workspace = true
 edition.workspace = true
@@ -8,18 +8,11 @@ edition.workspace = true
 
 [dependencies]
 mapp = { path = "../../crates/mapp" }
-mcloud-api = { path = "../../crates/mcloud-api" }
 mtool-core = { path = "../mtool-core" }
-mtool-wgui = { path = "../mtool-wgui" }
-mtool-system = { path = "../mtool-system" }
-mtool-cmder = { path = "../mtool-cmder" }
-mtool-interactive = { path = "../mtool-interactive" }
-mtool-ai = { path = "../mtool-ai" }
+mllama-sys = { path = "../../crates/mllama-sys" }
 
 serde = { workspace = true }
-clap = { workspace = true }
+tracing = { workspace = true }
 tokio = { workspace = true }
 async-trait = { workspace = true }
-futures = { workspace = true }
 anyhow = { workspace = true }
-itertools = { workspace = true }
