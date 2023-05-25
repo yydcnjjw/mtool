@@ -1,16 +1,20 @@
 use std::sync::Arc;
 
 use anyhow::Context;
-use socksv5::v5::{SocksV5AuthMethod, SocksV5Command, SocksV5RequestStatus};
+use socksv5::{
+    v4::SocksV4Command,
+    v5::{SocksV5AuthMethod, SocksV5Command, SocksV5RequestStatus},
+    SocksVersion,
+};
 use tokio::sync::{mpsc, Mutex};
-use tokio_util::compat::TokioAsyncReadCompatExt;
+use tokio_util::compat::{Compat, TokioAsyncReadCompatExt};
 use tracing::{instrument, warn};
 
 use crate::{
-    config::ingress::socks5::{ServerConfig, Socks5Config},
+    config::ingress::socks::{ServerConfig, Socks5Config},
     io::BoxedAsyncIO,
     net::transport,
-    proxy::{Address, TcpForwarder, NetLocation, ProxyConn, ProxyRequest},
+    proxy::{Address, NetLocation, ProxyConn, ProxyRequest, TcpForwarder},
 };
 
 #[derive(Debug)]
@@ -33,14 +37,11 @@ impl Server {
         })
     }
 
-    async fn serve_inner(
+    async fn serve_socksv5(
         tx: mpsc::UnboundedSender<ProxyRequest>,
-        stream: BoxedAsyncIO,
-        _config: Arc<Socks5Config>,
+        mut stream: Compat<BoxedAsyncIO>,
     ) -> Result<(), anyhow::Error> {
-        let mut stream = stream.compat();
-
-        let _methods = socksv5::v5::read_handshake(&mut stream).await?;
+        let _methods = socksv5::v5::read_handshake_skip_version(&mut stream).await?;
 
         // if let Some(_auth) = &config.auth {
         //     anyhow::bail!("auth is not supported {:?}", methods)
@@ -83,6 +84,48 @@ impl Server {
         };
         tx.send(request)
             .map_err(|e| anyhow::anyhow!("send error: {:?}", e.0))
+    }
+
+    async fn serve_socksv4(
+        tx: mpsc::UnboundedSender<ProxyRequest>,
+        mut stream: Compat<BoxedAsyncIO>,
+    ) -> Result<(), anyhow::Error> {
+        let request = socksv5::v4::read_request_skip_version(&mut stream).await?;
+        match request.command {
+            SocksV4Command::Connect | SocksV4Command::Bind => {
+                socksv5::v4::write_request_status(
+                    &mut stream,
+                    socksv5::v4::SocksV4RequestStatus::Granted,
+                    [0, 0, 0, 0],
+                    0,
+                )
+                .await?
+            }
+        }
+
+        tx.send(ProxyRequest {
+            remote: NetLocation {
+                address: Address::try_from(request.host)?,
+                port: request.port,
+            },
+            conn: ProxyConn::ForwardTcp(TcpForwarder {
+                stream: stream.into_inner(),
+            }),
+        })
+        .map_err(|e| anyhow::anyhow!("send error: {:?}", e.0))
+    }
+
+    async fn serve_inner(
+        tx: mpsc::UnboundedSender<ProxyRequest>,
+        stream: BoxedAsyncIO,
+        _config: Arc<Socks5Config>,
+    ) -> Result<(), anyhow::Error> {
+        let mut stream = stream.compat();
+
+        match socksv5::read_version(&mut stream).await? {
+            SocksVersion::V4 => Self::serve_socksv4(tx, stream).await,
+            SocksVersion::V5 => Self::serve_socksv5(tx, stream).await,
+        }
     }
 
     #[instrument(skip_all)]
