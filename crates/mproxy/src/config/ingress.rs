@@ -13,7 +13,7 @@ pub struct IngressConfig {
 #[serde(rename_all = "lowercase")]
 pub enum ServerConfig {
     Http(http::ServerConfig),
-    Socks5(socks5::ServerConfig),
+    Socks(socks::ServerConfig),
 }
 
 pub mod http {
@@ -28,7 +28,7 @@ pub mod http {
     }
 }
 
-pub mod socks5 {
+pub mod socks {
     use serde::{Deserialize, Serialize};
 
     use crate::config::transport::AcceptorConfig;
