@@ -24,6 +24,7 @@ impl Client {
         let (upload_bytes, download_bytes) = match req.conn {
             ProxyConn::ForwardTcp(conn) => conn.forward_with_monitor(s, &self.monitor).await?,
             ProxyConn::ForwardHttp(conn) => conn.forward_with_monitor(s, &self.monitor).await?,
+            ProxyConn::ForwardUdp(_) => unimplemented!(),
         };
         Ok(ProxyResponse {
             upload_bytes,

@@ -27,6 +27,7 @@ pub struct ProxyResponse {
 #[derive(Debug)]
 pub enum ProxyConn {
     ForwardTcp(TcpForwarder),
+    ForwardUdp(UdpForwarder),
     ForwardHttp(HttpForwarder),
 }
 

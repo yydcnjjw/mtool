@@ -272,6 +272,7 @@ impl Client {
         let (upload_bytes, download_bytes) = match req.conn {
             ProxyConn::ForwardTcp(conn) => self.handle_forward_tcp(s, req.remote, conn).await?,
             ProxyConn::ForwardHttp(conn) => self.handle_forward_http(s, conn).await?,
+            ProxyConn::ForwardUdp(_) => unreachable!(),
         };
 
         Ok(ProxyResponse {

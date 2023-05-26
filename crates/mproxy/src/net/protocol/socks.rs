@@ -71,7 +71,7 @@ impl Server {
                     }),
                 }
             }
-            _ => {
+            SocksV5Command::UdpAssociate => {
                 socksv5::v5::write_request_status(
                     &mut stream,
                     SocksV5RequestStatus::CommandNotSupported,
@@ -79,7 +79,7 @@ impl Server {
                     0,
                 )
                 .await?;
-                anyhow::bail!("{:?} is not supported", request.command)
+                anyhow::bail!("{:?} is not supported", request)
             }
         };
         tx.send(request)
