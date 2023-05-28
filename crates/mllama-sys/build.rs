@@ -13,40 +13,43 @@ fn get_cpp_link_stdlib(target: &str) -> Option<&'static str> {
     }
 }
 
+fn add_compile_define<'a>(compiler: &'a mut cc::Build, target: &str) -> &'a mut cc::Build {
+    if target.contains("msvc") {
+        compiler.define("_CRT_SECURE_NO_WARNINGS", None)
+    } else {
+        compiler
+    }
+}
+
+fn build_ggml(target: &str) {
+    let mut compiler = cc::Build::new();
+    add_compile_define(&mut compiler, target);
+    compiler
+        .warnings(false)
+        .include("llama.cpp")
+        .file("llama.cpp/ggml.c")
+        .compile("ggml");
+    println!("cargo:rustc-link-lib=static=ggml");
+}
+
+fn build_llama(target: &str) {
+    let mut compiler = cc::Build::new();
+    add_compile_define(&mut compiler, target);
+    compiler
+        .cpp(true)
+        .warnings(false)
+        .include("llama.cpp")
+        .file("llama.cpp/llama.cpp")
+        .cpp_link_stdlib(get_cpp_link_stdlib(target))
+        .compile("llama");
+    println!("cargo:rustc-link-lib=static=llama");
+}
+
 fn main() {
     let target = env::var("TARGET").unwrap();
-    // Link C++ standard library
-    if let Some(cpp_stdlib) = get_cpp_link_stdlib(&target) {
-        println!("cargo:rustc-link-lib=dylib={}", cpp_stdlib);
-    }
 
-    let build_type = "Release";
-
-    let dst = cmake::Config::new("llama.cpp")
-        .profile("Release")
-        .define("LLAMA_OPENBLAS", "ON")
-        .profile(build_type)
-        // .define("LLAMA_OPENBLAS", "ON")
-        .build_target("llama")
-        .build();
-
-    println!(
-        "cargo:rustc-link-search=native={}",
-        dst.join("build").display()
-    );
-    if cfg!(windows) {
-        println!(
-            "cargo:rustc-link-search=native={}",
-            dst.join("build").join(build_type).display()
-        );
-    } else {
-        println!(
-            "cargo:rustc-link-search=native={}",
-            dst.join("build").display()
-        );
-    }
-
-    println!("cargo:rustc-link-lib=static=llama");
+    build_ggml(&target);
+    build_llama(&target);
 
     println!("cargo:rerun-if-changed=wrapper.h");
 
