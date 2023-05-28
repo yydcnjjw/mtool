@@ -23,6 +23,7 @@ use tracing::{debug, warn};
 pub struct Module {}
 
 pub fn module() -> ModuleGroup {
+    #[allow(unused_mut)]
     let mut group = ModuleGroup::new("keybinding_group");
 
     #[cfg(not(windows))]

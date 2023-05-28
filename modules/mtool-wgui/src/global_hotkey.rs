@@ -9,7 +9,7 @@ use mapp::{
 };
 use mkeybinding::KeySequence;
 use msysev::keydef::{KeyCode, KeyModifier};
-use tauri::plugin;
+use tauri::{plugin, AppHandle};
 use tauri_plugin_global_shortcut::{self, GlobalShortcutExt, Shortcut};
 use tokio::sync::{mpsc, oneshot};
 use tracing::warn;
@@ -43,44 +43,33 @@ async fn add_wgui_plugin(
     injector: Injector,
 ) -> Result<(), anyhow::Error> {
     builder.setup(move |builder| {
-        Ok(builder.plugin(
+        let (ktx, krx) = mpsc::unbounded_channel();
+
+        let hotkey_mgr = Res::new(GlobalHotKeyMgr::new(injector.clone(), ktx));
+
+        let global_shortcut_plugin = {
+            let hotkey_mgr = hotkey_mgr.clone();
+            tauri_plugin_global_shortcut::Builder::with_handler(move |shortcut| {
+                if let Some(kv) = hotkey_mgr.shortcut_index.get(shortcut) {
+                    if let Err(e) = hotkey_mgr
+                        .sender
+                        .send(GlobalHotKeyEvent(kv.value().clone()))
+                    {
+                        warn!("send global hotkey event failed: {}", e);
+                    }
+                }
+            })
+            .build()
+        };
+        Ok(builder.plugin(global_shortcut_plugin).plugin(
             plugin::Builder::<tauri::Wry>::new("global-shortcut")
-                .setup(move |app, _| {
-                    let (ktx, krx) = mpsc::unbounded_channel();
+                .setup(move |_app, _| {
+                    let keybinding = Res::new(Keybinding::new(hotkey_mgr, krx));
+                    if let Err(_) = tx.send(keybinding.clone()) {
+                        warn!("Failed to send wgui Keybinding");
+                    }
 
-                    let hotkey_mgr = Res::new(GlobalHotKeyMgr::new(Res::new(app.clone()), ktx));
-
-                    let app = app.clone();
-                    tokio::spawn(async move {
-                        {
-                            let hotkey_mgr = hotkey_mgr.clone();
-
-                            app.plugin(
-                                tauri_plugin_global_shortcut::Builder::with_handler(
-                                    move |shortcut| {
-                                        if let Some(kv) = hotkey_mgr.shortcut_index.get(shortcut) {
-                                            if let Err(e) = hotkey_mgr
-                                                .sender
-                                                .send(GlobalHotKeyEvent(kv.value().clone()))
-                                            {
-                                                warn!("send global hotkey event failed: {}", e);
-                                            }
-                                        }
-                                    },
-                                )
-                                .build(),
-                            )
-                            .unwrap();
-                        }
-
-                        let keybinding = Res::new(Keybinding::new(hotkey_mgr, krx));
-                        if let Err(_) = tx.send(keybinding.clone()) {
-                            warn!("Failed to send wgui Keybinding");
-                        }
-
-                        tokio::spawn(keybinding.clone().handle_event_loop(injector));
-                    });
-
+                    tokio::spawn(keybinding.clone().handle_event_loop(injector));
                     Ok(())
                 })
                 .build(),
@@ -89,33 +78,39 @@ async fn add_wgui_plugin(
 }
 
 pub struct GlobalHotKeyMgr {
-    app: Res<tauri::AppHandle>,
+    injector: Injector,
     sender: mpsc::UnboundedSender<GlobalHotKeyEvent>,
     shortcut_index: DashMap<Shortcut, KeySequence>,
 }
 
 impl GlobalHotKeyMgr {
-    fn new(app: Res<tauri::AppHandle>, sender: mpsc::UnboundedSender<GlobalHotKeyEvent>) -> Self {
+    fn new(injector: Injector, sender: mpsc::UnboundedSender<GlobalHotKeyEvent>) -> Self {
         Self {
-            app,
+            injector,
             sender,
             shortcut_index: DashMap::new(),
         }
     }
 
-    fn define(&self, ks: &KeySequence) -> Result<(), anyhow::Error> {
+    async fn app_handle(&self) -> Res<AppHandle> {
+        self.injector.get::<Res<AppHandle>>().await.unwrap()
+    }
+
+    async fn define(&self, ks: &KeySequence) -> Result<(), anyhow::Error> {
         let accelerator = convert_kbd_to_accelerator(ks)?;
         let shortcut = Shortcut::from_str(&accelerator)?;
         self.shortcut_index.insert(shortcut.clone(), ks.clone());
 
-        self.app
+        self.app_handle()
+            .await
             .global_shortcut()
             .register(shortcut)
             .context(format!("tauri register global key: {}", accelerator))
     }
 
-    fn remove(&self, ks: &KeySequence) -> Result<(), anyhow::Error> {
-        self.app
+    async fn remove(&self, ks: &KeySequence) -> Result<(), anyhow::Error> {
+        self.app_handle()
+            .await
             .global_shortcut()
             .unregister(convert_kbd_to_accelerator(ks)?.as_str())
             .context("tauri unregister global key")
@@ -125,11 +120,12 @@ impl GlobalHotKeyMgr {
 #[async_trait]
 impl SetGlobalHotKey for GlobalHotKeyMgr {
     async fn register(&self, ks: &KeySequence) -> Result<(), anyhow::Error> {
-        self.define(ks)
+        // self.define(ks).await
+        Ok(())
     }
 
     async fn unregister(&self, ks: &KeySequence) -> Result<(), anyhow::Error> {
-        self.remove(ks)
+        self.remove(ks).await
     }
 }
 
