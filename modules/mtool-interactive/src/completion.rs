@@ -1,10 +1,10 @@
-use std::{fmt, ops::Deref, sync::Arc};
+use std::{fmt, sync::Arc};
 
-use crate::complete::CompleteRead;
+use crate::{wgui, CompleteItem, CompleteRead, CompletionArgs};
 
-pub type SharedCompletion = Arc<dyn CompleteRead + Send + Sync>;
-
-pub struct Completion(pub SharedCompletion);
+pub enum Completion {
+    WGui(Arc<wgui::Completion>),
+}
 
 impl fmt::Debug for Completion {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
@@ -12,12 +12,13 @@ impl fmt::Debug for Completion {
     }
 }
 
-impl Completion {}
-
-impl Deref for Completion {
-    type Target = SharedCompletion;
-
-    fn deref(&self) -> &Self::Target {
-        &self.0
+impl Completion {
+    pub async fn complete_read<T>(&self, args: CompletionArgs<T>) -> Result<T, anyhow::Error>
+    where
+        T: CompleteItem,
+    {
+        match self {
+            Completion::WGui(c) => c.complete_read(args).await,
+        }
     }
 }

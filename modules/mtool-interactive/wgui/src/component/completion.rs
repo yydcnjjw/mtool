@@ -1,12 +1,12 @@
-use mtool_interactive_model::CompletionMeta;
+use mtool_interactive_model::{CompletionExit, CompletionMeta};
 use mtool_wgui_core::{AutoResizeWindow, Horizontal, Vertical, WindowProps};
-use tracing::debug;
+use tracing::{debug, warn};
 use web_sys::HtmlInputElement;
 use yew::{platform::spawn_local, prelude::*};
 
 use crate::{app::AppContext, generate_keymap, keybinding::Keybinging};
 
-use super::completion_list::{CompletionArgs, CompletionList};
+use super::completion_list::{CompletionExitArgs, CompletionList};
 
 pub struct Completion {
     input: String,
@@ -125,12 +125,16 @@ impl Component for Completion {
                 self.clear_input();
 
                 spawn_local(async move {
-                    let _: () = mtauri_sys::invoke(
+                    if let Err(e) = mtauri_sys::invoke::<CompletionExitArgs, ()>(
                         "plugin:interactive::completion|complete_exit",
-                        &CompletionArgs { completed },
+                        &CompletionExitArgs {
+                            v: CompletionExit::Completed(completed),
+                        },
                     )
                     .await
-                    .unwrap();
+                    {
+                        warn!("invoke complete_exit failed: {:?}", e);
+                    }
                 });
 
                 false

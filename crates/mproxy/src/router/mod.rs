@@ -93,20 +93,33 @@ impl GeositeFile {
         Ok(())
     }
 
+    pub fn insert_target(&mut self, tag: &str, target: &str) -> Result<(), anyhow::Error> {
+        let (rule_type, value) = parse_target(target)?;
+        self.insert(tag, rule_type, value)
+    }
+
     pub fn remove(
         &mut self,
         tag: &str,
         rule_type: RuleType,
         value: &str,
     ) -> Result<(), anyhow::Error> {
-        if let Some(sg) = self.get_site_group_mut(tag) {
-            let domain = geosite::Domain {
-                type_: geosite::domain::Type::try_from(rule_type)?.into(),
-                value: value.to_string(),
-                ..Default::default()
-            };
+        let domain = geosite::Domain {
+            type_: geosite::domain::Type::try_from(rule_type)?.into(),
+            value: value.to_string(),
+            ..Default::default()
+        };
 
-            if let Some(i) = sg.domain.iter().position(|item| *item == domain) {
+        self.remove_with_domain(tag, &domain)
+    }
+
+    pub fn remove_with_domain(
+        &mut self,
+        tag: &str,
+        domain: &geosite::Domain,
+    ) -> Result<(), anyhow::Error> {
+        if let Some(sg) = self.get_site_group_mut(tag) {
+            if let Some(i) = sg.domain.iter().position(|item| item == domain) {
                 sg.domain.remove(i);
             }
         }
@@ -256,7 +269,7 @@ impl FromStr for RuleType {
     }
 }
 
-pub fn parse_target(value: &str) -> Result<(RuleType, &str), anyhow::Error> {
+fn parse_target(value: &str) -> Result<(RuleType, &str), anyhow::Error> {
     let (rule_type, value) = value.split_once(':').context("need ':'")?;
     Ok((RuleType::from_str(rule_type)?, value))
 }

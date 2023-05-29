@@ -1,15 +1,21 @@
+use std::{
+    hash::{Hash, Hasher},
+    ops::Deref,
+};
+
 use anyhow::Context;
 use mapp::provider::Res;
-use mproxy::{protos, router::parse_target};
-use mtool_interactive::{Completion, CompletionArgs};
+use mproxy::protos::geosite;
+use mtool_interactive::{CompleteItem, Completion, CompletionArgs};
 use notify_rust::{Notification, Timeout};
+use yew::prelude::*;
 
 use crate::proxy::ProxyApp;
 
 async fn add_proxy_rule_inner(app: Res<ProxyApp>, c: Res<Completion>) -> Result<(), anyhow::Error> {
     let target = c
         .complete_read(
-            CompletionArgs::without_completion()
+            CompletionArgs::<String>::without_completion()
                 .prompt("Add proxy target: ")
                 .hide_window(),
         )
@@ -17,12 +23,79 @@ async fn add_proxy_rule_inner(app: Res<ProxyApp>, c: Res<Completion>) -> Result<
 
     {
         let mut gs = app.resource.lock().unwrap();
-        let (rule_type, value) = parse_target(&target)?;
-        gs.insert("pri", rule_type, value)?;
+        gs.insert_target("pri", &target)?;
         gs.store()?;
     }
 
     app.inner.router().add_rule_target(&app.proxy_id, &target)
+}
+
+#[derive(Properties, PartialEq, Clone)]
+struct GeositeItem {
+    data: geosite::Domain,
+}
+
+impl Hash for GeositeItem {
+    fn hash<H: Hasher>(&self, state: &mut H) {
+        match self.data.type_.enum_value() {
+            Ok(v) => v.hash(state),
+            Err(_) => {}
+        }
+        self.data.value.hash(state);
+    }
+}
+
+impl Eq for GeositeItem {}
+
+impl Deref for GeositeItem {
+    type Target = geosite::Domain;
+
+    fn deref(&self) -> &Self::Target {
+        &self.data
+    }
+}
+
+impl CompleteItem for GeositeItem {
+    type WGuiView = GeositeItemView;
+
+    fn complete_hint(&self) -> String {
+        self.data.value.clone()
+    }
+}
+
+struct GeositeItemView;
+impl Component for GeositeItemView {
+    type Message = ();
+
+    type Properties = GeositeItem;
+
+    fn create(_ctx: &yew::Context<Self>) -> Self {
+        Self {}
+    }
+
+    fn view(&self, ctx: &yew::Context<Self>) -> Html {
+        let props = ctx.props();
+        let type_ = match props.type_.enum_value() {
+            Ok(v) => match v {
+                geosite::domain::Type::Plain => "Plain",
+                geosite::domain::Type::Regex => "Regex",
+                geosite::domain::Type::Domain => "Domain",
+                geosite::domain::Type::Full => "Full",
+            },
+            Err(_) => "Unknown",
+        };
+        html! {
+            <div>
+                <span>
+                  { type_ }
+                </span>
+                {": "}
+                <span>
+                  { props.value.clone() }
+                </span>
+            </div>
+        }
+    }
 }
 
 async fn remove_proxy_rule_inner(
@@ -35,22 +108,8 @@ async fn remove_proxy_rule_inner(
             if let Some(sg) = gs.get_site_group("pri") {
                 sg.domain
                     .iter()
-                    .map(|item| -> String {
-                        format!(
-                            "{}: {}",
-                            if let Ok(type_) = item.type_.enum_value() {
-                                match type_ {
-                                    protos::geosite::domain::Type::Domain => "Domain",
-                                    protos::geosite::domain::Type::Plain => "Plain",
-                                    protos::geosite::domain::Type::Regex => "Regex",
-                                    protos::geosite::domain::Type::Full => "Full",
-                                }
-                            } else {
-                                "Unknown"
-                            },
-                            item.value
-                        )
-                    })
+                    .cloned()
+                    .map(|v| GeositeItem { data: v })
                     .collect::<Vec<_>>()
             } else {
                 vec![]
@@ -67,8 +126,7 @@ async fn remove_proxy_rule_inner(
 
     {
         let mut gs = app.resource.lock().unwrap();
-        let (rule_type, value) = parse_target(&target)?;
-        gs.remove("pri", rule_type, value)?;
+        gs.remove_with_domain("pri", &target)?;
         gs.store()?;
     }
     Ok(())

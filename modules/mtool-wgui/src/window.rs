@@ -10,7 +10,7 @@ use tracing::info;
 
 pub struct WGuiWindow {
     inner: tauri::Window,
-    pos: RwLock<PhysicalPosition<i32>>,
+    pos: RwLock<Option<PhysicalPosition<i32>>>,
 }
 
 impl Deref for WGuiWindow {
@@ -25,21 +25,23 @@ impl WGuiWindow {
     pub fn new(window: tauri::Window) -> Self {
         Self {
             inner: window,
-            pos: RwLock::new(PhysicalPosition::new(0, 0)),
+            pos: RwLock::new(None),
         }
     }
 
     fn save_position(&self) -> Result<(), anyhow::Error> {
         let mut pos = self.pos.write().unwrap();
-        *pos = self.inner.outer_position()?;
+        *pos = Some(self.inner.outer_position()?);
         info!("save position: {:?}", &pos);
         Ok(())
     }
 
     fn restore_position(&self) -> Result<(), anyhow::Error> {
         let pos = self.pos.read().unwrap();
-        self.inner.set_position(pos.clone())?;
-        info!("restore position: {:?}", &pos);
+        if let Some(pos) = pos.as_ref() {
+            self.inner.set_position(pos.clone())?;
+            info!("restore position: {:?}", &pos);
+        }
         Ok(())
     }
 

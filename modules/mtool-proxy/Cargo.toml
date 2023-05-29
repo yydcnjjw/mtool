@@ -16,6 +16,7 @@ mtool-cmder = { path = "../mtool-cmder" }
 mtool-interactive = { path = "../mtool-interactive" }
 mtool-wgui = { path = "../mtool-wgui" }
 
+clap = { workspace = true }
 tauri = { workspace = true }
 tokio = { workspace = true }
 async-trait = { workspace = true }
@@ -25,3 +26,4 @@ serde = { workspace = true }
 serde-error = { workspace = true }
 toml = { workspace = true }
 notify-rust = { workspace = true }
+yew = { workspace = true }

@@ -56,7 +56,7 @@ pub async fn exec_command_interactive(
         let command = command.clone();
         injector.construct_once(move || async move {
             let completed = c
-                .complete_read(CompletionArgs::without_completion().prompt(&command))
+                .complete_read(CompletionArgs::<String>::without_completion().prompt(&command))
                 .await?;
 
             Ok(Res::new(CommandArgs::new(shellwords::split(&completed)?)))

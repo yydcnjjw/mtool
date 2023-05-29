@@ -23,5 +23,6 @@ itertools = { workspace = true }
 tracing = { workspace = true }
 serde-error = { workspace = true }
 fuzzy-matcher = { workspace = true }
+yew = { workspace = true }
 
 rand = "0.8"

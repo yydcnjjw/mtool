@@ -1,7 +1,8 @@
 use gloo_utils::document;
 use mkeybinding::KeyMap;
+use mtool_interactive_model::{CompletionExit, CompletionItem};
 use serde::{Deserialize, Serialize};
-use tracing::debug;
+use tracing::{debug, warn};
 use wasm_bindgen::JsCast;
 use web_sys::{HtmlElement, ScrollIntoViewOptions, ScrollLogicalPosition};
 use yew::{platform::spawn_local, prelude::*};
@@ -12,9 +13,14 @@ use crate::{
     keybinding::{Keybinging, SharedAction},
 };
 
-#[derive(Serialize, Deserialize)]
+#[derive(Debug, Serialize, Deserialize)]
 pub struct CompletionArgs {
     pub completed: String,
+}
+
+#[derive(Debug, Serialize, Deserialize)]
+pub struct CompletionExitArgs {
+    pub v: CompletionExit,
 }
 
 #[derive(Properties, PartialEq)]
@@ -26,7 +32,7 @@ pub struct Props {
 }
 
 pub struct CompletionList {
-    items: Vec<String>,
+    items: Vec<CompletionItem>,
     focused_item_index: usize,
     keybinding: Keybinging,
     km: KeyMap<SharedAction>,
@@ -35,7 +41,7 @@ pub struct CompletionList {
 #[derive(Clone)]
 pub enum Msg {
     AppContext(AppContext),
-    FetchCompleteRead(Vec<String>),
+    FetchCompleteRead(Vec<CompletionItem>),
     Next,
     Prev,
     FocusChanged(usize),
@@ -66,7 +72,7 @@ impl Component for CompletionList {
             km: Self::generate_keymap(ctx),
         };
 
-        Self::fetch_complete_read(ctx);
+        Self::fetch_complete(ctx);
 
         self_
     }
@@ -103,14 +109,18 @@ impl Component for CompletionList {
                 true
             }
             Msg::Exit => {
-                let completed = self.items[self.focused_item_index].to_owned();
+                let item = self.items[self.focused_item_index].to_owned();
                 spawn_local(async move {
-                    let _: () = mtauri_sys::invoke(
+                    if let Err(e) = mtauri_sys::invoke::<CompletionExitArgs, ()>(
                         "plugin:interactive::completion|complete_exit",
-                        &CompletionArgs { completed },
+                        &CompletionExitArgs {
+                            v: CompletionExit::Id(item.id),
+                        },
                     )
                     .await
-                    .unwrap();
+                    {
+                        warn!("invoke complete_exit failed: {:?}", e)
+                    }
                 });
                 false
             }
@@ -152,7 +162,7 @@ impl Component for CompletionList {
                                 onclick={ ctx.link().callback(move |_| Msg::FocusChanged(i)) }>
                                 <div class={classes!("font-mono",
                                                      "text-2xl")}>
-                                  { item }
+                                  { Html::from_html_unchecked(AttrValue::from(item.view.clone())) }
                                 </div>
                               </div>
                           }
@@ -170,7 +180,7 @@ impl Component for CompletionList {
 
         self.focused_item_index = 0;
 
-        Self::fetch_complete_read(ctx);
+        Self::fetch_complete(ctx);
 
         true
     }
@@ -192,16 +202,23 @@ impl Component for CompletionList {
 impl CompletionList {
     // const MAX_ITEM_COUNT: usize = 5;
 
-    fn fetch_complete_read(ctx: &Context<Self>) {
+    fn fetch_complete(ctx: &Context<Self>) {
         let input = ctx.props().input.to_string();
         ctx.link().send_future(async move {
-            let items: Vec<String> = mtauri_sys::invoke(
-                "plugin:interactive::completion|complete_read",
-                &CompletionArgs { completed: input },
+            Msg::FetchCompleteRead(
+                match mtauri_sys::invoke(
+                    "plugin:interactive::completion|complete",
+                    &CompletionArgs { completed: input },
+                )
+                .await
+                {
+                    Ok(items) => items,
+                    Err(e) => {
+                        warn!("invoke complete failed: {:?}", e);
+                        vec![]
+                    }
+                },
             )
-            .await
-            .unwrap();
-            Msg::FetchCompleteRead(items)
         });
     }
 
