@@ -84,3 +84,4 @@ dashmap = "*"
 clap = { version = "*", features = ["derive", "cargo"] }
 toml = "*"
 notify-rust = { version = "*", features = ["zbus"] }
+fuzzy-matcher = "*"

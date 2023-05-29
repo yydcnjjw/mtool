@@ -133,10 +133,13 @@ impl Component for CompletionList {
             }
         };
 
+        let mut cont_class = ctx.props().class.clone();
+        cont_class.extend(classes!("max-h-[17.5rem]"));
+
         html! {
             if !self.items.is_empty() {
                 <>
-                    <div class={ctx.props().class.clone()}>
+                    <div class={cont_class}>
                     {
                       for self.items.iter().enumerate().map(|(i, item)|{
                           html! {

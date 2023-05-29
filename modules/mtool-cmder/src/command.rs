@@ -95,7 +95,7 @@ impl CommandDescriptor {
         self.name.as_ref().map(|v| v.as_str()).unwrap_or_default()
     }
 
-    pub fn set_name(mut self, name: &str) -> Self {
+    pub fn name(mut self, name: &str) -> Self {
         self.name = Some(name.into());
         self
     }
@@ -113,7 +113,7 @@ impl CommandDescriptor {
         self.desc.as_ref().map(|v| v.as_str()).unwrap_or_default()
     }
 
-    pub fn set_desc(mut self, desc: &str) -> Self {
+    pub fn desc(mut self, desc: &str) -> Self {
         self.desc = Some(desc.into());
         self
     }

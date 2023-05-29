@@ -1,6 +1,5 @@
 use std::{collections::HashMap, sync::Arc};
 
-use fuzzy_matcher::{skim::SkimMatcherV2, FuzzyMatcher};
 use itertools::Itertools;
 use parking_lot::RwLock;
 
@@ -10,8 +9,7 @@ use super::{CommandDescriptor, IntoCommandDescriptor};
 
 type SharedCommandDescriptor = Arc<CommandDescriptor>;
 struct CmderInner {
-    fuzzy_storage: HashMap<String, SharedCommandDescriptor>,
-    fuzzy_matcher: SkimMatcherV2,
+    storage: HashMap<String, SharedCommandDescriptor>,
 
     kcmap: HashMap<Label, SharedCommandDescriptor>,
 }
@@ -19,8 +17,7 @@ struct CmderInner {
 impl CmderInner {
     fn new() -> Self {
         Self {
-            fuzzy_storage: HashMap::new(),
-            fuzzy_matcher: SkimMatcherV2::default(),
+            storage: HashMap::new(),
             kcmap: HashMap::new(),
         }
     }
@@ -33,36 +30,18 @@ impl CmderInner {
 
         self.kcmap.insert(*cmd.get_label(), cmd.clone());
 
-        self.fuzzy_storage
+        self.storage
             .insert(cmd.get_name().into(), cmd.clone());
 
         for alias in cmd.get_aliases() {
-            self.fuzzy_storage.insert(alias.clone(), cmd.clone());
+            self.storage.insert(alias.clone(), cmd.clone());
         }
 
         self
     }
 
-    fn get_cmd_fuzzy(&self, pattern: &str) -> Vec<SharedCommandDescriptor> {
-        let mut items = Vec::new();
-
-        for (choice, cmd) in &self.fuzzy_storage {
-            if let Some(score) = self.fuzzy_matcher.fuzzy_match(choice, pattern) {
-                items.push((score, cmd));
-            }
-        }
-
-        items.sort_by(|a, b| a.0.cmp(&b.0));
-
-        items
-            .iter()
-            .map(|item| item.1.clone())
-            .unique()
-            .collect_vec()
-    }
-
     fn get_cmd_exact(&self, name_or_alias: &str) -> Option<SharedCommandDescriptor> {
-        self.fuzzy_storage.get(name_or_alias).map(|v| v.clone())
+        self.storage.get(name_or_alias).map(|v| v.clone())
     }
 
     fn get_cmd_with_label<L>(&self, label: L) -> Option<SharedCommandDescriptor>
@@ -95,10 +74,6 @@ impl Cmder {
     {
         self.inner.write().add_command(cmd);
         self
-    }
-
-    pub fn get_command_fuzzy(&self, pattern: &str) -> Vec<SharedCommandDescriptor> {
-        self.inner.read().get_cmd_fuzzy(pattern)
     }
 
     pub fn get_command_exact(&self, name_or_alias: &str) -> Option<SharedCommandDescriptor> {

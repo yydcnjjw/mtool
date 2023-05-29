@@ -1,6 +1,8 @@
 use std::future::Future;
 
 use async_trait::async_trait;
+use fuzzy_matcher::{skim::SkimMatcherV2, FuzzyMatcher};
+use itertools::Itertools;
 use mtool_interactive_model::CompletionMeta;
 
 use crate::utils::rand_string;
@@ -31,15 +33,12 @@ impl CompletionArgs {
         }
     }
 
+    pub fn with_vec(items: Vec<String>) -> Self {
+        Self::new(CompleteVec::new(items))
+    }
+
     pub fn without_completion() -> Self {
-        Self {
-            complete: Box::new(|_| async move { Ok(Vec::new()) }),
-            meta: CompletionMeta {
-                id: rand_string(),
-                prompt: String::default(),
-            },
-            hide_window: false,
-        }
+        Self::new(|_| async move { Ok(Vec::new()) })
     }
 
     pub fn prompt(mut self, prompt: &str) -> Self {
@@ -70,6 +69,37 @@ where
 {
     async fn complete(&self, completed: String) -> Result<Vec<String>, anyhow::Error> {
         (self)(completed).await
+    }
+}
+
+pub struct CompleteVec {
+    matcher: SkimMatcherV2,
+    items: Vec<String>,
+}
+
+impl CompleteVec {
+    pub fn new(items: Vec<String>) -> Self {
+        Self {
+            matcher: SkimMatcherV2::default(),
+            items,
+        }
+    }
+}
+
+#[async_trait]
+impl Complete for CompleteVec {
+    async fn complete(&self, completed: String) -> Result<Vec<String>, anyhow::Error> {
+        let mut items = Vec::new();
+
+        for item in &self.items {
+            if let Some(score) = self.matcher.fuzzy_match(item, &completed) {
+                items.push((score, item.clone()));
+            }
+        }
+
+        items.sort_by(|a, b| a.0.cmp(&b.0));
+
+        Ok(items.into_iter().map(|item| item.1).unique().collect_vec())
     }
 }
 

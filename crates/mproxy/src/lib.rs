@@ -20,7 +20,7 @@ use std::{sync::Arc, time::Instant};
 use tokio::sync::{mpsc, Mutex};
 use tracing::{error, info, info_span, warn, Instrument};
 
-pub use config::AppConfig;
+pub use config::{AppConfig, protos};
 use proxy::{Egress, Ingress, ProxyRequest, ProxyResponse};
 use router::Router;
 

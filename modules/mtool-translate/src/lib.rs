@@ -41,19 +41,19 @@ async fn register_command(cmder: Res<Cmder>, cs: Res<ConfigStore>) -> Result<(),
                 cmd::text_translate_into_english
                     .name("text_translate_into_english")
                     .add_alias("te")
-                    .set_desc("Translate into English"),
+                    .desc("Translate into English"),
             )
             .add_command(
                 cmd::text_translate_into_chinese
                     .name("text_translate_into_chinese")
                     .add_alias("tz")
-                    .set_desc("Translate into Chinese"),
+                    .desc("Translate into Chinese"),
             )
             .add_command(
                 cmd::text_translate_into_japanese
                     .name("text_translate_into_japanese")
                     .add_alias("tj")
-                    .set_desc("Translate into Japanese"),
+                    .desc("Translate into Japanese"),
             );
     } else {
         cmder
@@ -61,19 +61,19 @@ async fn register_command(cmder: Res<Cmder>, cs: Res<ConfigStore>) -> Result<(),
                 cmd::text_translate_into_english_wgui
                     .name("text_translate_into_english")
                     .add_alias("te")
-                    .set_desc("Translate into English"),
+                    .desc("Translate into English"),
             )
             .add_command(
                 cmd::text_translate_into_chinese_wgui
                     .name("text_translate_into_chinese")
                     .add_alias("tz")
-                    .set_desc("Translate into Chinese"),
+                    .desc("Translate into Chinese"),
             )
             .add_command(
                 cmd::text_translate_into_japanese_wgui
                     .name("text_translate_into_japanese")
                     .add_alias("tj")
-                    .set_desc("Translate into Japanese"),
+                    .desc("Translate into Japanese"),
             );
     }
 

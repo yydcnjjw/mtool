@@ -37,10 +37,17 @@ impl GeositeFile {
         })
     }
 
-    fn get_site_group(&self, tag: &str) -> Option<&geosite::SiteGroup> {
+    pub fn get_site_group(&self, tag: &str) -> Option<&geosite::SiteGroup> {
         self.sgl
             .site_group
             .iter()
+            .find(|sg| sg.tag == tag.to_uppercase())
+    }
+
+    fn get_site_group_mut(&mut self, tag: &str) -> Option<&mut geosite::SiteGroup> {
+        self.sgl
+            .site_group
+            .iter_mut()
             .find(|sg| sg.tag == tag.to_uppercase())
     }
 
@@ -83,6 +90,26 @@ impl GeositeFile {
             anyhow::bail!("{} is exist", value);
         }
 
+        Ok(())
+    }
+
+    pub fn remove(
+        &mut self,
+        tag: &str,
+        rule_type: RuleType,
+        value: &str,
+    ) -> Result<(), anyhow::Error> {
+        if let Some(sg) = self.get_site_group_mut(tag) {
+            let domain = geosite::Domain {
+                type_: geosite::domain::Type::try_from(rule_type)?.into(),
+                value: value.to_string(),
+                ..Default::default()
+            };
+
+            if let Some(i) = sg.domain.iter().position(|item| *item == domain) {
+                sg.domain.remove(i);
+            }
+        }
         Ok(())
     }
 
@@ -200,6 +227,19 @@ pub enum RuleType {
     Full,
     SubStr,
     Geosite,
+}
+
+impl TryFrom<RuleType> for geosite::domain::Type {
+    type Error = anyhow::Error;
+
+    fn try_from(rule_type: RuleType) -> Result<Self, Self::Error> {
+        Ok(match rule_type {
+            RuleType::Domain => geosite::domain::Type::Domain,
+            RuleType::Full => geosite::domain::Type::Full,
+            RuleType::SubStr => geosite::domain::Type::Plain,
+            RuleType::Geosite => anyhow::bail!("geosite rule is not supported"),
+        })
+    }
 }
 
 impl FromStr for RuleType {

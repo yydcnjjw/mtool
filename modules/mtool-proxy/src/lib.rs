@@ -3,7 +3,7 @@ mod proxy;
 mod wgui;
 
 use async_trait::async_trait;
-use cmd::add_proxy_rule;
+use cmd::{add_proxy_rule, remove_proxy_rule};
 use mapp::{provider::Res, AppContext, AppModule, CreateOnceTaskDescriptor, ModuleGroup};
 use mtool_cmder::{Cmder, CreateCommandDescriptor};
 use mtool_core::{
@@ -17,7 +17,14 @@ use tracing::log::warn;
 pub struct Module {}
 
 async fn register_command(cmder: Res<Cmder>) -> Result<(), anyhow::Error> {
-    cmder.add_command(add_proxy_rule.name("add_proxy_rule"));
+    cmder
+        .add_command(add_proxy_rule.name("add_proxy_rule"))
+        .add_command(
+            remove_proxy_rule
+                .name("remove_proxy_rule")
+                .desc("remove proxy rule from file"),
+        );
+
     Ok(())
 }
 

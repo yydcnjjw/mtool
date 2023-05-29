@@ -22,5 +22,6 @@ futures = { workspace = true }
 itertools = { workspace = true }
 tracing = { workspace = true }
 serde-error = { workspace = true }
+fuzzy-matcher = { workspace = true }
 
 rand = "0.8"

@@ -40,16 +40,13 @@ pub async fn exec_command_interactive(
     let command = {
         let cmder = cmder.clone();
         c.complete_read(
-            CompletionArgs::new(move |completed: String| {
-                let cmder = cmder.clone();
-                async move {
-                    Ok(cmder
-                        .get_command_fuzzy(&completed)
-                        .iter()
-                        .map(|c| c.get_name().to_string())
-                        .collect::<Vec<_>>())
-                }
-            })
+            CompletionArgs::with_vec(
+                cmder
+                    .list_command()
+                    .iter()
+                    .map(|c| c.get_name().to_string())
+                    .collect_vec(),
+            )
             .prompt("Input command..."),
         )
         .await?
