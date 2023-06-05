@@ -176,8 +176,9 @@ where
         let mut items = Vec::new();
 
         for item in self.items.iter() {
-            if let Some(score) = self.matcher.fuzzy_match(&item.complete_hint(), &completed) {
-                items.push((score, item.clone()));
+            let hint = item.complete_hint();
+            if let Some(score) = self.matcher.fuzzy_match(&hint, &completed) {
+                items.push((score, hint, item.clone()));
             }
         }
 
@@ -185,8 +186,8 @@ where
 
         Ok(items
             .into_iter()
-            .unique_by(|v| v.0)
-            .map(|item| item.1)
+            .unique_by(|v| v.1.clone())
+            .map(|item| item.2)
             .collect_vec())
     }
 }
