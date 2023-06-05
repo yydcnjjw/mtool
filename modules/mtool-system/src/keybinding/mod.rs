@@ -1,5 +1,6 @@
 mod action;
 
+#[cfg(not(windows))]
 mod sysev_backend;
 
 // #[cfg(windows)]
@@ -26,7 +27,7 @@ pub fn module() -> ModuleGroup {
     #[allow(unused_mut)]
     let mut group = ModuleGroup::new("keybinding_group");
 
-    // #[cfg(not(windows))]
+    #[cfg(not(windows))]
     group.add_module(sysev_backend::Module::default());
 
     // #[cfg(windows)]

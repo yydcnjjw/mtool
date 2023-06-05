@@ -57,8 +57,8 @@ impl AppModule for Module {
 pub fn module() -> ModuleGroup {
     let mut group = ModuleGroup::new("wgui_group");
     group.add_module(Module::default());
-    // #[cfg(windows)]
-    // group.add_module(global_hotkey::Module::default());
+    #[cfg(windows)]
+    group.add_module(global_hotkey::Module::default());
     group
 }
 

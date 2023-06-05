@@ -96,32 +96,50 @@ impl GlobalHotKeyMgr {
         self.injector.get::<Res<AppHandle>>().await.unwrap()
     }
 
+    async fn run_on_main_thread<F, O>(&self, f: F) -> Result<O, anyhow::Error>
+    where
+        F: FnOnce() -> O + Send + 'static,
+        O: Send + 'static,
+    {
+        let (tx, rx) = oneshot::channel();
+        let app = self.app_handle().await;
+        app.run_on_main_thread(move || {
+            let _ = tx.send(f());
+        })
+        .context("run on main thread")?;
+        rx.await
+            .map_err(|_| anyhow::anyhow!("wait for result on main thread failed"))
+    }
+
     async fn define(&self, ks: &KeySequence) -> Result<(), anyhow::Error> {
         let accelerator = convert_kbd_to_accelerator(ks)?;
         let shortcut = Shortcut::from_str(&accelerator)?;
         self.shortcut_index.insert(shortcut.clone(), ks.clone());
-
-        self.app_handle()
-            .await
-            .global_shortcut()
-            .register(shortcut)
-            .context(format!("tauri register global key: {}", accelerator))
+        let app = self.app_handle().await;
+        self.run_on_main_thread(move || {
+            app.global_shortcut()
+                .register(shortcut)
+                .context("tauri unregister global key")
+        })
+        .await?
     }
 
     async fn remove(&self, ks: &KeySequence) -> Result<(), anyhow::Error> {
-        self.app_handle()
-            .await
-            .global_shortcut()
-            .unregister(convert_kbd_to_accelerator(ks)?.as_str())
-            .context("tauri unregister global key")
+        let app = self.app_handle().await;
+        let ks = ks.clone();
+        self.run_on_main_thread(move || {
+            app.global_shortcut()
+                .unregister(convert_kbd_to_accelerator(&ks)?.as_str())
+                .context("tauri unregister global key")
+        })
+        .await?
     }
 }
 
 #[async_trait]
 impl SetGlobalHotKey for GlobalHotKeyMgr {
     async fn register(&self, ks: &KeySequence) -> Result<(), anyhow::Error> {
-        // self.define(ks).await
-        Ok(())
+        self.define(ks).await
     }
 
     async fn unregister(&self, ks: &KeySequence) -> Result<(), anyhow::Error> {
