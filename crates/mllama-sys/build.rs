@@ -21,9 +21,19 @@ fn add_compile_define<'a>(compiler: &'a mut cc::Build, target: &str) -> &'a mut 
     }
 }
 
+fn add_compile_flag<'a>(compiler: &'a mut cc::Build, _target: &str) -> &'a mut cc::Build {
+    let c = compiler.get_compiler();
+    if c.is_like_clang() || c.is_like_gnu() {
+        compiler.flag("-Wno-multichar")
+    } else {
+        compiler
+    }
+}
+
 fn build_ggml(target: &str) {
     let mut compiler = cc::Build::new();
     add_compile_define(&mut compiler, target);
+    add_compile_flag(&mut compiler, target);
     compiler
         .warnings(false)
         .include("llama.cpp")
@@ -35,6 +45,7 @@ fn build_ggml(target: &str) {
 fn build_llama(target: &str) {
     let mut compiler = cc::Build::new();
     add_compile_define(&mut compiler, target);
+    add_compile_flag(&mut compiler, target);
     compiler
         .cpp(true)
         .warnings(false)
