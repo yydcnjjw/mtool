@@ -1,12 +1,9 @@
-use std::{
-    hash::{Hash, Hasher},
-    ops::Deref,
-};
+use std::ops::Deref;
 
 use anyhow::Context;
 use mapp::provider::Res;
 use mproxy::protos::geosite;
-use mtool_interactive::{CompleteItem, Completion, CompletionArgs};
+use mtool_interactive::{CompleteItem, Completion, CompletionArgs, TryFromCompleted};
 use notify_rust::{Notification, Timeout};
 use yew::prelude::*;
 
@@ -35,18 +32,6 @@ struct GeositeItem {
     data: geosite::Domain,
 }
 
-impl Hash for GeositeItem {
-    fn hash<H: Hasher>(&self, state: &mut H) {
-        match self.data.type_.enum_value() {
-            Ok(v) => v.hash(state),
-            Err(_) => {}
-        }
-        self.data.value.hash(state);
-    }
-}
-
-impl Eq for GeositeItem {}
-
 impl Deref for GeositeItem {
     type Target = geosite::Domain;
 
@@ -62,6 +47,8 @@ impl CompleteItem for GeositeItem {
         self.data.value.clone()
     }
 }
+
+impl TryFromCompleted for GeositeItem {}
 
 struct GeositeItemView;
 impl Component for GeositeItemView {

@@ -80,7 +80,11 @@ where
                     let items = self.items.lock().await;
                     let _ = tx.send(items[id].clone());
                 }
-                _ => {}
+                CompletionExit::Completed(completed) => {
+                    if let Ok(v) = T::try_from_completed(&completed) {
+                        let _ = tx.send(v);
+                    }
+                }
             }
         } else {
             anyhow::bail!("complete_exit multiple called, complete is finished");

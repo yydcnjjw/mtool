@@ -1,4 +1,4 @@
-use std::{fmt::Display, future::Future, hash::Hash};
+use std::{any::type_name, fmt::Display, future::Future};
 
 use async_trait::async_trait;
 use fuzzy_matcher::{skim::SkimMatcherV2, FuzzyMatcher};
@@ -38,12 +38,25 @@ pub trait CompleteItem:
     PartialEq
     + Clone
     + Into<<<Self as CompleteItem>::WGuiView as Component>::Properties>
+    + TryFromCompleted
     + Send
     + Sync
     + 'static
 {
     type WGuiView: Component;
     fn complete_hint(&self) -> String;
+}
+
+pub trait TryFromCompleted {
+    fn try_from_completed(_completed: &str) -> Result<Self, anyhow::Error>
+    where
+        Self: Sized,
+    {
+        Err(anyhow::anyhow!(
+            "TryFrom of {} is not implemented",
+            type_name::<Self>()
+        ))
+    }
 }
 
 #[async_trait]
@@ -106,7 +119,7 @@ where
 
     pub fn with_vec(items: Vec<T>) -> Self
     where
-        T: Hash + Eq + 'static,
+        T: 'static,
     {
         Self::new(CompleteVec::new(items))
     }
@@ -157,7 +170,7 @@ impl<T> CompleteVec<T> {
 #[async_trait]
 impl<T> Complete<T> for CompleteVec<T>
 where
-    T: CompleteItem + Clone + Hash + Eq,
+    T: CompleteItem + Clone,
 {
     async fn complete(&self, completed: &str) -> Result<Vec<T>, anyhow::Error> {
         let mut items = Vec::new();
@@ -170,7 +183,11 @@ where
 
         items.sort_by(|a, b| a.0.cmp(&b.0));
 
-        Ok(items.into_iter().map(|item| item.1).unique().collect_vec())
+        Ok(items
+            .into_iter()
+            .unique_by(|v| v.0)
+            .map(|item| item.1)
+            .collect_vec())
     }
 }
 
@@ -179,6 +196,15 @@ impl CompleteItem for String {
 
     fn complete_hint(&self) -> String {
         self.to_string()
+    }
+}
+
+impl TryFromCompleted for String {
+    fn try_from_completed(completed: &str) -> Result<Self, anyhow::Error>
+    where
+        Self: Sized,
+    {
+        Ok(completed.to_string())
     }
 }
 
