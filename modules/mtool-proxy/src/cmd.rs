@@ -50,38 +50,27 @@ impl CompleteItem for GeositeItem {
 
 impl TryFromCompleted for GeositeItem {}
 
-struct GeositeItemView;
-impl Component for GeositeItemView {
-    type Message = ();
-
-    type Properties = GeositeItem;
-
-    fn create(_ctx: &yew::Context<Self>) -> Self {
-        Self {}
-    }
-
-    fn view(&self, ctx: &yew::Context<Self>) -> Html {
-        let props = ctx.props();
-        let type_ = match props.type_.enum_value() {
-            Ok(v) => match v {
-                geosite::domain::Type::Plain => "Plain",
-                geosite::domain::Type::Regex => "Regex",
-                geosite::domain::Type::Domain => "Domain",
-                geosite::domain::Type::Full => "Full",
-            },
-            Err(_) => "Unknown",
-        };
-        html! {
-            <div>
-                <span>
-                  { type_ }
-                </span>
-                {": "}
-                <span>
-                  { props.value.clone() }
-                </span>
-            </div>
-        }
+#[function_component]
+fn GeositeItemView(props: &GeositeItem) -> Html {
+    let type_ = match props.type_.enum_value() {
+        Ok(v) => match v {
+            geosite::domain::Type::Plain => "Plain",
+            geosite::domain::Type::Regex => "Regex",
+            geosite::domain::Type::Domain => "Domain",
+            geosite::domain::Type::Full => "Full",
+        },
+        Err(_) => "Unknown",
+    };
+    html! {
+        <div>
+            <span>
+              { type_ }
+            </span>
+            {": "}
+            <span>
+              { props.value.clone() }
+            </span>
+        </div>
     }
 }
 

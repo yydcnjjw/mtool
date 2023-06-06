@@ -37,13 +37,13 @@ where
 pub trait CompleteItem:
     PartialEq
     + Clone
-    + Into<<<Self as CompleteItem>::WGuiView as Component>::Properties>
+    + Into<<<Self as CompleteItem>::WGuiView as BaseComponent>::Properties>
     + TryFromCompleted
     + Send
     + Sync
     + 'static
 {
-    type WGuiView: Component;
+    type WGuiView: BaseComponent<Message = ()>;
     fn complete_hint(&self) -> String;
 }
 
@@ -209,27 +209,16 @@ impl TryFromCompleted for String {
     }
 }
 
-pub struct TextCompleteItemView;
-
 impl From<String> for Props<String> {
     fn from(value: String) -> Self {
         Props::new(value)
     }
 }
 
-impl Component for TextCompleteItemView {
-    type Message = ();
-
-    type Properties = Props<String>;
-
-    fn create(_ctx: &Context<Self>) -> Self {
-        Self {}
-    }
-
-    fn view(&self, ctx: &Context<Self>) -> Html {
-        html! {
-            <div> { ctx.props().data.clone() } </div>
-        }
+#[function_component]
+pub fn TextCompleteItemView(props: &Props<String>) -> Html {
+    html! {
+        <div> { props.data.clone() } </div>
     }
 }
 
