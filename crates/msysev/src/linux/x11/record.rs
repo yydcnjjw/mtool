@@ -73,7 +73,7 @@ impl Context {
     unsafe fn run_loop(&self) -> Result<(), Error> {
         let dpy = Self::open_display()?;
 
-        let mut record_range = xrecord::XRecordAllocRange();
+        let record_range = xrecord::XRecordAllocRange();
         (*record_range).device_events.first = xlib::KeyPress as u8;
         (*record_range).device_events.last = xlib::MotionNotify as u8;
 
