@@ -1,4 +1,4 @@
-use std::ops::Deref;
+use std::{future::Future, ops::Deref};
 
 use anyhow::Context;
 use mapp::provider::Res;
@@ -9,14 +9,24 @@ use yew::prelude::*;
 
 use crate::proxy::ProxyApp;
 
-async fn add_proxy_rule_inner(app: Res<ProxyApp>, c: Res<Completion>) -> Result<(), anyhow::Error> {
+#[derive(Debug, thiserror::Error)]
+enum Error {
+    #[error("Operation has been cancelled")]
+    OperationCancelled,
+
+    #[error(transparent)]
+    Other(#[from] anyhow::Error),
+}
+
+async fn add_proxy_rule_inner(app: Res<ProxyApp>, c: Res<Completion>) -> Result<(), Error> {
     let target = c
         .complete_read(
             CompletionArgs::<String>::without_completion()
                 .prompt("Add proxy target: ")
                 .hide_window(),
         )
-        .await?;
+        .await?
+        .ok_or(Error::OperationCancelled)?;
 
     {
         let mut gs = app.resource.lock().unwrap();
@@ -24,7 +34,7 @@ async fn add_proxy_rule_inner(app: Res<ProxyApp>, c: Res<Completion>) -> Result<
         gs.store()?;
     }
 
-    app.inner.router().add_rule_target(&app.proxy_id, &target)
+    Ok(app.inner.router().add_rule_target(&app.proxy_id, &target)?)
 }
 
 #[derive(Properties, PartialEq, Clone)]
@@ -74,10 +84,7 @@ fn GeositeItemView(props: &GeositeItem) -> Html {
     }
 }
 
-async fn remove_proxy_rule_inner(
-    app: Res<ProxyApp>,
-    c: Res<Completion>,
-) -> Result<(), anyhow::Error> {
+async fn remove_proxy_rule_inner(app: Res<ProxyApp>, c: Res<Completion>) -> Result<(), Error> {
     let target = {
         let items = {
             let gs = app.resource.lock().unwrap();
@@ -98,6 +105,7 @@ async fn remove_proxy_rule_inner(
                 .hide_window(),
         )
         .await?
+        .ok_or(Error::OperationCancelled)?
     };
 
     {
@@ -108,45 +116,46 @@ async fn remove_proxy_rule_inner(
     Ok(())
 }
 
-pub async fn add_proxy_rule(app: Res<ProxyApp>, c: Res<Completion>) -> Result<(), anyhow::Error> {
+async fn with_notify_result<F, O>(name: &str, f: F) -> Result<(), anyhow::Error>
+where
+    F: FnOnce() -> O,
+    O: Future<Output = Result<(), Error>>,
+{
     let mut notify = Notification::new();
     notify
         .appname("mtool proxy")
-        .summary("add proxy rule")
+        .summary(name)
         .timeout(Timeout::Milliseconds(2000));
 
-    match add_proxy_rule_inner(app, c).await {
+    match f().await {
         Ok(_) => {
             notify.body("successfully");
         }
-        Err(e) => {
-            notify.body(&format!("Error:\n{:?}", e));
-        }
+        Err(e) => match e {
+            Error::OperationCancelled => return Ok(()),
+            Error::Other(e) => {
+                notify.body(&format!("Error:\n{:?}", e));
+            }
+        },
     }
 
     notify.show().context("Failed to show notify")?;
     Ok(())
 }
 
+pub async fn add_proxy_rule(app: Res<ProxyApp>, c: Res<Completion>) -> Result<(), anyhow::Error> {
+    with_notify_result("add proxy rule", || async move {
+        add_proxy_rule_inner(app, c).await
+    })
+    .await
+}
+
 pub async fn remove_proxy_rule(
     app: Res<ProxyApp>,
     c: Res<Completion>,
 ) -> Result<(), anyhow::Error> {
-    let mut notify = Notification::new();
-    notify
-        .appname("mtool proxy")
-        .summary("remove proxy rule")
-        .timeout(Timeout::Milliseconds(2000));
-
-    match remove_proxy_rule_inner(app, c).await {
-        Ok(_) => {
-            notify.body("successfully");
-        }
-        Err(e) => {
-            notify.body(&format!("Error:\n{:?}", e));
-        }
-    }
-
-    notify.show().context("Failed to show notify")?;
-    Ok(())
+    with_notify_result("remove proxy rule", || async move {
+        remove_proxy_rule_inner(app, c).await
+    })
+    .await
 }

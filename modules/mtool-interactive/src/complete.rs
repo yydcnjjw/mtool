@@ -1,4 +1,4 @@
-use std::{any::type_name, fmt::Display, future::Future};
+use std::{any::type_name, fmt::Display, future::Future, ops::Deref};
 
 use async_trait::async_trait;
 use fuzzy_matcher::{skim::SkimMatcherV2, FuzzyMatcher};
@@ -13,7 +13,7 @@ pub struct Props<T>
 where
     T: PartialEq,
 {
-    pub data: T,
+    data: T,
 }
 
 impl<T> Props<T>
@@ -22,6 +22,26 @@ where
 {
     pub fn new(data: T) -> Self {
         Self { data }
+    }
+}
+
+impl<T> Deref for Props<T>
+where
+    T: PartialEq,
+{
+    type Target = T;
+
+    fn deref(&self) -> &Self::Target {
+        &self.data
+    }
+}
+
+impl<T> From<T> for Props<T>
+where
+    T: PartialEq,
+{
+    fn from(value: T) -> Self {
+        Props::new(value)
     }
 }
 
@@ -61,7 +81,7 @@ pub trait TryFromCompleted {
 
 #[async_trait]
 pub trait CompleteRead {
-    async fn complete_read<T>(&self, args: CompletionArgs<T>) -> Result<T, anyhow::Error>
+    async fn complete_read<T>(&self, args: CompletionArgs<T>) -> Result<Option<T>, anyhow::Error>
     where
         T: CompleteItem;
 }
@@ -209,16 +229,10 @@ impl TryFromCompleted for String {
     }
 }
 
-impl From<String> for Props<String> {
-    fn from(value: String) -> Self {
-        Props::new(value)
-    }
-}
-
 #[function_component]
 pub fn TextCompleteItemView(props: &Props<String>) -> Html {
     html! {
-        <div> { props.data.clone() } </div>
+        <div> { props.deref().clone() } </div>
     }
 }
 

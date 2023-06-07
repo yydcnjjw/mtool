@@ -21,5 +21,6 @@ thiserror = { workspace = true }
 clap = { workspace = true }
 tracing = { workspace = true }
 itertools = { workspace = true }
+yew = { workspace = true }
 
 shellwords = "*"

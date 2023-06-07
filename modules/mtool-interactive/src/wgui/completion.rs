@@ -123,7 +123,7 @@ impl Completion {
 
 #[async_trait]
 impl CompleteRead for Completion {
-    async fn complete_read<T>(&self, args: CompletionArgs<T>) -> Result<T, anyhow::Error>
+    async fn complete_read<T>(&self, args: CompletionArgs<T>) -> Result<Option<T>, anyhow::Error>
     where
         T: CompleteItem,
     {
@@ -140,9 +140,9 @@ impl CompleteRead for Completion {
 
         let result = match rx.await {
             Err(_) => {
-                anyhow::bail!("complete read canceled")
+                return Ok(None);
             }
-            Ok(v) => v,
+            Ok(v) => Some(v),
         };
 
         if need_hide_window {

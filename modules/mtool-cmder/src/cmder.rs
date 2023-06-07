@@ -7,7 +7,7 @@ use mapp::{inject::Provide, provider::Res, App, Label};
 
 use super::{CommandDescriptor, IntoCommandDescriptor};
 
-type SharedCommandDescriptor = Arc<CommandDescriptor>;
+pub type SharedCommandDescriptor = Arc<CommandDescriptor>;
 struct CmderInner {
     storage: HashMap<String, SharedCommandDescriptor>,
 

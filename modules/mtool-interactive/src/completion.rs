@@ -13,7 +13,10 @@ impl fmt::Debug for Completion {
 }
 
 impl Completion {
-    pub async fn complete_read<T>(&self, args: CompletionArgs<T>) -> Result<T, anyhow::Error>
+    pub async fn complete_read<T>(
+        &self,
+        args: CompletionArgs<T>,
+    ) -> Result<Option<T>, anyhow::Error>
     where
         T: CompleteItem,
     {

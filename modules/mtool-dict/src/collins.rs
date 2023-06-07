@@ -1,6 +1,6 @@
 use clap::Parser;
 use futures::FutureExt;
-use mapp::provider::Res;
+use mapp::provider::{Res, Take};
 use mdict::decode::collins::{self, output::OutputOrg};
 use mtool_cmder::CommandArgs;
 use mtool_interactive::OutputDevice;
@@ -14,8 +14,8 @@ struct Args {
     query: String,
 }
 
-pub async fn dict(args: Res<CommandArgs>, o: Res<OutputDevice>) -> Result<(), anyhow::Error> {
-    let Args { query } = match Args::try_parse_from(args.iter()) {
+pub async fn dict(args: Take<CommandArgs>, o: Res<OutputDevice>) -> Result<(), anyhow::Error> {
+    let Args { query } = match Args::try_parse_from(args.take()?.iter()) {
         Ok(args) => args,
         Err(e) => {
             e.print().unwrap();
@@ -46,8 +46,8 @@ pub async fn dict(args: Res<CommandArgs>, o: Res<OutputDevice>) -> Result<(), an
     Ok(())
 }
 
-pub async fn thesaures(args: Res<CommandArgs>) -> Result<(), anyhow::Error> {
-    let Args { query } = match Args::try_parse_from(args.iter()) {
+pub async fn thesaures(args: Take<CommandArgs>) -> Result<(), anyhow::Error> {
+    let Args { query } = match Args::try_parse_from(args.take()?.iter()) {
         Ok(args) => args,
         Err(e) => {
             e.print().unwrap();

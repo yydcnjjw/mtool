@@ -1,7 +1,7 @@
 use std::io::{stdin, stdout, Write};
 
 use futures::FutureExt;
-use mapp::provider::{Injector, Res};
+use mapp::provider::{Injector, Res, Take};
 use mtool_cmder::CommandArgs;
 use mtool_interactive::{Completion, CompletionArgs, OutputDevice};
 
@@ -35,10 +35,10 @@ struct Args {
 async fn text_translate_from_cli(
     source: LanguageType,
     target: LanguageType,
-    args: Res<CommandArgs>,
+    args: Take<CommandArgs>,
     injector: Injector,
 ) -> Result<(), anyhow::Error> {
-    let args = match Args::try_parse_from(args.iter()) {
+    let args = match Args::try_parse_from(args.take()?.iter()) {
         Ok(args) => args,
         Err(e) => {
             e.print()?;
@@ -93,9 +93,13 @@ async fn text_translate_wgui(
     c: Res<Completion>,
     o: Res<OutputDevice>,
 ) -> Result<(), anyhow::Error> {
-    let text = c
+    let text = match c
         .complete_read(CompletionArgs::without_completion().prompt("Input text: "))
-        .await?;
+        .await?
+    {
+        Some(v) => v,
+        None => return Ok(()),
+    };
 
     o.output_future(
         async move {
@@ -138,7 +142,7 @@ quick_translate_wgui!(text_translate_into_japanese_wgui, Auto, Ja);
 macro_rules! quick_translate {
     ($name:ident, $source:ident, $target:ident) => {
         pub async fn $name(
-            args: Res<CommandArgs>,
+            args: Take<CommandArgs>,
             injector: Injector,
         ) -> Result<(), anyhow::Error> {
             text_translate_from_cli(LanguageType::$source, LanguageType::$target, args, injector)

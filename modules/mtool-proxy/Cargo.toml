@@ -21,6 +21,7 @@ tauri = { workspace = true }
 tokio = { workspace = true }
 async-trait = { workspace = true }
 anyhow = { workspace = true }
+thiserror = { workspace = true }
 tracing = { workspace = true }
 serde = { workspace = true }
 serde-error = { workspace = true }

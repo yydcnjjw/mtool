@@ -5,7 +5,7 @@ use std::{
 
 use anyhow::Context;
 use clap::Parser;
-use mapp::provider::Res;
+use mapp::provider::{Res, Take};
 use mdict::decode::mdx;
 use mtool_cmder::CommandArgs;
 use mtool_core::ConfigStore;
@@ -70,10 +70,10 @@ where
     Ok(())
 }
 
-pub async fn mdx_query(args: Res<CommandArgs>, cs: Res<ConfigStore>) -> Result<(), anyhow::Error> {
+pub async fn mdx_query(args: Take<CommandArgs>, cs: Res<ConfigStore>) -> Result<(), anyhow::Error> {
     let cfg = cs.get::<Config>("dict.mdx").await?;
 
-    let args = match Args::try_parse_from(args.iter()) {
+    let args = match Args::try_parse_from(args.take()?.iter()) {
         Ok(args) => args,
         Err(e) => {
             e.print().unwrap();
