@@ -30,7 +30,10 @@ impl AppModule for Module {
 
         app.schedule()
             .add_once_task(CmdlineStage::Setup, setup_cmdline)
-            .add_once_task(CmdlineStage::AfterInit, register_command)
+            .add_once_task(
+                CmdlineStage::AfterInit,
+                register_command.cond(is_startup_mode(StartupMode::Cli)),
+            )
             .add_once_task(
                 AppStage::Init,
                 register_keybinding.cond(not_startup_mode(StartupMode::Cli)),
