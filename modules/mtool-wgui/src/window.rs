@@ -46,14 +46,18 @@ impl WGuiWindow {
     }
 
     pub fn show(&self) -> Result<(), anyhow::Error> {
-        self.inner.show()?;
-        self.restore_position()?;
+        if !self.inner.is_visible()? {
+            self.inner.show()?;
+            self.restore_position()?;
+        }
         Ok(())
     }
 
     pub fn hide(&self) -> Result<(), anyhow::Error> {
-        self.save_position()?;
-        self.inner.hide()?;
+        if self.inner.is_visible()? {
+            self.save_position()?;
+            self.inner.hide()?;
+        }
         Ok(())
     }
 }
