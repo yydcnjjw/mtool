@@ -13,6 +13,7 @@ use crate::translator::{self, LanguageType};
 
 #[derive(Debug, Clone, Deserialize)]
 struct Config {
+    base_url: String,
     key: String,
 }
 
@@ -29,7 +30,7 @@ impl Translator {
             .context("Failed to parse translate")?;
 
         Ok(Res::new(Self {
-            cli: Client::new(&cfg.key)?,
+            cli: Client::new(&cfg.base_url, &cfg.key)?,
         }))
     }
 }

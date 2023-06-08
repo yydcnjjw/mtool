@@ -27,10 +27,10 @@ impl Debug for Client {
 }
 
 impl Client {
-    pub fn new(key: &str) -> Result<Self, anyhow::Error> {
+    pub fn new(url: &str, key: &str) -> Result<Self, anyhow::Error> {
         Ok(Self {
             inner: reqwest::ClientBuilder::new().build()?,
-            basic_url: "https://api.openai.com".into(),
+            basic_url: url.into(),
             key: key.into(),
         })
     }
