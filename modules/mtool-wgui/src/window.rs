@@ -71,7 +71,7 @@ impl MtoolWindow {
                 .title("mtool")
                 .transparent(true)
                 .decorations(false)
-                .resizable(false)
+                .resizable(true)
                 .skip_taskbar(true)
                 .always_on_top(true)
                 .visible(false)
