@@ -89,7 +89,7 @@ async fn text_translate_from_cli(
 async fn text_translate_wgui(
     source: LanguageType,
     target: LanguageType,
-    translator: Res<llama::Translator>,
+    injector: Injector,
     c: Res<Completion>,
     o: Res<OutputDevice>,
 ) -> Result<(), anyhow::Error> {
@@ -100,6 +100,8 @@ async fn text_translate_wgui(
         Some(v) => v,
         None => return Ok(()),
     };
+
+    let translator = injector.get::<Res<openai::Translator>>().await?;
 
     o.output_future(
         async move {
@@ -119,14 +121,14 @@ macro_rules! quick_translate_wgui {
     ($name:ident, $source:ident, $target:ident) => {
         #[allow(unused)]
         pub async fn $name(
-            translator: Res<llama::Translator>,
+            injector: Injector,
             c: Res<Completion>,
             o: Res<OutputDevice>,
         ) -> Result<(), anyhow::Error> {
             text_translate_wgui(
                 LanguageType::$source,
                 LanguageType::$target,
-                translator,
+                injector,
                 c,
                 o,
             )
