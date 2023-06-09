@@ -1,16 +1,14 @@
 [watch]
 watch = [
-  "./src",
-  "../core",
-  "../../mtool-interactive/wgui",
-  "../../mtool-proxy/wgui",
-  "../../../crates/mtauri-sys",
-  "./assets"
+  "../../../"
 ]
 
 [serve]
 address = "127.0.0.1"
 port = 18188
+
+[tools]
+wasm_bindgen = "0.2.87"
 
 [[hooks]]
 stage = "build"

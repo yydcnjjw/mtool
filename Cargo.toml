@@ -20,6 +20,7 @@ members = [
   "modules/mtool-translate",
   "modules/mtool-interactive",
   "modules/mtool-wgui",
+  "modules/mtool-wgui/wmain",
   "modules/mtool-proxy",
   "modules/mtool-toast",
   "modules/mtool-ai",
@@ -88,3 +89,14 @@ toml = "*"
 notify-rust = { version = "*", features = ["zbus"] }
 fuzzy-matcher = "*"
 yew = { version = "*", features = ["ssr"] }
+
+
+# WAR for wasm
+yew-router = "*"
+yew_icons = "*"
+grass = { version = "*", features = ["macro", "nightly"] }
+js-sys = "*"
+web-sys = "*"
+wasm-bindgen = { version = "*", features = ["serde-serialize"] }
+wasm-bindgen-futures = "*"
+serde-wasm-bindgen = "*"

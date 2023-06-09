@@ -8,18 +8,44 @@ edition.workspace = true
 
 [dependencies]
 mapp = { path = "../../crates/mapp" }
+mtauri-sys = { path = "../../crates/mtauri-sys" }
+mtool-wgui = { path = "../mtool-wgui" }
+
+async-trait = { workspace = true }
+serde = { workspace = true }
+futures = { workspace = true }
+anyhow = { workspace = true }
+itertools = { workspace = true }
+clap = { workspace = true }
+cfg-if = { workspace = true }
+yew = { workspace = true }
+tracing = { workspace = true }
+
+[dependencies.web-sys]
+workspace = true
+features = [
+  "HtmlTextAreaElement"
+]
+
+[dependencies.yew_icons]
+workspace = true
+features = [
+  "OcticonsDownload16",
+  "OcticonsUpload16"
+]
+
+[target.'cfg(not(target_arch = "wasm32"))'.dependencies]
 mcloud-api = { path = "../../crates/mcloud-api" }
 mtool-core = { path = "../mtool-core" }
-mtool-wgui = { path = "../mtool-wgui" }
 mtool-system = { path = "../mtool-system" }
 mtool-cmder = { path = "../mtool-cmder" }
 mtool-interactive = { path = "../mtool-interactive" }
 mtool-ai = { path = "../mtool-ai" }
 
-serde = { workspace = true }
 clap = { workspace = true }
 tokio = { workspace = true }
-async-trait = { workspace = true }
-futures = { workspace = true }
-anyhow = { workspace = true }
-itertools = { workspace = true }
+tauri = { workspace = true }
+serde-error = { workspace = true }
+
+[target.'cfg(target_arch = "wasm32")'.dependencies]
+tokio = { workspace = true, features = ["sync", "rt"] }

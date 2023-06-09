@@ -7,17 +7,10 @@ edition.workspace = true
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-mtool-proxy-model = { path = "./model" }
 mapp = { path = "../../crates/mapp" }
-mproxy = { path = "../../crates/mproxy" }
-mtool-core = { path = "../mtool-core" }
-mtool-system = { path = "../mtool-system" }
-mtool-cmder = { path = "../mtool-cmder" }
-mtool-interactive = { path = "../mtool-interactive" }
 mtool-wgui = { path = "../mtool-wgui" }
+mtauri-sys = { path = "../../crates/mtauri-sys" }
 
-clap = { workspace = true }
-tauri = { workspace = true }
 tokio = { workspace = true }
 async-trait = { workspace = true }
 anyhow = { workspace = true }
@@ -25,6 +18,35 @@ thiserror = { workspace = true }
 tracing = { workspace = true }
 serde = { workspace = true }
 serde-error = { workspace = true }
+yew = { workspace = true }
+yew-router = { workspace = true }
+grass = { workspace = true }
+js-sys = { workspace = true }
+wasm-bindgen = { workspace = true }
+wasm-bindgen-futures = { workspace = true }
+serde-wasm-bindgen = { workspace = true }
+
+gloo-utils = "*"
+async-stream = "*"
+
+[dependencies.web-sys]
+workspace = true
+
+[dependencies.yew_icons]
+workspace = true
+features = [
+  "OcticonsDownload16",
+  "OcticonsUpload16"
+]
+
+[target.'cfg(not(target_family = "wasm"))'.dependencies]
+mproxy = { path = "../../crates/mproxy" }
+mtool-core = { path = "../mtool-core" }
+mtool-system = { path = "../mtool-system" }
+mtool-cmder = { path = "../mtool-cmder" }
+mtool-interactive = { path = "../mtool-interactive" }
+
+clap = { workspace = true }
+tauri = { workspace = true }
 toml = { workspace = true }
 notify-rust = { workspace = true }
-yew = { workspace = true }

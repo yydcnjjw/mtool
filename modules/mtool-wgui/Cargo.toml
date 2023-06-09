@@ -7,18 +7,14 @@ edition.workspace = true
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [features]
-# default = [ "custom-protocol" ]
-
 custom-protocol = [ "tauri/custom-protocol" ]
 
 [dependencies]
 mapp = { path = "../../crates/mapp" }
-msysev = { path = "../../crates/msysev" }
+mtauri-sys = { path = "../../crates/mtauri-sys" }
 mkeybinding = { path = "../../crates/mkeybinding" }
-mtool-core = { path = "../mtool-core" }
-mtool-system = { path = "../mtool-system" }
+msysev = { path = "../../crates/msysev" }
 
-tauri = { workspace = true, features = ["system-tray"] }
 tokio = { workspace = true }
 async-trait = { workspace = true }
 futures = { workspace = true }
@@ -26,10 +22,36 @@ anyhow = { workspace = true }
 serde-error = { workspace = true }
 tracing = { workspace = true }
 dashmap = {  workspace = true }
+once_cell = { workspace = true }
+cfg-if = { workspace = true }
+yew = { workspace = true }
+yew-router = { workspace = true }
+js-sys = { workspace = true }
+wasm-bindgen = { workspace = true }
 
-[target.'cfg(not(any(target_os = "android", target_os = "ios")))'.dependencies]
+route-recognizer = "*"
+
+[dependencies.web-sys]
+workspace = true
+features = [
+  "KeyboardEvent",
+  "ResizeObserver",
+  "ResizeObserverEntry",
+  "HtmlDivElement",
+  "Screen",
+]
+
+[target.'cfg(not(target_family = "wasm"))'.dependencies]
+msysev = { path = "../../crates/msysev" }
+mkeybinding = { path = "../../crates/mkeybinding" }
+mtool-core = { path = "../mtool-core" }
+mtool-system = { path = "../mtool-system" }
+
+tauri = { workspace = true, features = ["system-tray"] }
+
+[target.'cfg(not(any(target_os = "android", target_os = "ios", target_family = "wasm")))'.dependencies]
 tauri-plugin-global-shortcut = { git = "https://github.com/tauri-apps/plugins-workspace", branch = "v2" }
 tauri-plugin-window = { git = "https://github.com/tauri-apps/plugins-workspace", branch = "v2" }
 
-[build-dependencies]
+[target.'cfg(not(target_family = "wasm"))'.build-dependencies]
 tauri-build = { workspace = true }

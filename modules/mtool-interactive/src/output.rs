@@ -4,7 +4,6 @@ use async_trait::async_trait;
 use futures::future::BoxFuture;
 
 #[async_trait]
-
 pub trait Output: Sync {
     async fn output(&self, _: &str) -> Result<(), anyhow::Error> {
         Ok(())

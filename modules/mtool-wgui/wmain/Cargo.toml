@@ -8,38 +8,7 @@ edition = "2021"
 
 [dependencies]
 mapp = { path = "../../../crates/mapp" }
-mtool-wgui-core = { path = "../core" }
-mtool-interactive-wgui = { path = "../../mtool-interactive/wgui" }
-mtool-proxy-wgui = { path = "../../mtool-proxy/wgui" }
-
-[workspace]
-members = [
-  "../core",
-  "../../mtool-interactive/wgui",
-  "../../mtool-proxy/wgui",
-  "../../../crates/mtauri-sys"
-]
-
-[workspace.package]
-version = "0.0.0"
-authors = ["yydcnjjw <yydcnjjw@gmail.com>"]
-edition = "2021"
-
-[workspace.dependencies]
-yew = { version = "*", features = ["csr"] }
-yew-router = "*"
-yew_icons = "*"
-grass = { version = "*", features = ["macro", "nightly"] }
-js-sys = "*"
-web-sys = "*"
-wasm-bindgen = { version = "*", features = ["serde-serialize"] }
-wasm-bindgen-futures = "*"
-serde = { version = "*", features = ["derive"] }
-serde-wasm-bindgen = "*"
-async-trait = "*"
-anyhow = "*"
-thiserror = "*"
-once_cell = "*"
-tracing = "*"
-futures = "*"
-tokio = "*"
+mtool-wgui = { path = "../" }
+mtool-interactive = { path = "../../mtool-interactive" }
+mtool-proxy = { path = "../../mtool-proxy" }
+mtool-translate = { path = "../../mtool-translate" }

@@ -1,10 +1,7 @@
-[watch]
-watch = [
-  "../core",
-  "../../mtool-interactive/wgui",
-  "../../../crates/mtauri-sys",
-  "./assets"
-]
+# [watch]
+# watch = [
+
+# ]
 
 [serve]
 address = "127.0.0.1"

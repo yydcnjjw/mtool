@@ -3,7 +3,6 @@ name = "mtauri-sys"
 version.workspace = true
 authors.workspace = true
 edition.workspace = true
-workspace = "../../modules/mtool-wgui/wmain"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 

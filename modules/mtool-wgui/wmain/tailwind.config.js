@@ -1,10 +1,7 @@
 /** @type {import('tailwindcss').Config} */
 module.exports = {
   content: [
-    "./src/**/*.rs",
-    "../core/src/**/*.rs",
-    "../../mtool-interactive/wgui/src/**/*.rs",
-    "../../mtool-proxy/wgui/src/**/*.rs"
+    "../../../**/*.rs"
   ],
   theme: {
     extend: {},
