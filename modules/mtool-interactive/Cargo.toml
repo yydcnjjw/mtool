@@ -8,21 +8,41 @@ edition.workspace = true
 
 [dependencies]
 mapp = { path = "../../crates/mapp" }
-mtool-interactive-model = { path = "./model" }
-mtool-core = { path = "../mtool-core" }
-mtool-system = { path = "../mtool-system" }
+mtauri-sys = { path = "../../crates/mtauri-sys" }
 mtool-wgui = { path = "../mtool-wgui" }
 
-tauri = { workspace = true }
 tokio = { workspace = true }
 async-trait = { workspace = true }
 anyhow = { workspace = true }
-clap = { workspace = true }
 futures = { workspace = true }
 itertools = { workspace = true }
 tracing = { workspace = true }
+serde = { workspace = true }
 serde-error = { workspace = true }
-fuzzy-matcher = { workspace = true }
+serde-wasm-bindgen = { workspace = true }
 yew = { workspace = true }
+cfg-if = { workspace = true }
+fuzzy-matcher = { workspace = true }
+yew-router = { workspace = true }
+grass = { workspace = true }
+js-sys = { workspace = true }
+wasm-bindgen = { workspace = true }
+wasm-bindgen-futures = { workspace = true }
 
+gloo-utils = "0.1"
+html-escape = "0.2"
 rand = "0.8"
+
+[dependencies.web-sys]
+workspace = true
+features = [
+  "ScrollIntoViewOptions",
+  "ScrollLogicalPosition"
+]
+
+[target.'cfg(not(target_family = "wasm"))'.dependencies]
+mtool-core = { path = "../mtool-core" }
+mtool-system = { path = "../mtool-system" }
+
+tauri = { workspace = true }
+clap = { workspace = true }

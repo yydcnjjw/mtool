@@ -1,22 +1,15 @@
-mod cli;
-mod complete;
-mod completion;
 mod output;
-mod tui;
-mod utils;
-mod wgui;
+mod completion;
+mod rand;  
+mod ui;
 
-pub use complete::*;
-pub use completion::Completion;
-pub use output::OutputDevice;
-pub use tauri::{async_runtime, AppHandle};
+pub use completion::*;
+pub use output::*;
 
 use mapp::ModuleGroup;
 
 pub fn module() -> ModuleGroup {
-    let mut group = ModuleGroup::new("interactive_group");
-    group
-        .add_module(wgui::Module::default())
-        .add_module(cli::Module::default());
+    let mut group = ModuleGroup::new("mtool-interactive");
+    group.add_module_group(ui::module());
     group
 }
