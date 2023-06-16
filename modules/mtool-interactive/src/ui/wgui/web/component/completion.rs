@@ -1,5 +1,5 @@
 use mtool_wgui::{
-    generate_keymap, AutoResizeWindow, Horizontal, Keybinging, Vertical, WindowProps,
+    generate_keymap, AutoResizeWindow, Horizontal, Keybinding, Vertical, WindowProps,
 };
 use tracing::warn;
 use web_sys::{HtmlElement, HtmlInputElement};
@@ -13,7 +13,7 @@ pub struct Completion {
     root_node: NodeRef,
     input: String,
     input_node: NodeRef,
-    keybinding: Keybinging,
+    keybinding: Keybinding,
     meta: CompletionMeta,
 }
 
@@ -44,7 +44,7 @@ impl Component for Completion {
             root_node: NodeRef::default(),
             input: String::default(),
             input_node: NodeRef::default(),
-            keybinding: Keybinging::new(),
+            keybinding: Keybinding::new(),
             meta: CompletionMeta::default(),
         };
 

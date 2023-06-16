@@ -17,19 +17,29 @@ telemetry = [
 ]
 
 [dependencies]
-tokio = { workspace = true, features = ["full"] }
-tokio-stream = { workspace = true }
-tokio-util = { version = "*", features = ["compat"] }
-async-trait = { workspace = true }
-futures = { workspace = true }
-tracing = { workspace = true }
-tracing-subscriber = { workspace = true, features = ["env-filter"] }
 serde = { workspace = true }
-clap = { workspace = true }
 itertools = { workspace = true }
 thiserror = { workspace = true }
 anyhow = { workspace = true }
 cfg-if = { workspace = true }
+async-trait = { workspace = true }
+
+protobuf = "*"
+rustls = { version = "0.21.1", features = ["quic"] }
+rustls-pemfile = "*"
+weak-table = "*"
+
+[target.'cfg(target_family = "wasm")'.dependencies]
+tokio = { workspace = true, features = ["sync"] }
+
+[target.'cfg(not(target_family = "wasm"))'.dependencies]
+tokio = { workspace = true, features = ["full"] }
+tokio-stream = { workspace = true }
+tokio-util = { version = "*", features = ["compat"] }
+futures = { workspace = true }
+tracing = { workspace = true }
+tracing-subscriber = { workspace = true, features = ["env-filter"] }
+clap = { workspace = true }
 toml = { workspace = true }
 dashmap = { workspace = true }
 
@@ -40,17 +50,13 @@ opentelemetry-prometheus = { version = "0.11", optional = true }
 prometheus = { version = "0.13", optional = true }
 libc = "*"
 quinn = "*"
-rustls = { version = "0.21.1", features = ["quic"] }
-rustls-pemfile = "*"
 hyper = { version = "1.0.0-rc.2", features = ["full"] }
 http-body-util = "0.1.0-rc.2"
 socksv5 = "*"
 strum = { version = "*", features = ["derive"] }
 enum_dispatch = "*"
 domain_matcher = { git = "https://github.com/Qv2ray/DomainMatcher" }
-protobuf = "*"
 warp = "*"
-weak-table = "*"
 
 [target.'cfg(target_family = "unix")'.dependencies]
 nix = "*"
@@ -58,6 +64,7 @@ neli = { git = "https://github.com/jbaublitz/neli" }
 
 [build-dependencies]
 protobuf-codegen = "3"
+protobuf = "*"
 
 [dev-dependencies]
 tracing-test = "0.2"

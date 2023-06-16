@@ -1,40 +1,31 @@
-use web_sys::window;
+use mapp::provider::Res;
 use yew::prelude::*;
 use yew_router::prelude::*;
 
-use super::{keybinding::Keybinging, route::Route, switch::ListenSwitch};
+use super::{keybinding::Keybinding, route::Route, switch::ListenSwitch, template::Templator};
 
-#[derive(Clone, PartialEq)]
+#[derive(Clone, PartialEq, Properties)]
 pub struct AppContext {
-    pub keybinding: Keybinging,
+    pub keybinding: Keybinding,
+    pub templator: Res<Templator>,
 }
 
-pub struct App {
-    ctx: AppContext,
-}
+pub struct App {}
 
 impl Component for App {
     type Message = ();
 
-    type Properties = ();
+    type Properties = AppContext;
 
     fn create(_ctx: &Context<Self>) -> Self {
-        let keybinding = Keybinging::new();
-
-        keybinding.setup_on_keydown(|f| {
-            window().unwrap().set_onkeydown(f);
-        });
-
-        Self {
-            ctx: AppContext { keybinding },
-        }
+        Self {}
     }
 
-    fn view(&self, _ctx: &Context<Self>) -> Html {
+    fn view(&self, ctx: &Context<Self>) -> Html {
         html! {
             <BrowserRouter>
-                <ContextProvider<AppContext> context={self.ctx.clone()}>
-                  <ListenSwitch<Route> render={switch} />
+                <ContextProvider<AppContext> context={ ctx.props().clone() }>
+                  <ListenSwitch<Route> render={ switch } />
                 </ContextProvider<AppContext>>
             </BrowserRouter>
         }

@@ -7,7 +7,7 @@ use msysev::{
     KeyAction, KeyEvent,
 };
 use wasm_bindgen::{prelude::*, JsCast};
-use web_sys::KeyboardEvent;
+use web_sys::{window, KeyboardEvent};
 use yew::platform::spawn_local;
 
 pub use mkeybinding::*;
@@ -33,11 +33,11 @@ pub type SharedAction = Rc<RefCell<dyn Action>>;
 type Dispatcher = KeyDispatcher<SharedAction>;
 
 #[derive(Clone)]
-pub struct Keybinging {
+pub struct Keybinding {
     dispatcher: Rc<RefCell<Dispatcher>>,
 }
 
-impl PartialEq for Keybinging {
+impl PartialEq for Keybinding {
     fn eq(&self, _: &Self) -> bool {
         true
     }
@@ -59,7 +59,17 @@ macro_rules! generate_keymap {
     };
 }
 
-impl Keybinging {
+impl Keybinding {
+    pub fn new_with_window() -> Self {
+        let keybinding = Keybinding::new();
+
+        keybinding.setup_on_keydown(|f| {
+            window().unwrap().set_onkeydown(f);
+        });
+
+        keybinding
+    }
+
     pub fn new() -> Self {
         let dispatcher = Rc::new(RefCell::new(KeyDispatcher::new()));
 

@@ -19,6 +19,7 @@ itertools = { workspace = true }
 tracing = { workspace = true }
 serde = { workspace = true }
 serde-error = { workspace = true }
+serde_json = { workspace = true }
 serde-wasm-bindgen = { workspace = true }
 yew = { workspace = true }
 cfg-if = { workspace = true }

@@ -45,6 +45,15 @@ impl<T: ?Sized> Deref for Res<T> {
     }
 }
 
+impl<T> PartialEq for Res<T>
+where
+    T: PartialEq,
+{
+    fn eq(&self, other: &Self) -> bool {
+        self.0 == other.0
+    }
+}
+
 impl<T> Clone for Res<T> {
     fn clone(&self) -> Self {
         Self(self.0.clone())

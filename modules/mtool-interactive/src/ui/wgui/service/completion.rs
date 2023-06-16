@@ -1,4 +1,4 @@
-use std::sync::Arc;
+use std::{any::type_name, sync::Arc};
 
 use anyhow::Context as _;
 use async_trait::async_trait;
@@ -10,7 +10,6 @@ use tauri::{
     AppHandle, Manager, Runtime, State,
 };
 use tokio::sync::{oneshot, Mutex};
-use yew::ServerRenderer;
 
 use crate::{
     completion::{Complete, CompleteItem, CompleteRead, CompletionArgs, CompletionMeta},
@@ -63,9 +62,8 @@ where
         for (i, v) in items.iter().cloned().enumerate() {
             vec.push(CompletionItem {
                 id: i,
-                view: ServerRenderer::<T::WGuiView>::with_props(|| v.into())
-                    .render()
-                    .await,
+                template_id: type_name::<T::WGuiView>().to_string(),
+                data: serde_json::to_value(v)?,
             })
         }
 

@@ -1,9 +1,13 @@
+use std::fmt::Debug;
+
 use serde::{Deserialize, Serialize};
 
 #[derive(Debug, Clone, Serialize, Deserialize, Default)]
-pub struct CompletionItem {
+pub struct CompletionItem
+{
     pub id: usize,
-    pub view: String,
+    pub template_id: String,
+    pub data: serde_json::Value,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
