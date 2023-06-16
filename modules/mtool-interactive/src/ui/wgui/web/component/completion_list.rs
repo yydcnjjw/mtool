@@ -1,7 +1,7 @@
 use gloo_utils::document;
-use mtool_wgui::{app::AppContext, generate_keymap, KeyMap, Keybinging, SharedAction};
+use mtool_wgui::{generate_keymap, KeyMap, Keybinging, SharedAction};
 use serde::{Deserialize, Serialize};
-use tracing::{debug, warn};
+use tracing::warn;
 use wasm_bindgen::JsCast;
 use web_sys::{HtmlElement, ScrollIntoViewOptions, ScrollLogicalPosition};
 use yew::{platform::spawn_local, prelude::*};
@@ -24,27 +24,22 @@ pub struct Props {
     pub class: Classes,
     pub id: String,
     pub input: String,
+    pub keybinding: Keybinging,
 }
 
 pub struct CompletionList {
     items: Vec<CompletionItem>,
     focused_item_index: usize,
-    keybinding: Keybinging,
-    km: KeyMap<SharedAction>,
+    keymap: KeyMap<SharedAction>,
 }
 
 #[derive(Clone)]
 pub enum Msg {
-    AppContext(AppContext),
     FetchCompleteRead(Vec<CompletionItem>),
     Next,
     Prev,
     FocusChanged(usize),
     Exit,
-}
-
-impl CompletionList {
-    const COMPLETION_LIST_KEYMAP: &str = "completion_list";
 }
 
 impl Component for CompletionList {
@@ -53,18 +48,10 @@ impl Component for CompletionList {
     type Properties = Props;
 
     fn create(ctx: &Context<Self>) -> Self {
-        debug!("BaseCompletionList()");
-
-        let (message, _) = ctx
-            .link()
-            .context(ctx.link().callback(Msg::AppContext))
-            .expect("No AppContext Provided");
-
         let self_ = Self {
             items: Vec::new(),
             focused_item_index: 0,
-            keybinding: message.keybinding,
-            km: Self::generate_keymap(ctx),
+            keymap: Self::generate_keymap(ctx),
         };
 
         Self::fetch_complete(ctx);
@@ -72,13 +59,11 @@ impl Component for CompletionList {
         self_
     }
 
-    fn update(&mut self, _ctx: &Context<Self>, msg: Self::Message) -> bool {
+    fn update(&mut self, ctx: &Context<Self>, msg: Self::Message) -> bool {
         match msg {
             Msg::FetchCompleteRead(items) => {
                 self.items = items;
-
-                self.remap_keymap();
-
+                self.set_keymap(ctx);
                 true
             }
             Msg::Next => {
@@ -123,9 +108,6 @@ impl Component for CompletionList {
                 self.focused_item_index = index;
                 true
             }
-            Msg::AppContext(_) => {
-                unreachable!();
-            }
         }
     }
 
@@ -142,37 +124,37 @@ impl Component for CompletionList {
         cont_class.extend(classes!("max-h-[17.5rem]"));
 
         html! {
-            if !self.items.is_empty() {
-                <>
-                    <div class={cont_class}>
+            <>
+                if !self.items.is_empty() {
+                    <div
+                        class={cont_class}
+                        tabindex=0>
                     {
-                      for self.items.iter().enumerate().map(|(i, item)|{
-                          html! {
-                              <div id={ Self::completion_item_id(i) }
-                                class={classes!("flex",
+                        for self.items.iter().enumerate().map(|(i, item)| {
+                            html! {
+                                <div
+                                    id={ Self::completion_item_id(i) }
+                                    class={classes!("flex",
                                                 "h-14",
                                                 "items-center",
                                                 "px-4",
                                                 focus_class(i))}
-                                onclick={ ctx.link().callback(move |_| Msg::FocusChanged(i)) }>
-                                <div class={classes!("font-mono",
-                                                     "text-2xl")}>
-                                  { Html::from_html_unchecked(AttrValue::from(item.view.clone())) }
+                                    onclick={ ctx.link().callback(move |_| Msg::FocusChanged(i)) }>
+                                    <div class={classes!("font-mono",
+                                                         "text-2xl")}>
+                                      { Html::from_html_unchecked(AttrValue::from(item.view.clone())) }
+                                    </div>
                                 </div>
-                              </div>
-                          }
-                      })
+                            }
+                        })
                     }
                     </div>
-                </>
-
-            }
+                }
+            </>
         }
     }
 
     fn changed(&mut self, ctx: &Context<Self>, _old_props: &Self::Properties) -> bool {
-        debug!("CompletionList changed");
-
         self.focused_item_index = 0;
 
         Self::fetch_complete(ctx);
@@ -180,22 +162,19 @@ impl Component for CompletionList {
         true
     }
 
-    fn rendered(&mut self, _ctx: &Context<Self>, first_render: bool) {
-        if first_render && !self.items.is_empty() {
-            self.keybinding
-                .push_keymap(Self::COMPLETION_LIST_KEYMAP, self.km.clone());
-        }
-
+    fn rendered(&mut self, _ctx: &Context<Self>, _first_render: bool) {
         self.scroll_into_focused_item();
     }
 
-    fn destroy(&mut self, _ctx: &Context<Self>) {
-        self.keybinding.remove_keymap(Self::COMPLETION_LIST_KEYMAP);
+    fn destroy(&mut self, ctx: &Context<Self>) {
+        ctx.props()
+            .keybinding
+            .remove_keymap("COMPLETION_LIST_KEYMAP");
     }
 }
 
 impl CompletionList {
-    // const MAX_ITEM_COUNT: usize = 5;
+    const COMPLETION_LIST_KEYMAP: &str = "completion_list";
 
     fn fetch_complete(ctx: &Context<Self>) {
         let input = ctx.props().input.to_string();
@@ -237,27 +216,25 @@ impl CompletionList {
         .unwrap()
     }
 
-    fn remap_keymap(&mut self) {
-        let items = &self.items;
-        if items.is_empty() {
-            self.keybinding.remove_keymap(Self::COMPLETION_LIST_KEYMAP);
-        } else {
-            if !self
-                .keybinding
-                .contains_keymap(Self::COMPLETION_LIST_KEYMAP)
-            {
-                self.keybinding
-                    .push_keymap(Self::COMPLETION_LIST_KEYMAP, self.km.clone());
-            }
-        }
-    }
-
     fn scroll_into_focused_item(&self) {
         if let Some(elm) = self.focused_item() {
             let mut opt = ScrollIntoViewOptions::new();
             opt.block(ScrollLogicalPosition::Nearest);
 
             elm.scroll_into_view_with_scroll_into_view_options(&opt);
+        }
+    }
+
+    fn set_keymap(&self, ctx: &Context<Self>) {
+        let items = &self.items;
+        if items.is_empty() {
+            ctx.props()
+                .keybinding
+                .remove_keymap(Self::COMPLETION_LIST_KEYMAP);
+        } else {
+            ctx.props()
+                .keybinding
+                .push_keymap(Self::COMPLETION_LIST_KEYMAP, self.keymap.clone());
         }
     }
 

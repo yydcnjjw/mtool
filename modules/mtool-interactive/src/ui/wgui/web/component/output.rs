@@ -1,20 +1,14 @@
-use mtool_wgui::{
-    app::AppContext, AutoResizeWindow, Horizontal, Keybinging, Vertical, WindowProps,
-};
-use tracing::debug;
+use mtool_wgui::{AutoResizeWindow, Horizontal, Vertical, WindowProps};
 use yew::prelude::*;
 
 use crate::ui::wgui::model::OutputContent;
 
 pub struct Output {
-    #[allow(dead_code)]
-    keybinding: Keybinging,
     content: OutputContent,
 }
 
 #[derive(Clone)]
 pub enum Msg {
-    AppContext(AppContext),
     Content(OutputContent),
 }
 
@@ -29,26 +23,16 @@ impl Component for Output {
     type Properties = Props;
 
     fn create(ctx: &Context<Self>) -> Self {
-        debug!("Output()");
-        let (message, _) = ctx
-            .link()
-            .context(ctx.link().callback(Msg::AppContext))
-            .expect("No AppContext Provided");
-
         let self_ = Self {
-            keybinding: message.keybinding,
             content: OutputContent::None,
         };
 
         Self::refresh(ctx);
 
-        self_.register_keybinding(ctx);
-
         self_
     }
 
     fn changed(&mut self, ctx: &Context<Self>, _old_props: &Self::Properties) -> bool {
-        debug!("Output changed");
         Self::refresh(ctx);
         true
     }
@@ -59,7 +43,6 @@ impl Component for Output {
                 self.content = c;
                 true
             }
-            Msg::AppContext(_) => unreachable!(),
         }
     }
 
@@ -92,10 +75,6 @@ impl Component for Output {
             },
         }
     }
-
-    fn destroy(&mut self, _ctx: &Context<Self>) {
-        self.unregister_keybinding();
-    }
 }
 
 impl Output {
@@ -107,40 +86,5 @@ impl Output {
                     .unwrap(),
             )
         });
-    }
-
-    fn register_keybinding(&self, ctx: &Context<Self>) {
-        let _send = |msg: Msg| {
-            let link = ctx.link().clone();
-            move || {
-                let link = link.clone();
-                let msg = msg.clone();
-                async move {
-                    link.send_message(msg);
-                    Ok::<(), anyhow::Error>(())
-                }
-            }
-        };
-        // self.keybinding
-        //     .define("C-a", send(Msg::MoveToLineBegin))
-        //     .unwrap();
-        // self.keybinding
-        //     .define("C-e", send(Msg::MoveToLineEnd))
-        //     .unwrap();
-        // self.keybinding
-        //     .define("C-f", send(Msg::ForwardChar))
-        //     .unwrap();
-        // self.keybinding
-        //     .define("C-b", send(Msg::BackwardChar))
-        //     .unwrap();
-        // self.keybinding.define("C-k", send(Msg::Kill)).unwrap();
-    }
-
-    fn unregister_keybinding(&self) {
-        // self.keybinding.remove("C-a").unwrap();
-        // self.keybinding.remove("C-e").unwrap();
-        // self.keybinding.remove("C-f").unwrap();
-        // self.keybinding.remove("C-b").unwrap();
-        // self.keybinding.remove("C-k").unwrap();
     }
 }

@@ -26,8 +26,12 @@ where
         }
     }
 
-    pub fn push_keymap(&mut self, id: &str, km: KeyMap<Value>) {
-        self.km_vec.push((id.to_string(), km))
+    pub fn push_keymap(&mut self, id: &str, km: KeyMap<Value>) -> bool {
+        if self.contains_keymap(id) {
+            return false;
+        }
+        self.km_vec.push((id.to_string(), km));
+        true
     }
 
     pub fn pop_keymap(&mut self) -> Option<(String, KeyMap<Value>)> {

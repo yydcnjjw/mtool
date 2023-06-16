@@ -112,7 +112,7 @@ impl Component for App {
                                      "bg-black",
                                      "text-white",
                                      "text-base")}
-                     tabindex="0"
+                     tabindex=0
                      ref={ self.root.clone() }>
                   <div class={classes!("columns-3","m-1")}>
                     <div>

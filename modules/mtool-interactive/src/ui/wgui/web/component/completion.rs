@@ -1,8 +1,8 @@
 use mtool_wgui::{
-    generate_keymap, AutoResizeWindow, Horizontal, Keybinging, Vertical, WindowProps, app::AppContext,
+    generate_keymap, AutoResizeWindow, Horizontal, Keybinging, Vertical, WindowProps,
 };
-use tracing::{debug, warn};
-use web_sys::HtmlInputElement;
+use tracing::warn;
+use web_sys::{HtmlElement, HtmlInputElement};
 use yew::{platform::spawn_local, prelude::*};
 
 use crate::{completion::CompletionMeta, ui::wgui::model::CompletionExit};
@@ -10,6 +10,7 @@ use crate::{completion::CompletionMeta, ui::wgui::model::CompletionExit};
 use super::completion_list::{CompletionExitArgs, CompletionList};
 
 pub struct Completion {
+    root_node: NodeRef,
     input: String,
     input_node: NodeRef,
     keybinding: Keybinging,
@@ -18,7 +19,6 @@ pub struct Completion {
 
 #[derive(Clone)]
 pub enum Msg {
-    AppContext(AppContext),
     Input(String),
     CompletionMeta(CompletionMeta),
     ForwardChar,
@@ -40,29 +40,20 @@ impl Component for Completion {
     type Properties = Props;
 
     fn create(ctx: &Context<Self>) -> Self {
-        debug!("Completion()");
-
-        let (message, _) = ctx
-            .link()
-            .context(ctx.link().callback(Msg::AppContext))
-            .expect("No AppContext Provided");
-
         let mut self_ = Self {
+            root_node: NodeRef::default(),
             input: String::default(),
             input_node: NodeRef::default(),
-            keybinding: message.keybinding,
+            keybinding: Keybinging::new(),
             meta: CompletionMeta::default(),
         };
 
         Self::refresh(&mut self_, ctx);
 
-        self_.register_keybinding(ctx);
-
         self_
     }
 
     fn changed(&mut self, ctx: &Context<Self>, _old_props: &Self::Properties) -> bool {
-        debug!("Completion changed");
         self.refresh(ctx);
         true
     }
@@ -144,7 +135,6 @@ impl Component for Completion {
                 self.meta = meta;
                 true
             }
-            Msg::AppContext(_) => unreachable!(),
         }
     }
 
@@ -162,11 +152,12 @@ impl Component for Completion {
                           vertical: Vertical::Absolute(350),
                           ..Default::default()}}>
                 <div class={classes!("w-[48rem]",
-                                     "text-white")}>
-                <div class={classes!("flex",
+                                     "text-white")}
+                     ref={ self.root_node.clone() }>
+                  <div class={classes!("flex",
                                      "w-full")}>
-                  <input ref={self.input_node.clone()}
-                    class={classes!("w-full",
+                    <input ref={ self.input_node.clone() }
+                      class={classes!("w-full",
                                     "h-16",
                                     "rounded-xl",
                                     "overflow-hidden",
@@ -177,36 +168,34 @@ impl Component for Completion {
                                     "px-4",
                                     "font-mono",
                                     "outline-none")}
-                    {oninput}
-                    type="text"
-                    placeholder={self.meta.prompt.clone()}
-                    autofocus=true/>
-                </div>
+                      {oninput}
+                      type="text"
+                      placeholder={self.meta.prompt.clone()}
+                      autofocus=true/>
+                  </div>
 
-                <div class={classes!("w-full", "h-2", "bg-transparent")} />
+                  <div class={classes!("w-full", "h-2", "bg-transparent")} />
 
-                <CompletionList
-                  class={classes!("flex",
+                  <CompletionList
+                    class={classes!("flex",
                                   "flex-col",
                                   "bg-black",
                                   "rounded-xl",
                                   "overflow-hidden")}
-                  id={ctx.props().id.clone()}
-                  input={self.input.clone()}/>
+                    id={ctx.props().id.clone()}
+                    input={self.input.clone()}
+                    keybinding={self.keybinding.clone()}/>
                 </div>
                 </AutoResizeWindow>
             </>
         }
     }
 
-    fn rendered(&mut self, _ctx: &Context<Self>, first_render: bool) {
+    fn rendered(&mut self, ctx: &Context<Self>, first_render: bool) {
         if first_render {
+            self.register_keybinding(ctx);
             self.input_node().unwrap().focus().unwrap();
         }
-    }
-
-    fn destroy(&mut self, _ctx: &Context<Self>) {
-        self.unregister_keybinding();
     }
 }
 
@@ -261,9 +250,12 @@ impl Completion {
         .unwrap();
 
         self.keybinding.push_keymap("completion", km);
-    }
 
-    fn unregister_keybinding(&self) {
-        self.keybinding.pop_keymap();
+        self.keybinding.setup_on_keydown(|f| {
+            self.root_node
+                .cast::<HtmlElement>()
+                .unwrap()
+                .set_onkeydown(f);
+        })
     }
 }
