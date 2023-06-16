@@ -49,9 +49,17 @@ impl Client {
             .json(req)
             .send()
             .await
-            .context(format!("{} send failed: {:?}", Request::api_name(), req))?
-            .json()
+            .context(format!(
+                "{} sending request: {:?}",
+                Request::api_name(),
+                req
+            ))?
+            .text()
             .await
-            .context(format!("{} recv failed", Request::api_name()))
+            .context(format!("{} reading response", Request::api_name()))
+            .and_then(|body| {
+                serde_json::from_str::<Response>(&body)
+                    .context(format!("decoding response body: {}", body))
+            })
     }
 }
