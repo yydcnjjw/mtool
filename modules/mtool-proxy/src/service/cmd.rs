@@ -1,14 +1,13 @@
-use std::{future::Future, ops::Deref};
+use std::future::Future;
 
 use anyhow::Context;
 use mapp::provider::Res;
-use mproxy::protos::geosite;
-use mtool_cmder::{Cmder, CreateCommandDescriptor};
-use mtool_interactive::{CompleteItem, Completion, CompletionArgs, TryFromCompleted};
-use notify_rust::{Notification, Timeout};
-use yew::prelude::*;
 
-use super::ProxyService;
+use mtool_cmder::{Cmder, CreateCommandDescriptor};
+use mtool_interactive::{Completion, CompletionArgs};
+use notify_rust::{Notification, Timeout};
+
+use super::{geosite_item::GeositeItem, ProxyService};
 
 #[derive(Debug, thiserror::Error)]
 enum Error {
@@ -38,53 +37,6 @@ async fn add_proxy_rule_inner(app: Res<ProxyService>, c: Res<Completion>) -> Res
     Ok(app.inner.router().add_rule_target(&app.proxy_id, &target)?)
 }
 
-#[derive(Properties, PartialEq, Clone)]
-struct GeositeItem {
-    data: geosite::Domain,
-}
-
-impl Deref for GeositeItem {
-    type Target = geosite::Domain;
-
-    fn deref(&self) -> &Self::Target {
-        &self.data
-    }
-}
-
-impl CompleteItem for GeositeItem {
-    type WGuiView = GeositeItemView;
-
-    fn complete_hint(&self) -> String {
-        self.data.value.clone()
-    }
-}
-
-impl TryFromCompleted for GeositeItem {}
-
-#[function_component]
-fn GeositeItemView(props: &GeositeItem) -> Html {
-    let type_ = match props.type_.enum_value() {
-        Ok(v) => match v {
-            geosite::domain::Type::Plain => "Plain",
-            geosite::domain::Type::Regex => "Regex",
-            geosite::domain::Type::Domain => "Domain",
-            geosite::domain::Type::Full => "Full",
-        },
-        Err(_) => "Unknown",
-    };
-    html! {
-        <div>
-            <span>
-              { type_ }
-            </span>
-            {": "}
-            <span>
-              { props.value.clone() }
-            </span>
-        </div>
-    }
-}
-
 async fn remove_proxy_rule_inner(app: Res<ProxyService>, c: Res<Completion>) -> Result<(), Error> {
     let target = {
         let items = {
@@ -93,7 +45,7 @@ async fn remove_proxy_rule_inner(app: Res<ProxyService>, c: Res<Completion>) -> 
                 sg.domain
                     .iter()
                     .cloned()
-                    .map(|v| GeositeItem { data: v })
+                    .map(|v| GeositeItem::new(v))
                     .collect::<Vec<_>>()
             } else {
                 vec![]

@@ -8,17 +8,17 @@ use yew::prelude::*;
 
 use crate::rand::rand_string;
 
-#[derive(Properties, Clone, PartialEq)]
+#[derive(Properties, Clone, PartialEq, Serialize, Deserialize)]
 pub struct Props<T>
 where
-    T: PartialEq,
+    T: PartialEq + Serialize,
 {
     data: T,
 }
 
 impl<T> Props<T>
 where
-    T: PartialEq,
+    T: PartialEq + Serialize,
 {
     pub fn new(data: T) -> Self {
         Self { data }
@@ -27,7 +27,7 @@ where
 
 impl<T> Deref for Props<T>
 where
-    T: PartialEq,
+    T: PartialEq + Serialize,
 {
     type Target = T;
 
@@ -38,7 +38,7 @@ where
 
 impl<T> From<T> for Props<T>
 where
-    T: PartialEq,
+    T: PartialEq + Serialize,
 {
     fn from(value: T) -> Self {
         Props::new(value)
@@ -47,27 +47,18 @@ where
 
 impl<T: Display> Display for Props<T>
 where
-    T: PartialEq,
+    T: PartialEq + Serialize,
 {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         self.data.fmt(f)
     }
 }
 
-pub trait CompleteItem:
-    PartialEq
-    + Clone
-    + Into<<<Self as CompleteItem>::WGuiView as BaseComponent>::Properties>
-    + TryFromCompleted
-    + Send
-    + Sync
-    + 'static
-{
+pub trait CompleteItem: Serialize + Clone + Send + Sync + 'static {
     type WGuiView: BaseComponent<Message = ()>;
-    fn complete_hint(&self) -> String;
-}
 
-pub trait TryFromCompleted {
+    fn complete_hint(&self) -> String;
+
     fn try_from_completed(_completed: &str) -> Result<Self, anyhow::Error>
     where
         Self: Sized,
@@ -106,7 +97,7 @@ where
     }
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize, Default)]
+#[derive(Debug, Clone, Serialize, Deserialize, Default, PartialEq)]
 pub struct CompletionMeta {
     pub id: String,
     pub prompt: String,
@@ -224,9 +215,7 @@ impl CompleteItem for String {
     fn complete_hint(&self) -> String {
         self.to_string()
     }
-}
 
-impl TryFromCompleted for String {
     fn try_from_completed(completed: &str) -> Result<Self, anyhow::Error>
     where
         Self: Sized,

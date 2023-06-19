@@ -2,8 +2,9 @@ use std::{
     collections::HashMap,
     sync::{Arc, RwLock},
 };
-use tracing::debug;
+
 use once_cell::sync::OnceCell;
+use tracing::debug;
 
 use yew::prelude::*;
 use yew_router::prelude::*;
@@ -107,7 +108,7 @@ impl Routable for Route {
 
     fn recognize(pathname: &str) -> Option<Self> {
         debug!("recognize: {}", pathname);
-        
+
         global_router()
             .recognize(pathname)
             .map(|(params, handler)| Self {

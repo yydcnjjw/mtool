@@ -8,8 +8,10 @@ edition.workspace = true
 
 [dependencies]
 mapp = { path = "../../crates/mapp" }
-mtool-wgui = { path = "../mtool-wgui" }
+mproxy = { path = "../../crates/mproxy" }
 mtauri-sys = { path = "../../crates/mtauri-sys" }
+mtool-wgui = { path = "../mtool-wgui" }
+mtool-interactive = { path = "../mtool-interactive" }
 
 tokio = { workspace = true }
 async-trait = { workspace = true }
@@ -25,6 +27,7 @@ js-sys = { workspace = true }
 wasm-bindgen = { workspace = true }
 wasm-bindgen-futures = { workspace = true }
 serde-wasm-bindgen = { workspace = true }
+cfg-if = { workspace = true }
 
 gloo-utils = "*"
 async-stream = "*"
@@ -40,11 +43,9 @@ features = [
 ]
 
 [target.'cfg(not(target_family = "wasm"))'.dependencies]
-mproxy = { path = "../../crates/mproxy" }
 mtool-core = { path = "../mtool-core" }
 mtool-system = { path = "../mtool-system" }
 mtool-cmder = { path = "../mtool-cmder" }
-mtool-interactive = { path = "../mtool-interactive" }
 
 clap = { workspace = true }
 tauri = { workspace = true }

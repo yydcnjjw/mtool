@@ -1,14 +1,14 @@
-use std::ops::Deref;
-
 use anyhow::Context;
 use clap::ArgMatches;
 use itertools::Itertools;
 use mapp::provider::{Injector, Res, Take};
-use mtool_interactive::{CompleteItem, Completion, CompletionArgs, Props, TryFromCompleted};
+use mtool_interactive::{CompleteItem, Completion, CompletionArgs};
+use serde::{Deserialize, Serialize};
 use yew::prelude::*;
 
 use crate::{Cmder, CommandArgs, SharedCommandDescriptor};
 
+#[allow(unused)]
 pub async fn exec_command_from_cli(
     args: Res<ArgMatches>,
     cmder: Res<Cmder>,
@@ -35,36 +35,42 @@ pub async fn exec_command_from_cli(
     Ok(())
 }
 
-#[derive(Properties, PartialEq, Clone)]
-struct CommandItem {
-    inner: SharedCommandDescriptor,
+#[derive(Properties, PartialEq, Clone, Serialize, Deserialize)]
+pub struct CommandItem {
+    name: String,
+    alias: Vec<String>,
+    desc: String,
+    #[serde(skip)]
+    cmd: Option<SharedCommandDescriptor>,
 }
 
-impl Deref for CommandItem {
-    type Target = SharedCommandDescriptor;
-
-    fn deref(&self) -> &Self::Target {
-        &self.inner
+impl From<SharedCommandDescriptor> for CommandItem {
+    fn from(value: SharedCommandDescriptor) -> Self {
+        Self {
+            name: value.get_name().into(),
+            alias: value.get_aliases().clone(),
+            desc: value.get_desc().into(),
+            cmd: Some(value),
+        }
     }
 }
-
-impl TryFromCompleted for CommandItem {}
 
 impl CompleteItem for CommandItem {
     type WGuiView = CommandItemView;
 
     fn complete_hint(&self) -> String {
-        self.get_name().to_string()
+        self.name.clone()
     }
 }
 
 #[function_component]
-fn CommandItemView(props: &Props<CommandItem>) -> Html {
+pub fn CommandItemView(props: &CommandItem) -> Html {
     html! {
-        <div> { props.get_name() } </div>
+        <div> { props.name.clone() } </div>
     }
 }
 
+#[allow(unused)]
 pub async fn exec_command_interactive(
     c: Res<Completion>,
     cmder: Res<Cmder>,
@@ -78,7 +84,7 @@ pub async fn exec_command_interactive(
                     cmder
                         .list_command()
                         .into_iter()
-                        .map(|v| CommandItem { inner: v })
+                        .map(|v| CommandItem::from(v))
                         .collect_vec(),
                 )
                 .prompt("Input command..."),
@@ -94,15 +100,13 @@ pub async fn exec_command_interactive(
         let command = command.clone();
         injector.construct_once(move || async move {
             let completed = c
-                .complete_read(
-                    CompletionArgs::<String>::without_completion().prompt(command.get_name()),
-                )
+                .complete_read(CompletionArgs::<String>::without_completion().prompt(&command.name))
                 .await?
                 .context("complete read canceled")?;
             Ok(Take::new(CommandArgs::new(shellwords::split(&completed)?)))
         });
     }
 
-    command.exec(&injector).await?;
+    command.cmd.unwrap().exec(&injector).await?;
     Ok(())
 }

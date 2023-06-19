@@ -5,9 +5,9 @@ cfg_if::cfg_if! {
     if #[cfg(target_family = "wasm")] {
         pub use web::Module;
     } else {
-        mod native;
-        pub use native::*;
-        pub use native::Module;
+        mod service;
+        pub use service::*;
+        pub use service::Module;
     }
 }
 

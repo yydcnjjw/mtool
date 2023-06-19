@@ -1,6 +1,6 @@
 use async_trait::async_trait;
 use mtool_wgui::{
-    generate_keymap, AppStage, AutoResizeWindow, Horizontal, Keybinging, RouteParams, Router,
+    generate_keymap, AppStage, AutoResizeWindow, Horizontal, Keybinding, RouteParams, Router,
     Vertical, WindowProps,
 };
 use serde::Serialize;
@@ -13,7 +13,7 @@ use mapp::{provider::Res, AppContext, AppModule};
 use crate::translator::{Backend, LanguageType};
 
 pub struct App {
-    keybinding: Keybinging,
+    keybinding: Keybinding,
     root: NodeRef,
     editor: NodeRef,
     backend: Backend,
@@ -46,7 +46,7 @@ impl Component for App {
 
     fn create(_ctx: &Context<Self>) -> Self {
         Self {
-            keybinding: Keybinging::new(),
+            keybinding: Keybinding::new(),
             root: NodeRef::default(),
             editor: NodeRef::default(),
             backend: Backend::Openai,

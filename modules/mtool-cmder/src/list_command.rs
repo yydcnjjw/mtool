@@ -4,6 +4,7 @@ use mtool_interactive::OutputDevice;
 
 use crate::Cmder;
 
+#[allow(unused)]
 pub async fn list_command(cmder: Res<Cmder>, o: Res<OutputDevice>) -> Result<(), anyhow::Error> {
     let output = cmder
         .list_command()

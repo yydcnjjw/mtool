@@ -8,8 +8,6 @@ edition.workspace = true
 
 [dependencies]
 mapp = { path = "../../crates/mapp" }
-mtool-core = { path = "../mtool-core" }
-mtool-system = { path = "../mtool-system" }
 mtool-wgui = { path = "../mtool-wgui" }
 mtool-interactive = { path = "../mtool-interactive" }
 
@@ -18,9 +16,14 @@ async-trait = { workspace = true }
 parking_lot = { workspace = true }
 anyhow = { workspace = true }
 thiserror = { workspace = true }
+serde = { workspace = true }
 clap = { workspace = true }
 tracing = { workspace = true }
 itertools = { workspace = true }
 yew = { workspace = true }
 
 shellwords = "*"
+
+[target.'cfg(not(target_family = "wasm"))'.dependencies]
+mtool-core = { path = "../mtool-core" }
+mtool-system = { path = "../mtool-system" }

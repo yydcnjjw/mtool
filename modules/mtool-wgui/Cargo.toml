@@ -19,12 +19,16 @@ tokio = { workspace = true }
 async-trait = { workspace = true }
 futures = { workspace = true }
 anyhow = { workspace = true }
+serde = { workspace = true }
 serde-error = { workspace = true }
+serde_json = { workspace = true }
+serde-wasm-bindgen = { workspace = true }
 tracing = { workspace = true }
 dashmap = {  workspace = true }
 once_cell = { workspace = true }
 cfg-if = { workspace = true }
-yew = { workspace = true }
+send_wrapper = { workspace = true }
+yew = { workspace = true, features = ["csr"] }
 yew-router = { workspace = true }
 js-sys = { workspace = true }
 wasm-bindgen = { workspace = true }
