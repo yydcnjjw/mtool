@@ -23,7 +23,7 @@ impl AppModule for Module {
 }
 
 async fn init(keybinding: Res<Keybinding>, cmder: Res<Cmder>) -> Result<(), anyhow::Error> {
-    keybinding.define_global("M-A-t", text_translate).await?;
+    keybinding.define_global("M-A-S-t", text_translate).await?;
     cmder.add_command(text_translate.name("text_translate").desc("text translate"));
     Ok(())
 }

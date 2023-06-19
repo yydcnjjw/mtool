@@ -1,11 +1,14 @@
-# [watch]
-# watch = [
-
-# ]
+[watch]
+watch = [
+  "../../../"
+]
 
 [serve]
 address = "127.0.0.1"
 port = 18188
+
+[tools]
+wasm_bindgen = "0.2.87"
 
 [[hooks]]
 stage = "build"
