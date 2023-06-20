@@ -49,6 +49,7 @@ impl WGuiWindow {
     pub fn show(&self) -> Result<(), anyhow::Error> {
         if !self.inner.is_visible()? {
             self.inner.show()?;
+            self.inner.set_focus()?;
             self.restore_position()?;
         }
         Ok(())
