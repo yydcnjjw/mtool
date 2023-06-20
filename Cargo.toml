@@ -90,9 +90,6 @@ toml = "*"
 notify-rust = { version = "*", features = ["zbus"] }
 fuzzy-matcher = "*"
 yew = { version = "*", features = ["ssr"] }
-
-
-# WAR for wasm
 yew-router = "*"
 yew_icons = "*"
 grass = { version = "*", features = ["macro", "nightly"] }
@@ -101,3 +98,6 @@ web-sys = "*"
 wasm-bindgen = { version = "*", features = ["serde-serialize"] }
 wasm-bindgen-futures = "*"
 serde-wasm-bindgen = "*"
+
+[patch.crates-io]
+tauri = { git = "https://github.com/yydcnjjw/tauri.git", branch = "fix/ipc-scope-not-found" }
