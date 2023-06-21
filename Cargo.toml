@@ -100,4 +100,4 @@ wasm-bindgen-futures = "*"
 serde-wasm-bindgen = "*"
 
 [patch.crates-io]
-tauri = { git = "https://github.com/yydcnjjw/tauri.git", branch = "fix/ipc-scope-not-found" }
+tauri = { git = "https://github.com/tauri-apps/tauri.git", branch = "dev" }
