@@ -7,7 +7,6 @@ use serde::Serialize;
 use tracing::{debug, warn};
 use web_sys::{HtmlElement, HtmlTextAreaElement};
 use yew::prelude::*;
-// use yew_icons::{Icon, IconId};
 use mapp::{provider::Res, AppContext, AppModule};
 
 use crate::translator::{Backend, LanguageType};
@@ -111,7 +110,8 @@ impl Component for App {
                                      "rounded-md",
                                      "bg-black",
                                      "text-white",
-                                     "text-base")}
+                                     "text-base",
+                                     "font-mono")}
                      tabindex=0
                      ref={ self.root.clone() }>
                   <div class={classes!("columns-3","m-1")}>
