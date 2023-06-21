@@ -30,8 +30,7 @@ features = [
 [dependencies.yew_icons]
 workspace = true
 features = [
-  "OcticonsDownload16",
-  "OcticonsUpload16"
+  "FontAwesomeSolidCircleNotch"
 ]
 
 [target.'cfg(not(target_arch = "wasm32"))'.dependencies]

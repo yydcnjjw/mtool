@@ -8,6 +8,7 @@ use tracing::{debug, warn};
 use web_sys::{HtmlElement, HtmlTextAreaElement};
 use yew::prelude::*;
 use mapp::{provider::Res, AppContext, AppModule};
+use yew_icons::{Icon, IconId};
 
 use crate::translator::{Backend, LanguageType};
 
@@ -19,6 +20,8 @@ pub struct App {
     source: LanguageType,
     target: LanguageType,
     result: String,
+
+    is_waiting_translate: bool
 }
 
 // #[derive(Properties, PartialEq)]
@@ -52,6 +55,7 @@ impl Component for App {
             source: LanguageType::Auto,
             target: LanguageType::En,
             result: String::default(),
+            is_waiting_translate: false,
         }
     }
 
@@ -74,6 +78,7 @@ impl Component for App {
                 true
             }
             AppMsg::ShowTranslate(result) => {
+                self.is_waiting_translate = false;
                 self.result = result;
                 true
             }
@@ -139,8 +144,19 @@ impl Component for App {
                     placeholder="Input text">
                    </textarea>
                   <div
-                    class={classes!("h-40")}>
-                    { self.result.clone() }
+                    class={classes!("flex",
+                                    "h-40")}>
+                    if self.is_waiting_translate {
+                        <Icon
+                            class={classes!("animate-spin",
+                                            "m-1")}
+                            icon_id={IconId::FontAwesomeSolidCircleNotch}
+                            width={"1em".to_owned()}
+                            height={"1em".to_owned()}/>
+                    } else {
+                        <div>{ self.result.clone() }</div>
+                    }
+                    
                   </div>
                 </div>
             </AutoResizeWindow>
@@ -157,7 +173,7 @@ impl Component for App {
 }
 
 impl App {
-    fn translate(&self, ctx: &Context<Self>) {
+    fn translate(&mut self, ctx: &Context<Self>) {
         #[derive(Debug, Serialize)]
         struct TranslateArgs {
             input: String,
@@ -165,6 +181,13 @@ impl App {
             target: LanguageType,
             backend: Backend,
         }
+
+        if self.is_waiting_translate {
+            return
+        } else {
+            self.is_waiting_translate = true
+        }
+        
         let args = TranslateArgs {
             input: self.editor.cast::<HtmlTextAreaElement>().unwrap().value(),
             source: self.source.clone(),
