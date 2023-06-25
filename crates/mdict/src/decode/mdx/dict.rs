@@ -1,4 +1,3 @@
-use std::cell::{Ref, RefCell, RefMut};
 use std::ops::RangeFrom;
 
 use anyhow::Context;
@@ -20,14 +19,14 @@ pub struct Dict<I> {
     pub record_block: RecordBlock<I>,
 
     pub keys: MultiMap<String, KeyIndex>,
-    pub blocks: RefCell<Vec<Vec<u8>>>,
+    pub blocks: Vec<Vec<u8>>,
 }
 
 impl<I> Dict<I>
 where
     I: Slice<RangeFrom<usize>> + Clone + PartialEq + InputIter<Item = u8> + InputLength,
 {
-    fn get_block<'a>(&'a self, i: usize) -> Result<Ref<'a, Vec<u8>>> {
+    fn try_get_block_or_decompress(&mut self, i: usize) -> Result<&[u8]> {
         let n_blocks = self.record_block.infos.len();
         let info = self
             .record_block
@@ -35,39 +34,43 @@ where
             .get(i)
             .ok_or(Error::OutOfBounds(n_blocks, i))?;
 
-        let offset = self.record_block.infos[0..i]
-            .iter()
-            .map(|info| info.nb_compressed)
-            .sum();
+        if self.blocks[i].len() == info.nb_decompressed {
+            Ok(&self.blocks[i])
+        } else {
+            let offset = self.record_block.infos[0..i]
+                .iter()
+                .map(|info| info.nb_compressed)
+                .sum();
 
-        {
-            let block = Ref::map(self.blocks.borrow(), |blocks| &blocks[i]);
-            if block.len() == info.nb_decompressed {
-                return Ok(block);
+            let (_, data) =
+                count(le_u8, info.nb_compressed)(self.record_block.records_input.slice(offset..))?;
+
+            let (_, decompressed_block) =
+                content_block::parse(data.as_slice(), info.nb_compressed, info.nb_decompressed)?;
+
+            {
+                self.blocks[i] = decompressed_block;
             }
+
+            Ok(&self.blocks[i])
         }
-
-        let (_, data) =
-            count(le_u8, info.nb_compressed)(self.record_block.records_input.slice(offset..))?;
-
-        let (_, decompressed_block) =
-            content_block::parse(data.as_slice(), info.nb_compressed, info.nb_decompressed)?;
-
-        {
-            let mut block = RefMut::map(self.blocks.borrow_mut(), |blocks| &mut blocks[i]);
-            *block = decompressed_block;
-        }
-
-        Ok(Ref::map(self.blocks.borrow(), |blocks| &blocks[i]))
     }
 
-    fn get_record<'a>(&'a self, key_index: &KeyIndex) -> Result<Ref<'a, [u8]>> {
-        Ok(Ref::map(self.get_block(key_index.record_index)?, |block| {
-            &block[key_index.block_pos..key_index.block_pos + key_index.block_size]
-        }))
+    fn get_block(&self, i: usize) -> &[u8] {
+        &self.blocks[i]
     }
 
-    pub fn search<'a>(&'a self, text: &str) -> Result<(String, Resource<'a>)> {
+    fn try_get_record_or_decompress(&mut self, key_index: &KeyIndex) -> Result<&[u8]> {
+        let block = self.try_get_block_or_decompress(key_index.record_index)?;
+        Ok(&block[key_index.block_pos..key_index.block_pos + key_index.block_size])
+    }
+
+    fn get_record(&self, key_index: &KeyIndex) -> &[u8] {
+        let block = self.get_block(key_index.record_index);
+        &block[key_index.block_pos..key_index.block_pos + key_index.block_size]
+    }
+
+    pub fn search<'a>(&'a mut self, text: &str) -> Result<(String, Resource<'a>)> {
         let text = text.trim();
 
         if text.is_empty() {
@@ -80,10 +83,13 @@ where
             .context(format!("{} not found", text))?
             .iter()
             .find_or_first(|key_index| text == key_index.key)
+            .cloned()
             .unwrap();
         let key = key_index.key.clone();
 
-        let record = self.get_record(&key_index)?;
+        self.try_get_record_or_decompress(&key_index)?;
+
+        let record = self.get_record(&key_index);
 
         Ok((key, Resource::new(text, record, &self.meta)?))
     }

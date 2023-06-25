@@ -8,18 +8,46 @@ edition.workspace = true
 
 [dependencies]
 mapp = { path = "../../crates/mapp" }
-mdict = { path = "../../crates/mdict" }
-mtool-core = { path = "../mtool-core" }
+mtauri-sys = { path = "../../crates/mtauri-sys" }
 mtool-wgui = { path = "../mtool-wgui" }
-mtool-system = { path = "../mtool-system" }
 mtool-cmder = { path = "../mtool-cmder" }
 mtool-interactive = { path = "../mtool-interactive" }
 
 clap = { workspace = true }
 serde = { workspace = true }
+serde-error = { workspace = true }
+serde_json = { workspace = true }
+serde-wasm-bindgen = { workspace = true }
 tokio = { workspace = true }
-tokio-stream = { workspace = true, features = ["fs"] }
 async-trait = { workspace = true }
 futures = { workspace = true }
 anyhow = { workspace = true }
 tracing = { workspace = true }
+yew = { workspace = true }
+cfg-if = { workspace = true }
+nom = { workspace = true }
+send_wrapper = { workspace = true }
+ouroboros = { workspace = true }
+itertools = { workspace = true }
+
+[dependencies.web-sys]
+workspace = true
+features = [
+  "HtmlTextAreaElement"
+]
+
+[dependencies.yew_icons]
+workspace = true
+features = [
+  "FontAwesomeSolidCircleNotch"
+]
+
+[target.'cfg(not(target_family = "wasm"))'.dependencies]
+mdict = { path = "../../crates/mdict" }
+mtool-core = { path = "../mtool-core" }
+mtool-system = { path = "../mtool-system" }
+
+tauri = { workspace = true }
+tokio-stream = { workspace = true, features = ["fs"] }
+
+sea-orm = { version = "*", features = ["sqlx-sqlite", "runtime-tokio-rustls"] }

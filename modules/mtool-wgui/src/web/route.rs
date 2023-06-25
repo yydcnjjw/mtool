@@ -7,7 +7,7 @@ use once_cell::sync::OnceCell;
 use tracing::debug;
 
 use yew::prelude::*;
-use yew_router::prelude::*;
+use yew_router::Routable;
 
 pub type RouteParams = HashMap<String, String>;
 pub type RouteHandler = Arc<dyn Fn(&RouteParams) -> Html + Send + Sync>;
@@ -40,7 +40,7 @@ impl Router {
     }
 }
 
-pub fn global_router() -> Router {
+pub(crate) fn global_router() -> Router {
     static INST: OnceCell<Router> = OnceCell::new();
     INST.get_or_init(|| Router {
         inner: Arc::new(RwLock::new(route_recognizer::Router::new())),

@@ -15,39 +15,39 @@ use crate::nom_return;
 
 use super::common::NomResult;
 
-#[derive(Debug, Deserialize, PartialEq)]
+#[derive(Debug, Clone, Deserialize, PartialEq)]
 pub struct DictMeta {
-    #[serde(rename = "GeneratedByEngineVersion")]
+    #[serde(rename = "@GeneratedByEngineVersion")]
     generated_by_engine_version: f64,
-    #[serde(rename = "RequiredEngineVersion")]
+    #[serde(rename = "@RequiredEngineVersion")]
     required_engine_version: f64,
-    #[serde(rename = "Format")]
+    #[serde(rename = "@Format")]
     format: String,
-    #[serde(rename = "KeyCaseSensitive")]
+    #[serde(rename = "@KeyCaseSensitive")]
     key_case_sensitive: String,
-    #[serde(rename = "StripKey")]
+    #[serde(rename = "@StripKey")]
     strip_key: Option<String>,
-    #[serde(rename = "Encrypted")]
+    #[serde(rename = "@Encrypted")]
     encrypted: String,
-    #[serde(rename = "RegisterBy")]
+    #[serde(rename = "@RegisterBy")]
     register_by: Option<String>,
-    #[serde(rename = "Description")]
+    #[serde(rename = "@Description")]
     pub description: String,
-    #[serde(rename = "Title")]
+    #[serde(rename = "@Title")]
     pub title: String,
-    #[serde(rename = "Encoding")]
+    #[serde(rename = "@Encoding")]
     pub encoding: String,
-    #[serde(rename = "CreationDate")]
+    #[serde(rename = "@CreationDate")]
     creation_date: Option<String>,
-    #[serde(rename = "Compact")]
+    #[serde(rename = "@Compact")]
     compact: Option<String>,
-    #[serde(rename = "Compat")]
+    #[serde(rename = "@Compat")]
     compat: Option<String>,
-    #[serde(rename = "Left2Right")]
+    #[serde(rename = "@Left2Right")]
     left2right: Option<String>,
-    #[serde(rename = "DataSourceFormat")]
+    #[serde(rename = "@DataSourceFormat")]
     data_source_format: Option<String>,
-    #[serde(rename = "StyleSheet")]
+    #[serde(rename = "@StyleSheet")]
     style_sheet: Option<String>,
 }
 
@@ -65,9 +65,7 @@ where
         tuple((length_count(map(be_u32, |i| i / 2), le_u16), le_u32))(in_)?;
 
     nom_return!(in_, DictMeta, {
-        quick_xml::de::from_str::<DictMeta>(
-            &String::from_utf16(&dict_meta).context("Failed to convert to utf-16")?,
-        )
-        .context("Failed to parse mdict meta xml")?
+        let xml = String::from_utf16(&dict_meta).context("Failed to convert to utf-16")?;
+        quick_xml::de::from_str::<DictMeta>(&xml).context("Failed to parse mdict meta xml")?
     })
 }

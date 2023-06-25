@@ -152,7 +152,7 @@ impl ScheduleInner {
         let label = label.into();
         let index = self
             .get_node_index(label.clone())
-            .expect(&format!("{}", &label));
+            .expect(&format!("{} is not exist", &label));
 
         let task_label = task.label;
 

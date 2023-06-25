@@ -1,4 +1,4 @@
-use std::{cell::RefCell, ops::RangeFrom};
+use std::ops::RangeFrom;
 
 use multimap::MultiMap;
 use nom::{sequence::tuple, AsBytes, InputIter, InputLength, Slice};
@@ -121,7 +121,7 @@ where
             key_block,
             record_block,
             keys,
-            blocks: RefCell::new(vec![Vec::new(); n_record_block]),
+            blocks: vec![Vec::new(); n_record_block],
         },
     ))
 }
