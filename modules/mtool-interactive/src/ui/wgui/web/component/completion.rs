@@ -152,22 +152,23 @@ impl Component for Completion {
                           vertical: Vertical::Absolute(350),
                           ..Default::default()}}>
                 <div class={classes!("w-[48rem]",
-                                     "text-white")}
+                                     "text-white",
+                                     "font-mono")}
                      ref={ self.root_node.clone() }>
                   <div class={classes!("flex",
-                                     "w-full")}>
+                                       "w-full")}>
                     <input ref={ self.input_node.clone() }
                       class={classes!("w-full",
-                                    "h-16",
-                                    "rounded-xl",
-                                    "overflow-hidden",
-                                    "text-3xl",
-                                    "bg-black",
-                                    "appearance-none",
-                                    "caret-white",
-                                    "px-4",
-                                    "font-mono",
-                                    "outline-none")}
+                                      "h-16",
+                                      "rounded-xl",
+                                      "overflow-hidden",
+                                      "text-3xl",
+                                      "bg-black",
+                                      "appearance-none",
+                                      "caret-white",
+                                      "px-4",
+                                      "font-mono",
+                                      "outline-none")}
                       {oninput}
                       type="text"
                       placeholder={self.meta.prompt.clone()}

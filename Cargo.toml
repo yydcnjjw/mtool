@@ -98,6 +98,7 @@ web-sys = "*"
 wasm-bindgen = { version = "*", features = ["serde-serialize"] }
 wasm-bindgen-futures = "*"
 serde-wasm-bindgen = "*"
+ouroboros = "*"
 
 [patch.crates-io]
 tauri = { git = "https://github.com/tauri-apps/tauri.git", branch = "dev" }

@@ -13,6 +13,7 @@ mtool-wgui = { path = "../mtool-wgui" }
 
 async-trait = { workspace = true }
 serde = { workspace = true }
+serde-wasm-bindgen = { workspace = true }
 futures = { workspace = true }
 anyhow = { workspace = true }
 itertools = { workspace = true }
@@ -33,7 +34,7 @@ features = [
   "FontAwesomeSolidCircleNotch"
 ]
 
-[target.'cfg(not(target_arch = "wasm32"))'.dependencies]
+[target.'cfg(not(target_family = "wasm"))'.dependencies]
 mcloud-api = { path = "../../crates/mcloud-api" }
 mtool-core = { path = "../mtool-core" }
 mtool-system = { path = "../mtool-system" }
@@ -46,5 +47,5 @@ tokio = { workspace = true }
 tauri = { workspace = true }
 serde-error = { workspace = true }
 
-[target.'cfg(target_arch = "wasm32")'.dependencies]
+[target.'cfg(target_family = "wasm")'.dependencies]
 tokio = { workspace = true, features = ["sync", "rt"] }

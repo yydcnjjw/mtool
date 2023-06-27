@@ -1,13 +1,15 @@
+use std::rc::Rc;
+
 use async_trait::async_trait;
+use mapp::{provider::Res, AppContext, AppModule};
 use mtool_wgui::{
     generate_keymap, AppStage, AutoResizeWindow, Horizontal, Keybinding, RouteParams, Router,
     Vertical, WindowProps,
 };
 use serde::Serialize;
-use tracing::{debug, warn};
+use tracing::debug;
 use web_sys::{HtmlElement, HtmlTextAreaElement};
 use yew::prelude::*;
-use mapp::{provider::Res, AppContext, AppModule};
 use yew_icons::{Icon, IconId};
 
 use crate::translator::{Backend, LanguageType};
@@ -19,26 +21,15 @@ pub struct App {
     backend: Backend,
     source: LanguageType,
     target: LanguageType,
-    result: String,
-
-    is_waiting_translate: bool
+    result: Option<Result<String, Rc<serde_wasm_bindgen::Error>>>,
 }
-
-// #[derive(Properties, PartialEq)]
-// pub struct AppProps {
-//     path: String,
-// }
 
 #[derive(Clone)]
 pub enum AppMsg {
-    ToEnglish,
-    ToChinese,
-    ToJapanese,
-    UseOpenai,
-    UseLLama,
-    UseTencent,
+    ToTarget(LanguageType),
+    UseBackend(Backend),
     Translate,
-    ShowTranslate(String),
+    ShowTranslate(Result<String, Rc<serde_wasm_bindgen::Error>>),
 }
 
 impl Component for App {
@@ -54,44 +45,27 @@ impl Component for App {
             backend: Backend::Openai,
             source: LanguageType::Auto,
             target: LanguageType::En,
-            result: String::default(),
-            is_waiting_translate: false,
+            result: Some(Ok("".into())),
         }
     }
 
     fn update(&mut self, ctx: &Context<Self>, msg: Self::Message) -> bool {
         match msg {
-            AppMsg::ToEnglish => {
-                self.target = LanguageType::En;
+            AppMsg::ToTarget(target) => {
+                self.target = target;
                 true
             }
-            AppMsg::ToChinese => {
-                self.target = LanguageType::Zh;
-                true
-            }
-            AppMsg::ToJapanese => {
-                self.target = LanguageType::Ja;
+            AppMsg::UseBackend(backend) => {
+                self.backend = backend;
                 true
             }
             AppMsg::Translate => {
+                self.result = None;
                 self.translate(ctx);
                 true
             }
             AppMsg::ShowTranslate(result) => {
-                self.is_waiting_translate = false;
-                self.result = result;
-                true
-            }
-            AppMsg::UseOpenai => {
-                self.backend = Backend::Openai;
-                true
-            }
-            AppMsg::UseLLama => {
-                self.backend = Backend::Llama;
-                true
-            }
-            AppMsg::UseTencent => {
-                self.backend = Backend::Tencent;
+                self.result = Some(result);
                 true
             }
         }
@@ -146,17 +120,16 @@ impl Component for App {
                   <div
                     class={classes!("flex",
                                     "h-40")}>
-                    if self.is_waiting_translate {
+                    if let Some(result) = self.result.as_ref() {
+                        <div>{ Self::render_translate_content(result) }</div>
+                    } else {
                         <Icon
                             class={classes!("animate-spin",
                                             "m-1")}
                             icon_id={IconId::FontAwesomeSolidCircleNotch}
                             width={"1em".to_owned()}
                             height={"1em".to_owned()}/>
-                    } else {
-                        <div>{ self.result.clone() }</div>
                     }
-                    
                   </div>
                 </div>
             </AutoResizeWindow>
@@ -182,12 +155,6 @@ impl App {
             backend: Backend,
         }
 
-        if self.is_waiting_translate {
-            return
-        } else {
-            self.is_waiting_translate = true
-        }
-        
         let args = TranslateArgs {
             input: self.editor.cast::<HtmlTextAreaElement>().unwrap().value(),
             source: self.source.clone(),
@@ -195,14 +162,23 @@ impl App {
             backend: self.backend.clone(),
         };
         ctx.link().send_future(async move {
-            match mtauri_sys::invoke("plugin:translate|text_translate", &args).await {
-                Ok(result) => AppMsg::ShowTranslate(result),
-                Err(e) => {
-                    warn!("invoke text_translate failed: {:?}", e);
-                    AppMsg::ShowTranslate("error occurred".into())
-                }
-            }
+            AppMsg::ShowTranslate(
+                mtauri_sys::invoke("plugin:translate|text_translate", &args)
+                    .await
+                    .map_err(|e| Rc::new(e)),
+            )
         })
+    }
+
+    fn render_translate_content(result: &Result<String, Rc<serde_wasm_bindgen::Error>>) -> Html {
+        match result {
+            Ok(result) => html! {
+                { result.clone() }
+            },
+            Err(e) => html! {
+                { e.to_string() }
+            },
+        }
     }
 
     fn register_keybinding(&self, ctx: &Context<Self>) {
@@ -220,12 +196,12 @@ impl App {
         };
 
         let km = generate_keymap!(
-            ("C-e", send(AppMsg::ToEnglish)),
-            ("C-z", send(AppMsg::ToChinese)),
-            ("C-j", send(AppMsg::ToJapanese)),
-            ("C-A-o", send(AppMsg::UseOpenai)),
-            ("C-A-l", send(AppMsg::UseLLama)),
-            ("C-A-t", send(AppMsg::UseTencent)),
+            ("C-e", send(AppMsg::ToTarget(LanguageType::En))),
+            ("C-z", send(AppMsg::ToTarget(LanguageType::Zh))),
+            ("C-j", send(AppMsg::ToTarget(LanguageType::Ja))),
+            ("C-A-o", send(AppMsg::UseBackend(Backend::Openai))),
+            ("C-A-l", send(AppMsg::UseBackend(Backend::Llama))),
+            ("C-A-t", send(AppMsg::UseBackend(Backend::Tencent))),
             ("C-<Return>", send(AppMsg::Translate)),
         )
         .unwrap();

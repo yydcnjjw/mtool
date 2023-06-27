@@ -1,21 +1,23 @@
-pub mod app;
+mod app;
 mod auto_resize_window;
+mod component;
 mod keybinding;
 mod route;
 mod switch;
 mod template;
 
 use async_trait::async_trait;
-use mapp::{define_label, provider::Res, AppContext, AppModule, ModuleGroup, ScheduleGraph};
-use route::global_router;
+use mapp::{
+    define_label, provider::Res, AppContext as AppCtx, AppModule, ModuleGroup, ScheduleGraph,
+};
 
+pub use app::*;
 pub use auto_resize_window::*;
 pub use keybinding::*;
-pub use route::{RouteParams, Router};
-pub use template::Templator;
+pub use route::*;
+pub use template::{EmptyView, Template, TemplateData, TemplateId, TemplateView, Templator};
 
-#[derive(Default)]
-struct Module {}
+struct Module;
 
 define_label!(
     pub enum AppStage {
@@ -27,9 +29,8 @@ define_label!(
 
 #[async_trait]
 impl AppModule for Module {
-    async fn init(&self, ctx: &mut AppContext) -> Result<(), anyhow::Error> {
+    async fn init(&self, ctx: &mut AppCtx) -> Result<(), anyhow::Error> {
         ctx.injector().insert(Res::new(global_router()));
-        ctx.injector().insert(Res::new(Templator::new()));
 
         ctx.schedule().insert_stage_vec(
             ScheduleGraph::Root,
@@ -37,7 +38,6 @@ impl AppModule for Module {
         );
 
         ctx.schedule().add_once_task(AppStage::Run, run);
-
         Ok(())
     }
 }
@@ -55,7 +55,8 @@ async fn run(templator: Res<Templator>) -> Result<(), anyhow::Error> {
 pub fn module() -> ModuleGroup {
     let mut group = ModuleGroup::new("mtool-wgui-web");
 
-    group.add_module(Module::default());
+    group.add_module(Module);
+    group.add_module(template::Module);
 
     group
 }

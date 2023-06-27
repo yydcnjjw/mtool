@@ -1,4 +1,4 @@
-use std::{cell::Ref, ops::RangeFrom};
+use std::ops::RangeFrom;
 
 use nom::{
     bytes::streaming::tag,
@@ -81,11 +81,11 @@ where
 #[derive(Debug)]
 pub enum Resource<'a> {
     Text(String),
-    Raw(Ref<'a, [u8]>),
+    Raw(&'a [u8]),
 }
 
 impl<'a> Resource<'a> {
-    pub fn new(key: &str, data: Ref<'a, [u8]>, meta: &DictMeta) -> Result<Resource<'a>> {
+    pub fn new(key: &str, data: &'a [u8], meta: &DictMeta) -> Result<Resource<'a>> {
         if key.ends_with(".png") {
             Ok(Resource::Raw(data))
         } else {

@@ -1,5 +1,5 @@
 use gloo_utils::document;
-use mtool_wgui::{app::AppContext, generate_keymap, KeyMap, Keybinding, SharedAction};
+use mtool_wgui::{generate_keymap, KeyMap, Keybinding, SharedAction, TemplateView};
 use serde::{Deserialize, Serialize};
 use tracing::warn;
 use wasm_bindgen::JsCast;
@@ -21,9 +21,6 @@ pub struct CompletionList {
     items: Vec<CompletionItem>,
     focused_item_index: usize,
     keymap: KeyMap<SharedAction>,
-
-    context: AppContext,
-    _context_listener: ContextHandle<AppContext>,
 }
 
 #[derive(Clone)]
@@ -33,7 +30,6 @@ pub enum Msg {
     Prev,
     FocusChanged(usize),
     Exit,
-    ContextUpdated(AppContext),
 }
 
 impl Component for CompletionList {
@@ -42,18 +38,10 @@ impl Component for CompletionList {
     type Properties = Props;
 
     fn create(ctx: &Context<Self>) -> Self {
-        let (context, _context_listener) = ctx
-            .link()
-            .context(ctx.link().callback(Msg::ContextUpdated))
-            .expect("No Message Context Provided");
-
         let self_ = Self {
             items: Vec::new(),
             focused_item_index: 0,
             keymap: Self::generate_keymap(ctx),
-
-            context,
-            _context_listener,
         };
 
         Self::fetch_complete(ctx);
@@ -98,10 +86,6 @@ impl Component for CompletionList {
                 self.focused_item_index = index;
                 true
             }
-            Msg::ContextUpdated(context) => {
-                self.context = context;
-                false
-            }
         }
     }
 
@@ -136,7 +120,7 @@ impl Component for CompletionList {
                                     onclick={ ctx.link().callback(move |_| Msg::FocusChanged(i)) }>
                                     <div class={classes!("font-mono",
                                                          "text-2xl")}>
-                                      { self.render_template(&item) }
+                                      <TemplateView template_id={ item.template_id.clone() } data={ item.data.clone() }/>
                                     </div>
                                 </div>
                             }
@@ -266,14 +250,5 @@ impl CompletionList {
                 warn!("invoke complete_exit failed: {:?}", e)
             }
         });
-    }
-
-    fn render_template(&self, item: &CompletionItem) -> Html {
-        match self.context.templator.render(&item.template_id, &item.data) {
-            Ok(view) => view,
-            Err(e) => html! {
-                { format!("{:?}", e) }
-            },
-        }
     }
 }
