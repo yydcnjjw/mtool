@@ -1,4 +1,4 @@
-use std::{pin::Pin, str::FromStr};
+use std::{pin::Pin, str::FromStr, sync::Arc};
 
 use anyhow::{bail, Context};
 use futures::Future;
@@ -10,7 +10,8 @@ use hyper::{
     service::Service,
     Method, Request, Response, StatusCode,
 };
-use tokio::sync::{mpsc, oneshot, Mutex};
+use tokio::sync::{mpsc, oneshot};
+use tokio_stream::wrappers::UnboundedReceiverStream;
 use tracing::{debug, debug_span, error, instrument, warn, Instrument};
 
 use crate::{
@@ -25,18 +26,13 @@ use crate::{
 
 #[derive(Debug)]
 pub struct Server {
-    acceptor: transport::Acceptor,
-    tx: mpsc::UnboundedSender<ProxyRequest>,
-    rx: Mutex<mpsc::UnboundedReceiver<ProxyRequest>>,
+    acceptor: Arc<transport::Acceptor>,
 }
 
 impl Server {
     pub async fn new(config: ServerConfig) -> Result<Self, anyhow::Error> {
-        let (tx, rx) = mpsc::unbounded_channel();
         Ok(Self {
-            acceptor: transport::Acceptor::new(config.acceptor).await?,
-            tx,
-            rx: Mutex::new(rx),
+            acceptor: Arc::new(transport::Acceptor::new(config.acceptor).await?),
         })
     }
 
@@ -60,18 +56,24 @@ impl Server {
         }
     }
 
-    pub async fn run(&self) -> Result<(), anyhow::Error> {
-        loop {
-            let stream = self.acceptor.accept().await?;
-            let tx = self.tx.clone();
-            tokio::task::spawn(Self::serve(tx, stream));
-        }
+    pub async fn incoming(&self) -> Result<UnboundedReceiverStream<ProxyRequest>, anyhow::Error> {
+        let (tx, rx) = mpsc::unbounded_channel();
+
+        tokio::spawn(Self::run(self.acceptor.clone(), tx));
+
+        Ok(UnboundedReceiverStream::new(rx))
     }
 
-    pub async fn proxy_accept(&self) -> Result<ProxyRequest, anyhow::Error> {
-        let mut rx = self.rx.lock().await;
-
-        rx.recv().await.context("Failed to proxy accept")
+    async fn run(acceptor: Arc<transport::Acceptor>, tx: mpsc::UnboundedSender<ProxyRequest>) {
+        loop {
+            match acceptor.accept().await {
+                Ok(stream) => tokio::spawn(Self::serve(tx.clone(), stream)),
+                Err(e) => {
+                    warn!("{:?}", e);
+                    break;
+                }
+            };
+        }
     }
 }
 

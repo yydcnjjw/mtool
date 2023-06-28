@@ -4,6 +4,7 @@ pub mod socks;
 
 use core::fmt;
 
+use futures::Stream;
 use tracing::instrument;
 
 use crate::{
@@ -26,19 +27,13 @@ impl Server {
     }
 
     #[instrument(skip_all)]
-    pub async fn run(&self) -> Result<(), anyhow::Error> {
-        match &self {
-            Server::Http(s) => s.run().await,
-            Server::Socks(s) => s.run().await,
-        }
-    }
-
-    #[instrument(skip_all)]
-    pub async fn proxy_accept(&self) -> Result<ProxyRequest, anyhow::Error> {
-        match &self {
-            Server::Http(s) => s.proxy_accept().await,
-            Server::Socks(s) => s.proxy_accept().await,
-        }
+    pub async fn incoming(
+        &self,
+    ) -> Result<Box<dyn Stream<Item = ProxyRequest> + Unpin + Send>, anyhow::Error> {
+        Ok(match &self {
+            Server::Http(s) => Box::new(s.incoming().await?),
+            Server::Socks(s) => Box::new(s.incoming().await?),
+        })
     }
 }
 

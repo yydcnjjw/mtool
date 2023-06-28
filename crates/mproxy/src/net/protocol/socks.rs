@@ -1,12 +1,12 @@
 use std::sync::Arc;
 
-use anyhow::Context;
 use socksv5::{
     v4::SocksV4Command,
     v5::{SocksV5AuthMethod, SocksV5Command, SocksV5RequestStatus},
     SocksVersion,
 };
-use tokio::sync::{mpsc, Mutex};
+use tokio::sync::mpsc;
+use tokio_stream::wrappers::UnboundedReceiverStream;
 use tokio_util::compat::{Compat, TokioAsyncReadCompatExt};
 use tracing::{instrument, warn};
 
@@ -19,21 +19,15 @@ use crate::{
 
 #[derive(Debug)]
 pub struct Server {
-    acceptor: transport::Acceptor,
+    acceptor: Arc<transport::Acceptor>,
     config: Arc<Socks5Config>,
-
-    tx: mpsc::UnboundedSender<ProxyRequest>,
-    rx: Mutex<mpsc::UnboundedReceiver<ProxyRequest>>,
 }
 
 impl Server {
     pub async fn new(config: ServerConfig) -> Result<Self, anyhow::Error> {
-        let (tx, rx) = mpsc::unbounded_channel();
         Ok(Self {
-            acceptor: transport::Acceptor::new(config.acceptor).await?,
+            acceptor: Arc::new(transport::Acceptor::new(config.acceptor).await?),
             config: Arc::new(config.socks5),
-            tx,
-            rx: Mutex::new(rx),
         })
     }
 
@@ -139,16 +133,27 @@ impl Server {
         }
     }
 
-    pub async fn run(&self) -> Result<(), anyhow::Error> {
-        loop {
-            let stream = self.acceptor.accept().await?;
-            tokio::task::spawn(Self::serve(self.tx.clone(), stream, self.config.clone()));
-        }
+    pub async fn incoming(&self) -> Result<UnboundedReceiverStream<ProxyRequest>, anyhow::Error> {
+        let (tx, rx) = mpsc::unbounded_channel();
+
+        tokio::spawn(Self::run(self.acceptor.clone(), tx, self.config.clone()));
+
+        Ok(UnboundedReceiverStream::new(rx))
     }
 
-    pub async fn proxy_accept(&self) -> Result<ProxyRequest, anyhow::Error> {
-        let mut rx = self.rx.lock().await;
-
-        rx.recv().await.context("Failed to proxy accept")
+    async fn run(
+        acceptor: Arc<transport::Acceptor>,
+        tx: mpsc::UnboundedSender<ProxyRequest>,
+        config: Arc<Socks5Config>,
+    ) {
+        loop {
+            match acceptor.accept().await {
+                Ok(stream) => tokio::spawn(Self::serve(tx.clone(), stream, config.clone())),
+                Err(e) => {
+                    warn!("{:?}", e);
+                    break;
+                }
+            };
+        }
     }
 }
