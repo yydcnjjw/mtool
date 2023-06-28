@@ -22,13 +22,7 @@ fn add_compile_define<'a>(compiler: &'a mut cc::Build, target: &str) -> &'a mut 
 }
 
 fn add_compile_flag<'a>(compiler: &'a mut cc::Build, _target: &str) -> &'a mut cc::Build {
-    let c = compiler.get_compiler();
-    if c.is_like_clang() || c.is_like_gnu() {
-        // compiler.flag("-Wno-multichar");
-        compiler
-    } else {
-        compiler
-    }
+    compiler.flag_if_supported("-Wno-multichar")
 }
 
 fn build_ggml(target: &str) {
