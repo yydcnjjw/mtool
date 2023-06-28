@@ -29,6 +29,7 @@ nom = { workspace = true }
 send_wrapper = { workspace = true }
 ouroboros = { workspace = true }
 itertools = { workspace = true }
+wasm-bindgen = { workspace = true }
 
 [dependencies.web-sys]
 workspace = true
@@ -51,3 +52,4 @@ tauri = { workspace = true }
 tokio-stream = { workspace = true, features = ["fs"] }
 
 sea-orm = { version = "*", features = ["sqlx-sqlite", "runtime-tokio-rustls"] }
+clipboard = "*"

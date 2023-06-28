@@ -1,4 +1,5 @@
 use async_trait::async_trait;
+use clipboard::{ClipboardContext, ClipboardProvider};
 use mapp::{provider::Res, AppContext, AppModule, CreateOnceTaskDescriptor};
 use mtool_cmder::{Cmder, CreateCommandDescriptor};
 use mtool_core::{
@@ -22,13 +23,29 @@ impl AppModule for Module {
 }
 
 async fn init(keybinding: Res<Keybinding>, cmder: Res<Cmder>) -> Result<(), anyhow::Error> {
-    keybinding.define_global("M-A-S-d", query_dict).await?;
+    keybinding.define_global("M-S-d", query_dict_with_clipboard).await?;
     cmder.add_command(query_dict.name("query_dict").desc("query dict"));
     Ok(())
 }
 
-pub async fn query_dict(window: Res<MtoolWindow>) -> Result<(), anyhow::Error> {
-    window.emit("route", "/dict")?;
+async fn query_dict_with_clipboard(window: Res<MtoolWindow>) -> Result<(), anyhow::Error> {
+    let mut context: ClipboardContext = ClipboardProvider::new()
+        .map_err(|e| anyhow::anyhow!("Failed to get Clipboard: {}", e.to_string()))?;
+
+    let text = match context.get_contents() {
+        Ok(v) => v
+            .split_ascii_whitespace()
+            .next()
+            .map_or(String::default(), |v| v.to_string()),
+        Err(_) => "".into(),
+    };
+    window.emit("route", format!("/dict/{}", text.to_lowercase()))?;
+    window.show()?;
+    Ok(())
+}
+
+async fn query_dict(window: Res<MtoolWindow>) -> Result<(), anyhow::Error> {
+    window.emit("route", format!("/dict/"))?;
     window.show()?;
     Ok(())
 }

@@ -19,9 +19,15 @@ pub struct QueryResult {
     pub data: TemplateData,
 }
 
+#[derive(Properties, PartialEq)]
+pub struct AppProps {
+    query: String,
+}
+
 pub struct App {
     input_node: NodeRef,
     keybinding: Keybinding,
+    query: String,
     query_result: Option<Result<QueryResult, Rc<serde_wasm_bindgen::Error>>>,
     backend: Backend,
 }
@@ -29,19 +35,21 @@ pub struct App {
 #[derive(Clone)]
 pub enum AppMsg {
     UseBackend(Backend),
-    QueryDict,
+    QueryDict(String),
+    QueryDictFromInput,
     ShowDict(Result<QueryResult, Rc<serde_wasm_bindgen::Error>>),
 }
 
 impl Component for App {
     type Message = AppMsg;
 
-    type Properties = ();
+    type Properties = AppProps;
 
-    fn create(_ctx: &Context<Self>) -> Self {
+    fn create(ctx: &Context<Self>) -> Self {
         Self {
             input_node: NodeRef::default(),
             keybinding: Keybinding::new(),
+            query: ctx.props().query.clone(),
             query_result: Some(Ok(QueryResult {
                 template_id: type_name::<EmptyView>().into(),
                 data: serde_json::to_value(()).unwrap(),
@@ -50,15 +58,30 @@ impl Component for App {
         }
     }
 
+    fn changed(&mut self, ctx: &Context<Self>, _old_props: &Self::Properties) -> bool {
+        let query = &ctx.props().query;
+        if !query.is_empty() {
+            ctx.link().send_message(AppMsg::QueryDict(query.clone()))
+        }
+        true
+    }
+
     fn update(&mut self, ctx: &Context<Self>, msg: Self::Message) -> bool {
         match msg {
             AppMsg::UseBackend(backend) => {
                 self.backend = backend;
                 true
             }
-            AppMsg::QueryDict => {
+            AppMsg::QueryDict(query) => {
                 self.query_result = None;
-                self.dict_query(ctx);
+                self.query = query;
+                self.dict_query(ctx, &self.query);
+                true
+            }
+            AppMsg::QueryDictFromInput => {
+                self.query_result = None;
+                self.query = self.get_input();
+                self.dict_query(ctx, &self.query);
                 true
             }
             AppMsg::ShowDict(result) => {
@@ -105,7 +128,8 @@ impl Component for App {
                                   "outline-none")}
                   type="text"
                   placeholder="Input text..."
-                  autofocus=true/>
+                  autofocus=true
+                  value={ self.query.clone() }/>
                 if let Some(result) = self.query_result.as_ref() {
                     <div class={classes!("max-h-[16em]",
                                          "overflow-y-auto")}>
@@ -140,7 +164,11 @@ impl Component for App {
 }
 
 impl App {
-    fn dict_query(&mut self, ctx: &Context<Self>) {
+    fn get_input(&self) -> String {
+        self.input_node.cast::<HtmlInputElement>().unwrap().value()
+    }
+
+    fn dict_query(&self, ctx: &Context<Self>, query: &str) {
         #[derive(Debug, Serialize)]
         struct Args {
             query: String,
@@ -148,7 +176,7 @@ impl App {
         }
 
         let args = Args {
-            query: self.input_node.cast::<HtmlInputElement>().unwrap().value(),
+            query: query.to_string(),
             backend: self.backend.clone(),
         };
         ctx.link().send_future(async move {
@@ -192,7 +220,7 @@ impl App {
         let km = generate_keymap!(
             ("C-A-m", send(AppMsg::UseBackend(Backend::Mdx))),
             ("C-A-e", send(AppMsg::UseBackend(Backend::ECDict))),
-            ("C-<Return>", send(AppMsg::QueryDict)),
+            ("C-<Return>", send(AppMsg::QueryDictFromInput)),
         )
         .unwrap();
 
@@ -215,13 +243,14 @@ impl AppModule for Module {
     }
 }
 
-fn render(_: &RouteParams) -> Html {
+fn render(params: &RouteParams) -> Html {
     html! {
-        <App/>
+        <App query={ params.get("query").cloned().unwrap_or_default() }/>
     }
 }
 
 async fn init(router: Res<Router>) -> Result<(), anyhow::Error> {
-    router.add("/dict", render);
+    router.add("/dict/:query", render);
+    router.add("/dict/", render);
     Ok(())
 }

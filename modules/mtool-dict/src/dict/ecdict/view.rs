@@ -94,7 +94,7 @@ pub fn DictView(props: &QueryResult) -> Html {
                     if line.starts_with("[网络]") {
                       <span>{ "[网络]" }</span>
                       <span>{ &line[4..].trim_start() }</span>
-                    } else if &line[0..1] == ">" {
+                    } else if line.starts_with(">") {
                       <span>{ line }</span>
                     } else if let Some((pos, text)) = line.split_once('.') {
                       <span>{ format!("{}.", pos) }</span>
