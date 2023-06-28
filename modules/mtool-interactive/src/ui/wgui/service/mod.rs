@@ -1,10 +1,8 @@
 pub mod completion;
-mod output;
 
 pub use completion::Completion;
 
 use mtool_wgui::{Builder, WGuiStage};
-pub use output::OutputDevice;
 
 use async_trait::async_trait;
 use mapp::{
@@ -24,10 +22,8 @@ impl AppModule for Module {
 }
 
 async fn setup(builder: Res<Builder>, injector: Injector) -> Result<(), anyhow::Error> {
-    builder.setup(|builder| Ok(builder.plugin(completion::init()).plugin(output::init())))?;
+    builder.setup(|builder| Ok(builder.plugin(completion::init())))?;
 
-    injector
-        .construct_once(Completion::construct)
-        .construct_once(OutputDevice::construct);
+    injector.construct_once(Completion::construct);
     Ok(())
 }

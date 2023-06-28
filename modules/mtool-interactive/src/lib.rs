@@ -1,10 +1,8 @@
 mod completion;
-mod output;
 mod rand;
 mod ui;
 
 pub use completion::*;
-pub use output::*;
 
 use mapp::ModuleGroup;
 
