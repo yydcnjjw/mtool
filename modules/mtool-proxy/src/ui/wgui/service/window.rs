@@ -1,4 +1,4 @@
-use std::ops::Deref;
+use std::{ops::Deref, sync::Arc};
 
 use mapp::provider::{Injector, Res};
 use mtool_wgui::WGuiWindow;
@@ -14,7 +14,7 @@ use crate::{
     ui::wgui::stats::{Stats, TransferStats},
 };
 
-pub struct ProxyMonitorWindow(WGuiWindow);
+pub struct ProxyMonitorWindow(Arc<WGuiWindow>);
 
 impl ProxyMonitorWindow {
     fn new(app: tauri::AppHandle) -> Self {
@@ -28,6 +28,7 @@ impl ProxyMonitorWindow {
                 .visible(true)
                 .build()
                 .expect("create proxy monitor window failed"),
+            false,
         ))
     }
 }

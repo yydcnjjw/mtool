@@ -1,17 +1,21 @@
-use std::{ops::Deref, sync::RwLock};
-
+use std::{
+    ops::Deref,
+    sync::{Arc, RwLock},
+};
 
 use mapp::provider::{Injector, Res};
 use tauri::{
     async_runtime::spawn,
     plugin::{Builder, TauriPlugin},
-    AppHandle, PhysicalPosition, WindowBuilder, WindowUrl, Wry,
+    AppHandle, PhysicalPosition, WindowBuilder, WindowEvent, WindowUrl, Wry,
 };
-use tracing::info;
+use tokio::sync::mpsc;
+use tracing::{info, log::debug};
 
 pub struct WGuiWindow {
     inner: tauri::Window,
     pos: RwLock<Option<PhysicalPosition<i32>>>,
+    hide_on_unfocus: bool,
 }
 
 impl Deref for WGuiWindow {
@@ -23,11 +27,16 @@ impl Deref for WGuiWindow {
 }
 
 impl WGuiWindow {
-    pub fn new(window: tauri::Window) -> Self {
-        Self {
+    pub fn new(window: tauri::Window, hide_on_unfocus: bool) -> Arc<Self> {
+        let this = Arc::new(Self {
             inner: window,
             pos: RwLock::new(None),
-        }
+            hide_on_unfocus,
+        });
+
+        Self::listen_window_event(this.clone());
+
+        this
     }
 
     fn save_position(&self) -> Result<(), anyhow::Error> {
@@ -44,6 +53,32 @@ impl WGuiWindow {
             info!("restore position: {:?}", &pos);
         }
         Ok(())
+    }
+
+    fn listen_window_event(self: Arc<Self>) {
+        let (tx, mut rx) = mpsc::unbounded_channel();
+
+        self.inner.on_window_event(move |e| {
+            let _ = tx.send(e.clone());
+        });
+
+        tokio::spawn(async move {
+            while let Some(e) = rx.recv().await {
+                self.handle_window_event(e);
+            }
+        });
+    }
+
+    fn handle_window_event(&self, e: WindowEvent) {
+        match e {
+            WindowEvent::Focused(focused) => {
+                if !focused && self.hide_on_unfocus {
+                    let _ = self.hide();
+                }
+            }
+
+            _ => {}
+        }
     }
 
     pub fn show(&self) -> Result<(), anyhow::Error> {
@@ -64,7 +99,7 @@ impl WGuiWindow {
     }
 }
 
-pub struct MtoolWindow(WGuiWindow);
+pub struct MtoolWindow(Arc<WGuiWindow>);
 
 impl MtoolWindow {
     fn new(app: AppHandle) -> Self {
@@ -79,6 +114,7 @@ impl MtoolWindow {
                 .visible(false)
                 .build()
                 .expect("create mtool window failed"),
+            true,
         ))
     }
 }
