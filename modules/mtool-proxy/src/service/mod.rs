@@ -53,8 +53,7 @@ impl AppModule for Module {
                     if let Err(e) = app.run().await {
                         warn!("proxy is exited: {:?}", e);
                     }
-                })
-                .await?;
+                });
                 Ok(())
             }
         }
