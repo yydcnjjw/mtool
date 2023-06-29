@@ -10,7 +10,7 @@ use tauri::{
     AppHandle, PhysicalPosition, WindowBuilder, WindowEvent, WindowUrl, Wry,
 };
 use tokio::sync::mpsc;
-use tracing::{info, log::debug};
+use tracing::info;
 
 pub struct WGuiWindow {
     inner: tauri::Window,
