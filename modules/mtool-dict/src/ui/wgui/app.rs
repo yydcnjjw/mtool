@@ -46,10 +46,12 @@ impl Component for App {
     type Properties = AppProps;
 
     fn create(ctx: &Context<Self>) -> Self {
+        ctx.link()
+            .send_message(AppMsg::QueryDict(ctx.props().query.clone()));
         Self {
             input_node: NodeRef::default(),
             keybinding: Keybinding::new(),
-            query: ctx.props().query.clone(),
+            query: String::default(),
             query_result: Some(Ok(QueryResult {
                 template_id: type_name::<EmptyView>().into(),
                 data: serde_json::to_value(()).unwrap(),
@@ -59,10 +61,8 @@ impl Component for App {
     }
 
     fn changed(&mut self, ctx: &Context<Self>, _old_props: &Self::Properties) -> bool {
-        let query = &ctx.props().query;
-        if !query.is_empty() {
-            ctx.link().send_message(AppMsg::QueryDict(query.clone()))
-        }
+        ctx.link()
+            .send_message(AppMsg::QueryDict(ctx.props().query.clone()));
         true
     }
 
@@ -73,15 +73,11 @@ impl Component for App {
                 true
             }
             AppMsg::QueryDict(query) => {
-                self.query_result = None;
-                self.query = query;
-                self.dict_query(ctx, &self.query);
+                self.query_dict(ctx, query);
                 true
             }
             AppMsg::QueryDictFromInput => {
-                self.query_result = None;
-                self.query = self.get_input();
-                self.dict_query(ctx, &self.query);
+                self.query_dict(ctx, self.get_input());
                 true
             }
             AppMsg::ShowDict(result) => {
@@ -168,15 +164,26 @@ impl App {
         self.input_node.cast::<HtmlInputElement>().unwrap().value()
     }
 
-    fn dict_query(&self, ctx: &Context<Self>, query: &str) {
+    fn query_dict(&mut self, ctx: &Context<Self>, query: String) {
         #[derive(Debug, Serialize)]
         struct Args {
             query: String,
             backend: Backend,
         }
 
+        self.query = query;
+
+        if self.query.is_empty() {
+            return;
+        }
+
+        if self.query_result.is_none() {
+            return;
+        }
+
+        self.query_result = None;
         let args = Args {
-            query: query.to_string(),
+            query: self.query.clone(),
             backend: self.backend.clone(),
         };
         ctx.link().send_future(async move {
