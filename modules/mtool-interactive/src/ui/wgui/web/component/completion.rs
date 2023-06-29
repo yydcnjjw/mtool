@@ -1,5 +1,5 @@
 use mtool_wgui::{
-    generate_keymap, AutoResizeWindow, Horizontal, Keybinding, Vertical, WindowProps,
+    generate_keymap, AutoWindow, Horizontal, Keybinding, Vertical, WindowProps,
 };
 use tracing::warn;
 use web_sys::{HtmlElement, HtmlInputElement};
@@ -145,7 +145,7 @@ impl Component for Completion {
 
         html! {
             <>
-                <AutoResizeWindow
+                <AutoWindow
                   window={
                       WindowProps{
                           horizontal: Horizontal::Center,
@@ -187,7 +187,7 @@ impl Component for Completion {
                     input={self.input.clone()}
                     keybinding={self.keybinding.clone()}/>
                 </div>
-                </AutoResizeWindow>
+                </AutoWindow>
             </>
         }
     }

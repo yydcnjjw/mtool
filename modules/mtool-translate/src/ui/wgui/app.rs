@@ -1,7 +1,7 @@
 use async_trait::async_trait;
 use mapp::{provider::Res, AppContext, AppModule};
 use mtool_wgui::{
-    component::error::error_view, generate_keymap, AppStage, AutoResizeWindow, Horizontal,
+    component::error::error_view, generate_keymap, AppStage, AutoWindow, Horizontal,
     Keybinding, RouteParams, Router, Vertical, WindowProps,
 };
 use serde::Serialize;
@@ -70,7 +70,7 @@ impl Component for App {
     fn view(&self, _ctx: &Context<Self>) -> Html {
         html! {
             <>
-            <AutoResizeWindow window={
+            <AutoWindow window={
                 WindowProps{
                     horizontal: Horizontal::Center,
                     vertical: Vertical::Absolute(350),
@@ -130,7 +130,7 @@ impl Component for App {
                     }
                   </div>
                 </div>
-            </AutoResizeWindow>
+            </AutoWindow>
             </>
         }
     }

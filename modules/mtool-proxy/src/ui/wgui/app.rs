@@ -1,7 +1,7 @@
 use std::time::Duration;
 
 use async_stream::stream;
-use mtool_wgui::{AutoResizeWindow, Horizontal, Vertical, WindowProps, RouteParams, Router, AppStage};
+use mtool_wgui::{AutoWindow, Horizontal, Vertical, WindowProps, RouteParams, Router, AppStage};
 use tracing::{debug, warn};
 use yew::{
     platform::time,
@@ -60,7 +60,7 @@ impl Component for App {
     fn view(&self, _ctx: &Context<Self>) -> Html {
         html! {
             <>
-            <AutoResizeWindow window={
+            <AutoWindow window={
                 WindowProps{
                     horizontal: Horizontal::RightAlign,
                     vertical: Vertical::Absolute(24),
@@ -79,7 +79,7 @@ impl Component for App {
                    })
                 }
               </div>
-            </AutoResizeWindow>
+            </AutoWindow>
             </>
         }
     }

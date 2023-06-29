@@ -1,5 +1,4 @@
 use mtauri_sys::window::{Position, Size, Window};
-use tracing::debug;
 use wasm_bindgen::prelude::*;
 use web_sys::{window, HtmlDivElement, ResizeObserver, ResizeObserverEntry};
 use yew::{platform::spawn_local, prelude::*};
@@ -52,15 +51,13 @@ pub struct Props {
     pub children: Children,
 }
 
-pub struct AutoResizeWindow {
+pub struct AutoWindow {
     cont: NodeRef,
     window_props: WindowProps,
     window: Window,
 }
-impl AutoResizeWindow {
+impl AutoWindow {
     fn adjust_window(&self, width: usize, height: usize) -> Result<(), JsValue> {
-        debug!("{:?}", self.window_props);
-
         let WindowProps {
             vertical,
             horizontal,
@@ -99,7 +96,7 @@ impl AutoResizeWindow {
     }
 }
 
-impl Component for AutoResizeWindow {
+impl Component for AutoWindow {
     type Message = Msg;
 
     type Properties = Props;

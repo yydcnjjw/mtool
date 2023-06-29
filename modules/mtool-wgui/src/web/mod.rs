@@ -1,5 +1,5 @@
 mod app;
-mod auto_resize_window;
+mod auto_window;
 pub mod component;
 mod keybinding;
 mod route;
@@ -12,7 +12,7 @@ use mapp::{
 };
 
 pub use app::*;
-pub use auto_resize_window::*;
+pub use auto_window::*;
 pub use keybinding::*;
 pub use route::*;
 pub use template::{EmptyView, Template, TemplateData, TemplateId, TemplateView, Templator};
