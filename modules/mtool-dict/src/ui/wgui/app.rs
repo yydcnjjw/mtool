@@ -116,7 +116,7 @@ impl Component for App {
                   class={classes!("w-[32rem]",
                                   "h-12",
                                   "overflow-hidden",
-                                  "text-3xl",
+                                  "text-2xl",
                                   "bg-black",
                                   "appearance-none",
                                   "caret-white",

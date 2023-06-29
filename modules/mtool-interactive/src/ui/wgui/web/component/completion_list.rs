@@ -99,7 +99,7 @@ impl Component for CompletionList {
         };
 
         let mut cont_class = ctx.props().class.clone();
-        cont_class.extend(classes!("max-h-[17.5rem]"));
+        cont_class.extend(classes!("max-h-[12.5rem]"));
 
         html! {
             <>
@@ -113,13 +113,13 @@ impl Component for CompletionList {
                                 <div
                                     id={ Self::completion_item_id(i) }
                                     class={classes!("flex",
-                                                "h-14",
+                                                "h-10",
                                                 "items-center",
                                                 "px-4",
                                                 focus_class(i))}
                                     onclick={ ctx.link().callback(move |_| Msg::FocusChanged(i)) }>
                                     <div class={classes!("font-mono",
-                                                         "text-2xl")}>
+                                                         "text-base")}>
                                       <TemplateView template_id={ item.template_id.clone() } data={ item.data.clone() }/>
                                     </div>
                                 </div>

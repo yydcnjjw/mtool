@@ -151,7 +151,7 @@ impl Component for Completion {
                           horizontal: Horizontal::Center,
                           vertical: Vertical::Absolute(350),
                           ..Default::default()}}>
-                <div class={classes!("w-[48rem]",
+                <div class={classes!("w-[32rem]",
                                      "text-white",
                                      "font-mono")}
                      ref={ self.root_node.clone() }>
@@ -159,10 +159,10 @@ impl Component for Completion {
                                        "w-full")}>
                     <input ref={ self.input_node.clone() }
                       class={classes!("w-full",
-                                      "h-16",
+                                      "h-12",
                                       "rounded-xl",
                                       "overflow-hidden",
-                                      "text-3xl",
+                                      "text-2xl",
                                       "bg-black",
                                       "appearance-none",
                                       "caret-white",
