@@ -54,6 +54,8 @@ impl Connector {
 }
 
 pub trait Connect<S> {
+    async fn is_open(&self) -> bool;
     async fn connect(&self, endpoint: SocketAddr) -> Result<(), anyhow::Error>;
+    async fn close(&self);
     async fn open_stream(&self) -> Result<S, anyhow::Error>;
 }

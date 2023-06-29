@@ -1,7 +1,7 @@
 use anyhow::Context;
 use futures::{future::try_join_all, FutureExt};
 use std::{sync::Arc, time::Instant};
-use tokio::sync::{mpsc, Mutex};
+use tokio::sync::mpsc;
 use tokio_stream::StreamExt;
 use tracing::{info, info_span, warn, Instrument};
 
@@ -9,7 +9,7 @@ use super::{
     proxy::{Egress, Ingress, ProxyRequest, ProxyResponse},
     router::Router,
     stats::Stats,
-    AppConfig
+    AppConfig,
 };
 
 #[derive(Debug)]
@@ -17,13 +17,10 @@ pub struct App {
     ingress: Vec<Arc<Ingress>>,
     egress: Vec<Arc<Egress>>,
     router: Router,
-    tx: mpsc::UnboundedSender<(String, ProxyRequest)>,
-    rx: Mutex<mpsc::UnboundedReceiver<(String, ProxyRequest)>>,
 }
 
 impl App {
     pub async fn new(config: AppConfig) -> Result<Self, anyhow::Error> {
-        let (tx, rx) = mpsc::unbounded_channel();
         Ok(Self {
             ingress: try_join_all(
                 config
@@ -40,14 +37,13 @@ impl App {
             )
             .await?,
             router: Router::new(config.routing)?,
-            tx,
-            rx: Mutex::new(rx),
         })
     }
 
     pub async fn run(&self) -> Result<(), anyhow::Error> {
-        self.run_ingress();
-        self.dispatch().await
+        let (tx, rx) = mpsc::unbounded_channel();
+        self.run_ingress(tx);
+        self.dispatch(rx).await
     }
 
     pub fn router(&self) -> &Router {
@@ -64,9 +60,9 @@ impl App {
         Ok(stats)
     }
 
-    fn run_ingress(&self) {
+    fn run_ingress(&self, tx: mpsc::UnboundedSender<(String, ProxyRequest)>) {
         for ingress in &self.ingress {
-            let tx = self.tx.clone();
+            let tx = tx.clone();
             let ingress = ingress.clone();
             tokio::spawn(async move {
                 match ingress.incoming().await {
@@ -85,8 +81,11 @@ impl App {
         }
     }
 
-    async fn dispatch(&self) -> Result<(), anyhow::Error> {
-        while let Some((source, req)) = self.rx.lock().await.recv().await {
+    async fn dispatch(
+        &self,
+        mut rx: mpsc::UnboundedReceiver<(String, ProxyRequest)>,
+    ) -> Result<(), anyhow::Error> {
+        while let Some((source, req)) = rx.recv().await {
             match self.router.route(&source, &req.remote.address) {
                 Ok(dest) => {
                     let egress = self

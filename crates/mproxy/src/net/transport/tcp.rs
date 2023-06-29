@@ -61,6 +61,10 @@ impl ConnectorInner {
 }
 
 impl Connect<TcpStream> for ConnectorInner {
+    async fn is_open(&self) -> bool {
+        self.endpoint.read().await.is_some()
+    }
+
     async fn connect(&self, endpoint: SocketAddr) -> Result<(), anyhow::Error> {
         *self.endpoint.write().await = Some(endpoint);
         Ok(())
@@ -72,5 +76,9 @@ impl Connect<TcpStream> for ConnectorInner {
         } else {
             anyhow::bail!("connection is invalid")
         }
+    }
+
+    async fn close(&self) {
+        *self.endpoint.write().await = None;
     }
 }

@@ -1,7 +1,7 @@
 use anyhow::Context;
 use quinn::{
     congestion::{BbrConfig, CubicConfig, NewRenoConfig},
-    RecvStream, SendStream,
+    RecvStream, SendStream, VarInt,
 };
 use std::{io, net::SocketAddr, pin::Pin, sync::Arc, task, time::Duration};
 use tokio::{
@@ -21,9 +21,7 @@ impl From<TransportConfig> for quinn::TransportConfig {
         let mut transport_config = quinn::TransportConfig::default();
         if let Some(t) = config.congestion {
             match t {
-                CongestionType::Bbr {
-                    initial_window,
-                } => {
+                CongestionType::Bbr { initial_window } => {
                     let mut bbr = BbrConfig::default();
 
                     if let Some(initial_window) = initial_window {
@@ -195,6 +193,15 @@ impl ConnectorInner {
 }
 
 impl Connect<BiStream> for ConnectorInner {
+    async fn is_open(&self) -> bool {
+        let conn = self.conn.read().await;
+        if let Some(conn) = conn.as_ref() {
+            conn.close_reason().is_none()
+        } else {
+            false
+        }
+    }
+
     async fn connect(&self, endpoint: SocketAddr) -> Result<(), anyhow::Error> {
         let conn = Arc::new(self.endpoint.connect(endpoint, &self.server_name)?.await?);
 
@@ -207,6 +214,15 @@ impl Connect<BiStream> for ConnectorInner {
 
     async fn open_stream(&self) -> Result<BiStream, anyhow::Error> {
         self.open_bistream().await
+    }
+
+    async fn close(&self) {
+        if !self.is_open().await {
+            return;
+        }
+        if let Some(conn) = self.conn.write().await.as_mut() {
+            conn.close(VarInt::from_u32(0), &[]);
+        }
     }
 }
 

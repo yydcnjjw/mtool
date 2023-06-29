@@ -24,7 +24,8 @@ pub struct Connector<T, S> {
 
 impl<T, S> Connector<T, S>
 where
-    T: Connect<S>, {
+    T: Connect<S>,
+{
     pub async fn new(connector: T, endpoint: Endpoint) -> Result<Self, anyhow::Error> {
         let (address, start, end) = match endpoint {
             Endpoint::Single { address, port } => (address, port, port),
@@ -44,22 +45,14 @@ where
             }
         };
 
-        let this = Self {
+        Ok(Self {
             address: Address::from_str(&address)?,
             start,
             end,
             current: AtomicU16::new(start),
             connector,
             _phantom: PhantomData,
-        };
-
-        let endpoint = this.endpoint()?;
-        if let Err(e) = this.connector.connect(endpoint.clone()).await {
-            warn!("connect with {} failed: {:?}", endpoint, e);
-            this.set_next_endpoint()?;
-        }
-
-        Ok(this)
+        })
     }
 }
 
@@ -75,32 +68,36 @@ where
         ))?)
     }
 
-    fn set_next_endpoint(&self) -> Result<(), anyhow::Error> {
+    fn set_next_endpoint(&self) {
         if (self.current.fetch_add(1, Ordering::Relaxed) + 1) > self.end {
-            anyhow::bail!("{}-{} have been exhausted", self.start, self.end);
+            self.current.store(self.start, Ordering::Relaxed);
         }
-        Ok(())
     }
 
     pub async fn connect(&self) -> Result<S, anyhow::Error> {
-        Ok(match self.connector.open_stream().await {
-            Ok(s) => s,
-            Err(e) => {
-                warn!("open stream failed: {:?}", e);
-
-                loop {
-                    self.set_next_endpoint()?;
-                    let endpoint = self.endpoint()?;
-                    match self.connector.connect(endpoint.clone()).await {
-                        Ok(_) => break,
-                        Err(e) => {
-                            warn!("connect with {} failed: {:?}", endpoint, e);
-                        }
+        loop {
+            if !self.connector.is_open().await {
+                let endpoint = self.endpoint()?;
+                match self.connector.connect(endpoint.clone()).await {
+                    Ok(_) => {}
+                    Err(e) => {
+                        warn!("connect with {} failed: {:?}", endpoint, e);
+                        self.connector.close().await;
+                        self.set_next_endpoint();
+                        continue;
                     }
                 }
-
-                self.connector.open_stream().await?
             }
-        })
+
+            match self.connector.open_stream().await {
+                Ok(s) => return Ok(s),
+                Err(e) => {
+                    warn!("open stream failed: {:?}", e);
+                    self.connector.close().await;
+                    self.set_next_endpoint();
+                    continue;
+                }
+            }
+        }
     }
 }
