@@ -130,10 +130,10 @@ impl CompleteRead for Completion {
         let (tx, rx) = oneshot::channel();
         self.set_context(CompletionContext::new(args, tx)).await;
 
-        self.win.show().context("show completion window")?;
-
         self.win
             .emit("route", format!("/interactive/completion/{}", id))?;
+
+        self.win.show().context("show completion window")?;
 
         let result = match rx.await {
             Err(_) => {
