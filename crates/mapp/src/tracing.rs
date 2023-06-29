@@ -22,7 +22,7 @@ pub struct Tracing {
 
 impl Tracing {
     pub fn new() -> Result<Self, anyhow::Error> {
-        #[cfg(not(target_arch = "wasm32"))]
+        #[cfg(not(target_family = "wasm"))]
         let ((writer, _logger_guard), filter) = {
             (
                 tracing_appender::non_blocking(std::io::stdout()),
@@ -31,7 +31,7 @@ impl Tracing {
             )
         };
 
-        #[cfg(target_arch = "wasm32")]
+        #[cfg(target_family = "wasm")]
         let (writer, filter) = {
             use tracing::metadata::LevelFilter;
             (
