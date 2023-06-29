@@ -98,6 +98,7 @@ impl Component for App {
             }>
               <div class={classes!("flex",
                                    "flex-col",
+                                   "w-[32rem]",
                                    "divide-y",
                                    "divide-gray-600",
                                    "p-2",
@@ -113,7 +114,7 @@ impl Component for App {
                   </div>
                 </div>
                 <input ref={ self.input_node.clone() }
-                  class={classes!("w-[32rem]",
+                  class={classes!("w-full",
                                   "h-12",
                                   "overflow-hidden",
                                   "text-2xl",
@@ -127,7 +128,7 @@ impl Component for App {
                   value={ self.query.clone() }/>
                 if let Some(result) = self.query_result.as_ref() {
                     <div class={classes!("max-h-[16em]",
-                                         "overflow-y-auto")}>
+                                         "w-full",)}>
                       { Self::render_dict_content(result) }
                     </div>
                 } else {
@@ -193,8 +194,10 @@ impl App {
     fn render_dict_content(result: &Result<QueryResult, anyhow::Error>) -> Html {
         match result {
             Ok(QueryResult { template_id, data }) => html! {
-                <TemplateView template_id={ template_id.clone() }
-                              data={ data.clone() }/>
+                <div class={classes!("overflow-y-auto")}>
+                  <TemplateView template_id={ template_id.clone() }
+                                data={ data.clone() }/>                    
+                </div>
             },
             Err(e) => error_view(e),
         }
