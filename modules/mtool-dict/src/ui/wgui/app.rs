@@ -1,10 +1,10 @@
-use std::{any::type_name, rc::Rc};
+use std::any::type_name;
 
 use async_trait::async_trait;
 use mapp::{provider::Res, AppContext, AppModule};
 use mtool_wgui::{
     generate_keymap, AppStage, AutoResizeWindow, EmptyView, Horizontal, Keybinding, RouteParams,
-    Router, TemplateData, TemplateId, TemplateView, Vertical, WindowProps,
+    Router, TemplateData, TemplateId, TemplateView, Vertical, WindowProps, component::error::error_view,
 };
 use serde::{Deserialize, Serialize};
 use web_sys::HtmlInputElement;
@@ -28,16 +28,15 @@ pub struct App {
     input_node: NodeRef,
     keybinding: Keybinding,
     query: String,
-    query_result: Option<Result<QueryResult, Rc<serde_wasm_bindgen::Error>>>,
+    query_result: Option<Result<QueryResult, anyhow::Error>>,
     backend: Backend,
 }
 
-#[derive(Clone)]
 pub enum AppMsg {
     UseBackend(Backend),
     QueryDict(String),
     QueryDictFromInput,
-    ShowDict(Result<QueryResult, Rc<serde_wasm_bindgen::Error>>),
+    ShowDict(Result<QueryResult, anyhow::Error>),
 }
 
 impl Component for App {
@@ -187,51 +186,40 @@ impl App {
             backend: self.backend.clone(),
         };
         ctx.link().send_future(async move {
-            AppMsg::ShowDict(
-                mtauri_sys::invoke("plugin:dict|dict_query", &args)
-                    .await
-                    .map_err(|e| Rc::new(e)),
-            )
+            AppMsg::ShowDict(mtauri_sys::invoke("plugin:dict|dict_query", &args).await)
         })
     }
 
-    fn render_dict_content(result: &Result<QueryResult, Rc<serde_wasm_bindgen::Error>>) -> Html {
+    fn render_dict_content(result: &Result<QueryResult, anyhow::Error>) -> Html {
         match result {
-            Ok(QueryResult { template_id, data }) => {
-                html! {
-                    <TemplateView template_id={ template_id.clone() }
-                                  data={ data.clone() }/>
-                }
-            }
-            Err(e) => {
-                html! {
-                    <div> { format!("{:?}", e) } </div>
-                }
-            }
+            Ok(QueryResult { template_id, data }) => html! {
+                <TemplateView template_id={ template_id.clone() }
+                              data={ data.clone() }/>
+            },
+            Err(e) => error_view(e),
         }
     }
 
     fn register_keybinding(&self, ctx: &Context<Self>) {
-        let send = |msg: AppMsg| {
+        let send = |msg: fn() -> AppMsg| {
             let link = ctx.link().clone();
             move || {
                 let link = link.clone();
-                let msg = msg.clone();
                 async move {
-                    link.send_message(msg);
+                    link.send_message(msg());
                     Ok::<(), anyhow::Error>(())
                 }
             }
         };
 
         let km = generate_keymap!(
-            ("C-A-m", send(AppMsg::UseBackend(Backend::Mdx))),
-            ("C-A-e", send(AppMsg::UseBackend(Backend::ECDict))),
-            ("C-<Return>", send(AppMsg::QueryDictFromInput)),
+            ("C-A-m", send(|| AppMsg::UseBackend(Backend::Mdx))),
+            ("C-A-e", send(|| AppMsg::UseBackend(Backend::ECDict))),
+            ("C-<Return>", send(|| AppMsg::QueryDictFromInput)),
         )
         .unwrap();
 
-        self.keybinding.push_keymap("translate", km);
+        self.keybinding.push_keymap("dict", km);
 
         self.keybinding.setup_on_keydown(|f| {
             let root = self.input_node.cast::<HtmlInputElement>().unwrap();

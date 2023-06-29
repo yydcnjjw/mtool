@@ -1,6 +1,6 @@
 mod app;
 mod auto_resize_window;
-mod component;
+pub mod component;
 mod keybinding;
 mod route;
 mod switch;

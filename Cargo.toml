@@ -93,6 +93,7 @@ yew = { version = "*", features = ["ssr"] }
 yew-router = "*"
 yew_icons = "*"
 grass = { version = "*", features = ["macro", "nightly"] }
+html-escape = "*"
 js-sys = "*"
 web-sys = "*"
 wasm-bindgen = { version = "*", features = ["serde-serialize"] }

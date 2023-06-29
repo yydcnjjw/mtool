@@ -2,7 +2,7 @@ use tracing::debug;
 use yew::prelude::*;
 use yew_router::prelude::*;
 
-use crate::ui::wgui::web::component::{completion::Completion, output::Output};
+use crate::ui::wgui::web::component::completion::Completion;
 
 #[derive(Clone, Routable, PartialEq, Debug)]
 pub enum Route {
@@ -10,8 +10,6 @@ pub enum Route {
     Home,
     #[at("/interactive/completion/:id")]
     Completion { id: String },
-    #[at("/interactive/output/:id")]
-    Output { id: String },
 }
 
 pub fn switch(routes: Route) -> Html {
@@ -19,6 +17,5 @@ pub fn switch(routes: Route) -> Html {
     match routes {
         Route::Home => html! { <h1>{ "Mtool Interactive" }</h1> },
         Route::Completion { id } => html! { <Completion id={id} /> },
-        Route::Output { id } => html! { <Output id={id} /> },
     }
 }

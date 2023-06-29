@@ -32,6 +32,7 @@ yew = { workspace = true, features = ["csr"] }
 yew-router = { workspace = true }
 js-sys = { workspace = true }
 wasm-bindgen = { workspace = true }
+html-escape = { workspace = true }
 
 route-recognizer = "*"
 

@@ -1,13 +1,10 @@
-use std::rc::Rc;
-
 use async_trait::async_trait;
 use mapp::{provider::Res, AppContext, AppModule};
 use mtool_wgui::{
-    generate_keymap, AppStage, AutoResizeWindow, Horizontal, Keybinding, RouteParams, Router,
-    Vertical, WindowProps,
+    component::error::error_view, generate_keymap, AppStage, AutoResizeWindow, Horizontal,
+    Keybinding, RouteParams, Router, Vertical, WindowProps,
 };
 use serde::Serialize;
-use tracing::debug;
 use web_sys::{HtmlElement, HtmlTextAreaElement};
 use yew::prelude::*;
 use yew_icons::{Icon, IconId};
@@ -21,15 +18,14 @@ pub struct App {
     backend: Backend,
     source: LanguageType,
     target: LanguageType,
-    result: Option<Result<String, Rc<serde_wasm_bindgen::Error>>>,
+    result: Option<Result<String, anyhow::Error>>,
 }
 
-#[derive(Clone)]
 pub enum AppMsg {
     ToTarget(LanguageType),
     UseBackend(Backend),
     Translate,
-    ShowTranslate(Result<String, Rc<serde_wasm_bindgen::Error>>),
+    ShowTranslate(Result<String, anyhow::Error>),
 }
 
 impl Component for App {
@@ -83,6 +79,7 @@ impl Component for App {
             }>
                 <div class={classes!("flex",
                                      "flex-col",
+                                     "w-[32rem]",
                                      "divide-y",
                                      "divide-gray-600",
                                      "p-2",
@@ -114,14 +111,15 @@ impl Component for App {
                                     "outline-none")}
                     ref={ self.editor.clone() }
                     rows="5"
-                    cols="50"
                     placeholder="Input text">
                    </textarea>
                   <div
                     class={classes!("flex",
                                     "h-40")}>
                     if let Some(result) = self.result.as_ref() {
-                        <div>{ Self::render_translate_content(result) }</div>
+                        <div class={classes!("w-full", "h-full")}>
+                          { Self::render_translate_content(result) }
+                        </div>
                     } else {
                         <Icon
                             class={classes!("animate-spin",
@@ -163,46 +161,40 @@ impl App {
         };
         ctx.link().send_future(async move {
             AppMsg::ShowTranslate(
-                mtauri_sys::invoke("plugin:translate|text_translate", &args)
-                    .await
-                    .map_err(|e| Rc::new(e)),
+                mtauri_sys::invoke("plugin:translate|text_translate", &args).await,
             )
         })
     }
 
-    fn render_translate_content(result: &Result<String, Rc<serde_wasm_bindgen::Error>>) -> Html {
+    fn render_translate_content(result: &Result<String, anyhow::Error>) -> Html {
         match result {
             Ok(result) => html! {
                 { result.clone() }
             },
-            Err(e) => html! {
-                { e.to_string() }
-            },
+            Err(e) => error_view(e),
         }
     }
 
     fn register_keybinding(&self, ctx: &Context<Self>) {
-        debug!("register_keybinding");
-        let send = |msg: AppMsg| {
+        let send = |msg: fn() -> AppMsg| {
             let link = ctx.link().clone();
             move || {
                 let link = link.clone();
-                let msg = msg.clone();
                 async move {
-                    link.send_message(msg);
+                    link.send_message(msg());
                     Ok::<(), anyhow::Error>(())
                 }
             }
         };
 
         let km = generate_keymap!(
-            ("C-e", send(AppMsg::ToTarget(LanguageType::En))),
-            ("C-z", send(AppMsg::ToTarget(LanguageType::Zh))),
-            ("C-j", send(AppMsg::ToTarget(LanguageType::Ja))),
-            ("C-A-o", send(AppMsg::UseBackend(Backend::Openai))),
-            ("C-A-l", send(AppMsg::UseBackend(Backend::Llama))),
-            ("C-A-t", send(AppMsg::UseBackend(Backend::Tencent))),
-            ("C-<Return>", send(AppMsg::Translate)),
+            ("C-e", send(|| AppMsg::ToTarget(LanguageType::En))),
+            ("C-z", send(|| AppMsg::ToTarget(LanguageType::Zh))),
+            ("C-j", send(|| AppMsg::ToTarget(LanguageType::Ja))),
+            ("C-A-o", send(|| AppMsg::UseBackend(Backend::Openai))),
+            ("C-A-l", send(|| AppMsg::UseBackend(Backend::Llama))),
+            ("C-A-t", send(|| AppMsg::UseBackend(Backend::Tencent))),
+            ("C-<Return>", send(|| AppMsg::Translate)),
         )
         .unwrap();
 
