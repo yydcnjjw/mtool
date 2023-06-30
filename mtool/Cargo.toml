@@ -8,6 +8,7 @@ edition = "2021"
 [features]
 # default = [ "custom-protocol" ]
 custom-protocol = [ "mtool-wgui/custom-protocol" ]
+devtools = [ "mtool-wgui/devtools" ]
 
 [dependencies]
 mapp = { path = "../crates/mapp" }

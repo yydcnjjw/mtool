@@ -8,6 +8,7 @@ edition.workspace = true
 
 [features]
 custom-protocol = [ "tauri/custom-protocol" ]
+devtools = [ "tauri/devtools" ]
 
 [dependencies]
 mapp = { path = "../../crates/mapp" }
