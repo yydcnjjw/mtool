@@ -127,7 +127,7 @@ impl Component for App {
                   autofocus=true
                   value={ self.query.clone() }/>
                 if let Some(result) = self.query_result.as_ref() {
-                    <div class={classes!("max-h-[16em]",
+                    <div class={classes!("h-[16rem]",
                                          "w-full",)}>
                       { Self::render_dict_content(result) }
                     </div>

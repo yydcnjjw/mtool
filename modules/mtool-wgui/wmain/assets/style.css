@@ -22,3 +22,7 @@
     border-radius: 4px;
     border: 2px solid black;
 }
+
+*::-webkit-scrollbar-corner {
+    background: black;
+}
