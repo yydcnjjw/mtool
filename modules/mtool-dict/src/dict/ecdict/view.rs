@@ -107,7 +107,7 @@ pub fn DictView(props: &QueryResult) -> Html {
               }).collect::<Html>()
             }
           </div>
-          <div>
+          <div class={classes!("text-sm")}>
             {
               exchange.iter().map(|(key, exchange)| {
                 html!{
@@ -123,7 +123,7 @@ pub fn DictView(props: &QueryResult) -> Html {
               }).collect::<Html>()
             }
           </div>
-          <div>
+          <div class={classes!("text-sm")}>
             {
               tag.iter().map(|tag| {
                 html!{
