@@ -24,8 +24,17 @@ impl TransferStats {
 
 impl ops::SubAssign for TransferStats {
     fn sub_assign(&mut self, rhs: Self) {
-        self.tx -= rhs.tx;
-        self.rx -= rhs.rx;
+        if self.tx > rhs.tx {
+            self.tx -= rhs.tx;
+        } else {
+            self.tx = 0;
+        }
+
+        if self.rx > rhs.rx {
+            self.rx -= rhs.rx;
+        } else {
+            self.rx = 0;
+        }
     }
 }
 
