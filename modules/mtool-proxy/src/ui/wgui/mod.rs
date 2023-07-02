@@ -3,16 +3,17 @@ mod app;
 mod service;
 mod stats;
 
-use mapp::ModuleGroup;
+use mapp::prelude::*;
 
+#[cfg(not(target_family = "wasm"))]
 pub fn module() -> ModuleGroup {
     let mut group = ModuleGroup::new("mtool-proxy-wgui");
+    group.add_module(service::Module);
+    group
+}
 
-    #[cfg(target_family = "wasm")]
-    group.add_module(app::Module::default());
-
-    #[cfg(not(target_family = "wasm"))]
-    group.add_module(service::Module::default());
-
+pub fn web_module() -> LocalModuleGroup {
+    let mut group = LocalModuleGroup::new("mtool-proxy-wgui");
+    group.add_module(app::Module);
     group
 }

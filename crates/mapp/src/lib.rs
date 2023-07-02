@@ -1,6 +1,7 @@
 #![feature(unsize)]
 #![feature(coerce_unsized)]
 #![feature(unsized_fn_params)]
+
 // #![feature(async_closure)]
 // #![feature(trait_alias)]
 
@@ -11,14 +12,31 @@ pub mod provider;
 mod schedule;
 mod tracing;
 
+pub mod prelude {
+
+    pub use minject as inject;
+
+    pub use crate::{
+        app::*,
+        label::*,
+        module::{
+            LocalModule as AppLocalModule, LocalModuleGroup, Module as AppModule, ModuleGroup,
+        },
+        provider::*,
+        tracing::*,
+        Error,
+    };
+}
+
 pub use minject as inject;
 
-pub use app::*;
-pub use label::*;
-pub use module::{Module as AppModule, ModuleGroup};
-// pub use provider::*;
-pub use crate::tracing::*;
-pub use schedule::*;
+pub use crate::{
+    app::*,
+    label::*,
+    module::{LocalModule as AppLocalModule, LocalModuleGroup, Module as AppModule, ModuleGroup},
+    schedule::*,
+    tracing::*,
+};
 
 use thiserror::Error;
 

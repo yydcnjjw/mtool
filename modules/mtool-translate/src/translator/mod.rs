@@ -1,13 +1,13 @@
 cfg_if::cfg_if! {
-    if #[cfg(not(target_arch = "wasm32"))] {
+    if #[cfg(not(target_family = "wasm"))] {
         pub mod llama;
         pub mod openai;
         pub mod tencent;
+        use mapp::prelude::*;
     }
 }
 
 use async_trait::async_trait;
-use mapp::{AppContext, AppModule};
 use serde::{Deserialize, Serialize};
 use std::fmt;
 
@@ -57,20 +57,17 @@ pub trait Translator {
     ) -> Result<String, anyhow::Error>;
 }
 
-#[derive(Default)]
-pub struct Module {}
+#[cfg(not(target_family = "wasm"))]
+pub struct Module;
 
+#[cfg(not(target_family = "wasm"))]
 #[async_trait]
 impl AppModule for Module {
     async fn init(&self, #[allow(unused)] app: &mut AppContext) -> Result<(), anyhow::Error> {
-        cfg_if::cfg_if! {
-            if #[cfg(not(target_arch = "wasm32"))] {
-                app.injector()
-                    .construct_once(tencent::Translator::construct)
-                    .construct_once(openai::Translator::construct)
-                    .construct_once(llama::Translator::construct);
-            }
-        }
+        app.injector()
+            .construct_once(tencent::Translator::construct)
+            .construct_once(openai::Translator::construct)
+            .construct_once(llama::Translator::construct);
         Ok(())
     }
 }

@@ -14,13 +14,12 @@ use crate::service::{is_runnable, ProxyService};
 
 use self::window::{hide_window, show_window};
 
-#[derive(Default)]
-pub struct Module {}
+pub struct Module;
 
 #[async_trait]
 impl AppModule for Module {
-    async fn init(&self, app: &mut AppContext) -> Result<(), anyhow::Error> {
-        app.schedule()
+    async fn init(&self, ctx: &mut AppContext) -> Result<(), anyhow::Error> {
+        ctx.schedule()
             .add_once_task(WGuiStage::Setup, setup.cond(is_runnable))
             .add_once_task(AppStage::Init, register_keybinding.cond(is_runnable));
         Ok(())

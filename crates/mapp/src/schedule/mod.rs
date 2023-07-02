@@ -1,10 +1,16 @@
 mod cond_load;
 mod once_task;
 mod schedule;
+mod local_schedule;
 
 pub use cond_load::*;
 pub use once_task::*;
 pub use schedule::*;
+pub use local_schedule::*;
+
+use crate::define_label;
+
+define_label!(pub ScheduleGraph, Root);
 
 #[cfg(test)]
 mod tests {

@@ -1,12 +1,13 @@
 fn main() {
-    mapp::AppBuilder::new()
+    mapp::LocalAppBuilder::new()
         .unwrap()
-        .add_module(mtool_wgui::module())
-        .add_module(mtool_cmder::Module::default())
-        .add_module(mtool_interactive::module())
-        .add_module(mtool_proxy::module())
-        .add_module(mtool_translate::module())
-        .add_module(mtool_dict::module())
+        .add_module(mtool_wgui::web_module())
+        .add_module(mtool_cmder::web_module())
+        .add_module(mtool_interactive::web_module())
+        .add_module(mtool_proxy::web_module())
+        .add_module(mtool_translate::web_module())
+        .add_module(mtool_dict::web_module())
+        // .add_module(mtool_pdf::module())
         .build()
         .run();
 }

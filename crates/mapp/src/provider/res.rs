@@ -8,9 +8,11 @@ use std::{
 
 use anyhow::Context;
 use async_trait::async_trait;
-use minject::Provide;
+use minject::{LocalProvide, Provide};
 
-use crate::{provider::Injector, App};
+use crate::{provider::Injector, App, LocalApp};
+
+use super::LocalInjector;
 
 pub struct Res<T: ?Sized>(pub Arc<T>);
 
@@ -88,6 +90,31 @@ where
     T: Send + Sync + 'static,
 {
     async fn provide(c: &Injector) -> Result<Self, anyhow::Error> {
+        c.get::<Self>()
+            .await
+            .context(format!("Failed to provide {}", type_name::<Self>()))
+    }
+}
+
+#[async_trait(?Send)]
+impl<T> LocalProvide<LocalApp> for Res<T>
+where
+    T: 'static,
+{
+    async fn local_provide(app: &LocalApp) -> Result<Self, anyhow::Error> {
+        app.injector()
+            .get::<Self>()
+            .await
+            .context(format!("Failed to provide {}", type_name::<Self>()))
+    }
+}
+
+#[async_trait(?Send)]
+impl<T> LocalProvide<LocalInjector> for Res<T>
+where
+    T: 'static,
+{
+    async fn local_provide(c: &LocalInjector) -> Result<Self, anyhow::Error> {
         c.get::<Self>()
             .await
             .context(format!("Failed to provide {}", type_name::<Self>()))

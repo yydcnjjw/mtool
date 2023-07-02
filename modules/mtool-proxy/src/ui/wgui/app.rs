@@ -1,16 +1,13 @@
 use std::time::Duration;
 
-use async_stream::stream;
-use mtool_wgui::{AutoWindow, Horizontal, Vertical, WindowProps, RouteParams, Router, AppStage};
-use tracing::{debug, warn};
-use yew::{
-    platform::time,
-    prelude::*,
-};
-use yew_icons::{Icon, IconId};
-use async_trait::async_trait;
-use mapp::{AppModule, AppContext, provider::Res};
 use crate::ui::wgui::stats::{Stats, TransferStats};
+use async_stream::stream;
+use async_trait::async_trait;
+use mapp::prelude::*;
+use mtool_wgui::{AutoWindow, Horizontal, RouteParams, Router, Vertical, WebStage, WindowProps};
+use tracing::{debug, warn};
+use yew::{platform::time, prelude::*};
+use yew_icons::{Icon, IconId};
 
 pub struct App {
     stats: Stats,
@@ -148,12 +145,12 @@ impl App {
 }
 
 #[derive(Default)]
-pub struct Module {}
+pub struct Module;
 
-#[async_trait]
-impl AppModule for Module {
-    async fn init(&self, ctx: &mut AppContext) -> Result<(), anyhow::Error> {
-        ctx.schedule().add_once_task(AppStage::Init, init);
+#[async_trait(?Send)]
+impl AppLocalModule for Module {
+    async fn local_init(&self, ctx: &mut LocalAppContext) -> Result<(), anyhow::Error> {
+        ctx.schedule().add_once_task(WebStage::Init, init);
         Ok(())
     }
 }

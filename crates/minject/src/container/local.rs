@@ -1,83 +1,79 @@
 use std::{
     any::{Any, TypeId},
+    cell::RefCell,
     collections::HashMap,
     fmt,
 };
 
-type BoxedAny = Box<dyn Any + Send + Sync>;
-type AnyMap = HashMap<TypeId, BoxedAny>;
+type LocalBoxedAny = Box<dyn Any>;
+type LocalAnyMap = HashMap<TypeId, LocalBoxedAny>;
 
 pub struct LocalContainer {
-    inner: AnyMap,
+    inner: RefCell<LocalAnyMap>,
 }
 
 impl LocalContainer {
     pub fn new() -> Self {
         Self {
-            inner: HashMap::new(),
+            inner: RefCell::new(HashMap::new()),
         }
     }
 
-    pub fn insert<T>(&mut self, v: T) -> Option<Box<T>>
+    pub fn insert<T>(&self, v: T) -> Option<Box<T>>
     where
-        T: Send + Sync + 'static,
+        T: 'static,
     {
         self.insert_any(Box::new(v))
     }
 
-    pub fn insert_any<T>(&mut self, v: BoxedAny) -> Option<Box<T>>
+    pub fn insert_any<T>(&self, v: LocalBoxedAny) -> Option<Box<T>>
     where
-        T: Send + Sync + 'static,
+        T: 'static,
     {
         self.inner
+            .borrow_mut()
             .insert(TypeId::of::<T>(), v)
             .and_then(|boxed| boxed.downcast().ok().map(|boxed| *boxed))
     }
 
-    pub fn get<T>(&self) -> Option<&T>
+    pub fn get<T>(&self) -> Option<T>
     where
-        T: Send + Sync + 'static,
+        T: Clone + 'static,
     {
         self.inner
+            .borrow()
             .get(&TypeId::of::<T>())
             .and_then(|v| v.downcast_ref())
-    }
-
-    pub fn get_mut<T>(&mut self) -> Option<&mut T>
-    where
-        T: Send + Sync + 'static,
-    {
-        self.inner
-            .get_mut(&TypeId::of::<T>())
-            .and_then(|v| v.downcast_mut())
+            .cloned()
     }
 
     pub fn contains_key<T>(&self) -> bool
     where
-        T: Send + Sync + 'static,
+        T: 'static,
     {
-        self.inner.contains_key(&TypeId::of::<T>())
+        self.inner.borrow().contains_key(&TypeId::of::<T>())
     }
 
-    pub fn remove<T>(&mut self) -> Option<T>
+    pub fn remove<T>(&self) -> Option<T>
     where
-        T: Send + Sync + 'static,
+        T: 'static,
     {
         self.inner
+            .borrow_mut()
             .remove(&TypeId::of::<T>())
             .and_then(|boxed| boxed.downcast().ok().map(|boxed| *boxed))
     }
 
-    pub fn clear(&mut self) {
-        self.inner.clear()
+    pub fn clear(&self) {
+        self.inner.borrow_mut().clear()
     }
 
     pub fn is_empty(&self) -> bool {
-        self.inner.is_empty()
+        self.inner.borrow().is_empty()
     }
 
     pub fn len(&self) -> usize {
-        self.inner.len()
+        self.inner.borrow().len()
     }
 }
 

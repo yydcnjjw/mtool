@@ -1,7 +1,7 @@
 pub mod ecdict;
 pub mod mdx;
 
-use mapp::ModuleGroup;
+use mapp::prelude::*;
 use serde::{Deserialize, Serialize};
 use std::fmt;
 
@@ -20,8 +20,16 @@ impl fmt::Display for Backend {
     }
 }
 
+#[cfg(not(target_family = "wasm"))]
 pub fn module() -> ModuleGroup {
     let mut group = ModuleGroup::new("mtool-dict-backend");
+    group.add_module(mdx::Module);
+    group.add_module(ecdict::Module);
+    group
+}
+
+pub fn web_module() -> LocalModuleGroup {
+    let mut group = LocalModuleGroup::new("mtool-dict-backend");
     group.add_module(mdx::Module);
     group.add_module(ecdict::Module);
     group

@@ -5,18 +5,17 @@ mod route;
 
 use app::App;
 use async_trait::async_trait;
-use mapp::{provider::Res, AppContext, AppModule};
-use mtool_wgui::{AppStage, RouteParams, Router};
+use mapp::prelude::*;
+use mtool_wgui::{RouteParams, Router, WebStage};
 use yew::prelude::*;
 
 #[allow(unused)]
-#[derive(Default)]
-pub struct Module {}
+pub struct Module;
 
-#[async_trait]
-impl AppModule for Module {
-    async fn init(&self, ctx: &mut AppContext) -> Result<(), anyhow::Error> {
-        ctx.schedule().add_once_task(AppStage::Init, init);
+#[async_trait(?Send)]
+impl AppLocalModule for Module {
+    async fn local_init(&self, ctx: &mut LocalAppContext) -> Result<(), anyhow::Error> {
+        ctx.schedule().add_once_task(WebStage::Init, init);
         Ok(())
     }
 }

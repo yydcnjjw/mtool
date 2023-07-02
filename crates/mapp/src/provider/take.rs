@@ -2,9 +2,11 @@ use std::{any::type_name, fmt, sync::Arc};
 
 use anyhow::Context;
 use async_trait::async_trait;
-use minject::Provide;
+use minject::{LocalProvide, Provide};
 
-use crate::{provider::Injector, App};
+use crate::{provider::Injector, App, LocalApp};
+
+use super::LocalInjector;
 
 pub struct Take<T>(Arc<T>);
 
@@ -56,6 +58,29 @@ where
     }
 }
 
+#[async_trait(?Send)]
+impl<T> LocalProvide<LocalApp> for Take<T>
+where
+    T: 'static,
+{
+    async fn local_provide(app: &LocalApp) -> Result<Self, anyhow::Error> {
+        app.injector()
+            .remove::<Take<T>>()
+            .context(format!("Failed to provide {}", type_name::<Self>()))
+    }
+}
+
+#[async_trait(?Send)]
+impl<T> LocalProvide<LocalInjector> for Take<T>
+where
+    T: 'static,
+{
+    async fn local_provide(c: &LocalInjector) -> Result<Self, anyhow::Error> {
+        c.remove::<Take<T>>()
+            .context(format!("Failed to provide {}", type_name::<Self>()))
+    }
+}
+
 pub struct TakeOpt<T>(Option<Take<T>>);
 
 impl<T> TakeOpt<T> {
@@ -80,6 +105,26 @@ where
     T: Send + Sync + 'static,
 {
     async fn provide(c: &Injector) -> Result<Self, anyhow::Error> {
+        Ok(TakeOpt(c.remove::<Take<T>>()))
+    }
+}
+
+#[async_trait(?Send)]
+impl<T> LocalProvide<LocalApp> for TakeOpt<T>
+where
+    T: 'static,
+{
+    async fn local_provide(app: &LocalApp) -> Result<Self, anyhow::Error> {
+        Ok(TakeOpt(app.injector().remove::<Take<T>>()))
+    }
+}
+
+#[async_trait(?Send)]
+impl<T> LocalProvide<LocalInjector> for TakeOpt<T>
+where
+    T: 'static,
+{
+    async fn local_provide(c: &LocalInjector) -> Result<Self, anyhow::Error> {
         Ok(TakeOpt(c.remove::<Take<T>>()))
     }
 }

@@ -10,7 +10,7 @@ use tokio::sync::Mutex;
 use tracing::debug;
 
 use crate::{
-    define_label, App, CondLoad, FnCondLoad, IntoOnceTaskDescriptor, Label, OnceTaskDescriptor,
+    App, CondLoad, FnCondLoad, IntoOnceTaskDescriptor, Label, OnceTaskDescriptor, ScheduleGraph,
 };
 
 enum Node {
@@ -61,8 +61,6 @@ impl StageNode {
 }
 
 type SchedGraph = Graph<Label, ()>;
-
-define_label!(pub ScheduleGraph, Root);
 
 #[derive(Default)]
 pub struct ScheduleInner {

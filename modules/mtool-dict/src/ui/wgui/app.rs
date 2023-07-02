@@ -1,10 +1,10 @@
 use std::any::type_name;
 
 use async_trait::async_trait;
-use mapp::{provider::Res, AppContext, AppModule};
+use mapp::prelude::*;
 use mtool_wgui::{
-    generate_keymap, AppStage, AutoWindow, EmptyView, Horizontal, Keybinding, RouteParams,
-    Router, TemplateData, TemplateId, TemplateView, Vertical, WindowProps, component::error::error_view,
+    component::error::error_view, generate_keymap, AutoWindow, EmptyView, Horizontal, Keybinding,
+    RouteParams, Router, TemplateData, TemplateId, TemplateView, Vertical, WebStage, WindowProps,
 };
 use serde::{Deserialize, Serialize};
 use web_sys::HtmlInputElement;
@@ -196,7 +196,7 @@ impl App {
             Ok(QueryResult { template_id, data }) => html! {
                 <div class={classes!("overflow-y-auto")}>
                   <TemplateView template_id={ template_id.clone() }
-                                data={ data.clone() }/>                    
+                                data={ data.clone() }/>
                 </div>
             },
             Err(e) => error_view(e),
@@ -233,10 +233,10 @@ impl App {
 
 pub struct Module;
 
-#[async_trait]
-impl AppModule for Module {
-    async fn init(&self, ctx: &mut AppContext) -> Result<(), anyhow::Error> {
-        ctx.schedule().add_once_task(AppStage::Init, init);
+#[async_trait(?Send)]
+impl AppLocalModule for Module {
+    async fn local_init(&self, ctx: &mut LocalAppContext) -> Result<(), anyhow::Error> {
+        ctx.schedule().add_once_task(WebStage::Init, init);
         Ok(())
     }
 }

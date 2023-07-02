@@ -106,8 +106,7 @@ quick_translate!(text_translate_into_chinese, Auto, Zh);
 quick_translate!(text_translate_into_english, Auto, En);
 quick_translate!(text_translate_into_japanese, Auto, Ja);
 
-#[derive(Default)]
-pub struct Module {}
+pub struct Module;
 
 #[async_trait]
 impl AppModule for Module {

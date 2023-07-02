@@ -4,13 +4,19 @@ mod ui;
 
 pub use completion::*;
 
-use mapp::ModuleGroup;
+use mapp::prelude::*;
 
+#[cfg(not(target_family = "wasm"))]
 pub fn module() -> ModuleGroup {
     let mut group = ModuleGroup::new("mtool-interactive");
     group.add_module(ui::module());
+    group
+}
 
-    #[cfg(target_family = "wasm32")]
-    group.add_module(completion::Module::default());
+pub fn web_module() -> LocalModuleGroup {
+    let mut group = LocalModuleGroup::new("mtool-interactive");
+    group.add_module(ui::web_module());
+
+    group.add_module(completion::Module);
     group
 }
