@@ -8,7 +8,7 @@ pub fn module() -> ModuleGroup {
 
     group.add_module(translator::Module::default());
 
-    group.add_module_group(ui::module());
+    group.add_module(ui::module());
 
     return group;
 }

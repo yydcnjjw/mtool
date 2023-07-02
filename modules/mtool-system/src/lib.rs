@@ -10,7 +10,7 @@ pub fn module() -> ModuleGroup {
 
     group
         .add_module(event::Module::default())
-        .add_module_group(keybinding::module());
+        .add_module(keybinding::module());
 
     group
 }

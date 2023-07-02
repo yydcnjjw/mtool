@@ -35,11 +35,6 @@ impl AppBuilder {
         self
     }
 
-    pub fn add_module_group(&mut self, modules: ModuleGroup) -> &mut Self {
-        self.modules.add_module_group(modules);
-        self
-    }
-
     pub fn build(&mut self) -> AppRunner {
         let builder = std::mem::replace(self, AppBuilder::empty());
 

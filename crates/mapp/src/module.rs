@@ -33,11 +33,6 @@ impl ModuleGroup {
         }
     }
 
-    pub fn add_module_group(&mut self, module: ModuleGroup) -> &mut Self {
-        self.modules.extend(module.modules);
-        self
-    }
-
     pub fn add_module<Mod>(&mut self, module: Mod) -> &mut Self
     where
         Mod: Module + Send + Sync + 'static,
