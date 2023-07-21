@@ -14,4 +14,6 @@ mtool-interactive = { path = "../../mtool-interactive" }
 mtool-proxy = { path = "../../mtool-proxy" }
 mtool-translate = { path = "../../mtool-translate" }
 mtool-dict = { path = "../../mtool-dict" }
-# mtool-pdf = { path = "../../mtool-pdf" }
+mtool-pdf = { path = "../../mtool-pdf" }
+
+wasm-bindgen = { workspace = true }

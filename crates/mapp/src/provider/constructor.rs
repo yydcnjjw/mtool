@@ -2,7 +2,7 @@ use std::{any::Any, marker::PhantomData};
 
 use async_trait::async_trait;
 use futures::Future;
-use minject::{inject, inject_once, Inject, InjectOnce, Provide};
+use minject::{inject, inject_once, Inject, InjectOnce, LocalProvide, Provide, local_inject_once};
 
 pub type BoxedAny = Box<dyn Any + Send + Sync>;
 
@@ -161,11 +161,11 @@ impl<Func, Args, Output, C> LocalConstructOnce<C> for FnWrapper<Func, Args>
 where
     Func: InjectOnce<Args>,
     Func::Output: Future<Output = Result<Output, anyhow::Error>>,
-    Args: Provide<C>,
+    Args: LocalProvide<C>,
     Output: 'static,
 {
     async fn local_construct_once(self, c: &C) -> Result<LocalBoxedAny, anyhow::Error> {
-        inject_once(c, self.f)
+        local_inject_once(c, self.f)
             .await?
             .await
             .map(|v| Box::new(v) as LocalBoxedAny)
@@ -176,7 +176,7 @@ impl<Func, Args, Output, C> IntoLocalOnceConstructor<Args, Output, C> for Func
 where
     Func: InjectOnce<Args>,
     Func::Output: Future<Output = Result<Output, anyhow::Error>>,
-    Args: Provide<C>,
+    Args: LocalProvide<C>,
     Output: 'static,
 {
     type LocalOnceConstructor = FnWrapper<Func, Args>;

@@ -1,32 +1,36 @@
 mod app;
-mod pdf;
 
+use anyhow::Context;
 use async_trait::async_trait;
-use mapp::{provider::Res, AppContext, AppModule};
-use mtool_wgui::{AppStage, RouteParams, Router};
+use base64::prelude::*;
+use mapp::prelude::*;
+use mtool_wgui::{component::error::render_result_view, RouteParams, Router, WebStage};
 use yew::prelude::*;
 
-use self::{app::App, pdf::Pdf};
+use self::app::App;
 
 pub struct Module;
 
-#[cfg(target_family = "wasm")]
 #[async_trait(?Send)]
-impl AppModule for Module {
-    async fn init(&self, ctx: &mut AppContext) -> Result<(), anyhow::Error> {
-        ctx.injector().construct_once(Pdf::construct);
-        ctx.schedule().add_once_task(AppStage::Init, init);
+impl AppLocalModule for Module {
+    async fn local_init(&self, ctx: &mut LocalAppContext) -> Result<(), anyhow::Error> {
+        ctx.schedule().add_once_task(WebStage::Init, init);
         Ok(())
     }
 }
 
-fn render(_: &RouteParams, pdf: Res<Pdf>) -> Html {
-    html! {
-        <App {pdf}/>
-    }
+fn render(params: &RouteParams) -> Result<Html, anyhow::Error> {
+    let path =
+        String::from_utf8(BASE64_STANDARD.decode(params.get("path").context("path not exist")?)?)?;
+
+    Ok(html! {
+        <App {path}/>
+    })
 }
 
-async fn init(router: Res<Router>, pdf: Res<Pdf>) -> Result<(), anyhow::Error> {
-    router.add("/pdfviewer", move |params| render(params, pdf.clone()));
+async fn init(router: Res<Router>) -> Result<(), anyhow::Error> {
+    router.add("/pdfviewer/:path", |params| {
+        render_result_view(render(params))
+    });
     Ok(())
 }

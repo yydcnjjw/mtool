@@ -1,106 +1,93 @@
-use mapp::provider::Res;
+use anyhow::Context;
+use async_trait::async_trait;
+use mapp::prelude::*;
+use mtool_core::ConfigStore;
 use ouroboros::self_referencing;
 use pdfium_render::prelude::*;
-use send_wrapper::SendWrapper;
-use std::ops::Deref;
+use std::{
+    ops::Deref,
+    path::{Path, PathBuf},
+};
+
+use crate::Config;
 
 pub struct Pdf {
-    inner: SendWrapper<Pdfium>,
+    inner: Pdfium,
+}
+
+impl Deref for Pdf {
+    type Target = Pdfium;
+
+    fn deref(&self) -> &Self::Target {
+        &self.inner
+    }
 }
 
 impl Pdf {
-    pub async fn construct() -> Result<Res<Self>, anyhow::Error> {
-        Ok(Res::new(Self::new()?))
+    async fn construct(cs: Res<ConfigStore>) -> Result<Res<Self>, anyhow::Error> {
+        Ok(Res::new(Self::new(&cs.get("pdf").await?)?))
     }
 
-    fn new() -> Result<Self, anyhow::Error> {
-        let bindings = Pdfium::bind_to_system_library()
+    fn new(config: &Config) -> Result<Self, anyhow::Error> {
+        let bindings = Pdfium::bind_to_library(&config.library)
             .map_err(|e| anyhow::anyhow!("Failed to load pdfium library: {}", e))?;
 
         Ok(Self {
-            inner: SendWrapper::new(Pdfium::new(bindings)),
+            inner: Pdfium::new(bindings),
         })
     }
 
-    #[cfg(target_family = "wasm")]
-    pub async fn load(
+    pub fn load(
         self: &Res<Self>,
-        url: impl ToString,
+        path: &(impl AsRef<Path> + ?Sized),
         password: Option<&str>,
     ) -> Result<PdfDoc, anyhow::Error> {
-        PdfDoc::load(self.clone(), url, password).await
+        PdfDoc::load(self.clone(), path, password)
     }
-
-    // #[cfg(not(target_family = "wasm"))]
-    // pub async fn load(
-    //     self: &Res<Self>,
-    //     path: &(impl AsRef<Path> + ?Sized),
-    //     password: Option<&str>,
-    // ) -> Result<PdfDoc, anyhow::Error> {
-    //     PdfDoc::load(self.clone(), path, password).await
-    // }
 }
 
 #[self_referencing]
 pub struct PdfDoc {
     pdf: Res<Pdf>,
+    pub path: PathBuf,
     password: Option<String>,
     #[borrows(pdf)]
     pdf_inner: &'this Pdfium,
     #[borrows(pdf_inner, password)]
-    #[covariant]
-    doc: PdfDocument<'this>,
+    #[not_covariant]
+    pub doc: PdfDocument<'this>,
 }
 
 impl PdfDoc {
-    // #[cfg(target_family = "wasm")]
-    async fn load(
+    fn load(
         pdf: Res<Pdf>,
-        url: impl ToString,
+        path: &(impl AsRef<Path> + ?Sized),
         password: Option<&str>,
     ) -> Result<Self, anyhow::Error> {
-        use futures::FutureExt;
-        use tokio::task::spawn_local;
-        let url = url.to_string();
-
-        Ok(spawn_local(
-            PdfDocAsyncTryBuilder {
-                pdf,
-                password: password.map(|v| v.to_string()),
-                pdf_inner_builder: |pdf| async move { Ok(pdf.inner.deref()) }.boxed_local(),
-                doc_builder: |pdf, password| {
-                    async move {
-                        pdf.load_pdf_from_fetch(&url, password.as_deref())
-                            .await
-                            .map_err(|e| anyhow::anyhow!("Failed to load pdf {}: {}", url, e))
-                    }
-                    .boxed_local()
-                },
-            }
-            .try_build(),
-        )
-        .await??)
+        PdfDocTryBuilder {
+            pdf,
+            path: path.as_ref().to_path_buf(),
+            password: password.map(|v| v.to_string()),
+            pdf_inner_builder: |pdf| Ok(pdf.deref()),
+            doc_builder: |pdf, password| {
+                pdf.load_pdf_from_file(path, password.as_deref())
+                    .context(format!("Loading pdf: {}", path.as_ref().display()))
+            },
+        }
+        .try_build()
     }
 
-    // #[cfg(not(target_family = "wasm"))]
-    // async fn load(
-    //     pdf: Res<Pdf>,
-    //     path: &str,
-    //     password: Option<&str>,
-    // ) -> Result<Self, anyhow::Error> {
-    //     Ok(PdfDocAsyncSendTryBuilder {
-    //         pdf,
-    //         password: password.map(|v| v.to_string()),
-    //         doc_builder: |pdf, password| {
-    //             async move {
-    //                 let pdf = pdf.inner.lock().await;
-    //                 pdf.load_pdf_from_file(path, password.as_deref())
-    //                     .context(format!("Loading pdf: {}", path))
-    //             }
-    //             .boxed()
-    //         },
-    //     }
-    //     .try_build()
-    //     .await?)
-    // }
+    pub fn page(&self, index: u16) -> Result<PdfPage, anyhow::Error> {
+        self.with_doc(|doc| Ok(doc.pages().get(index)?))
+    }
+}
+
+pub struct Module;
+
+#[async_trait]
+impl AppModule for Module {
+    async fn init(&self, ctx: &mut AppContext) -> Result<(), anyhow::Error> {
+        ctx.injector().construct_once(Pdf::construct);
+        Ok(())
+    }
 }

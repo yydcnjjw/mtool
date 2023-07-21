@@ -10,7 +10,12 @@ port = 18188
 [tools]
 wasm_bindgen = "0.2.87"
 
-[[hooks]]
-stage = "build"
-command = "tailwindcss"
-command_arguments = ["-i", "assets/style.css", "-o", "dist/.stage/tailwind.css"]
+[build]
+pattern_script = '''
+<script type="module">
+  import init, { run } from '{base}{js}';
+  let __MTOOL__ = await init();
+  window.__MTOOL__ = __MTOOL__;
+  run();
+</script>
+'''

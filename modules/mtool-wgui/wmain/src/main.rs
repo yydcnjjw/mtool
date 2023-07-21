@@ -1,4 +1,7 @@
-fn main() {
+use wasm_bindgen::prelude::*;
+
+#[wasm_bindgen]
+pub fn run() {
     mapp::LocalAppBuilder::new()
         .unwrap()
         .add_module(mtool_wgui::web_module())
@@ -7,7 +10,9 @@ fn main() {
         .add_module(mtool_proxy::web_module())
         .add_module(mtool_translate::web_module())
         .add_module(mtool_dict::web_module())
-        // .add_module(mtool_pdf::module())
+        .add_module(mtool_pdf::web_module())
         .build()
         .run();
 }
+
+fn main() {}

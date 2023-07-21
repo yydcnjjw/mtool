@@ -10,7 +10,7 @@ use std::{
 use async_trait::async_trait;
 use dashmap::DashMap;
 use minject::{LocalProvide, Provide};
-use tokio::sync::Mutex;
+use tokio::sync::{oneshot, Mutex};
 use tracing::trace;
 
 use crate::{App, LocalApp};
@@ -18,7 +18,7 @@ use crate::{App, LocalApp};
 use super::{
     constructor::{Construct, IntoConstructor},
     BoxedAny, ConstructOnce, IntoLocalConstructor, IntoLocalOnceConstructor, IntoOnceConstructor,
-    LocalBoxedAny, LocalConstruct, LocalConstructOnce,
+    LocalBoxedAny, LocalConstruct, LocalConstructOnce, Res,
 };
 
 type BoxedConstruct = Box<dyn Construct<Injector> + Send + Sync>;
@@ -120,6 +120,20 @@ impl InjectorInner {
         );
 
         self
+    }
+
+    pub fn construct_oneshot<Output>(&self) -> oneshot::Sender<Output>
+    where
+        Output: Send + Sync + 'static,
+    {
+        let (tx, rx) = oneshot::channel();
+        self.construct_once(|| async move {
+            Ok(Res::new(rx.await.map_err(|e| {
+                anyhow::anyhow!("get {} failed: {}", type_name::<Output>(), e)
+            })?))
+        });
+
+        tx
     }
 
     pub fn insert<T>(&self, v: T) -> Option<Box<T>>
@@ -273,7 +287,7 @@ impl LocalInjectorInner {
     pub fn construct_once<Ctor, Args, Output>(&self, ctor: Ctor) -> &Self
     where
         Ctor: IntoLocalOnceConstructor<Args, Output, LocalInjector>,
-        Ctor::LocalOnceConstructor: ConstructOnce<LocalInjector> + 'static,
+        Ctor::LocalOnceConstructor: LocalConstructOnce<LocalInjector> + 'static,
         Output: 'static,
     {
         self.constructor_once.borrow_mut().insert(
@@ -282,6 +296,20 @@ impl LocalInjectorInner {
         );
 
         self
+    }
+
+    pub fn construct_oneshot<Output>(&self) -> oneshot::Sender<Output>
+    where
+        Output: 'static,
+    {
+        let (tx, rx) = oneshot::channel();
+        self.construct_once(|| async move {
+            Ok(Res::new(rx.await.map_err(|e| {
+                anyhow::anyhow!("get {} failed: {}", type_name::<Output>(), e)
+            })?))
+        });
+
+        tx
     }
 
     pub fn insert<T>(&self, v: T) -> Option<Box<T>>
