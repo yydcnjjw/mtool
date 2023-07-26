@@ -20,7 +20,7 @@ use tokio::{
 };
 use tracing::warn;
 
-use crate::stats::{Copyed, GetTransferStats, TransferMonitor};
+use crate::{stats::{Copyed, GetTransferStats, TransferMonitor}, net::protocol::http::TokioIo};
 
 #[derive(Debug)]
 pub struct HttpForwarder {
@@ -52,7 +52,7 @@ impl HttpForwarder {
         let (mut sender, conn) = http1::Builder::new()
             .preserve_header_case(true)
             .title_case_headers(true)
-            .handshake(s)
+            .handshake(TokioIo::new(s))
             .await?;
 
         tokio::task::spawn(async move {

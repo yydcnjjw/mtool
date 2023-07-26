@@ -168,7 +168,7 @@ impl TryFrom<&TlsConfig> for rustls::ClientConfig {
         rustls::ClientConfig::builder()
             .with_safe_defaults()
             .with_root_certificates(roots)
-            .with_single_cert(certs, key)
+            .with_client_auth_cert(certs, key)
             .context("Failed to build tls client config")
     }
 }
