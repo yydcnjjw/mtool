@@ -115,7 +115,7 @@ pub fn DictView(props: &QueryResult) -> Html {
                     <div>{ format!("[{}]", key) }</div>
                     {
                       exchange.iter().map(|(exchange, value)| html!{
-                        <span>{ format!("{}({})/", value, exchange_map[exchange]) }</span>
+                        <span>{ format!("{}({})/", value, exchange_map.get(exchange).unwrap_or(exchange)) }</span>
                       }).collect::<Html>()
                     }
                   </div>
@@ -126,9 +126,10 @@ pub fn DictView(props: &QueryResult) -> Html {
           <div class={classes!("text-sm")}>
             {
               tag.iter().map(|tag| {
+                let tag = tag.as_str();
                 html!{
                   <span>
-                    { format!("{}/", tag_map[tag.as_str()]) }
+                    { format!("{}/", tag_map.get(tag).unwrap_or(&tag)) }
                   </span>
                 }
               }).collect::<Html>()

@@ -1,9 +1,6 @@
 use serde::de::DeserializeOwned;
 use serde_wasm_bindgen::from_value;
-use wasm_bindgen::{
-    prelude::Closure,
-    JsValue,
-};
+use wasm_bindgen::{prelude::Closure, JsValue};
 
 use crate::event::Event;
 
@@ -42,6 +39,9 @@ mod ffi {
 
         #[wasm_bindgen(method, catch)]
         pub async fn setPosition(this: &WebviewWindow, pos: JsValue) -> Result<(), JsValue>;
+
+        #[wasm_bindgen(method, catch)]
+        pub async fn center(this: &WebviewWindow) -> Result<(), JsValue>;
 
         #[wasm_bindgen(method, catch)]
         pub async fn listen(
@@ -136,6 +136,10 @@ impl Window {
                 Position::Logical { x, y } => ffi::LogicalPosition::new(x, y).into(),
             })
             .await
+    }
+
+    pub async fn center(&self) -> Result<(), JsValue> {
+        self.handle.center().await
     }
 
     pub async fn listen<Handler, T>(

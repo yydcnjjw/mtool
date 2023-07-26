@@ -1,34 +1,36 @@
-use std::{
-    collections::HashMap,
-    sync::{Arc, RwLock},
-};
+use std::{cell::RefCell, collections::HashMap, rc::Rc};
 
-use once_cell::sync::OnceCell;
 use tracing::debug;
 
 use yew::prelude::*;
 use yew_router::Routable;
 
 pub type RouteParams = HashMap<String, String>;
-pub type RouteHandler = Arc<dyn Fn(&RouteParams) -> Html + Send + Sync>;
+pub type RouteHandler = Rc<dyn Fn(&RouteParams) -> Html>;
 
 #[derive(Clone)]
 pub struct Router {
-    inner: Arc<RwLock<route_recognizer::Router<RouteHandler>>>,
+    inner: Rc<RefCell<route_recognizer::Router<RouteHandler>>>,
 }
 
 impl Router {
+    pub fn new() -> Self {
+        Self {
+            inner: Rc::new(RefCell::new(route_recognizer::Router::new())),
+        }
+    }
+
     pub fn add<Handler>(&self, route: &str, handler: Handler) -> &Self
     where
-        Handler: Fn(&RouteParams) -> Html + Send + Sync + 'static,
+        Handler: Fn(&RouteParams) -> Html + 'static,
     {
         debug!("add route {}", route);
-        self.inner.write().unwrap().add(route, Arc::new(handler));
+        self.inner.borrow_mut().add(route, Rc::new(handler));
         self
     }
 
     pub fn recognize(&self, path: &str) -> Result<(RouteParams, RouteHandler), String> {
-        self.inner.read().unwrap().recognize(path).map(|v| {
+        self.inner.borrow().recognize(path).map(|v| {
             (
                 v.params()
                     .iter()
@@ -41,11 +43,11 @@ impl Router {
 }
 
 pub(crate) fn global_router() -> Router {
-    static INST: OnceCell<Router> = OnceCell::new();
-    INST.get_or_init(|| Router {
-        inner: Arc::new(RwLock::new(route_recognizer::Router::new())),
-    })
-    .clone()
+    thread_local! {
+        static INST: Router = Router::new();
+    }
+
+    INST.with(|v| v.clone())
 }
 
 #[derive(Clone)]

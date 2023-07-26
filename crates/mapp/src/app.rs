@@ -1,10 +1,10 @@
 use tracing::{debug, error};
 
 use crate::{
-    module::{Module, ModuleGroup},
-    provider::{Injector, Res},
+    module::{LocalModule, LocalModuleGroup, Module, ModuleGroup},
+    provider::{Injector, LocalInjector, Res},
     tracing::Tracing,
-    Schedule,
+    LocalSchedule, Schedule,
 };
 
 pub struct AppBuilder {
@@ -29,7 +29,7 @@ impl AppBuilder {
 
     pub fn add_module<Mod>(&mut self, module: Mod) -> &mut Self
     where
-        Mod: Module + Send + Sync + 'static,
+        Mod: Module + 'static,
     {
         self.modules.add_module(module);
         self
@@ -49,10 +49,10 @@ impl AppBuilder {
 
             modules.early_init(&mut ctx)?;
 
-            #[cfg(target_arch = "wasm32")]
+            #[cfg(target_family = "wasm")]
             let mut rt = tokio::runtime::Builder::new_current_thread();
 
-            #[cfg(not(target_arch = "wasm32"))]
+            #[cfg(not(target_family = "wasm"))]
             let mut rt = tokio::runtime::Builder::new_multi_thread();
 
             let run = || async move {
@@ -105,22 +105,6 @@ impl AppContext {
     }
 }
 
-pub struct AppRunner {
-    runner: Option<Box<dyn FnOnce() -> Result<(), anyhow::Error>>>,
-}
-
-impl AppRunner {
-    pub fn new() -> Self {
-        Self { runner: None }
-    }
-
-    pub fn run(self) {
-        if let Err(e) = (self.runner.unwrap())() {
-            error!("{:?}", e);
-        }
-    }
-}
-
 #[derive(Clone)]
 pub struct App {
     injector: Injector,
@@ -142,49 +126,133 @@ impl App {
     }
 }
 
-#[cfg(test)]
-mod tests {
-    use async_trait::async_trait;
+pub struct LocalAppBuilder {
+    modules: LocalModuleGroup,
+    tracing: Option<Tracing>,
+}
 
-    use crate::{define_label, provider::Res, Label};
+impl LocalAppBuilder {
+    pub fn new() -> Result<Self, anyhow::Error> {
+        Ok(Self {
+            modules: LocalModuleGroup::new("local_app_group"),
+            tracing: Some(Tracing::new()?),
+        })
+    }
 
-    use super::*;
-
-    struct TestModule {}
-
-    define_label!(
-        enum TestStage {
-            PreTest,
-            Test,
-            PostTest,
-        }
-    );
-
-    #[async_trait]
-    impl Module for TestModule {
-        async fn init(&self, app: &mut AppContext) -> Result<(), anyhow::Error> {
-            app.injector().insert(Res::new(10i32));
-            app.injector().insert(Res::new(String::from("test")));
-
-            app.schedule()
-                .add_stage(TestStage::PreTest)
-                .add_stage(TestStage::Test)
-                .add_stage(TestStage::PostTest)
-                .add_task(
-                    TestStage::Test,
-                    |v1: Res<i32>, v2: Res<String>| async move {
-                        println!("test module {}, {}", *v1, *v2);
-                        Ok(())
-                    },
-                );
-
-            println!("test module init");
-            Ok(())
+    fn empty() -> Self {
+        Self {
+            modules: Default::default(),
+            tracing: None,
         }
     }
 
-    #[test]
-    fn test_app() {
-        AppBuilder::new().add_module(TestModule {}).build().run();
+    pub fn add_module<Mod>(&mut self, module: Mod) -> &mut Self
+    where
+        Mod: LocalModule + 'static,
+    {
+        self.modules.add_module(module);
+        self
+    }
+
+    pub fn build(&mut self) -> AppRunner {
+        let builder = std::mem::replace(self, LocalAppBuilder::empty());
+
+        let mut app_runner = AppRunner::new();
+
+        app_runner.runner = Some(Box::new(move || -> Result<(), anyhow::Error> {
+            let mut ctx = LocalAppContext::new();
+
+            ctx.injector().insert(Res::new(builder.tracing.unwrap()));
+
+            let modules = builder.modules;
+
+            modules.local_early_init(&mut ctx)?;
+
+            let mut rt = tokio::runtime::Builder::new_current_thread();
+
+            let run = || async move {
+                modules.local_init(&mut ctx).await?;
+
+                let sche = ctx.schedule;
+
+                let mut app = LocalApp::new();
+                app.injector = ctx.injector;
+
+                sche.run(&app).await?;
+
+                debug!("App running!");
+                Ok::<(), anyhow::Error>(())
+            };
+
+            rt.enable_all().build()?.block_on(async move {
+                if let Err(e) = run().await {
+                    error!("{:?}", e);
+                    eprintln!("{:?}", e);
+                    std::process::exit(-1);
+                }
+            });
+            Ok(())
+        }));
+
+        app_runner
+    }
+}
+
+pub struct LocalAppContext {
+    injector: LocalInjector,
+    schedule: LocalSchedule,
+}
+
+impl LocalAppContext {
+    pub fn new() -> Self {
+        Self {
+            injector: LocalInjector::new(),
+            schedule: LocalSchedule::new(),
+        }
+    }
+
+    pub fn schedule(&mut self) -> &LocalSchedule {
+        return &self.schedule;
+    }
+
+    pub fn injector(&self) -> &LocalInjector {
+        return &self.injector;
+    }
+}
+
+pub struct AppRunner {
+    runner: Option<Box<dyn FnOnce() -> Result<(), anyhow::Error>>>,
+}
+
+impl AppRunner {
+    pub fn new() -> Self {
+        Self { runner: None }
+    }
+
+    pub fn run(self) {
+        if let Err(e) = (self.runner.unwrap())() {
+            error!("{:?}", e);
+        }
+    }
+}
+
+#[derive(Clone)]
+pub struct LocalApp {
+    injector: LocalInjector,
+}
+
+impl LocalApp {
+    pub fn new() -> Self {
+        Self::empty()
+    }
+
+    pub fn empty() -> Self {
+        Self {
+            injector: LocalInjector::new(),
+        }
+    }
+
+    pub fn injector(&self) -> &LocalInjector {
+        return &self.injector;
     }
 }

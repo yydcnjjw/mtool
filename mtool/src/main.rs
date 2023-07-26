@@ -16,6 +16,7 @@ fn main() {
         .add_module(mtool_proxy::module())
         .add_module(mtool_toast::Module::default())
         .add_module(mtool_ai::Module::default())
+        .add_module(mtool_pdf::module())
         .build()
         .run();
 }

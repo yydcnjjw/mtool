@@ -1,8 +1,8 @@
 use async_trait::async_trait;
-use mapp::{provider::Res, AppContext, AppModule};
+use mapp::prelude::*;
 use mtool_wgui::{
-    component::error::error_view, generate_keymap, AppStage, AutoWindow, Horizontal,
-    Keybinding, RouteParams, Router, Vertical, WindowProps,
+    component::error::error_view, generate_keymap, AutoWindow, Horizontal, Keybinding, RouteParams,
+    Router, Vertical, WebStage, WindowProps,
 };
 use serde::Serialize;
 use web_sys::{HtmlElement, HtmlTextAreaElement};
@@ -207,13 +207,12 @@ impl App {
     }
 }
 
-#[derive(Default)]
-pub struct Module {}
+pub struct Module;
 
-#[async_trait]
-impl AppModule for Module {
-    async fn init(&self, ctx: &mut AppContext) -> Result<(), anyhow::Error> {
-        ctx.schedule().add_once_task(AppStage::Init, init);
+#[async_trait(?Send)]
+impl AppLocalModule for Module {
+    async fn local_init(&self, ctx: &mut LocalAppContext) -> Result<(), anyhow::Error> {
+        ctx.schedule().add_once_task(WebStage::Init, init);
         Ok(())
     }
 }

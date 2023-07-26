@@ -1,0 +1,56 @@
+[package]
+name = "mtool-pdf"
+version.workspace = true
+authors.workspace = true
+edition.workspace = true
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+mapp = { path = "../../crates/mapp" }
+mtauri-sys = { path = "../../crates/mtauri-sys" }
+mtool-cmder = { path = "../mtool-cmder" }
+mtool-wgui = { path = "../mtool-wgui" }
+mtool-interactive = { path = "../mtool-interactive" }
+
+clap = { workspace = true }
+tracing = { workspace = true }
+tokio = { workspace = true }
+futures = { workspace = true }
+async-trait = { workspace = true }
+anyhow = { workspace = true }
+yew = { workspace = true }
+serde = { workspace = true }
+serde-error = { workspace = true }
+serde_json = { workspace = true }
+wasm-bindgen = { workspace = true }
+wasm-bindgen-futures = { workspace = true }
+cfg-if = { workspace = true }
+js-sys = { workspace = true }
+ouroboros = { workspace = true }
+
+gloo-utils = "*"
+base64 = "*"
+
+[dependencies.web-sys]
+workspace = true
+features = [
+  "Document",
+  "Navigator",
+  "Element",
+  "HtmlCanvasElement",
+  "CanvasRenderingContext2d",
+]
+
+[target.'cfg(not(target_family = "wasm"))'.dependencies]
+mtool-core = { path = "../mtool-core" }
+
+tauri = { workspace = true }
+
+image = "*"
+fs_extra = "*"
+
+[target.'cfg(not(target_family = "wasm"))'.dependencies.pdfium-render]
+git = "https://github.com/yydcnjjw/pdfium-render"
+branch = "master"
+features = ["image", "sync"]

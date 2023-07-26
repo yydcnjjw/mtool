@@ -33,3 +33,30 @@ where
             .context(format!("Failed to inject once {}", type_name::<Args>()))?,
     ))
 }
+
+pub async fn local_inject<Func, Args, Output, C>(c: &C, f: &Func) -> Result<Output, anyhow::Error>
+where
+    Func: Inject<Args, Output = Output>,
+    Args: LocalProvide<C>,
+{
+    Ok(f.inject(
+        Args::local_provide(c)
+            .await
+            .context(format!("Failed to inject {}", type_name::<Args>()))?,
+    ))
+}
+
+pub async fn local_inject_once<Func, Args, Output, C>(
+    c: &C,
+    f: Func,
+) -> Result<Output, anyhow::Error>
+where
+    Func: InjectOnce<Args, Output = Output>,
+    Args: LocalProvide<C>,
+{
+    Ok(f.inject_once(
+        Args::local_provide(c)
+            .await
+            .context(format!("Failed to inject once {}", type_name::<Args>()))?,
+    ))
+}

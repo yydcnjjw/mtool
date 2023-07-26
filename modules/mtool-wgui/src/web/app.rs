@@ -5,17 +5,17 @@ use yew_router::prelude::*;
 use super::{keybinding::Keybinding, route::Route, switch::ListenSwitch, template::Templator};
 
 #[derive(Clone, PartialEq, Properties)]
-pub struct AppContext {
+pub struct WebAppContext {
     pub keybinding: Keybinding,
     pub templator: Res<Templator>,
 }
 
-pub struct App {}
+pub struct WebApp {}
 
-impl Component for App {
+impl Component for WebApp {
     type Message = ();
 
-    type Properties = AppContext;
+    type Properties = WebAppContext;
 
     fn create(_ctx: &Context<Self>) -> Self {
         Self {}
@@ -24,9 +24,9 @@ impl Component for App {
     fn view(&self, ctx: &Context<Self>) -> Html {
         html! {
             <BrowserRouter>
-                <ContextProvider<AppContext> context={ ctx.props().clone() }>
+                <ContextProvider<WebAppContext> context={ ctx.props().clone() }>
                   <ListenSwitch<Route> render={ switch } />
-                </ContextProvider<AppContext>>
+                </ContextProvider<WebAppContext>>
             </BrowserRouter>
         }
     }

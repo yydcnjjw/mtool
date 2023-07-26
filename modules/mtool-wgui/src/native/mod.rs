@@ -6,11 +6,7 @@ pub use builder::*;
 pub use window::{MtoolWindow, WGuiWindow};
 
 use async_trait::async_trait;
-use mapp::{
-    define_label,
-    provider::{Injector, Res, Take, TakeOpt},
-    AppContext, AppModule, CreateOnceTaskDescriptor, ModuleGroup,
-};
+use mapp::{define_label, prelude::*, CreateOnceTaskDescriptor};
 use mtool_core::{
     config::{is_startup_mode, StartupMode},
     AppStage, CmdlineStage,

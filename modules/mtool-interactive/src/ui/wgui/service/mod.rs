@@ -5,13 +5,9 @@ pub use completion::Completion;
 use mtool_wgui::{Builder, WGuiStage};
 
 use async_trait::async_trait;
-use mapp::{
-    provider::{Injector, Res},
-    AppContext, AppModule,
-};
+use mapp::prelude::*;
 
-#[derive(Default)]
-pub struct Module {}
+pub struct Module;
 
 #[async_trait]
 impl AppModule for Module {
