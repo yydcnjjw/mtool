@@ -1,7 +1,5 @@
 mod window;
 
-use std::path::Path;
-
 use async_trait::async_trait;
 use base64::prelude::*;
 use mapp::{
@@ -9,13 +7,10 @@ use mapp::{
     AppContext, AppModule,
 };
 use mtool_cmder::{Cmder, CreateCommandDescriptor};
-use mtool_core::{CmdlineStage, ConfigStore};
+use mtool_core::CmdlineStage;
 use mtool_interactive::{Completion, CompletionArgs};
 use mtool_wgui::{Builder, WGuiStage};
-use tokio::fs;
 pub use window::PdfViewerWindow;
-
-use crate::Config;
 
 pub struct Module;
 
@@ -39,24 +34,24 @@ async fn register_command(cmder: Res<Cmder>) -> Result<(), anyhow::Error> {
     Ok(())
 }
 
-async fn list_file<P: AsRef<Path>>(dir: P) -> Result<Vec<String>, anyhow::Error> {
-    let mut entries = fs::read_dir(dir).await?;
-    let mut files = Vec::new();
-    while let Some(entry) = entries.next_entry().await? {
-        if entry.file_type().await?.is_file()
-            && entry.path().extension().is_some_and(|ext| ext == "pdf")
-        {
-            files.push(
-                entry
-                    .path()
-                    .into_os_string()
-                    .into_string()
-                    .map_err(|e| anyhow::anyhow!("convert OsString failed: {:?}", e))?,
-            )
-        }
-    }
-    Ok(files)
-}
+// async fn list_file<P: AsRef<Path>>(dir: P) -> Result<Vec<String>, anyhow::Error> {
+//     let mut entries = fs::read_dir(dir).await?;
+//     let mut files = Vec::new();
+//     while let Some(entry) = entries.next_entry().await? {
+//         if entry.file_type().await?.is_file()
+//             && entry.path().extension().is_some_and(|ext| ext == "pdf")
+//         {
+//             files.push(
+//                 entry
+//                     .path()
+//                     .into_os_string()
+//                     .into_string()
+//                     .map_err(|e| anyhow::anyhow!("convert OsString failed: {:?}", e))?,
+//             )
+//         }
+//     }
+//     Ok(files)
+// }
 
 async fn open_pdf(
     window: Res<PdfViewerWindow>,

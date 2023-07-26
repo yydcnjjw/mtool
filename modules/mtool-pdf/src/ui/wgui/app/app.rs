@@ -1,9 +1,8 @@
-use anyhow::Context as _;
 use gloo_utils::document;
 use mtauri_sys::window::{Size, Window};
 use mtool_wgui::component::error::render_result_view;
 use serde::Serialize;
-use tracing::{debug, warn};
+use tracing::warn;
 use wasm_bindgen::{JsCast, JsValue};
 use web_sys::{window, CanvasRenderingContext2d, HtmlCanvasElement};
 use yew::{platform::spawn_local, prelude::*};
