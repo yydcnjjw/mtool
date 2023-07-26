@@ -26,6 +26,8 @@ impl ProxyMonitorWindow {
                 .resizable(false)
                 .skip_taskbar(true)
                 .visible(true)
+                // TODO: disable shadow for transparent
+                .shadow(false)
                 .build()
                 .expect("create proxy monitor window failed"),
             false,

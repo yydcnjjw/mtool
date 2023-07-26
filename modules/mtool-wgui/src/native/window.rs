@@ -112,6 +112,8 @@ impl MtoolWindow {
                 .skip_taskbar(true)
                 .always_on_top(true)
                 .visible(false)
+                // TODO: disable shadow for transparent
+                .shadow(false)
                 .build()
                 .expect("create mtool window failed"),
             true,

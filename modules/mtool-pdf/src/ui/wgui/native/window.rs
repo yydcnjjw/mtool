@@ -24,6 +24,7 @@ impl PdfViewerWindow {
             .resizable(true)
             .skip_taskbar(false)
             .visible(false)
+            .shadow(true)
             .build()
             .expect("create proxy monitor window failed"),
             false,

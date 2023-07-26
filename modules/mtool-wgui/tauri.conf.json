@@ -47,10 +47,7 @@
       }
     },
     "security": {
-      "csp": "default-src 'self'; img-src 'self' pdfviewer: https://pdfviewer.localhost",
-      "assetProtocol": {
-        "scope": ["**"]
-      }      
+      "csp": null
     }
   }
 }
