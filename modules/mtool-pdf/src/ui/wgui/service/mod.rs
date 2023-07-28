@@ -1,14 +1,16 @@
-mod pdf_render;
+mod error;
+// mod grobid;
+mod pdf_document;
+mod pdf_loader;
 
 use async_trait::async_trait;
 use mapp::{prelude::*, CreateOnceTaskDescriptor};
 use mtool_core::config::{is_startup_mode, StartupMode};
 use mtool_wgui::{Builder, WGuiStage};
-use tracing::warn;
 
-use crate::pdf::Pdf;
-
-use self::pdf_render::pdf_protocol_handler;
+pub use error::Error;
+pub use pdf_document::*;
+pub use pdf_loader::*;
 
 pub struct Module;
 
@@ -23,12 +25,6 @@ impl AppModule for Module {
     }
 }
 
-async fn setup(builder: Res<Builder>, pdf: Res<Pdf>) -> Result<(), anyhow::Error> {
-    builder.setup(|builder| {
-        Ok(builder
-            .plugin(pdf_render::init(pdf))
-            .register_uri_scheme_protocol("pdfviewer", |handle, req| {
-                Ok(pdf_protocol_handler(handle, req).inspect_err(|e| warn!("{:?}", e))?)
-            }))
-    })
+async fn setup(builder: Res<Builder>) -> Result<(), anyhow::Error> {
+    builder.setup(|builder| Ok(builder.plugin(pdf_loader::init())))
 }

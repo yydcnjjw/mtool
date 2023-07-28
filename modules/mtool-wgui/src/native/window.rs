@@ -4,10 +4,11 @@ use std::{
 };
 
 use mapp::provider::{Injector, Res};
+use raw_window_handle::{HasRawDisplayHandle, HasRawWindowHandle};
 use tauri::{
     async_runtime::spawn,
     plugin::{Builder, TauriPlugin},
-    AppHandle, PhysicalPosition, WindowBuilder, WindowEvent, WindowUrl, Wry,
+    AppHandle, Manager, PhysicalPosition, WindowBuilder, WindowEvent, WindowUrl, Wry,
 };
 use tokio::sync::mpsc;
 use tracing::info;
@@ -16,6 +17,18 @@ pub struct WGuiWindow {
     inner: tauri::Window,
     pos: RwLock<Option<PhysicalPosition<i32>>>,
     hide_on_unfocus: bool,
+}
+
+unsafe impl HasRawDisplayHandle for WGuiWindow {
+    fn raw_display_handle(&self) -> raw_window_handle::RawDisplayHandle {
+        self.app_handle().raw_display_handle()
+    }
+}
+
+unsafe impl HasRawWindowHandle for WGuiWindow {
+    fn raw_window_handle(&self) -> raw_window_handle::RawWindowHandle {
+        self.inner.raw_window_handle()
+    }
 }
 
 impl Deref for WGuiWindow {

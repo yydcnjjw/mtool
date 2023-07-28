@@ -16,12 +16,12 @@ tokio = { workspace = true }
 itertools = { workspace = true }
 regex = { workspace = true }
 nom = { workspace = true }
+quick-xml = { workspace = true }
 
 flate2 = "1.0"
 minilzo-rs = "*"
 ripemd128 = "0.1"
 byteorder = "1.4"
-quick-xml = { version = "*", features = ["serialize"] }
 multimap = "0.8.3"
 scraper = "0.12"
 selectors = "0.22"

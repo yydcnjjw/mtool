@@ -18,11 +18,7 @@ impl GlobalHook {
     }
 
     pub fn uninstall(&self) -> Result<(), anyhow::Error> {
-        if unsafe { !UnhookWindowsHookEx(self.inst) }.as_bool() {
-            anyhow::bail!("Failed to uninstall hook")
-        } else {
-            Ok(())
-        }
+        unsafe { UnhookWindowsHookEx(self.inst).context("Failed to uninstall hook") }
     }
 
     pub fn new(idhook: WINDOWS_HOOK_ID, hook: HOOKPROC) -> Result<Self, anyhow::Error> {

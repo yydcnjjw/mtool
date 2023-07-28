@@ -1,3 +1,5 @@
+use std::sync::atomic::{AtomicUsize, Ordering};
+
 use tracing::{debug, error};
 
 use crate::{
@@ -69,13 +71,20 @@ impl AppBuilder {
                 Ok::<(), anyhow::Error>(())
             };
 
-            rt.enable_all().build()?.block_on(async move {
-                if let Err(e) = run().await {
-                    error!("{:?}", e);
-                    eprintln!("{:?}", e);
-                    std::process::exit(-1);
-                }
-            });
+            rt.enable_all()
+                .thread_name_fn(|| {
+                    static ATOMIC_ID: AtomicUsize = AtomicUsize::new(0);
+                    let id = ATOMIC_ID.fetch_add(1, Ordering::SeqCst);
+                    format!("mtool-thread-pool-{}", id)
+                })
+                .build()?
+                .block_on(async move {
+                    if let Err(e) = run().await {
+                        error!("{:?}", e);
+                        eprintln!("{:?}", e);
+                        std::process::exit(-1);
+                    }
+                });
             Ok(())
         }));
 

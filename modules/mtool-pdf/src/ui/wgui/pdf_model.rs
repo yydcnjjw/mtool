@@ -1,4 +1,3 @@
-use base64::prelude::*;
 use serde::{Deserialize, Serialize};
 
 #[derive(Serialize, Deserialize, Hash)]
@@ -8,38 +7,55 @@ pub struct PdfFile {
 }
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
-pub struct Bounds {
-    pub bottom: isize,
-    pub left: isize,
-    pub top: isize,
-    pub right: isize,
+pub struct Bound {
+    pub x: f64,
+    pub y: f64,
+    pub width: f64,
+    pub height: f64,
+}
+
+#[derive(Debug, Serialize, Deserialize, Clone)]
+pub struct Block {
+    pub r#type: String,
+    pub index: usize,
+    pub bound: Bound,
 }
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct PageInfo {
-    pub width: i32,
-    pub height: i32,
-    pub text_segs: Vec<Bounds>,
+    pub width: usize,
+    pub height: usize,
 }
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
-pub struct PdfInfo {
+pub struct PdfDocumentInfo {
     pub pages: Vec<PageInfo>,
 }
 
-#[derive(Serialize, Deserialize)]
-pub struct PdfRenderArgs {
-    pub page_index: u16,
+impl PdfDocumentInfo {
+    pub fn width(&self) -> usize {
+        self.pages.iter().map(|size| size.width).max().unwrap_or(0)
+    }
+
+    pub fn height(&self) -> usize {
+        self.pages.iter().map(|size| size.height).sum()
+    }
 }
 
-impl PdfRenderArgs {
-    #[allow(unused)]
-    pub fn decode<T: AsRef<[u8]>>(input: T) -> Result<Self, anyhow::Error> {
-        Ok(serde_json::from_slice(&BASE64_STANDARD.decode(input)?)?)
-    }
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct ScaleEvent {
+    pub scale: f32,
+    pub mouse_point: (i32, i32),
+}
 
-    #[allow(unused)]
-    pub fn encode(&self) -> Result<String, anyhow::Error> {
-        Ok(BASE64_STANDARD.encode(serde_json::to_string(self)?))
-    }
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct ScrollEvent {
+    pub left: i32,
+    pub top: i32,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub enum WPdfEvent {
+    Scale(ScaleEvent),
+    Scroll(ScrollEvent),
 }

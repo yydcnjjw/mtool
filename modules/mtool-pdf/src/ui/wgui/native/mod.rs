@@ -1,4 +1,17 @@
+mod pdf_viewer;
+mod pdf_document;
+mod pdf_page;
 mod window;
+
+cfg_if::cfg_if! {
+    if #[cfg(windows)] {
+        mod windows;
+        use windows::*;
+    } else if #[cfg(target_os = "linux")] {
+        mod linux;
+        use linux::*;
+    }
+}
 
 use async_trait::async_trait;
 use base64::prelude::*;
@@ -8,7 +21,7 @@ use mapp::{
 };
 use mtool_cmder::{Cmder, CreateCommandDescriptor};
 use mtool_core::CmdlineStage;
-use mtool_interactive::{Completion, CompletionArgs};
+use mtool_interactive::Completion;
 use mtool_wgui::{Builder, WGuiStage};
 pub use window::PdfViewerWindow;
 
@@ -55,30 +68,38 @@ async fn register_command(cmder: Res<Cmder>) -> Result<(), anyhow::Error> {
 
 async fn open_pdf(
     window: Res<PdfViewerWindow>,
-    c: Res<Completion>,
+    _c: Res<Completion>,
     // cs: Res<ConfigStore>,
 ) -> Result<(), anyhow::Error> {
     // let cfg: Config = cs.get("pdf").await?;
 
-    let path: String = match c
-        .complete_read(
-            CompletionArgs::without_completion()
-                // CompletionArgs::new(|completed| async move {
-                //     list_file(completed).await
-                // })
-                .prompt("Open pdf: ")
-                .hide_window(),
-        )
-        .await?
-    {
-        Some(v) => v,
-        None => return Ok(()),
-    };
+    // let path: String = match c
+    //     .complete_read(
+    //         CompletionArgs::without_completion()
+    //             // CompletionArgs::new(|completed| async move {
+    //             //     list_file(completed).await
+    //             // })
+    //             .prompt("Open pdf: ")
+    //             .hide_window(),
+    //     )
+    //     .await?
+    // {
+    //     Some(v) => v,
+    //     None => return Ok(()),
+    // };
 
     window.emit(
         "route",
-        format!("/pdfviewer/{}", BASE64_STANDARD.encode(path)),
+        format!(
+            "/pdfviewer/{}",
+            BASE64_STANDARD.encode(if cfg!(windows) {
+                "D:/book/art.pdf"
+            } else {
+                "/home/yydcnjjw/resource/book/art.pdf"
+            })
+        ),
     )?;
     window.show()?;
+
     Ok(())
 }

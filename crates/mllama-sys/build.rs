@@ -46,6 +46,7 @@ fn build_llama(target: &str) {
         .warnings(false)
         .include("llama.cpp")
         .file("llama.cpp/llama.cpp")
+        .flag_if_supported("/EHa")
         .cpp_link_stdlib(get_cpp_link_stdlib(target))
         .compile("llama");
     println!("cargo:rustc-link-lib=static=llama");
