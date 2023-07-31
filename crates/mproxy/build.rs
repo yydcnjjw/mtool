@@ -5,7 +5,7 @@ use protobuf_codegen::Customize;
 use protobuf_codegen::CustomizeCallback;
 
 fn main() {
-    println!("cargo:rerun-if-changed=src/geosite.proto");
+    println!("cargo:rerun-if-changed=src/config/protos/geosite.proto");
 
     struct GenSerde;
 
