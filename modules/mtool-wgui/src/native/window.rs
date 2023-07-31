@@ -116,7 +116,7 @@ impl MtoolWindow {
                 .shadow(false)
                 .build()
                 .expect("create mtool window failed"),
-            true,
+            cfg!(not(debug_assertions)),
         ))
     }
 }

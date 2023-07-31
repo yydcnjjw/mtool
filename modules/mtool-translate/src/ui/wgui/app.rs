@@ -90,7 +90,11 @@ impl Component for App {
                                      "font-mono")}
                      tabindex=0
                      ref={ self.root.clone() }>
-                  <div class={classes!("columns-3","m-1")}>
+                  <div class={classes!("flex",
+                                       "flex-row",
+                                       "justify-between",
+                                       "m-1",
+                                       "w-full")}>
                     <div>
                       <span>{ "source: " }</span>
                       <span>{ self.source.clone() }</span>
