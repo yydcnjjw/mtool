@@ -15,11 +15,13 @@ use crate::translator::{self, LanguageType};
 struct Config {
     base_url: String,
     key: String,
+    model: String,
 }
 
 #[derive(Debug)]
 pub struct Translator {
     cli: Client,
+    cfg: Config,
 }
 
 impl Translator {
@@ -31,6 +33,7 @@ impl Translator {
 
         Ok(Res::new(Self {
             cli: Client::new(&cfg.base_url, &cfg.key)?,
+            cfg,
         }))
     }
 }
@@ -44,6 +47,7 @@ impl translator::Translator for Translator {
         target: LanguageType,
     ) -> Result<String, anyhow::Error> {
         let mut req = ChatRequest::default();
+        req.model = self.cfg.model.clone();
 
         let target = match target {
             LanguageType::Auto => "English",
