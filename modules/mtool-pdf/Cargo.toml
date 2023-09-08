@@ -101,8 +101,8 @@ features = [
 version = "*"
 
 [target.'cfg(not(target_family = "wasm"))'.dependencies.pdfium-render]
-path = "/home/yydcnjjw/workspace/project/pdfium-render"
-# git = "https://github.com/yydcnjjw/pdfium-render"
-# branch = "master"
+# path = "/home/yydcnjjw/workspace/project/pdfium-render"
+git = "https://github.com/yydcnjjw/pdfium-render"
+branch = "master"
 features = ["image", "sync"]
 

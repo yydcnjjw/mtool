@@ -1,7 +1,5 @@
 /target/
 /.vscode/
 
-/Cargo.lock
-
 /.log/
 /.bugs/
