@@ -53,7 +53,7 @@ pub struct RenderContext<'a> {
 }
 
 pub struct Renderer {
-    win: Arc<WGuiWindow>,
+    _win: Arc<WGuiWindow>,
 }
 
 impl Renderer {
@@ -79,7 +79,6 @@ impl Renderer {
 
     fn rebuild_widget(win: Arc<WGuiWindow>) -> Result<GLArea, anyhow::Error> {
         let win = win.gtk_window()?;
-        let size = win.size();
         let widget = win.children().pop().context("root widget is not exist")?;
         let vbox = widget
             .downcast::<gtk::Box>()
@@ -138,7 +137,7 @@ impl Renderer {
 
     fn on_render(
         glarea: &GLArea,
-        gl_context: &GLContext,
+        _gl_context: &GLContext,
         draw_hooks: &Vec<DrawHook>,
     ) -> Result<(), anyhow::Error> {
         if let Some(mut skctx) = unsafe { glarea.data::<SkiaContext>(Self::SKIA_CONTEXT_KEY) } {
@@ -205,6 +204,6 @@ impl Renderer {
             }
         })?;
 
-        Ok(Self { win })
+        Ok(Self { _win: win })
     }
 }

@@ -58,4 +58,11 @@ pub struct ScrollEvent {
 pub enum WPdfEvent {
     Scale(ScaleEvent),
     Scroll(ScrollEvent),
+    HighlightSentence {
+        page_index: u16, // PdfPageIndex
+        x: i32,
+        y: i32,
+    },
+    PrevSentence,
+    NextSentence,
 }

@@ -5,6 +5,8 @@ use std::{
     rc::Rc,
 };
 
+use pdfium_render::prelude::{PdfPageIndex, PdfiumLibraryBindings};
+
 use crate::ui::wgui::{service::PdfDocument as Document, PdfDocumentInfo};
 
 use super::pdf_page::PdfPage;
@@ -30,7 +32,11 @@ impl DocumentInner {
         }
     }
 
-    fn get_page(&mut self, index: u16) -> Result<PdfPage, anyhow::Error> {
+    fn page_count(&self) -> u16 {
+        self.pages().len()
+    }
+
+    fn get_page(&mut self, index: PdfPageIndex) -> Result<PdfPage, anyhow::Error> {
         Ok(match self.cached_pages.iter().find(|(i, _)| *i == index) {
             Some((_, page)) => page.clone(),
             None => {
@@ -41,7 +47,7 @@ impl DocumentInner {
                 }
 
                 self.cached_pages
-                    .push_front((index, PdfPage::new(self.pages().get(index)?)?));
+                    .push_front((index, PdfPage::new(self.pages().get(index)?, index)?));
 
                 self.cached_pages.front().unwrap().1.clone()
             }
@@ -61,6 +67,10 @@ impl PdfDocument {
         }
     }
 
+    pub fn bindings(&self) -> &'static dyn PdfiumLibraryBindings {
+        self.inner.borrow().bindings()
+    }
+
     pub fn width(&self) -> usize {
         self.inner.borrow().width()
     }
@@ -69,7 +79,11 @@ impl PdfDocument {
         self.inner.borrow().height()
     }
 
-    pub fn get_page(&self, index: u16) -> Result<PdfPage, anyhow::Error> {
+    pub fn page_count(&self) -> u16 {
+        self.inner.borrow().page_count()
+    }
+
+    pub fn get_page(&self, index: PdfPageIndex) -> Result<PdfPage, anyhow::Error> {
         self.inner.borrow_mut().get_page(index)
     }
 

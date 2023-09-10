@@ -1,17 +1,19 @@
 use mtauri_sys::window::{Size, Window};
-use mtool_wgui::component::error::render_result_view;
+use mtool_wgui::{component::error::render_result_view, generate_keymap, Keybinding};
 use serde::Serialize;
 use tracing::warn;
 use wasm_bindgen::prelude::*;
 use web_sys::HtmlDivElement;
 use yew::{platform::spawn_local, prelude::*};
 
-use crate::ui::wgui::{PageInfo, PdfFile, PdfDocumentInfo, ScaleEvent, ScrollEvent, WPdfEvent};
+use crate::ui::wgui::{PageInfo, PdfDocumentInfo, PdfFile, ScaleEvent, ScrollEvent, WPdfEvent};
 
 pub struct App {
     root: NodeRef,
 
     pdf_info: Option<Result<PdfDocumentInfo, anyhow::Error>>,
+
+    keybinding: Keybinding,
 
     scale: f32,
 }
@@ -24,6 +26,9 @@ pub enum DeviceEvent {
 pub enum AppMsg {
     PdfLoaded(Result<PdfDocumentInfo, anyhow::Error>),
     DeviceEvent(DeviceEvent),
+
+    PrevSentence,
+    NextSentence,
 }
 
 #[derive(Properties, PartialEq)]
@@ -42,6 +47,9 @@ impl Component for App {
         Self {
             root: NodeRef::default(),
             pdf_info: None,
+
+            keybinding: Keybinding::new(),
+
             scale: 1.,
         }
     }
@@ -67,6 +75,14 @@ impl Component for App {
                 }
                 true
             }
+            AppMsg::PrevSentence => {
+                send_pdf_event(WPdfEvent::PrevSentence);
+                false
+            }
+            AppMsg::NextSentence => {
+                send_pdf_event(WPdfEvent::NextSentence);
+                false
+            }
         }
     }
 
@@ -91,11 +107,7 @@ impl Component for App {
               <div
                 class={classes!("w-screen",
                                 "h-screen",
-                                "flex",
-                                "flex-row",
-                                "justify-center",
-                                "items-start",
-                                "overflow-y-scroll",
+                                "overflow-scroll",
                                 "bg-transparent",
                                 "relative")}
                 ref={self.root.clone()}
@@ -119,7 +131,11 @@ impl Component for App {
         }
     }
 
-    fn rendered(&mut self, _ctx: &Context<Self>, _first_render: bool) {}
+    fn rendered(&mut self, ctx: &Context<Self>, first_render: bool) {
+        if first_render {
+            self.register_keybinding(ctx)
+        }
+    }
 }
 
 impl App {
@@ -146,7 +162,11 @@ impl App {
         .await
     }
 
-    fn render_pdf(&self, _ctx: &Context<Self>, info: &PdfDocumentInfo) -> Result<Html, anyhow::Error> {
+    fn render_pdf(
+        &self,
+        _ctx: &Context<Self>,
+        info: &PdfDocumentInfo,
+    ) -> Result<Html, anyhow::Error> {
         if info.pages.is_empty() {
             anyhow::bail!("pdf page is empty")
         }
@@ -154,14 +174,15 @@ impl App {
         let (doc_width, doc_height) = (info.width(), info.height());
 
         let scale = self.scale;
-        let (width, height) = (doc_width as f32 * scale, doc_height as f32 * scale);
+        let (width, height) = (
+            (doc_width as f32 * scale).round(),
+            (doc_height as f32 * scale).round(),
+        );
 
         Ok(html! {
             <>
               <div
-                class={classes!("flex",
-                                "flex-col",
-                                "items-center")}
+                class={classes!("mx-auto")}
                 style={format!(r#"
 width: {width}px;
 height: {height}px;
@@ -172,7 +193,7 @@ height: {height}px;
                     for info.pages.iter().enumerate()
                         .map(|(i, info)| html! {
                             <PdfPage
-                                index={i as i32}
+                                pageindex={i as u16}
                                 info={info.clone()}
                                 scale={scale}/>
                         })
@@ -215,32 +236,49 @@ height: {height}px;
                     let delta = e.delta_y() as f32;
                     let delta = delta * if self.scale > 1. { -0.001 } else { -0.0005 };
                     self.scale = (self.scale + delta).clamp(0.25, 5.);
-                    self.send_pdf_event(WPdfEvent::Scale(ScaleEvent {
+                    send_pdf_event(WPdfEvent::Scale(ScaleEvent {
                         scale: self.scale,
                         mouse_point: (e.client_x(), e.client_y()),
                     }))
                 }
             }
             DeviceEvent::Scroll(e) => {
-                self.send_pdf_event(WPdfEvent::Scroll(e));
+                send_pdf_event(WPdfEvent::Scroll(e));
             }
         }
         Ok(())
     }
 
-    fn send_pdf_event(&self, e: WPdfEvent) {
-        let window = Window::current().unwrap();
-        spawn_local(async move {
-            if let Err(e) = window.emit("pdf-event", &e).await {
-                warn!("{:?}", e);
+    fn register_keybinding(&self, ctx: &Context<Self>) {
+        let send = |msg: fn() -> AppMsg| {
+            let link = ctx.link().clone();
+            move || {
+                let link = link.clone();
+                async move {
+                    link.send_message(msg());
+                    Ok::<(), anyhow::Error>(())
+                }
             }
+        };
+
+        let km = generate_keymap!(
+            ("n", send(|| AppMsg::NextSentence)),
+            ("p", send(|| AppMsg::PrevSentence)),
+        )
+        .unwrap();
+
+        self.keybinding.push_keymap("pdfviewer", km);
+
+        self.keybinding.setup_on_keydown(|f| {
+            let root = self.root.cast::<HtmlDivElement>().unwrap();
+            root.set_onkeydown(f);
         });
     }
 }
 
 #[derive(Properties, Clone)]
 struct PdfPageProps {
-    index: i32,
+    pageindex: u16,
 
     info: PageInfo,
 
@@ -249,7 +287,7 @@ struct PdfPageProps {
 
 impl PartialEq for PdfPageProps {
     fn eq(&self, other: &Self) -> bool {
-        self.index == other.index && self.scale == other.scale
+        self.pageindex == other.pageindex && self.scale == other.scale
     }
 }
 
@@ -257,20 +295,42 @@ impl PartialEq for PdfPageProps {
 fn PdfPage(props: &PdfPageProps) -> Html {
     fn render(props: &PdfPageProps) -> Result<Html, anyhow::Error> {
         let PdfPageProps {
-            index: _,
+            pageindex,
             info,
             scale,
         } = props;
 
+        let onmousemove = {
+            let page_index = *pageindex;
+            Callback::from(move |e: MouseEvent| {
+                send_pdf_event(WPdfEvent::HighlightSentence {
+                    page_index,
+                    x: e.offset_x(),
+                    y: e.offset_y(),
+                });
+            })
+        };
+
         Ok(html! {
-            <div style={
-                format!(r#"
+            <div
+              style={
+                    format!(r#"
 width: {}px;
 height: {}px;
-"#, info.width as f32 * scale, info.height as f32 * scale)
-            }>
+"#, (info.width as f32 * scale).round(), (info.height as f32 * scale).round())}
+              {onmousemove}
+            >
             </div>
         })
     }
     render_result_view(render(props))
+}
+
+fn send_pdf_event(e: WPdfEvent) {
+    let window = Window::current().unwrap();
+    spawn_local(async move {
+        if let Err(e) = window.emit("pdf-event", &e).await {
+            warn!("{:?}", e);
+        }
+    });
 }

@@ -1,40 +1,45 @@
-use std::{ffi::c_void, sync::Arc};
+use std::{collections::HashMap, ffi::c_void, sync::Arc};
 
 use anyhow::Context;
 use itertools::Itertools;
 use mtool_wgui::WGuiWindow;
 use pdfium_render::prelude::*;
 use skia_safe as sk;
-use tauri::{LogicalSize, Manager, PhysicalPosition, PhysicalSize, WindowEvent};
+use tauri::{Manager, PhysicalPosition, PhysicalSize, WindowEvent};
 use tokio::sync::{broadcast, watch};
 use tracing::{debug, warn};
 
-use super::{pdf_document::PdfDocument, pdf_page::TextRange};
+use super::{
+    pdf_document::PdfDocument,
+    pdf_page::{PdfPage, PdfTextRange},
+};
 use crate::{
     pdf::Pdf,
     ui::wgui::{
         service::{PdfDocument as Document, PdfLoader},
-        ScaleEvent, ScrollEvent, WPdfEvent,
+        PageInfo, ScaleEvent, ScrollEvent, WPdfEvent,
     },
 };
 
-struct PdfRenderer {
+struct PdfViewerInner {
     doc: Option<PdfDocument>,
 
     surface: sk::Surface,
 
-    bitmap: PdfBitmap<'static>,
+    pdf_bitmap: PdfBitmap<'static>,
 
     image_snapshot: watch::Sender<sk::Image>,
+
+    selections: HashMap<PdfPageIndex, Vec<PdfTextRange>>,
 
     size: PhysicalSize<u32>,
     scale: f32,
     scroll_offset: PhysicalPosition<i32>,
 }
 
-unsafe impl Send for PdfRenderer {}
+unsafe impl Send for PdfViewerInner {}
 
-impl PdfRenderer {
+impl PdfViewerInner {
     fn new(size: PhysicalSize<u32>) -> Result<(Self, watch::Receiver<sk::Image>), anyhow::Error> {
         let PhysicalSize { width, height } = size.cast::<i32>();
         let mut surface =
@@ -46,13 +51,15 @@ impl PdfRenderer {
             Self {
                 doc: None,
                 surface,
-                bitmap: PdfBitmap::empty(
+                pdf_bitmap: PdfBitmap::empty(
                     width,
                     height,
                     PdfBitmapFormat::BGRA,
                     Pdf::get_unwrap().bindings(),
                 )?,
                 image_snapshot,
+
+                selections: HashMap::new(),
 
                 scale: 1.,
                 size,
@@ -69,102 +76,67 @@ impl PdfRenderer {
     fn draw_selection(
         &mut self,
         page: &PdfPage,
-        (page_width, page_height): (i32, i32),
-
-        text_range: &TextRange,
+        page_size: sk::ISize,
     ) -> Result<(), anyhow::Error> {
-        let bindings = page.bindings();
-        let page_handle = page.page_handle();
-        let text_page = page.text()?;
-        let text_page_handle = text_page.handle();
-        let count = bindings.FPDFText_CountRects(
-            *text_page_handle,
-            text_range.index as i32,
-            text_range.count as i32,
-        );
+        let text_ranges = match self.selections.get(&page.index()) {
+            Some(v) => v,
+            None => return Ok(()),
+        };
 
         let mut highlight_rects = Vec::new();
-        let mut line_rect = sk::Rect::new_empty();
-        for i in 0..count {
-            let (mut page_left, mut page_top, mut page_right, mut page_bottom) = (0., 0., 0., 0.);
-            if bindings.FPDFText_GetRect(
-                *text_page_handle,
-                i,
-                &mut page_left,
-                &mut page_top,
-                &mut page_right,
-                &mut page_bottom,
-            ) == 1
-            {
-                let mut left = 0;
-                let mut top = 0;
-                let mut right = 0;
-                let mut bottom = 0;
-                bindings.FPDF_PageToDevice(
-                    page_handle,
-                    0,
-                    0,
-                    page_width,
-                    page_height,
-                    page.rotation()?.as_pdfium(),
-                    page_left,
-                    page_top,
-                    &mut left,
-                    &mut top,
-                );
 
-                bindings.FPDF_PageToDevice(
-                    page_handle,
-                    0,
-                    0,
-                    page_width,
-                    page_height,
-                    page.rotation()?.as_pdfium(),
-                    page_right,
-                    page_bottom,
-                    &mut right,
-                    &mut bottom,
-                );
+        for text_range in text_ranges {
+            let mut line_rect = sk::IRect::new_empty();
 
-                let rect = sk::Rect::new(left as f32, top as f32, right as f32, bottom as f32);
+            for rect in page.get_text_rects(page_size, text_range)? {
                 if line_rect.is_empty() {
                     line_rect = rect;
                 } else {
-                    if sk::Rect::new(f32::MIN, line_rect.top, f32::MAX, line_rect.bottom)
-                        .intersect(sk::Rect::new(f32::MIN, top as f32, f32::MAX, bottom as f32))
-                    {
-                        line_rect.join(rect);
+                    // NOTE: if IRect is same, return false
+                    // therefore we need to make the horizontal size different
+                    if sk::IRect::intersects(
+                        &sk::IRect::new(0, line_rect.top, i32::MAX, line_rect.bottom),
+                        &sk::IRect::new(i32::MIN, rect.top, i32::MAX, rect.bottom),
+                    ) {
+                        line_rect = sk::IRect::join(&line_rect, &rect);
                     } else {
                         highlight_rects.push(line_rect);
                         line_rect = rect;
                     }
                 }
             }
+            highlight_rects.push(line_rect);
         }
-
-        highlight_rects.push(line_rect);
 
         let mut paint = sk::Paint::new(sk::Color4f::from(sk::Color::from_rgb(153, 193, 218)), None);
         paint.set_blend_mode(sk::BlendMode::Multiply);
         for rect in highlight_rects {
-            self.canvas().draw_rect(rect, &paint);
+            self.canvas().draw_irect(rect, &paint);
         }
 
         Ok(())
     }
 
     fn render_pdf(&mut self, doc: PdfDocument) -> Result<(), anyhow::Error> {
-        let PhysicalSize { width, height } = self.size;
-        let (doc_width, _doc_height) = (doc.width(), doc.height());
+        let PhysicalSize {
+            width: viewpoint_width,
+            height: viewpoint_height,
+        } = self.size;
+        let (doc_width, _doc_height) = self.size_with_scale(doc.width(), doc.height());
+
+        let scroll_offset = self.scroll_offset;
 
         let doc_viewpoint = sk::IRect::new(
-            0,
-            self.scroll_offset.y,
-            doc_width as i32,
-            self.scroll_offset.y + height as i32,
+            scroll_offset.x,
+            scroll_offset.y,
+            scroll_offset.x + (viewpoint_width as i32).min(doc_width),
+            scroll_offset.y + viewpoint_height as i32,
         );
 
-        debug!("doc_viewpoint={:?}", doc_viewpoint);
+        debug!(
+            "viewpoint={:?} doc_viewpoint={:?}",
+            self.size, doc_viewpoint
+        );
 
         let mut doc_top_offset = 0;
 
@@ -174,35 +146,50 @@ impl PdfRenderer {
             .iter()
             .enumerate()
             .filter_map(|(i, size)| {
-                let width = (size.width as f32 * self.scale) as i32;
-                let height = (size.height as f32 * self.scale) as i32;
+                let (page_width, page_height) = self.size_with_scale(size.width, size.height);
 
                 let page_top = doc_top_offset;
-                let page_bottom = page_top + height;
+                let page_bottom = page_top + page_height;
                 doc_top_offset = page_bottom;
 
-                let page_rect = sk::IRect::new(0, page_top, width, page_bottom);
+                let page_rect = sk::IRect::new(0, page_top, page_width, page_bottom);
 
                 let mut clip = sk::IRect::intersect(&page_rect, &doc_viewpoint)?;
 
                 clip.offset((0, -page_top));
 
-                Some((i, LogicalSize::new(width, height), clip))
+                Some((i as u16, sk::ISize::new(page_width, page_height), clip))
             })
             .collect_vec();
 
         self.canvas().save();
-        for (i, size, clip) in pages {
-            let page = doc.get_page(i as u16)?;
 
-            let page_width = size.width as i32;
-            let page_height = size.height as i32;
+        self.canvas()
+            .translate((((viewpoint_width as i32 - doc_viewpoint.width()) / 2), 0));
+
+        for (i, size, clip) in pages {
+            let page = doc.get_page(i)?;
+
+            let page_width = size.width;
+            let page_height = size.height;
 
             debug!("{i}, {page_width}, {page_height}, ({:?})", clip);
 
-            let pdf_bitmap = page.render_with_config(
+            let mut pdf_bitmap = PdfBitmap::empty(
+                page_width,
+                page_height,
+                PdfBitmapFormat::BGRA,
+                doc.bindings(),
+            )?;
+
+            page.render_into_bitmap_with_config(
+                &mut pdf_bitmap,
                 &PdfRenderConfig::default()
                     .set_target_size(page_width, page_height)
+                    .use_lcd_text_rendering(true)
+                    .clear_before_rendering(true)
+                    .render_form_data(false)
+                    .render_annotations(true)
                     .set_format(PdfBitmapFormat::BGRA),
             )?;
 
@@ -211,32 +198,40 @@ impl PdfRenderer {
             unsafe {
                 bitmap.install_pixels(
                     &sk::ImageInfo::new(
-                        (page_width, page_height),
+                        (clip.width(), clip.height()),
                         sk::ColorType::BGRA8888,
                         sk::AlphaType::Opaque,
                         None,
                     ),
-                    pdf_bitmap.as_bytes().as_ptr().cast_mut().cast::<c_void>(),
+                    {
+                        let p = pdf_bitmap.as_bytes().as_ptr();
+                        p.wrapping_add(
+                            (page_width as i32 * 4 * clip.top() + scroll_offset.x * 4) as usize,
+                        )
+                        .cast_mut()
+                        .cast::<c_void>()
+                    },
                     (page_width * 4) as usize,
                 );
             }
 
-            self.canvas().translate((0, -clip.top));
+            {
+                self.canvas().save();
 
-            self.canvas().save();
+                self.canvas().draw_image(bitmap.as_image(), (0, 0), None);
 
-            self.canvas()
-                .translate(((width as i32 - page_width) / 2 - 2, 0));
+                {
+                    self.canvas().save();
+                    self.canvas().translate((-clip.left, -clip.top));
+                    self.draw_selection(&page, size)?;
+                    self.canvas().restore();
+                }
 
-            self.canvas().draw_image(bitmap.as_image(), (0, 0), None);
+                self.canvas().restore();
 
-            // self.draw_selection(&page, (page_width, page_height), sentence)?;
-
-            self.canvas().restore();
-
-            self.canvas().translate((0, page_height));
+                self.canvas().translate((0, clip.height()));
+            }
         }
-
         self.canvas().restore();
 
         Ok(())
@@ -253,12 +248,102 @@ impl PdfRenderer {
         Ok(())
     }
 
+    fn size_with_scale(&self, width: usize, height: usize) -> (i32, i32) {
+        (
+            (width as f32 * self.scale).round() as i32,
+            (height as f32 * self.scale).round() as i32,
+        )
+    }
+
+    fn highlight_sentence(
+        &mut self,
+        page_index: PdfPageIndex,
+        position: sk::IPoint,
+    ) -> Result<bool, anyhow::Error> {
+        self.selections.clear();
+
+        Ok(match self.doc.clone() {
+            Some(doc) => {
+                let page = doc.get_page(page_index)?;
+                let PageInfo { width, height } = doc
+                    .document_info()
+                    .pages
+                    .get(page_index as usize)
+                    .context(format!("page is not exist: {page_index}"))?
+                    .clone();
+
+                let (page_width, page_height) = self.size_with_scale(width, height);
+
+                let pos = page.device_to_page(
+                    &sk::IRect::new(0, 0, page_width, page_height),
+                    (position.x, position.y),
+                )?;
+
+                let (tolerance_width, tolerance_height) = (5, 5);
+
+                let text_page = page.text()?;
+                let chars = text_page.chars();
+                if let Some(ch) = chars.get_char_near_point(
+                    PdfPoints::new(pos.0 as f32),
+                    PdfPoints::new(tolerance_width as f32),
+                    PdfPoints::new(pos.1 as f32),
+                    PdfPoints::new(tolerance_height as f32),
+                ) {
+                    let begin = match (0..ch.index()).rev().find(|ch| match chars.get(*ch) {
+                        Ok(ch) => ch.unicode_char() == Some('.'),
+                        Err(_) => false,
+                    }) {
+                        Some(ch) => ch + 1,
+                        None => 0,
+                    };
+
+                    let end = match (ch.index()..chars.len()).find(|ch| match chars.get(*ch) {
+                        Ok(ch) => ch.unicode_char() == Some('.'),
+                        Err(_) => false,
+                    }) {
+                        Some(ch) => ch + 1,
+                        None => {
+                            if page_index + 1 != doc.page_count() {
+                                let page = doc.get_page(page_index + 1)?;
+                                let text_page = page.text()?;
+                                let end = match text_page
+                                    .chars()
+                                    .iter()
+                                    .find_or_last(|ch| ch.unicode_char() == Some('.'))
+                                {
+                                    Some(ch) => ch.index() + 1,
+                                    None => text_page.chars().len(),
+                                };
+                                self.selections
+                                    .entry(page_index + 1)
+                                    .or_default()
+                                    .push(PdfTextRange::new(page_index, 0, end));
+                            }
+                            chars.len()
+                        }
+                    };
+
+                    self.selections
+                        .entry(page_index)
+                        .or_default()
+                        .push(PdfTextRange::new(page_index, begin, end - begin));
+                }
+                true
+            }
+            None => false,
+        })
+    }
+
+    fn prev_sentence(&mut self) {}
+
+    fn next_sentence(&mut self) {}
+
     fn resize(&mut self, size: PhysicalSize<u32>) -> Result<(), anyhow::Error> {
         let PhysicalSize { width, height } = size.cast::<i32>();
         self.surface =
             sk::surfaces::raster_n32_premul((width, height)).context("create pdf surface")?;
 
-        self.bitmap = PdfBitmap::empty(
+        self.pdf_bitmap = PdfBitmap::empty(
             width,
             height,
             PdfBitmapFormat::BGRA,
@@ -275,17 +360,6 @@ impl PdfRenderer {
                 self.doc = Some(PdfDocument::new(Arc::try_unwrap(doc).unwrap()));
                 true
             }
-            PdfEvent::Scale(ScaleEvent {
-                scale,
-                mouse_point: _,
-            }) => {
-                self.scale = scale;
-                true
-            }
-            PdfEvent::Scroll(ScrollEvent { left, top }) => {
-                self.scroll_offset = PhysicalPosition::new(left, top);
-                true
-            }
             PdfEvent::Window(e) => match e {
                 WindowEvent::Resized(size) => {
                     if size.width == 0 || size.height == 0 {
@@ -297,8 +371,33 @@ impl PdfRenderer {
                 }
                 _ => false,
             },
+            PdfEvent::WGui(e) => match e {
+                WPdfEvent::Scale(ScaleEvent {
+                    scale,
+                    mouse_point: _,
+                }) => {
+                    self.scale = scale;
+                    true
+                }
+                WPdfEvent::Scroll(ScrollEvent { left, top }) => {
+                    self.scroll_offset = PhysicalPosition::new(left, top);
+                    true
+                }
+                WPdfEvent::HighlightSentence { page_index, x, y } => {
+                    self.highlight_sentence(page_index, sk::IPoint::new(x, y))?
+                }
+                WPdfEvent::PrevSentence => {
+                    self.prev_sentence();
+                    true
+                }
+                WPdfEvent::NextSentence => {
+                    self.next_sentence();
+                    true
+                }
+            },
         })
     }
+
     async fn handle_multi_event(&mut self, events: Vec<PdfEvent>) -> Result<(), anyhow::Error> {
         let mut need_redraw = false;
         for e in events {
@@ -339,7 +438,7 @@ impl PdfViewer {
 
         let event_receiver = pdf_event_receiver(&loader, &win).await;
 
-        let (renderer, image_snapshot) = PdfRenderer::new(win.inner_size()?)?;
+        let (renderer, image_snapshot) = PdfViewerInner::new(win.inner_size()?)?;
 
         tokio::spawn(async move {
             if let Err(e) = renderer.run_loop(event_receiver).await {
@@ -361,9 +460,10 @@ impl PdfViewer {
 #[derive(Debug, Clone)]
 enum PdfEvent {
     DocChanged(Arc<Document>),
-    Scale(ScaleEvent),
-    Scroll(ScrollEvent),
+
     Window(WindowEvent),
+
+    WGui(WPdfEvent),
 }
 
 async fn pdf_event_receiver(loader: &PdfLoader, win: &WGuiWindow) -> broadcast::Receiver<PdfEvent> {
@@ -380,14 +480,9 @@ async fn pdf_event_receiver(loader: &PdfLoader, win: &WGuiWindow) -> broadcast::
         win.listen("pdf-event", move |e| {
             if let Some(payload) = e.payload() {
                 match serde_json::from_str::<WPdfEvent>(payload) {
-                    Ok(e) => match e {
-                        WPdfEvent::Scale(e) => {
-                            let _ = tx.send(PdfEvent::Scale(e));
-                        }
-                        WPdfEvent::Scroll(e) => {
-                            let _ = tx.send(PdfEvent::Scroll(e));
-                        }
-                    },
+                    Ok(e) => {
+                        let _ = tx.send(PdfEvent::WGui(e));
+                    }
                     Err(_) => {
                         warn!("{:?}", e);
                     }
