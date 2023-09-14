@@ -1,6 +1,7 @@
 use std::ops::Deref;
 
 use itertools::Itertools;
+use mcloud_api::adobe;
 use pdfium_render::prelude as pdfium;
 
 use crate::ui::wgui::{PageInfo, PdfDocumentInfo};
@@ -8,6 +9,7 @@ use crate::ui::wgui::{PageInfo, PdfDocumentInfo};
 pub struct PdfDocument {
     doc: pdfium::PdfDocument<'static>,
     info: PdfDocumentInfo,
+    adobe: Option<adobe::PdfStructure>,
 }
 
 unsafe impl Send for PdfDocument {}
@@ -27,10 +29,17 @@ impl std::fmt::Debug for PdfDocument {
 }
 
 impl PdfDocument {
-    pub(super) async fn new(doc: pdfium::PdfDocument<'static>) -> Result<Self, anyhow::Error> {
+    pub(super) async fn new(
+        doc: pdfium::PdfDocument<'static>,
+        adobe: Option<adobe::PdfStructure>,
+    ) -> Result<Self, anyhow::Error> {
         let info = load_document_info(&doc).await?;
 
-        Ok(Self { doc, info })
+        Ok(Self {
+            doc,
+            info,
+            adobe,
+        })
     }
 
     pub fn document_info(&self) -> &PdfDocumentInfo {
@@ -44,6 +53,28 @@ impl PdfDocument {
     pub fn height(&self) -> usize {
         self.document_info().height()
     }
+
+    pub fn paragraphs(&self) -> impl Iterator<Item = &adobe::Element> {
+        self.adobe.iter().flat_map(|adobe| {
+            adobe
+                .elements
+                .iter()
+                .filter(|elem| elem.path.starts_with("//Document/P"))
+        })
+    }
+
+    // pub fn sentences(&self) -> impl Iterator<Item = &Sentence> {
+    //     self.paragraphs().flat_map(|paragraph| paragraph.sentence())
+    // }
+
+    // pub fn paragraphs(&self) -> impl Iterator<Item = &Paragraph> {
+    //     self.tei
+    //         .text
+    //         .body
+    //         .divs
+    //         .iter()
+    //         .flat_map(|div| div.paragraph())
+    // }
 }
 
 async fn load_document_info(

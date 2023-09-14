@@ -32,7 +32,7 @@ struct PdfViewerInner {
 
     selections: HashMap<PdfPageIndex, Vec<PdfTextRange>>,
 
-    size: PhysicalSize<u32>,
+    viewpoint: PhysicalSize<u32>,
     scale: f32,
     scroll_offset: PhysicalPosition<i32>,
 }
@@ -40,8 +40,10 @@ struct PdfViewerInner {
 unsafe impl Send for PdfViewerInner {}
 
 impl PdfViewerInner {
-    fn new(size: PhysicalSize<u32>) -> Result<(Self, watch::Receiver<sk::Image>), anyhow::Error> {
-        let PhysicalSize { width, height } = size.cast::<i32>();
+    fn new(
+        viewpoint: PhysicalSize<u32>,
+    ) -> Result<(Self, watch::Receiver<sk::Image>), anyhow::Error> {
+        let PhysicalSize { width, height } = viewpoint.cast::<i32>();
         let mut surface =
             sk::surfaces::raster_n32_premul((width, height)).context("create pdf surface")?;
 
@@ -61,8 +63,8 @@ impl PdfViewerInner {
 
                 selections: HashMap::new(),
 
+                viewpoint,
                 scale: 1.,
-                size,
                 scroll_offset: PhysicalPosition::new(0, 0),
             },
             rx,
@@ -117,11 +119,35 @@ impl PdfViewerInner {
         Ok(())
     }
 
+    fn draw_pargraphs(
+        &mut self,
+        doc: &PdfDocument,
+        page: &PdfPage,
+        page_size: sk::ISize,
+    ) -> Result<(), anyhow::Error> {
+        let page_region = sk::IRect::new(0, 0, page_size.width, page_size.height);
+
+        let mut paint = sk::Paint::new(sk::Color4f::from(sk::Color::BLUE), None);
+        paint.set_stroke(true);
+
+        for paragraph in doc.get_page_paragraphs(page.index()) {
+            let [left, top, right, bottom] = paragraph.bounds.unwrap();
+
+            let (left, top) = page.page_to_device(&page_region, (left, top))?;
+            let (right, bottom) = page.page_to_device(&page_region, (right, bottom))?;
+
+            self.canvas()
+                .draw_irect(sk::IRect::new(left, top, right, bottom), &paint);
+        }
+
+        Ok(())
+    }
+
     fn render_pdf(&mut self, doc: PdfDocument) -> Result<(), anyhow::Error> {
         let PhysicalSize {
             width: viewpoint_width,
             height: viewpoint_height,
-        } = self.size;
+        } = self.viewpoint;
         let (doc_width, _doc_height) = self.size_with_scale(doc.width(), doc.height());
 
         let scroll_offset = self.scroll_offset;
@@ -135,7 +161,7 @@ impl PdfViewerInner {
 
         debug!(
             "viewpoint={:?} doc_viewpoint={:?}",
-            self.size, doc_viewpoint
+            self.viewpoint, doc_viewpoint
         );
 
         let mut doc_top_offset = 0;
@@ -167,11 +193,11 @@ impl PdfViewerInner {
         self.canvas()
             .translate((((viewpoint_width as i32 - doc_viewpoint.width()) / 2), 0));
 
-        for (i, size, clip) in pages {
+        for (i, page_size, clip) in pages {
             let page = doc.get_page(i)?;
 
-            let page_width = size.width;
-            let page_height = size.height;
+            let page_width = page_size.width;
+            let page_height = page_size.height;
 
             debug!("{i}, {page_width}, {page_height}, ({:?})", clip);
 
@@ -223,7 +249,8 @@ impl PdfViewerInner {
                 {
                     self.canvas().save();
                     self.canvas().translate((-clip.left, -clip.top));
-                    self.draw_selection(&page, size)?;
+                    self.draw_selection(&page, page_size)?;
+                    self.draw_pargraphs(&doc, &page, page_size)?;
                     self.canvas().restore();
                 }
 
@@ -255,6 +282,7 @@ impl PdfViewerInner {
         )
     }
 
+    #[allow(unused)]
     fn highlight_sentence(
         &mut self,
         page_index: PdfPageIndex,
@@ -350,7 +378,7 @@ impl PdfViewerInner {
             Pdf::get_unwrap().bindings(),
         )?;
 
-        self.size = size;
+        self.viewpoint = size;
         Ok(())
     }
 
@@ -383,8 +411,13 @@ impl PdfViewerInner {
                     self.scroll_offset = PhysicalPosition::new(left, top);
                     true
                 }
-                WPdfEvent::HighlightSentence { page_index, x, y } => {
-                    self.highlight_sentence(page_index, sk::IPoint::new(x, y))?
+                WPdfEvent::HighlightSentence {
+                    page_index: _,
+                    x: _,
+                    y: _,
+                } => {
+                    // self.highlight_sentence(page_index, sk::IPoint::new(x, y))?
+                    false
                 }
                 WPdfEvent::PrevSentence => {
                     self.prev_sentence();
@@ -470,7 +503,7 @@ async fn pdf_event_receiver(loader: &PdfLoader, win: &WGuiWindow) -> broadcast::
     let (tx, rx) = broadcast::channel(64);
     {
         let tx = tx.clone();
-        loader.set_doc_loaded_handler(move |doc| {
+        loader.doc_loaded_handler(move |doc| {
             let _ = tx.send(PdfEvent::DocChanged(Arc::new(doc)));
         });
     }

@@ -157,7 +157,7 @@ pub struct CompletionExitArgs {
 }
 
 impl CompletionList {
-    const COMPLETION_LIST_KEYMAP: &str = "completion_list";
+    const COMPLETION_LIST_KEYMAP: &'static str = "completion_list";
 
     fn fetch_complete(ctx: &Context<Self>) {
         #[derive(Debug, Serialize, Deserialize)]

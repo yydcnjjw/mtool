@@ -3,9 +3,9 @@ use std::str::FromStr;
 use itertools::Itertools;
 use serde::{Deserialize, Deserializer};
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct Rect {
-    pub page: usize,
+    pub page: u16,
     pub x: f64,
     pub y: f64,
     pub w: f64,
@@ -32,7 +32,7 @@ impl FromStr for Rect {
         }
 
         Ok(Self {
-            page: usize::from_str(v[0])?,
+            page: u16::from_str(v[0])?,
             x: f64::from_str(v[1])?,
             y: f64::from_str(v[2])?,
             w: f64::from_str(v[3])?,
@@ -55,7 +55,7 @@ impl Rect {
     }
 }
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Clone, Deserialize)]
 enum SentenceElement {
     #[serde(rename = "$text")]
     Content(String),
@@ -63,7 +63,7 @@ enum SentenceElement {
     Other,
 }
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Clone, Deserialize)]
 pub struct Sentence {
     #[serde(rename = "@coords", deserialize_with = "Rect::deserialize")]
     pub coords: Vec<Rect>,

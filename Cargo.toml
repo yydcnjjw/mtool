@@ -72,7 +72,7 @@ futures = "*"
 parking_lot = "*"
 thiserror = "*"
 anyhow = "*"
-tauri = { version = "2.0.0-alpha.11" }
+tauri = { version = "2.0.0-alpha.14" }
 tauri-runtime-wry = { version = "1.0.0-alpha.0" }
 tauri-build = "2.0.0-alpha.8"
 serde = { version = "*", features = ["derive"] }

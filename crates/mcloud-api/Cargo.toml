@@ -8,12 +8,13 @@ edition.workspace = true
 
 [dependencies]
 serde = { workspace = true }
-reqwest = { workspace = true, features = ["blocking", "json"] }
-tokio = { workspace = true, features = ["rt", "macros"] }
+reqwest = { workspace = true, features = ["blocking", "json", "stream"] }
+tokio = { workspace = true, features = ["rt", "macros", "fs"] }
 anyhow = { workspace = true }
 thiserror = { workspace = true }
 regex = { workspace = true }
 serde_json = { workspace = true }
+tracing = { workspace = true }
 
 hex = "0.4"
 base64 = "0.13"
@@ -21,3 +22,9 @@ chrono = "0.4"
 digest = "0.10"
 hmac = "0.12"
 sha2 = "0.10"
+# zip = "*"
+
+[dev-dependencies]
+test-log = { version = "*", features = ["trace"] }
+env_logger = "*"
+tracing-subscriber = { workspace = true, features = ["env-filter", "fmt"] }

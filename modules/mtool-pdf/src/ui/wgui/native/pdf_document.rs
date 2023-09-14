@@ -5,9 +5,13 @@ use std::{
     rc::Rc,
 };
 
+use mcloud_api::adobe;
 use pdfium_render::prelude::{PdfPageIndex, PdfiumLibraryBindings};
 
-use crate::ui::wgui::{service::PdfDocument as Document, PdfDocumentInfo};
+use crate::ui::wgui::{
+    service::PdfDocument as Document,
+    PdfDocumentInfo,
+};
 
 use super::pdf_page::PdfPage;
 
@@ -53,6 +57,14 @@ impl DocumentInner {
             }
         })
     }
+
+    fn get_page_paragraphs(&self, index: PdfPageIndex) -> Vec<adobe::Element> {
+        self.inner
+            .paragraphs()
+            .filter(|p| p.page == Some(index) && p.bounds.is_some())
+            .cloned()
+            .collect()
+    }
 }
 
 #[derive(Clone)]
@@ -89,5 +101,9 @@ impl PdfDocument {
 
     pub fn document_info(&self) -> Ref<'_, PdfDocumentInfo> {
         Ref::map(self.inner.borrow(), |doc| doc.document_info())
+    }
+
+    pub fn get_page_paragraphs(&self, index: PdfPageIndex) -> Vec<adobe::Element> {
+        self.inner.borrow().get_page_paragraphs(index)
     }
 }

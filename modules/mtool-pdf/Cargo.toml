@@ -51,13 +51,15 @@ features = [
 
 [target.'cfg(not(target_family = "wasm"))'.dependencies]
 mtool-core = { path = "../mtool-core" }
+mcloud-api = { path = "../../crates/mcloud-api" }
 
 tauri = { workspace = true }
 tauri-runtime-wry = { workspace = true }
 quick-xml = { workspace = true, features = ["async-tokio"] }
 
 tao = "*"
-raw-window-handle = "*"
+raw-window-handle = "0.5"
+md5 = "*"
 # wgpu = "*"
 
 [target.'cfg(target_os = "linux")'.dependencies]
