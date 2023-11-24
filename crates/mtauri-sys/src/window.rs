@@ -1,4 +1,4 @@
-use serde::de::DeserializeOwned;
+use serde::{de::DeserializeOwned, Serialize};
 use serde_wasm_bindgen::from_value;
 use wasm_bindgen::{prelude::Closure, JsValue};
 
@@ -49,6 +49,13 @@ mod ffi {
             event: &str,
             handler: &Closure<dyn FnMut(JsValue) -> Result<(), JsValue>>,
         ) -> Result<JsValue, JsValue>;
+
+        #[wasm_bindgen(method, catch)]
+        pub async fn emit(
+            this: &WebviewWindow,
+            event: &str,
+            payload: JsValue,
+        ) -> Result<(), JsValue>;
 
         #[wasm_bindgen(catch)]
         pub fn getCurrent() -> Result<WebviewWindow, JsValue>;
@@ -164,5 +171,18 @@ impl Window {
                 Ok(())
             }
         })
+    }
+
+    pub async fn emit<T>(&self, event: &str, payload: &T) -> Result<(), anyhow::Error>
+    where
+        T: Serialize,
+    {
+        self.handle
+            .emit(
+                event,
+                serde_wasm_bindgen::to_value(payload).map_err(|e| anyhow::anyhow!("{}", e))?,
+            )
+            .await
+            .map_err(|e| anyhow::anyhow!("{:?}", e))
     }
 }

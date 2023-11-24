@@ -12,9 +12,13 @@ use mtool_core::{
     AppStage, CmdlineStage,
 };
 use mtool_system::keybinding::Keybinding;
-use tauri::{CustomMenuItem, SystemTray, SystemTrayEvent, SystemTrayMenu};
+use tauri::{
+    menu::{Menu, MenuItem},
+    tray::TrayIconBuilder,
+    Manager, RunEvent,
+};
 use tokio::sync::oneshot;
-use tracing::{info, warn};
+use tracing::{debug, info, warn};
 
 define_label! {
     pub enum WGuiStage {
@@ -63,30 +67,38 @@ async fn setup(builder: Res<Builder>, injector: Injector) -> Result<(), anyhow::
 
     injector.construct_once(|| async move { Ok(rx.await?) });
 
-    builder.setup(move |builder| {
-        let quit = CustomMenuItem::new("quit".to_string(), "Quit");
-        let tray_menu = SystemTrayMenu::new().add_item(quit);
+    builder
+        .setup_with_app(move |app| {
+            let app = app.handle();
+            {
+                let menu =
+                    Menu::with_items(app, &[&MenuItem::with_id(app, "quit", "Quit", true, None)])?;
+                let builder = TrayIconBuilder::with_id("mtool")
+                    .tooltip("MTool")
+                    .icon(app.default_window_icon().unwrap().clone())
+                    .menu(&menu);
 
-        let tray = SystemTray::new().with_menu(tray_menu);
+                // HACK: for keepalive
+                app.manage(menu);
+                builder
+                    .menu_on_left_click(false)
+                    .on_menu_event(move |app, event| match event.id.as_ref() {
+                        "quit" => {
+                            app.exit(0);
+                        }
+                        _ => (),
+                    })
+                    .build(app)?;
+            }
 
-        Ok(builder
-            .system_tray(tray)
-            .on_system_tray_event(|_, event| match event {
-                SystemTrayEvent::MenuItemClick { id, .. } => match id.as_str() {
-                    "quit" => {
-                        std::process::exit(0);
-                    }
-                    _ => {}
-                },
-                _ => {}
-            })
-            .plugin(tauri_plugin_window::init())
-            .plugin(window::init(injector))
-            .setup(move |app| {
-                tx.send(Res::new(app.handle())).unwrap();
-                Ok(())
-            }))
-    })?;
+            tx.send(Res::new(app.clone())).unwrap();
+            Ok(())
+        })
+        .setup(move |builder| {
+            Ok(builder
+                .plugin(tauri_plugin_window::init())
+                .plugin(window::init(injector)))
+        })?;
 
     Ok(())
 }
@@ -97,14 +109,20 @@ async fn init(builder: Res<Builder>, injector: Injector) -> Result<(), anyhow::E
     let builder = builder.take();
 
     let worker = tokio::task::spawn_blocking(move || {
-        match builder.any_thread().run(tauri::generate_context!()) {
-            Ok(_) => {
-                info!("tauri run loop is exited");
-            }
+        debug!("tauri run at {:?}", std::thread::current().name());
+        match builder.any_thread().build(tauri::generate_context!()) {
+            Ok(v) => v,
             Err(e) => {
                 warn!("tauri run loop is exited: {:?}", e);
+                return;
             }
         }
+        .run(|_, ev| {
+            if let RunEvent::ExitRequested { api, .. } = &ev {
+                api.prevent_exit();
+            }
+        });
+        info!("tauri run loop is exited");
     });
 
     injector.insert(Take::new(TauriWorker(worker)));

@@ -1,4 +1,4 @@
-#![feature(arbitrary_self_types, result_option_inspect, iterator_try_collect)]
+#![feature(arbitrary_self_types, result_option_inspect, iterator_try_collect, slice_group_by)]
 
 #[cfg(not(target_family = "wasm"))]
 mod pdf;

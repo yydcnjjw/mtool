@@ -128,9 +128,9 @@ impl InjectorInner {
     {
         let (tx, rx) = oneshot::channel();
         self.construct_once(|| async move {
-            Ok(Res::new(rx.await.map_err(|e| {
-                anyhow::anyhow!("get {} failed: {}", type_name::<Output>(), e)
-            })?))
+            Ok(rx
+                .await
+                .map_err(|e| anyhow::anyhow!("get {} failed: {}", type_name::<Output>(), e))?)
         });
 
         tx

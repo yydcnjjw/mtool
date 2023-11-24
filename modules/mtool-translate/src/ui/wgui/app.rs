@@ -97,15 +97,15 @@ impl Component for App {
                                        "w-full")}>
                     <div>
                       <span>{ "source: " }</span>
-                      <span>{ self.source.clone() }</span>
+                      <span>{ self.source.to_string() }</span>
                     </div>
                     <div>
                       <span>{ "target: " }</span>
-                      <span>{ self.target.clone() }</span>
+                      <span>{ self.target.to_string() }</span>
                     </div>
                     <div>
                       <span>{ "backend: " }</span>
-                      <span>{ self.backend.clone() }</span>
+                      <span>{ self.backend.to_string() }</span>
                     </div>
                   </div>
                   <textarea

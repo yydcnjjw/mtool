@@ -24,24 +24,14 @@ pub struct Module {}
 #[async_trait]
 impl AppModule for Module {
     async fn init(&self, app: &mut AppContext) -> Result<(), anyhow::Error> {
-        let (tx, rx) = oneshot::channel();
-
-        app.injector()
-            .construct_once(|| async move { Ok(rx.await?) });
-
         app.schedule()
-            .add_once_task(WGuiStage::Setup, |builder, injector| {
-                add_wgui_plugin(tx, builder, injector)
-            });
+            .add_once_task(WGuiStage::Setup, add_wgui_plugin);
         Ok(())
     }
 }
 
-async fn add_wgui_plugin(
-    tx: oneshot::Sender<Res<Keybinding>>,
-    builder: Res<Builder>,
-    injector: Injector,
-) -> Result<(), anyhow::Error> {
+async fn add_wgui_plugin(builder: Res<Builder>, injector: Injector) -> Result<(), anyhow::Error> {
+    let tx = injector.construct_oneshot();
     builder.setup(move |builder| {
         let (ktx, krx) = mpsc::unbounded_channel();
 

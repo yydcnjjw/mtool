@@ -72,8 +72,9 @@ futures = "*"
 parking_lot = "*"
 thiserror = "*"
 anyhow = "*"
-tauri = "2.0.0-alpha.10"
-tauri-build = "2.0.0-alpha.6"
+tauri = { version = "2.0.0-alpha.14" }
+tauri-runtime-wry = { version = "1.0.0-alpha.0" }
+tauri-build = "2.0.0-alpha.8"
 serde = { version = "*", features = ["derive"] }
 serde_json = "*"
 serde-error = "*"
@@ -102,6 +103,15 @@ wasm-bindgen-futures = "*"
 serde-wasm-bindgen = "*"
 ouroboros = "*"
 pin-project = "*"
+quick-xml = { version = "*", features = ["serialize"] }
 
 [patch.crates-io]
-tauri = { git = "https://github.com/tauri-apps/tauri.git", branch = "dev" }
+tauri = { git = "https://github.com/yydcnjjw/tauri.git", branch = "dev" }
+tauri-runtime-wry = { git = "https://github.com/yydcnjjw/tauri.git", branch = "dev" }
+tauri-build = { git = "https://github.com/yydcnjjw/tauri.git", branch = "dev" }
+wry = { git = "https://github.com/yydcnjjw/wry.git", branch = "dev" }
+
+# tauri = { path = "/home/yydcnjjw/workspace/project/tauri/core/tauri" }
+# tauri-runtime-wry = { path = "/home/yydcnjjw/workspace/project/tauri/core/tauri-runtime-wry" }
+# tauri-build = { path = "/home/yydcnjjw/workspace/project/tauri/core/tauri-build" }
+# wry = { path = "/home/yydcnjjw/workspace/project/wry" }

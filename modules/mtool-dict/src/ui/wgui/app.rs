@@ -110,7 +110,7 @@ impl Component for App {
                 <div class={classes!("columns-1","m-1")}>
                   <div>
                     <span>{ "backend: " }</span>
-                    <span>{ self.backend.clone() }</span>
+                    <span>{ self.backend.to_string() }</span>
                   </div>
                 </div>
                 <input ref={ self.input_node.clone() }
