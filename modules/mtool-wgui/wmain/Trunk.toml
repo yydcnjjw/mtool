@@ -9,7 +9,7 @@ port = 18188
 headers = { "cross-origin-embedder-policy" = "require-corp", "cross-origin-opener-policy" = "same-origin" }
 
 [tools]
-wasm_bindgen = "0.2.87"
+wasm_bindgen = "0.2.88"
 
 [build]
 pattern_script = '''

@@ -58,7 +58,6 @@ tauri = { workspace = true, features = ["tray-icon"] }
 
 [target.'cfg(not(any(target_os = "android", target_os = "ios", target_family = "wasm")))'.dependencies]
 tauri-plugin-global-shortcut = { git = "https://github.com/tauri-apps/plugins-workspace", branch = "v2" }
-tauri-plugin-window = { git = "https://github.com/tauri-apps/plugins-workspace", branch = "v2" }
 
 [target.'cfg(not(target_family = "wasm"))'.build-dependencies]
 tauri-build = { workspace = true, features = ["codegen"] }

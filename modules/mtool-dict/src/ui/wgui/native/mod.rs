@@ -8,6 +8,7 @@ use mtool_core::{
 };
 use mtool_system::keybinding::Keybinding;
 use mtool_wgui::MtoolWindow;
+use tauri::Manager;
 
 pub struct Module;
 
@@ -23,7 +24,9 @@ impl AppModule for Module {
 }
 
 async fn init(keybinding: Res<Keybinding>, cmder: Res<Cmder>) -> Result<(), anyhow::Error> {
-    keybinding.define_global("M-S-d", query_dict_with_clipboard).await?;
+    keybinding
+        .define_global("M-S-d", query_dict_with_clipboard)
+        .await?;
     cmder.add_command(query_dict.name("query_dict").desc("query dict"));
     Ok(())
 }

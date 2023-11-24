@@ -6,6 +6,7 @@ use glutin::{
     display::{Display, DisplayApiPreference},
 };
 use gtk::gdk::GLContext;
+use gtk::glib::Propagation;
 use gtk::prelude::*;
 use gtk::Overlay;
 use gtk::{gdk::GLError, GLArea};
@@ -49,7 +50,7 @@ impl RendererBuilder {
 }
 
 pub struct RenderContext<'a> {
-    pub canvas: &'a mut sk::Canvas,
+    pub canvas: &'a sk::Canvas,
 }
 
 pub struct Renderer {
@@ -189,7 +190,7 @@ impl Renderer {
                     &e.to_string(),
                 )));
             }
-            Inhibit(true)
+            Propagation::Proceed
         });
 
         Ok(())

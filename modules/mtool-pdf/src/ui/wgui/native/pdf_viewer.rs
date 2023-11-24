@@ -71,7 +71,8 @@ impl PdfViewerInner {
         ))
     }
 
-    fn canvas(&mut self) -> &mut sk::Canvas {
+    #[inline]
+    fn canvas(&mut self) -> &sk::Canvas {
         self.surface.canvas()
     }
 
@@ -482,7 +483,7 @@ impl PdfViewer {
         Ok(Self { image_snapshot })
     }
 
-    pub fn draw(&self, canvas: &mut sk::Canvas) -> Result<(), anyhow::Error> {
+    pub fn draw(&self, canvas: &sk::Canvas) -> Result<(), anyhow::Error> {
         let image = self.image_snapshot.borrow().clone();
 
         canvas.draw_image(image, (0, 0), None);
@@ -511,14 +512,12 @@ async fn pdf_event_receiver(loader: &PdfLoader, win: &WGuiWindow) -> broadcast::
     {
         let tx = tx.clone();
         win.listen("pdf-event", move |e| {
-            if let Some(payload) = e.payload() {
-                match serde_json::from_str::<WPdfEvent>(payload) {
-                    Ok(e) => {
-                        let _ = tx.send(PdfEvent::WGui(e));
-                    }
-                    Err(_) => {
-                        warn!("{:?}", e);
-                    }
+            match serde_json::from_str::<WPdfEvent>(e.payload()) {
+                Ok(e) => {
+                    let _ = tx.send(PdfEvent::WGui(e));
+                }
+                Err(_) => {
+                    warn!("{:?}", e);
                 }
             }
         });

@@ -66,7 +66,7 @@ impl PdfViewerWindow {
         let renderer = {
             let viewer = pdf_viewer.clone();
             RendererBuilder::new(win.clone())
-                .add_draw_hook(move |c| viewer.draw(&mut c.canvas))
+                .add_draw_hook(move |c| viewer.draw(c.canvas))
                 .build()
                 .await?
         };

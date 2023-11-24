@@ -1,7 +1,7 @@
 use std::ffi::CString;
 
 use anyhow::Context;
-use sk::gpu::{self, BackendRenderTarget, SurfaceOrigin};
+use sk::gpu::{self, SurfaceOrigin};
 use sk::gpu::{gl::FramebufferInfo, DirectContext};
 use skia_safe as sk;
 
@@ -81,7 +81,7 @@ impl SkiaContext {
         num_samples: usize,
         stencil_size: usize,
     ) -> Result<sk::Surface, anyhow::Error> {
-        let backend_render_target = BackendRenderTarget::new_gl(
+        let backend_render_target = gpu::backend_render_targets::make_gl(
             (width as i32, height as i32),
             num_samples,
             stencil_size,
@@ -113,7 +113,7 @@ impl SkiaContext {
         Ok(())
     }
 
-    pub(super) fn canvas(&mut self) -> &mut sk::Canvas {
+    pub(super) fn canvas(&mut self) -> &sk::Canvas {
         self.surface.canvas()
     }
 

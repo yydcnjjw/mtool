@@ -96,7 +96,6 @@ async fn setup(builder: Res<Builder>, injector: Injector) -> Result<(), anyhow::
         })
         .setup(move |builder| {
             Ok(builder
-                .plugin(tauri_plugin_window::init())
                 .plugin(window::init(injector)))
         })?;
 

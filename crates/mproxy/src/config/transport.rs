@@ -1,7 +1,6 @@
 use std::{fs::File, io::BufReader, path::PathBuf, sync::Arc};
 
 use anyhow::Context;
-use rustls::server::AllowAnyAuthenticatedClient;
 use serde::{Deserialize, Serialize};
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
@@ -38,9 +37,7 @@ pub mod quic {
     #[serde(rename_all = "lowercase")]
     #[serde(tag = "type")]
     pub enum CongestionType {
-        Bbr {
-            initial_window: Option<u64>,
-        },
+        Bbr { initial_window: Option<u64> },
         Cubic,
         NewReno,
     }
@@ -106,6 +103,7 @@ pub struct TlsConfig {
     pub cert: Option<PathBuf>,
 }
 
+#[cfg(not(target_family = "wasm"))]
 impl TlsConfig {
     pub fn root_cert_store(&self) -> Result<rustls::RootCertStore, anyhow::Error> {
         let f = &self.ca_cert;
@@ -146,10 +144,12 @@ impl TlsConfig {
     }
 }
 
+#[cfg(not(target_family = "wasm"))]
 impl TryFrom<&TlsConfig> for rustls::ServerConfig {
     type Error = anyhow::Error;
 
     fn try_from(c: &TlsConfig) -> Result<Self, Self::Error> {
+        use rustls::server::AllowAnyAuthenticatedClient;
         let (roots, certs, key) = (c.root_cert_store()?, c.cert_chain()?, c.key()?);
 
         Ok(rustls::ServerConfig::builder()
@@ -159,6 +159,7 @@ impl TryFrom<&TlsConfig> for rustls::ServerConfig {
     }
 }
 
+#[cfg(not(target_family = "wasm"))]
 impl TryFrom<&TlsConfig> for rustls::ClientConfig {
     type Error = anyhow::Error;
 

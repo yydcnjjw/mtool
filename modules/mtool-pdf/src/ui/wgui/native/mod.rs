@@ -25,6 +25,7 @@ use mtool_cmder::{Cmder, CreateCommandDescriptor};
 use mtool_core::CmdlineStage;
 use mtool_interactive::{Completion, CompletionArgs};
 use mtool_wgui::{Builder, WGuiStage};
+use tauri::Manager;
 use tokio::fs;
 pub use window::PdfViewerWindow;
 

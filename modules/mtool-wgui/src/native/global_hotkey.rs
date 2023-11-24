@@ -39,7 +39,7 @@ async fn add_wgui_plugin(builder: Res<Builder>, injector: Injector) -> Result<()
 
         let global_shortcut_plugin = {
             let hotkey_mgr = hotkey_mgr.clone();
-            tauri_plugin_global_shortcut::Builder::with_handler(move |shortcut| {
+            tauri_plugin_global_shortcut::Builder::with_handler(move |_, shortcut| {
                 if let Some(kv) = hotkey_mgr.shortcut_index.get(shortcut) {
                     if let Err(e) = hotkey_mgr
                         .sender

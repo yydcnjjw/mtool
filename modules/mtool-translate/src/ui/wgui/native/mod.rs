@@ -7,6 +7,7 @@ use mtool_core::{
 };
 use mtool_system::keybinding::Keybinding;
 use mtool_wgui::MtoolWindow;
+use tauri::Manager;
 
 #[derive(Default)]
 pub struct Module {}
