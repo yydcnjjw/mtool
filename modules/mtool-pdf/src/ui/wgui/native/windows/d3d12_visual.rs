@@ -44,7 +44,7 @@ use super::skia_context::SkiaContext;
 
 pub struct RenderContext<'a> {
     pub frame_buffer_index: usize,
-    pub canvas: &'a mut sk::Canvas,
+    pub canvas: &'a sk::Canvas,
 }
 
 pub type DrawHook = Box<dyn Fn(&mut RenderContext) -> Result<(), anyhow::Error> + Send>;
@@ -141,7 +141,7 @@ impl D3d12Context {
                     self.fench_event.clone(),
                 )?;
 
-                WaitForSingleObjectEx(self.fench_event, u32::max_value(), false).ok()?;
+                WaitForSingleObjectEx(self.fench_event, u32::max_value(), false);
             }
         }
 
@@ -197,7 +197,7 @@ impl D3d12Context {
                 "adapter description: {}",
                 PCWSTR::from_raw(desc.Description.as_ptr()).display()
             );
-            if DXGI_ADAPTER_FLAG(desc.Flags).contains(DXGI_ADAPTER_FLAG_SOFTWARE) {
+            if DXGI_ADAPTER_FLAG(desc.Flags as i32).contains(DXGI_ADAPTER_FLAG_SOFTWARE) {
                 index += 1;
                 continue;
             }
@@ -292,8 +292,7 @@ impl D3d12Visual {
                         self.d3d_context.fench_values[i as usize],
                         self.d3d_context.fench_event.clone(),
                     )?;
-                    WaitForSingleObjectEx(self.d3d_context.fench_event, u32::max_value(), false)
-                        .ok()?;
+                    WaitForSingleObjectEx(self.d3d_context.fench_event, u32::max_value(), false);
                 }
             }
         }

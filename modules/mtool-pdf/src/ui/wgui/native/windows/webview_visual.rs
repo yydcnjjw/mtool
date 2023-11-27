@@ -12,7 +12,6 @@ use winapi::um::{
     winuser::{GET_KEYSTATE_WPARAM, GET_WHEEL_DELTA_WPARAM, GET_XBUTTON_WPARAM},
 };
 use windows::{
-    core::ComInterface,
     Foundation::Numerics::Vector2,
     Win32::{
         Foundation::{HWND, LPARAM, LRESULT, POINT, RECT, WPARAM},
@@ -27,7 +26,7 @@ use windows::{
             WindowsAndMessaging::*,
         },
     },
-    UI::Composition::{Compositor, ContainerVisual},
+    UI::Composition::{Compositor, ContainerVisual}, core::ComInterface,
 };
 
 #[derive(Clone)]
@@ -122,7 +121,7 @@ impl WebviewVisual {
                 };
 
                 let mut bounds = RECT::default();
-                GetClientRect(hwnd, &mut bounds);
+                GetClientRect(hwnd, &mut bounds).unwrap();
                 let is_mouse_in_webview = PtInRect(&bounds, point).as_bool();
                 if is_mouse_in_webview || msg == WM_MOUSELEAVE || (*data).is_capturing_mouse {
                     let mut mouse_data = 0u32;
@@ -141,7 +140,7 @@ impl WebviewVisual {
                                 e.cbSize = size_of::<TRACKMOUSEEVENT>() as u32;
                                 e.dwFlags = TME_LEAVE;
                                 e.hwndTrack = hwnd;
-                                TrackMouseEvent(&mut e);
+                                TrackMouseEvent(&mut e).unwrap();
                                 (*data).is_tracking_mouse = true;
                             }
                         }
@@ -162,7 +161,7 @@ impl WebviewVisual {
                         WM_LBUTTONUP | WM_MBUTTONUP | WM_RBUTTONUP | WM_XBUTTONUP => {
                             if GetCapture() == hwnd {
                                 (*data).is_capturing_mouse = false;
-                                ReleaseCapture();
+                                ReleaseCapture().unwrap();
                             }
                         }
                         _ => {}
@@ -191,7 +190,7 @@ impl WebviewVisual {
                     e.cbSize = size_of::<TRACKMOUSEEVENT>() as u32;
                     e.dwFlags = TME_LEAVE | TME_CANCEL;
                     e.hwndTrack = hwnd;
-                    TrackMouseEvent(&mut e);
+                    TrackMouseEvent(&mut e).unwrap();
                     Self::subclass_proc(hwnd, msg, wparam, lparam, uidsubclass, dwrefdata);
                 }
             }

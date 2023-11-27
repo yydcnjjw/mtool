@@ -51,9 +51,6 @@ impl SkiaContext {
     }
 
     pub(super) fn flush_and_submit(&mut self, surface: &mut Surface) {
-        let _ = surface
-            .flush_with_access_info(BackendSurfaceAccess::Present, &gpu::FlushInfo::default());
-
         self.context.flush_and_submit();
     }
 
@@ -72,7 +69,7 @@ impl SkiaContext {
                 resource: new_com_ptr(buffer.clone()),
                 alloc: None,
                 resource_state: D3D12_RESOURCE_STATE_PRESENT.0 as u32,
-                format: DXGI_FORMAT_B8G8R8A8_UNORM.0,
+                format: DXGI_FORMAT_B8G8R8A8_UNORM.0 as u32,
                 sample_count: 1,
                 level_count: 1,
                 sample_quality_pattern: 0,
