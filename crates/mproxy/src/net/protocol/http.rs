@@ -73,7 +73,16 @@ impl Server {
     async fn run(acceptor: Arc<transport::Acceptor>, tx: mpsc::UnboundedSender<ProxyRequest>) {
         loop {
             match acceptor.accept().await {
-                Ok(stream) => tokio::spawn(Self::serve(tx.clone(), stream)),
+                Ok(stream) => {
+                    let tx = tx.clone();
+                    let acceptor = acceptor.clone();
+                    tokio::spawn(async move {
+                        match acceptor.handshake(stream).await {
+                            Ok(io) => Self::serve(tx, io).await,
+                            Err(e) => warn!("{:?}", e),
+                        }
+                    });
+                }
                 Err(e) => {
                     warn!("{:?}", e);
                     break;

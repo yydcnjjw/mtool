@@ -43,6 +43,14 @@ impl Acceptor {
             Acceptor::Tls(acceptor) => Box::new(acceptor.accept().await?),
         })
     }
+
+    #[async_recursion]
+    pub async fn handshake(&self, io: BoxedAsyncIO) -> Result<BoxedAsyncIO, anyhow::Error> {
+        Ok(match self {
+            Acceptor::Tls(acceptor) => Box::new(acceptor.handshake(io).await?) as BoxedAsyncIO,
+            _ => io,
+        })
+    }
 }
 
 #[derive(Debug)]

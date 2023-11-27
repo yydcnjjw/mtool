@@ -148,14 +148,14 @@ pub mod kcp {
     #[derive(Serialize, Deserialize, Debug, Clone)]
     pub struct AcceptorConfig {
         pub listen: SocketAddr,
-        #[serde(with = "KcpConfigDef", default)]
+        #[serde(with = "KcpConfigDef", default, flatten)]
         pub kcp: KcpConfig,
     }
 
     #[derive(Serialize, Deserialize, Debug, Clone)]
     pub struct ConnectorConfig {
         pub endpoint: Endpoint,
-        #[serde(with = "KcpConfigDef", default)]
+        #[serde(with = "KcpConfigDef", default, flatten)]
         pub kcp: KcpConfig,
     }
 }

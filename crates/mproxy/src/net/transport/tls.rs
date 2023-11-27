@@ -31,11 +31,15 @@ impl Acceptor {
         })
     }
 
-    pub async fn accept(&self) -> Result<server::TlsStream<BoxedAsyncIO>, anyhow::Error> {
-        Ok(self
-            .acceptor
-            .accept(self.next_layer.accept().await?)
-            .await?)
+    pub async fn accept(&self) -> Result<BoxedAsyncIO, anyhow::Error> {
+        Ok(self.next_layer.accept().await?)
+    }
+
+    pub async fn handshake(
+        &self,
+        io: BoxedAsyncIO,
+    ) -> Result<server::TlsStream<BoxedAsyncIO>, anyhow::Error> {
+        Ok(self.acceptor.accept(io).await?)
     }
 }
 

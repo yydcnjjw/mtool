@@ -2,7 +2,7 @@ use std::net::SocketAddr;
 
 use tokio::sync::{Mutex, RwLock};
 use tokio_kcp::{KcpConfig, KcpListener, KcpStream};
-use tracing::{info, instrument};
+use tracing::{debug, info, instrument};
 
 use crate::config::transport::kcp::{AcceptorConfig, ConnectorConfig};
 
@@ -34,6 +34,8 @@ pub struct Connector {
 
 impl Connector {
     pub async fn new(config: ConnectorConfig) -> Result<Self, anyhow::Error> {
+        debug!("{:?}", config);
+
         Ok(Self {
             inner: dynamic_port::Connector::new(ConnectorInner::new(config.kcp), config.endpoint)
                 .await?,
