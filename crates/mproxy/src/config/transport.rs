@@ -9,6 +9,7 @@ use serde::{Deserialize, Serialize};
 pub enum AcceptorConfig {
     Quic(quic::AcceptorConfig),
     Tcp(tcp::AcceptorConfig),
+    Kcp(kcp::AcceptorConfig),
 }
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
@@ -17,6 +18,7 @@ pub enum AcceptorConfig {
 pub enum ConnectorConfig {
     Quic(quic::ConnectorConfig),
     Tcp(tcp::ConnectorConfig),
+    Kcp(kcp::ConnectorConfig),
 }
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
@@ -93,6 +95,66 @@ pub mod tcp {
     #[derive(Serialize, Deserialize, Debug, Clone)]
     pub struct ConnectorConfig {
         pub endpoint: Endpoint,
+    }
+}
+
+pub mod kcp {
+    use std::{net::SocketAddr, time::Duration};
+
+    use serde::{Deserialize, Serialize};
+    use serde_with::serde_as;
+    use tokio_kcp::{KcpConfig, KcpNoDelayConfig};
+
+    use super::Endpoint;
+
+    #[derive(Serialize, Deserialize)]
+    #[serde(remote = "KcpNoDelayConfig")]
+    pub struct KcpNoDelayConfigDef {
+        /// Enable nodelay
+        pub nodelay: bool,
+        /// Internal update interval (ms)
+        pub interval: i32,
+        /// ACK number to enable fast resend
+        pub resend: i32,
+        /// Disable congetion control
+        pub nc: bool,
+    }
+
+    #[derive(Serialize, Deserialize)]
+    #[serde(remote = "KcpConfig")]
+    #[serde_as]
+    struct KcpConfigDef {
+        /// Max Transmission Unit
+        pub mtu: usize,
+        /// nodelay
+        #[serde(with = "KcpNoDelayConfigDef")]
+        pub nodelay: KcpNoDelayConfig,
+        /// Send window size
+        pub wnd_size: (u16, u16),
+        /// Session expire duration, default is 90 seconds
+
+        #[serde_as(as = "DurationSeconds")]
+        pub session_expire: Duration,
+        /// Flush KCP state immediately after write
+        pub flush_write: bool,
+        /// Flush ACKs immediately after input
+        pub flush_acks_input: bool,
+        /// Stream mode
+        pub stream: bool,
+    }
+
+    #[derive(Serialize, Deserialize, Debug, Clone)]
+    pub struct AcceptorConfig {
+        pub listen: SocketAddr,
+        #[serde(with = "KcpConfigDef")]
+        pub kcp: KcpConfig,
+    }
+
+    #[derive(Serialize, Deserialize, Debug, Clone)]
+    pub struct ConnectorConfig {
+        pub endpoint: Endpoint,
+        #[serde(with = "KcpConfigDef")]
+        pub kcp: KcpConfig,
     }
 }
 
