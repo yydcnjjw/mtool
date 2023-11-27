@@ -10,6 +10,7 @@ pub enum AcceptorConfig {
     Quic(quic::AcceptorConfig),
     Tcp(tcp::AcceptorConfig),
     Kcp(kcp::AcceptorConfig),
+    Tls(Box<tls::AcceptorConfig>),
 }
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
@@ -19,6 +20,7 @@ pub enum ConnectorConfig {
     Quic(quic::ConnectorConfig),
     Tcp(tcp::ConnectorConfig),
     Kcp(kcp::ConnectorConfig),
+    Tls(Box<tls::ConnectorConfig>),
 }
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
@@ -146,15 +148,34 @@ pub mod kcp {
     #[derive(Serialize, Deserialize, Debug, Clone)]
     pub struct AcceptorConfig {
         pub listen: SocketAddr,
-        #[serde(with = "KcpConfigDef")]
+        #[serde(with = "KcpConfigDef", default)]
         pub kcp: KcpConfig,
     }
 
     #[derive(Serialize, Deserialize, Debug, Clone)]
     pub struct ConnectorConfig {
         pub endpoint: Endpoint,
-        #[serde(with = "KcpConfigDef")]
+        #[serde(with = "KcpConfigDef", default)]
         pub kcp: KcpConfig,
+    }
+}
+
+pub mod tls {
+    use serde::{Deserialize, Serialize};
+
+    use super::TlsConfig;
+
+    #[derive(Serialize, Deserialize, Debug, Clone)]
+    pub struct AcceptorConfig {
+        pub next_layer: super::AcceptorConfig,
+        pub tls: TlsConfig,
+    }
+
+    #[derive(Serialize, Deserialize, Debug, Clone)]
+    pub struct ConnectorConfig {
+        pub next_layer: super::ConnectorConfig,
+        pub tls: TlsConfig,
+        pub server_name: String,
     }
 }
 

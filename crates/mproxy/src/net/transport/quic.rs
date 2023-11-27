@@ -174,7 +174,7 @@ pub struct ConnectorInner {
 }
 
 impl ConnectorInner {
-    pub async fn new(config: ConnectorConfig) -> Result<Self, anyhow::Error> {
+    async fn new(config: ConnectorConfig) -> Result<Self, anyhow::Error> {
         let tls_config = rustls::ClientConfig::try_from(&config.tls)?;
 
         let mut quic_config = quinn::ClientConfig::new(Arc::new(tls_config));

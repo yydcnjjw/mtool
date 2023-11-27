@@ -37,7 +37,7 @@ tokio = { workspace = true, features = ["sync"] }
 [target.'cfg(not(target_family = "wasm"))'.dependencies]
 tokio = { workspace = true, features = ["full"] }
 tokio-stream = { workspace = true }
-tokio-util = { version = "*", features = ["compat"] }
+async-recursion = { workspace = true }
 futures = { workspace = true }
 tracing = { workspace = true }
 tracing-subscriber = { workspace = true, features = ["env-filter"] }
@@ -60,6 +60,8 @@ enum_dispatch = "*"
 domain_matcher = { git = "https://github.com/Qv2ray/DomainMatcher" }
 warp = "*"
 rustls = { version = "0.21.1", features = ["quic"] }
+tokio-rustls = "*"
+tokio-util = { version = "*", features = ["compat"] }
 rustls-pemfile = "*"
 
 [target.'cfg(target_family = "unix")'.dependencies]
