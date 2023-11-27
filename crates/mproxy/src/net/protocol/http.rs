@@ -237,7 +237,7 @@ impl Client {
     ) -> Result<(u64, u64), anyhow::Error> {
         let (mut sender, conn) = hyper::client::conn::http1::handshake(TokioIo::new(s)).await?;
         tokio::task::spawn(async move {
-            if let Err(err) = conn.await {
+            if let Err(err) = conn.with_upgrades().await {
                 error!("Connection failed: {:?}", err);
             }
         });
