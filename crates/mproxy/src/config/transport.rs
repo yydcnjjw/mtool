@@ -227,7 +227,6 @@ impl TlsConfig {
     }
 }
 
-#[cfg(not(target_family = "wasm"))]
 impl TryFrom<&TlsConfig> for rustls::ServerConfig {
     type Error = anyhow::Error;
 
@@ -242,7 +241,6 @@ impl TryFrom<&TlsConfig> for rustls::ServerConfig {
     }
 }
 
-#[cfg(not(target_family = "wasm"))]
 impl TryFrom<&TlsConfig> for rustls::ClientConfig {
     type Error = anyhow::Error;
 

@@ -27,7 +27,6 @@ async-trait = { workspace = true }
 pin-project = { workspace = true }
 
 protobuf = "*"
-tokio_kcp = "*"
 
 weak-table = "*"
 
@@ -63,6 +62,7 @@ rustls = { version = "0.21.1", features = ["quic"] }
 tokio-rustls = "*"
 tokio-util = { version = "*", features = ["compat"] }
 rustls-pemfile = "*"
+tokio_kcp = "*"
 
 [target.'cfg(target_family = "unix")'.dependencies]
 nix = "*"

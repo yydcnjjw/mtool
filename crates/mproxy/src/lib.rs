@@ -5,7 +5,7 @@
 mod config;
 pub mod stats;
 
-pub use config::{protos, AppConfig};
+pub use config::protos;
 
 cfg_if::cfg_if! {
     if #[cfg(not(target_family = "wasm"))] {
@@ -19,5 +19,7 @@ cfg_if::cfg_if! {
         
         mod app;
         pub use app::*;
+        
+        pub use config::AppConfig;
     }
 }

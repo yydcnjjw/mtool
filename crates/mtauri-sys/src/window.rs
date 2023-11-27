@@ -7,7 +7,7 @@ use crate::event::Event;
 mod ffi {
     use wasm_bindgen::prelude::*;
 
-    #[wasm_bindgen(js_namespace = ["window", "__TAURI__", "window"])]
+    #[wasm_bindgen(js_namespace = ["__TAURI__", "window"])]
     extern "C" {
         #[derive(Debug, Clone)]
         pub type LogicalSize;

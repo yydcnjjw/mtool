@@ -17,7 +17,7 @@ pub struct Event<T> {
 
 mod ffi {
     use wasm_bindgen::prelude::*;
-    #[wasm_bindgen(js_namespace = ["window", "__TAURI__", "event"])]
+    #[wasm_bindgen(js_namespace = ["__TAURI__", "event"])]
     extern "C" {
         #[wasm_bindgen(catch)]
         pub async fn listen(
