@@ -60,7 +60,10 @@ impl std::fmt::Debug for Connector {
 
 impl Connector {
     pub async fn new(config: ConnectorConfig) -> Result<Self, anyhow::Error> {
-        let tls_config = rustls::ClientConfig::try_from(&config.tls)?;
+        let mut tls_config = rustls::ClientConfig::try_from(&config.tls)?;
+
+        tls_config.resumption = rustls::client::Resumption::in_memory_sessions(128);
+
         Ok(Self {
             next_layer: super::Connector::new(config.next_layer).await?,
             connector: TlsConnector::from(Arc::new(tls_config)),
