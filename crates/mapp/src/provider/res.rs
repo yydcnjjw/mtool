@@ -14,7 +14,7 @@ use crate::{provider::Injector, App, LocalApp};
 
 use super::LocalInjector;
 
-pub struct Res<T: ?Sized>(pub Arc<T>);
+pub struct Res<T: ?Sized>(Arc<T>);
 
 impl<T: ?Sized + Unsize<U>, U: ?Sized> CoerceUnsized<Res<U>> for Res<T> {}
 

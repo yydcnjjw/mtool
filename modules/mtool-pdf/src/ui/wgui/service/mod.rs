@@ -1,5 +1,4 @@
 mod error;
-pub mod grobid;
 mod pdf_document;
 mod pdf_loader;
 
@@ -14,6 +13,7 @@ use mtool_wgui::{Builder, WGuiStage};
 pub use error::Error;
 pub use pdf_document::*;
 pub use pdf_loader::*;
+use sea_orm::DatabaseConnection;
 
 use crate::Config;
 
@@ -30,7 +30,11 @@ impl AppModule for Module {
     }
 }
 
-async fn setup(builder: Res<Builder>, cs: Res<ConfigStore>) -> Result<(), anyhow::Error> {
+async fn setup(
+    builder: Res<Builder>,
+    cs: Res<ConfigStore>,
+    db: Res<DatabaseConnection>,
+) -> Result<(), anyhow::Error> {
     let config: Config = cs.get("pdf").await?;
-    builder.setup(|builder| Ok(builder.plugin(pdf_loader::init(&config))))
+    builder.setup(|builder| Ok(builder.plugin(pdf_loader::init(config, db))))
 }

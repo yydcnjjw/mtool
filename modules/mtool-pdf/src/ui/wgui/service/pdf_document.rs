@@ -3,13 +3,14 @@ use std::ops::Deref;
 use itertools::Itertools;
 use mcloud_api::adobe;
 use pdfium_render::prelude as pdfium;
+use tokio::sync::OnceCell;
 
 use crate::ui::wgui::{PageInfo, PdfDocumentInfo};
 
 pub struct PdfDocument {
     doc: pdfium::PdfDocument<'static>,
     info: PdfDocumentInfo,
-    adobe: Option<adobe::PdfStructure>,
+    structure: OnceCell<adobe::PdfStructure>,
 }
 
 unsafe impl Send for PdfDocument {}
@@ -29,33 +30,34 @@ impl std::fmt::Debug for PdfDocument {
 }
 
 impl PdfDocument {
-    pub(super) async fn new(
-        doc: pdfium::PdfDocument<'static>,
-        adobe: Option<adobe::PdfStructure>,
-    ) -> Result<Self, anyhow::Error> {
+    pub(super) async fn new(doc: pdfium::PdfDocument<'static>) -> Result<Self, anyhow::Error> {
         let info = load_document_info(&doc).await?;
 
         Ok(Self {
             doc,
             info,
-            adobe,
+            structure: OnceCell::new(),
         })
     }
 
-    pub fn document_info(&self) -> &PdfDocumentInfo {
+    pub fn strucutre(&self) -> &OnceCell<adobe::PdfStructure> {
+        &self.structure
+    }
+
+    pub fn info(&self) -> &PdfDocumentInfo {
         &self.info
     }
 
     pub fn width(&self) -> usize {
-        self.document_info().width()
+        self.info().width()
     }
 
     pub fn height(&self) -> usize {
-        self.document_info().height()
+        self.info().height()
     }
 
     pub fn paragraphs(&self) -> impl Iterator<Item = &adobe::Element> {
-        self.adobe.iter().flat_map(|adobe| {
+        self.structure.get().into_iter().flat_map(|adobe| {
             adobe
                 .elements
                 .iter()

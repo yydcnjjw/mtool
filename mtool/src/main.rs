@@ -10,6 +10,7 @@ fn main() {
         .add_module(mtool_system::module())
         .add_module(mtool_wgui::module())
         .add_module(mtool_cmder::Module::default())
+        .add_module(mtool_storage::module())
         .add_module(mtool_translate::module())
         .add_module(mtool_dict::module())
         .add_module(mtool_interactive::module())

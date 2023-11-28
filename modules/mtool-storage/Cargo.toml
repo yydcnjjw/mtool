@@ -1,0 +1,19 @@
+[package]
+name = "mtool-storage"
+version.workspace = true
+authors.workspace = true
+edition.workspace = true
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+mapp = { path = "../../crates/mapp" }
+mtool-core = { path = "../mtool-core" }
+
+tracing = { workspace = true }
+tokio = { workspace = true }
+async-trait = { workspace = true }
+anyhow = { workspace = true }
+parking_lot = { workspace = true }
+sea-orm = { workspace = true }
+sea-orm-migration = { workspace = true }

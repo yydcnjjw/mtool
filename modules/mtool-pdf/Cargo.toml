@@ -50,17 +50,19 @@ features = [
 ]
 
 [target.'cfg(not(target_family = "wasm"))'.dependencies]
-mtool-core = { path = "../mtool-core" }
 mcloud-api = { path = "../../crates/mcloud-api" }
+mtool-core = { path = "../mtool-core" }
+mtool-storage = { path = "../mtool-storage" }
 
 tauri = { workspace = true }
 tauri-runtime-wry = { workspace = true }
 quick-xml = { workspace = true, features = ["async-tokio"] }
+sea-orm = { workspace = true }
+sea-orm-migration = { workspace = true }
 
 tao = "*"
 raw-window-handle = "0.5"
 md5 = "*"
-# wgpu = "*"
 
 [target.'cfg(target_os = "linux")'.dependencies]
 gtk = "*"
@@ -68,17 +70,11 @@ gl = "*"
 glutin = "*"
 skia-safe = { version = "*", features = ["gpu", "gl"] }
 
-# [target.'cfg(target_os = "linux")'.dependencies]
-# webkit2gtk = { version = "*", features = ["v2_40"] }
-# javascriptcore-rs = "*"
-# javascriptcore-rs-sys = "*"
-
 
 [target.'cfg(target_os = "windows")'.dependencies]
 webview2-com = "*"
 wio = "*"
 skia-safe = { version = "*", features = ["gpu", "d3d"] }
-# skia-bindings = "*"
 
 [target.'cfg(target_os = "windows")'.dependencies.windows]
 workspace = true
@@ -108,7 +104,6 @@ features = [
 version = "*"
 
 [target.'cfg(not(target_family = "wasm"))'.dependencies.pdfium-render]
-# path = "/home/yydcnjjw/workspace/project/pdfium-render"
 git = "https://github.com/yydcnjjw/pdfium-render"
 branch = "master"
 features = ["image", "sync"]

@@ -2,7 +2,7 @@ use std::{
     cell::{Ref, RefCell},
     collections::VecDeque,
     ops::Deref,
-    rc::Rc,
+    rc::Rc, sync::Arc,
 };
 
 use mcloud_api::adobe;
@@ -16,7 +16,7 @@ use crate::ui::wgui::{
 use super::pdf_page::PdfPage;
 
 pub struct DocumentInner {
-    inner: Document,
+    inner: Arc<Document>,
     cached_pages: VecDeque<(u16, PdfPage)>,
 }
 
@@ -29,7 +29,7 @@ impl Deref for DocumentInner {
 }
 
 impl DocumentInner {
-    fn new(inner: Document) -> Self {
+    fn new(inner: Arc<Document>) -> Self {
         Self {
             inner,
             cached_pages: VecDeque::new(),
@@ -73,7 +73,7 @@ pub struct PdfDocument {
 }
 
 impl PdfDocument {
-    pub fn new(doc: Document) -> Self {
+    pub fn new(doc: Arc<Document>) -> Self {
         Self {
             inner: Rc::new(RefCell::new(DocumentInner::new(doc))),
         }
@@ -100,7 +100,7 @@ impl PdfDocument {
     }
 
     pub fn document_info(&self) -> Ref<'_, PdfDocumentInfo> {
-        Ref::map(self.inner.borrow(), |doc| doc.document_info())
+        Ref::map(self.inner.borrow(), |doc| doc.info())
     }
 
     pub fn get_page_paragraphs(&self, index: PdfPageIndex) -> Vec<adobe::Element> {

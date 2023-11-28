@@ -21,6 +21,7 @@ members = [
   "modules/mtool-interactive",
   "modules/mtool-wgui",
   "modules/mtool-wgui/wmain",
+  "modules/mtool-storage",
   "modules/mtool-proxy",
   "modules/mtool-toast",
   "modules/mtool-ai",
@@ -79,6 +80,10 @@ serde-wasm-bindgen = "*"
 ouroboros = "*"
 pin-project = "*"
 quick-xml = { version = "*", features = ["serialize"] }
+
+sea-orm = { version = "*", features = [ "sqlx-sqlite", "runtime-tokio-rustls", "macros" ] }
+sea-orm-migration = { version = "*", features = [ "sqlx-sqlite", "runtime-tokio-rustls" ] }
+
 
 [patch.crates-io]
 tauri = { git = "https://github.com/yydcnjjw/tauri.git", branch = "dev" }

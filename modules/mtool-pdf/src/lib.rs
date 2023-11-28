@@ -1,7 +1,16 @@
-#![feature(arbitrary_self_types, result_option_inspect, iterator_try_collect, slice_group_by)]
+#![feature(
+    arbitrary_self_types,
+    result_option_inspect,
+    iterator_try_collect,
+    slice_group_by
+)]
 
-#[cfg(not(target_family = "wasm"))]
-mod pdf;
+cfg_if::cfg_if! {
+    if #[cfg(not(target_family = "wasm"))] {
+        mod pdf;
+        mod storage;
+    }
+}
 
 mod ui;
 
@@ -15,6 +24,7 @@ pub fn module() -> ModuleGroup {
     let mut group = ModuleGroup::new("mtool-pdf");
 
     group.add_module(ui::module());
+    group.add_module(storage::module());
     group.add_module(pdf::Module);
 
     group

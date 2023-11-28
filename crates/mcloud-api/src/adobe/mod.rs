@@ -3,12 +3,12 @@ mod pdf_structure;
 pub use pdf_structure::*;
 use tracing::debug;
 
-use std::{collections::HashMap, fmt::Debug, io::Cursor, time::Duration};
+use std::{collections::HashMap, fmt::Debug, time::Duration};
 
 use anyhow::Context;
 use reqwest::{
     header::{HeaderMap, HeaderValue, CONTENT_TYPE},
-    Body, Method, Response,
+    Body,
 };
 use serde::{Deserialize, Serialize};
 

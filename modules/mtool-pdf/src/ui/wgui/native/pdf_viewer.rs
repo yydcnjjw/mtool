@@ -16,7 +16,7 @@ use super::{
 use crate::{
     pdf::Pdf,
     ui::wgui::{
-        service::{PdfDocument as Document, PdfLoader},
+        service::{PdfDocument as Document, PdfLoadEvent, PdfLoader},
         PageInfo, ScaleEvent, ScrollEvent, WPdfEvent,
     },
 };
@@ -386,7 +386,7 @@ impl PdfViewerInner {
     async fn handle_event(&mut self, e: PdfEvent) -> Result<bool, anyhow::Error> {
         Ok(match e {
             PdfEvent::DocChanged(doc) => {
-                self.doc = Some(PdfDocument::new(Arc::try_unwrap(doc).unwrap()));
+                self.doc = Some(PdfDocument::new(doc));
                 true
             }
             PdfEvent::Window(e) => match e {
@@ -504,8 +504,12 @@ async fn pdf_event_receiver(loader: &PdfLoader, win: &WGuiWindow) -> broadcast::
     let (tx, rx) = broadcast::channel(64);
     {
         let tx = tx.clone();
-        loader.doc_loaded_handler(move |doc| {
-            let _ = tx.send(PdfEvent::DocChanged(Arc::new(doc)));
+        loader.on_load_event(move |e| match e {
+            PdfLoadEvent::DocLoaded(_, doc) => {
+                let _ = tx.send(PdfEvent::DocChanged(doc));
+            }
+            PdfLoadEvent::DocStructureLoaded(_) => {}
+            PdfLoadEvent::Err(_) => {}
         });
     }
 

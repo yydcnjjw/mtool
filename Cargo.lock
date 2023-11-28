@@ -4040,6 +4040,7 @@ dependencies = [
  "mtool-interactive",
  "mtool-pdf",
  "mtool-proxy",
+ "mtool-storage",
  "mtool-system",
  "mtool-toast",
  "mtool-translate",
@@ -4197,12 +4198,15 @@ dependencies = [
  "mtool-cmder",
  "mtool-core",
  "mtool-interactive",
+ "mtool-storage",
  "mtool-wgui",
  "ouroboros 0.18.0",
  "parking_lot",
  "pdfium-render",
  "quick-xml 0.31.0",
  "raw-window-handle 0.5.2",
+ "sea-orm",
+ "sea-orm-migration",
  "send_wrapper",
  "serde",
  "serde-error",
@@ -4259,6 +4263,21 @@ dependencies = [
  "yew",
  "yew-router",
  "yew_icons",
+]
+
+[[package]]
+name = "mtool-storage"
+version = "0.0.0"
+dependencies = [
+ "anyhow",
+ "async-trait",
+ "mapp",
+ "mtool-core",
+ "parking_lot",
+ "sea-orm",
+ "sea-orm-migration",
+ "tokio",
+ "tracing",
 ]
 
 [[package]]
@@ -6286,6 +6305,23 @@ dependencies = [
 ]
 
 [[package]]
+name = "sea-orm-cli"
+version = "0.12.6"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "507c2b99f83129f4d5d511012ab47c9f40d1c7923fd4698c19fae23f0bf62913"
+dependencies = [
+ "chrono",
+ "clap",
+ "dotenvy",
+ "glob",
+ "regex",
+ "sea-schema",
+ "tracing",
+ "tracing-subscriber",
+ "url",
+]
+
+[[package]]
 name = "sea-orm-macros"
 version = "0.12.6"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -6300,6 +6336,23 @@ dependencies = [
 ]
 
 [[package]]
+name = "sea-orm-migration"
+version = "0.12.6"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "9d45937e5d4869a0dcf0222bb264df564c077cbe9b312265f3717401d023a633"
+dependencies = [
+ "async-trait",
+ "clap",
+ "dotenvy",
+ "futures",
+ "sea-orm",
+ "sea-orm-cli",
+ "sea-schema",
+ "tracing",
+ "tracing-subscriber",
+]
+
+[[package]]
 name = "sea-query"
 version = "0.30.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -6311,6 +6364,7 @@ dependencies = [
  "inherent",
  "ordered-float 3.9.2",
  "rust_decimal",
+ "sea-query-derive",
  "serde_json",
  "time",
  "uuid 1.6.1",
@@ -6330,6 +6384,42 @@ dependencies = [
  "sqlx",
  "time",
  "uuid 1.6.1",
+]
+
+[[package]]
+name = "sea-query-derive"
+version = "0.4.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "25a82fcb49253abcb45cdcb2adf92956060ec0928635eb21b4f7a6d8f25ab0bc"
+dependencies = [
+ "heck",
+ "proc-macro2",
+ "quote",
+ "syn 2.0.39",
+ "thiserror",
+]
+
+[[package]]
+name = "sea-schema"
+version = "0.14.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "0cd9561232bd1b82ea748b581f15909d11de0db6563ddcf28c5d908aee8282f1"
+dependencies = [
+ "futures",
+ "sea-query",
+ "sea-schema-derive",
+]
+
+[[package]]
+name = "sea-schema-derive"
+version = "0.2.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "c6f686050f76bffc4f635cda8aea6df5548666b830b52387e8bc7de11056d11e"
+dependencies = [
+ "heck",
+ "proc-macro2",
+ "quote",
+ "syn 1.0.109",
 ]
 
 [[package]]

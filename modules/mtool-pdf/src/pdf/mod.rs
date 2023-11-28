@@ -28,7 +28,7 @@ impl Pdf {
     }
 
     fn new(config: &Config) -> Result<Self, anyhow::Error> {
-        let bindings = Pdfium::bind_to_library(&config.library)
+        let bindings = Pdfium::bind_to_library(&config.pdfium)
             .map_err(|e| anyhow::anyhow!("Failed to load pdfium library: {}", e))?;
 
         Ok(Self {

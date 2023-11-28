@@ -23,3 +23,4 @@ mtool-proxy = { path = "../modules/mtool-proxy" }
 mtool-toast = { path = "../modules/mtool-toast" }
 mtool-ai = { path = "../modules/mtool-ai" }
 mtool-pdf = { path = "../modules/mtool-pdf" }
+mtool-storage = { path = "../modules/mtool-storage" }
