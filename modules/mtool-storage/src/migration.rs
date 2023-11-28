@@ -2,9 +2,8 @@ use std::ops::Deref;
 
 use async_trait::async_trait;
 use mapp::{define_label, prelude::*};
-use mtool_core::ConfigStore;
 use parking_lot::Mutex;
-use sea_orm::{Database, DatabaseConnection};
+use sea_orm::DatabaseConnection;
 use sea_orm_migration::{MigrationTrait, MigratorTrait};
 
 static MIGRATIONS: Mutex<Vec<Box<dyn MigrationTrait>>> = Mutex::new(Vec::new());
