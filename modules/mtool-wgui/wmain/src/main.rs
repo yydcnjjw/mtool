@@ -1,7 +1,8 @@
-use wasm_bindgen::prelude::*;
+use std::panic;
 
-#[wasm_bindgen]
-pub fn run() {
+fn main() {
+    panic::set_hook(Box::new(console_error_panic_hook::hook));
+    
     mapp::LocalAppBuilder::new()
         .unwrap()
         .add_module(mtool_wgui::web_module())
@@ -12,7 +13,5 @@ pub fn run() {
         .add_module(mtool_dict::web_module())
         .add_module(mtool_pdf::web_module())
         .build()
-        .run();
+        .run();    
 }
-
-fn main() {}

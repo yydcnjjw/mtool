@@ -16,4 +16,4 @@ mtool-translate = { path = "../../mtool-translate" }
 mtool-dict = { path = "../../mtool-dict" }
 mtool-pdf = { path = "../../mtool-pdf" }
 
-wasm-bindgen = { workspace = true }
+console_error_panic_hook = "*"

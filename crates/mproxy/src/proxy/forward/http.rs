@@ -14,13 +14,14 @@ use hyper::{
     client::conn::http1,
     header, Request, Response, Uri,
 };
+use hyper_util::rt::TokioIo;
 use tokio::{
     io::{AsyncRead, AsyncWrite},
     sync::oneshot,
 };
 use tracing::warn;
 
-use crate::{stats::{Copyed, GetTransferStats, TransferMonitor}, net::protocol::http::TokioIo};
+use crate::stats::{Copyed, GetTransferStats, TransferMonitor};
 
 #[derive(Debug)]
 pub struct HttpForwarder {

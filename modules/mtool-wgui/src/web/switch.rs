@@ -37,6 +37,7 @@ where
     fn listen_route(ctx: &Context<Self>) {
         let link = ctx.link().clone();
         ctx.link().send_future(async move {
+            debug!("starting listen route");
             let unlisten = match Window::current()
                 .unwrap()
                 .listen("route", move |e: mtauri_sys::event::Event<String>| {

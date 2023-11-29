@@ -2,7 +2,8 @@
     arbitrary_self_types,
     result_option_inspect,
     iterator_try_collect,
-    slice_group_by
+    slice_group_by,
+    async_closure,
 )]
 
 cfg_if::cfg_if! {

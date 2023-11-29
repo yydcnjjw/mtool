@@ -40,8 +40,8 @@ impl PdfDocument {
         })
     }
 
-    pub fn strucutre(&self) -> &OnceCell<adobe::PdfStructure> {
-        &self.structure
+    pub(crate) fn set_structure(&self, structure: adobe::PdfStructure) {
+        self.structure.set(structure).unwrap();
     }
 
     pub fn info(&self) -> &PdfDocumentInfo {
@@ -64,19 +64,6 @@ impl PdfDocument {
                 .filter(|elem| elem.path.starts_with("//Document/P"))
         })
     }
-
-    // pub fn sentences(&self) -> impl Iterator<Item = &Sentence> {
-    //     self.paragraphs().flat_map(|paragraph| paragraph.sentence())
-    // }
-
-    // pub fn paragraphs(&self) -> impl Iterator<Item = &Paragraph> {
-    //     self.tei
-    //         .text
-    //         .body
-    //         .divs
-    //         .iter()
-    //         .flat_map(|div| div.paragraph())
-    // }
 }
 
 async fn load_document_info(

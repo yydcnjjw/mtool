@@ -1,8 +1,10 @@
 use std::{ops::Deref, sync::Arc};
 
+use anyhow::Context;
+use futures::{future, Stream, StreamExt, TryStreamExt};
 use mapp::prelude::*;
 use mcloud_api::adobe;
-use parking_lot::RwLock;
+use mtool_wgui::WindowDataBind;
 use sea_orm::{ActiveValue, DatabaseConnection, EntityTrait};
 use tauri::{
     command,
@@ -11,30 +13,30 @@ use tauri::{
 };
 use tokio::{
     fs,
-    sync::{mpsc, OnceCell},
+    sync::{broadcast, oneshot, OnceCell},
 };
+use tokio_stream::wrappers::{errors::BroadcastStreamRecvError, BroadcastStream};
 
 use crate::{
     pdf::Pdf,
     storage::entity,
-    ui::wgui::{PdfDocumentInfo, PdfFile},
+    ui::wgui::{native::PdfViewerWindow, PdfDocumentInfo, PdfFile},
     AdobeApiConfig, Config,
 };
 
 use super::PdfDocument;
 
+#[derive(Debug, Clone)]
 pub enum PdfLoadEvent {
-    DocLoaded(PdfFile, Arc<PdfDocument>),
-    DocStructureLoaded(PdfFile),
-    Err(anyhow::Error),
+    DocLoading,
+    DocLoaded(Arc<PdfDocument>),
+    DocStructureLoading,
+    DocStructureLoaded,
 }
 
-type LoadEventHandler = Option<Box<dyn Fn(PdfLoadEvent) + Send + Sync>>;
-
 struct PdfLoaderInner {
-    tx: mpsc::UnboundedSender<PdfLoadEvent>,
+    tx: broadcast::Sender<(PdfFile, PdfLoadEvent)>,
     db: Res<DatabaseConnection>,
-    load_event_handler: RwLock<LoadEventHandler>,
 
     adobe_api_cfg: AdobeApiConfig,
     adobe_api_cli: OnceCell<adobe::Client>,
@@ -42,35 +44,21 @@ struct PdfLoaderInner {
 
 impl PdfLoaderInner {
     fn new(adobe_api_cfg: AdobeApiConfig, db: Res<DatabaseConnection>) -> Arc<Self> {
-        let (tx, rx) = mpsc::unbounded_channel();
+        let (tx, _) = broadcast::channel(128);
 
-        let this = Arc::new(Self {
+        Arc::new(Self {
             tx,
             db,
-            load_event_handler: RwLock::new(None),
 
             adobe_api_cfg,
             adobe_api_cli: OnceCell::new(),
-        });
-
-        Self::handle_event(this.clone(), rx);
-        this
-    }
-
-    fn handle_event(this: Arc<Self>, mut rx: mpsc::UnboundedReceiver<PdfLoadEvent>) {
-        tokio::spawn(async move {
-            while let Some(e) = rx.recv().await {
-                let handler = this.load_event_handler.read();
-                if let Some(handler) = handler.as_ref() {
-                    handler(e);
-                }
-            }
-        });
+        })
     }
 
     async fn load_adobe_structure(&self, path: &str) -> Result<adobe::PdfStructure, anyhow::Error> {
         let file = fs::read(path).await?;
         let md5sum = md5::compute(&file).to_vec();
+
         match entity::adobe::Entity::find_by_id(md5sum.clone())
             .one(self.db.deref())
             .await?
@@ -108,8 +96,21 @@ impl PdfLoaderInner {
         }
     }
 
-    fn send_event(&self, e: PdfLoadEvent) {
-        let _ = self.tx.send(e);
+    fn send_event(&self, file: &PdfFile, e: PdfLoadEvent) {
+        let _ = self.tx.send((file.clone(), e));
+    }
+
+    pub fn subscribe_event(&self) -> broadcast::Receiver<(PdfFile, PdfLoadEvent)> {
+        self.tx.subscribe()
+    }
+
+    pub fn subscribe_event_with_file(
+        &self,
+        file: &PdfFile,
+    ) -> impl Stream<Item = Result<(PdfFile, PdfLoadEvent), BroadcastStreamRecvError>> {
+        let file = file.clone();
+        BroadcastStream::new(self.subscribe_event())
+            .try_filter(move |(f, _)| future::ready(f == &file))
     }
 }
 
@@ -124,58 +125,81 @@ impl PdfLoader {
         }
     }
 
-    pub fn on_load_event<Handler>(&self, handler: Handler)
-    where
-        Handler: Fn(PdfLoadEvent) + Send + Sync + 'static,
-    {
-        *self.inner.load_event_handler.write() = Some(Box::new(handler))
+    pub fn subscribe_event(&self) -> broadcast::Receiver<(PdfFile, PdfLoadEvent)> {
+        self.inner.subscribe_event()
     }
 
-    async fn load(&self, file: PdfFile) -> Result<PdfDocumentInfo, anyhow::Error> {
-        let doc = Pdf::get_unwrap().load_pdf_from_file(
-            &file.path,
-            file.password.clone().map(|p| p.leak() as &'static str),
-        )?;
+    pub fn subscribe_event_with_file(
+        &self,
+        file: &PdfFile,
+    ) -> impl Stream<Item = Result<(PdfFile, PdfLoadEvent), BroadcastStreamRecvError>> {
+        self.inner.subscribe_event_with_file(file)
+    }
 
-        let doc = Arc::new(PdfDocument::new(doc).await?);
+    async fn load(&self, file: PdfFile) -> Result<Arc<PdfDocument>, anyhow::Error> {
+        let (doc, doc_rx) = {
+            let (tx, rx) = oneshot::channel();
+            let this = self.inner.clone();
+            let file = file.clone();
+            (
+                tokio::spawn(async move {
+                    this.send_event(&file, PdfLoadEvent::DocLoading);
+                    let doc = {
+                        let file = file.clone();
+                        tokio::task::spawn_blocking(move || {
+                            Pdf::get_unwrap().load_pdf_from_file(
+                                &file.path,
+                                file.password.clone().map(|p| p.leak() as &'static str),
+                            )
+                        })
+                        .await??
+                    };
 
-        let info = doc.info().clone();
-
-        self.inner
-            .send_event(PdfLoadEvent::DocLoaded(file.clone(), doc.clone()));
+                    let doc = Arc::new(PdfDocument::new(doc).await?);
+                    this.send_event(&file, PdfLoadEvent::DocLoaded(doc.clone()));
+                    let _ = tx.send(doc.clone());
+                    Ok::<_, anyhow::Error>(doc)
+                }),
+                rx,
+            )
+        };
 
         {
             let this = self.inner.clone();
             tokio::spawn(async move {
-                let path = file.path.clone();
-                let e = {
-                    let this = this.clone();
-                    match doc
-                        .strucutre()
-                        .get_or_try_init(
-                            move || async move { this.load_adobe_structure(&path).await },
-                        )
-                        .await
-                    {
-                        Ok(_) => PdfLoadEvent::DocStructureLoaded(file),
-                        Err(e) => PdfLoadEvent::Err(e),
-                    }
-                };
-                this.send_event(e);
+                this.send_event(&file, PdfLoadEvent::DocStructureLoading);
+                let structure = this.load_adobe_structure(&file.path).await?;
+                if let Ok(doc) = doc_rx.await {
+                    doc.set_structure(structure);
+                }
+                Ok::<(), anyhow::Error>(())
             });
         }
 
-        Ok(info)
+        Ok(doc.await??)
     }
+}
+
+async fn load_pdf_inner(
+    window: tauri::Window,
+    loader: State<'_, PdfLoader>,
+    file: PdfFile,
+) -> Result<PdfDocumentInfo, anyhow::Error> {
+    let win = window
+        .get_data::<PdfViewerWindow>()
+        .context("PdfViewerWindow is not binded")?;
+    let doc = loader.load(file).await?;
+    win.render_document(doc.clone());
+    Ok(doc.info().clone())
 }
 
 #[command]
 async fn load_pdf(
+    window: tauri::Window,
     loader: State<'_, PdfLoader>,
     file: PdfFile,
 ) -> Result<PdfDocumentInfo, serde_error::Error> {
-    loader
-        .load(file)
+    load_pdf_inner(window, loader, file)
         .await
         .map_err(|e| serde_error::Error::new(&*e))
 }

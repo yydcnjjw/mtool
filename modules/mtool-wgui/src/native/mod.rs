@@ -1,9 +1,11 @@
 mod builder;
 mod global_hotkey;
 mod window;
+mod window_data_bind;
 
 pub use builder::*;
 pub use window::{MtoolWindow, WGuiWindow};
+pub use window_data_bind::WindowDataBind;
 
 use async_trait::async_trait;
 use mapp::{define_label, prelude::*, CreateOnceTaskDescriptor};
@@ -94,10 +96,7 @@ async fn setup(builder: Res<Builder>, injector: Injector) -> Result<(), anyhow::
             tx.send(Res::new(app.clone())).unwrap();
             Ok(())
         })
-        .setup(move |builder| {
-            Ok(builder
-                .plugin(window::init(injector)))
-        })?;
+        .setup(move |builder| Ok(builder.plugin(window::init(injector))))?;
 
     Ok(())
 }

@@ -2,10 +2,9 @@ use std::{collections::HashMap, ffi::c_void, sync::Arc};
 
 use anyhow::Context;
 use itertools::Itertools;
-use mtool_wgui::WGuiWindow;
 use pdfium_render::prelude::*;
 use skia_safe as sk;
-use tauri::{Manager, PhysicalPosition, PhysicalSize, WindowEvent};
+use tauri::{PhysicalPosition, PhysicalSize, WindowEvent};
 use tokio::sync::{broadcast, watch};
 use tracing::{debug, warn};
 
@@ -15,10 +14,7 @@ use super::{
 };
 use crate::{
     pdf::Pdf,
-    ui::wgui::{
-        service::{PdfDocument as Document, PdfLoadEvent, PdfLoader},
-        PageInfo, ScaleEvent, ScrollEvent, WPdfEvent,
-    },
+    ui::wgui::{service::PdfDocument as Document, PageInfo, ScaleEvent, ScrollEvent, WPdfEvent},
 };
 
 struct PdfViewerInner {
@@ -461,18 +457,16 @@ impl PdfViewerInner {
     }
 }
 
-#[derive(Clone)]
 pub struct PdfViewer {
     image_snapshot: watch::Receiver<sk::Image>,
+    event_sender: broadcast::Sender<PdfEvent>,
 }
 
 impl PdfViewer {
-    pub async fn new(win: Arc<WGuiWindow>) -> Result<Self, anyhow::Error> {
-        let loader = win.state::<PdfLoader>();
+    pub async fn new(viewpoint: PhysicalSize<u32>) -> Result<Self, anyhow::Error> {
+        let (event_sender, event_receiver) = broadcast::channel(64);
 
-        let event_receiver = pdf_event_receiver(&loader, &win).await;
-
-        let (renderer, image_snapshot) = PdfViewerInner::new(win.inner_size()?)?;
+        let (renderer, image_snapshot) = PdfViewerInner::new(viewpoint)?;
 
         tokio::spawn(async move {
             if let Err(e) = renderer.run_loop(event_receiver).await {
@@ -480,7 +474,10 @@ impl PdfViewer {
             }
         });
 
-        Ok(Self { image_snapshot })
+        Ok(Self {
+            image_snapshot,
+            event_sender,
+        })
     }
 
     pub fn draw(&self, canvas: &sk::Canvas) -> Result<(), anyhow::Error> {
@@ -489,50 +486,17 @@ impl PdfViewer {
         canvas.draw_image(image, (0, 0), None);
         Ok(())
     }
+
+    pub fn notify_event(&self, e: PdfEvent) {
+        let _ = self.event_sender.send(e);
+    }
 }
 
 #[derive(Debug, Clone)]
-enum PdfEvent {
+pub enum PdfEvent {
     DocChanged(Arc<Document>),
 
     Window(WindowEvent),
 
     WGui(WPdfEvent),
-}
-
-async fn pdf_event_receiver(loader: &PdfLoader, win: &WGuiWindow) -> broadcast::Receiver<PdfEvent> {
-    let (tx, rx) = broadcast::channel(64);
-    {
-        let tx = tx.clone();
-        loader.on_load_event(move |e| match e {
-            PdfLoadEvent::DocLoaded(_, doc) => {
-                let _ = tx.send(PdfEvent::DocChanged(doc));
-            }
-            PdfLoadEvent::DocStructureLoaded(_) => {}
-            PdfLoadEvent::Err(_) => {}
-        });
-    }
-
-    {
-        let tx = tx.clone();
-        win.listen("pdf-event", move |e| {
-            match serde_json::from_str::<WPdfEvent>(e.payload()) {
-                Ok(e) => {
-                    let _ = tx.send(PdfEvent::WGui(e));
-                }
-                Err(_) => {
-                    warn!("{:?}", e);
-                }
-            }
-        });
-    }
-
-    {
-        let tx = tx.clone();
-        win.on_window_event(move |e| {
-            let _ = tx.send(PdfEvent::Window(e.clone()));
-        });
-    }
-
-    rx
 }

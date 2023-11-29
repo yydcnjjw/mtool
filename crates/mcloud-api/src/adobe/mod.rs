@@ -49,6 +49,7 @@ impl Client {
         })
     }
 
+    #[allow(unused)]
     fn from_access_token(
         url: &str,
         client_id: &str,
@@ -145,6 +146,7 @@ impl Client {
 
     pub async fn get_download_asset(&self, asset_id: &AssetId) -> Result<String, anyhow::Error> {
         #[derive(Debug, Deserialize)]
+        #[allow(unused)]
         pub struct Response {
             #[serde(rename = "downloadUri")]
             download_uri: String,
@@ -205,12 +207,14 @@ impl Client {
 
         let content = loop {
             #[derive(Debug, Deserialize)]
+            #[allow(unused)]
             struct AssetMetadata {
                 size: usize,
                 r#type: String,
             }
 
             #[derive(Debug, Deserialize)]
+            #[allow(unused)]
             struct Asset {
                 metadata: AssetMetadata,
                 #[serde(rename = "assetID")]
@@ -220,6 +224,7 @@ impl Client {
             }
 
             #[derive(Debug, Deserialize)]
+            #[allow(unused)]
             struct Response {
                 status: String,
                 content: Option<Asset>,

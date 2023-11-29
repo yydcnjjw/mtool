@@ -53,6 +53,7 @@ pub struct RenderContext<'a> {
     pub canvas: &'a sk::Canvas,
 }
 
+#[derive(Clone)]
 pub struct Renderer {
     _win: Arc<WGuiWindow>,
 }

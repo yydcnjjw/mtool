@@ -4,7 +4,7 @@ use tokio::{
     net::{TcpListener, TcpStream},
     sync::RwLock,
 };
-use tracing::{info, instrument};
+use tracing::{info, instrument, debug};
 
 use crate::config::transport::tcp::{AcceptorConfig, ConnectorConfig};
 

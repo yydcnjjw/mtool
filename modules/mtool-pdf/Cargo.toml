@@ -59,6 +59,8 @@ tauri-runtime-wry = { workspace = true }
 quick-xml = { workspace = true, features = ["async-tokio"] }
 sea-orm = { workspace = true }
 sea-orm-migration = { workspace = true }
+tokio-stream = { workspace = true, features = ["sync"] }
+
 
 tao = "*"
 raw-window-handle = "0.5"

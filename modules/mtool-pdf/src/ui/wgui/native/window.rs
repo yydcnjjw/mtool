@@ -1,44 +1,73 @@
-use std::{ops::Deref, sync::Arc};
-
-use mapp::provider::Res;
-use mtool_wgui::WGuiWindow;
-use tauri::{
-    async_runtime::spawn,
-    plugin::{Builder, TauriPlugin},
-    WindowBuilder, WindowUrl, Wry,
+use std::{
+    ops::Deref,
+    sync::{
+        atomic::{AtomicUsize, Ordering},
+        Arc,
+    },
 };
 
-use tokio::sync::oneshot;
+use base64::prelude::*;
+use mtool_wgui::{WGuiWindow, WindowDataBind};
+
+use tauri::{
+    plugin::{Builder, TauriPlugin},
+    Manager, WindowBuilder, WindowUrl, Wry,
+};
 use tracing::warn;
 
-use super::{pdf_viewer::PdfViewer, Renderer, RendererBuilder};
+use crate::ui::wgui::{service::PdfDocument, WPdfEvent};
 
+use super::{
+    pdf_viewer::{PdfEvent, PdfViewer},
+    Renderer, RendererBuilder,
+};
+
+#[derive(Clone)]
 pub struct PdfViewerWindow {
     win: Arc<WGuiWindow>,
     _renderer: Renderer,
-    _pdf_viewer: PdfViewer,
+    pdf_viewer: Arc<PdfViewer>,
 }
 
 impl PdfViewerWindow {
-    const WINDOW_LABEL: &'static str = "mtool-pdfviewer";
+    pub async fn open(app: tauri::AppHandle) -> Result<Self, anyhow::Error> {
+        Self::new(app).await
+    }
+
+    pub fn open_file(&self, path: &str) -> Result<(), anyhow::Error> {
+        // win.emit(
+        //     "route",
+        //     format!("/pdfviewer/{}", BASE64_STANDARD.encode(path)),
+        // )
+        // .unwrap();
+        Ok(())
+    }
+
+    pub fn render_document(&self, doc: Arc<PdfDocument>) {
+        self.pdf_viewer.notify_event(PdfEvent::DocChanged(doc));
+    }
+
+    fn window_index() -> usize {
+        static INDEX: AtomicUsize = AtomicUsize::new(0);
+        INDEX.fetch_add(1, Ordering::Relaxed)
+    }
 
     async fn new(app: tauri::AppHandle) -> Result<Self, anyhow::Error> {
         let win = WGuiWindow::new(
             {
+                let label = format!("mtool-pdfviewer-{}", Self::window_index());
+
                 #[allow(unused_mut)]
-                let mut builder = WindowBuilder::new(
-                    &app,
-                    Self::WINDOW_LABEL,
-                    WindowUrl::App("/index.html".into()),
-                )
-                .title(Self::WINDOW_LABEL)
-                .resizable(true)
-                .skip_taskbar(false)
-                .visible(false)
-                .transparent(true)
-                .decorations(true)
-                .shadow(false)
-                .disable_file_drop_handler();
+                let mut builder =
+                    WindowBuilder::new(&app, &label, WindowUrl::App("/pdfviewer".into()))
+                        .title(label)
+                        .resizable(true)
+                        .skip_taskbar(false)
+                        .visible(false)
+                        .transparent(true)
+                        .decorations(true)
+                        .shadow(false)
+                        .disable_file_drop_handler();
 
                 #[cfg(windows)]
                 {
@@ -49,19 +78,10 @@ impl PdfViewerWindow {
             },
             false,
         );
+        
+        win.
 
-        {
-            let window = win.clone();
-            win.on_window_event(move |e| match e {
-                tauri::WindowEvent::CloseRequested { api, .. } => {
-                    api.prevent_close();
-                    let _ = window.hide();
-                }
-                _ => {}
-            });
-        }
-
-        let pdf_viewer = PdfViewer::new(win.clone()).await?;
+        let pdf_viewer = Arc::new(PdfViewer::new(win.inner_size()?).await?);
 
         let renderer = {
             let viewer = pdf_viewer.clone();
@@ -71,11 +91,40 @@ impl PdfViewerWindow {
                 .await?
         };
 
-        Ok(Self {
-            win,
+        let this = Self {
+            win: win.clone(),
             _renderer: renderer,
-            _pdf_viewer: pdf_viewer,
-        })
+            pdf_viewer,
+        };
+
+        this.listen_event();
+
+        win.bind(this.clone());
+
+        Ok(this)
+    }
+
+    fn listen_event(&self) {
+        {
+            let pdf_viewer = self.pdf_viewer.clone();
+            self.listen("pdf-event", move |e| {
+                match serde_json::from_str::<WPdfEvent>(e.payload()) {
+                    Ok(e) => {
+                        pdf_viewer.notify_event(PdfEvent::WGui(e));
+                    }
+                    Err(e) => {
+                        warn!("{:?}", e);
+                    }
+                }
+            });
+        }
+
+        {
+            let pdf_viewer = self.pdf_viewer.clone();
+            self.on_window_event(move |e| {
+                pdf_viewer.notify_event(PdfEvent::Window(e.clone()));
+            });
+        }
     }
 }
 
@@ -87,22 +136,8 @@ impl Deref for PdfViewerWindow {
     }
 }
 
-pub(crate) fn init(tx: oneshot::Sender<Res<PdfViewerWindow>>) -> TauriPlugin<Wry> {
+pub(crate) fn init() -> TauriPlugin<Wry> {
     Builder::new("pdfviewer")
-        .setup(move |app, _| {
-            let app = app.clone();
-            spawn(async move {
-                match PdfViewerWindow::new(app).await {
-                    Ok(win) => {
-                        let _ = tx.send(Res::new(win));
-                    }
-                    Err(e) => {
-                        warn!("{:?}", e);
-                    }
-                }
-            });
-            Ok(())
-        })
         .invoke_handler(tauri::generate_handler![])
         .build()
 }
