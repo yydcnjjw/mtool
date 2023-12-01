@@ -23,18 +23,17 @@ use tracing::warn;
 
 use crate::stats::{Copyed, GetTransferStats, TransferMonitor};
 
+type HttpForwardResp = Result<Response<BoxBody<Bytes, hyper::Error>>, anyhow::Error>;
+
 #[derive(Debug)]
 pub struct HttpForwarder {
     pub req: Request<body::Incoming>,
-    pub resp_tx: oneshot::Sender<Result<Response<BoxBody<Bytes, hyper::Error>>, anyhow::Error>>,
+    pub resp_tx: oneshot::Sender<HttpForwardResp>,
     pub remove_proxy_header: bool,
 }
 
 impl HttpForwarder {
-    pub fn new(
-        req: Request<body::Incoming>,
-        resp_tx: oneshot::Sender<Result<Response<BoxBody<Bytes, hyper::Error>>, anyhow::Error>>,
-    ) -> Self {
+    pub fn new(req: Request<body::Incoming>, resp_tx: oneshot::Sender<HttpForwardResp>) -> Self {
         Self {
             req,
             resp_tx,

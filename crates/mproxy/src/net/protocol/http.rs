@@ -11,7 +11,10 @@ use hyper::{
     Method, Request, Response, StatusCode,
 };
 use hyper_util::rt::TokioIo;
-use tokio::sync::{mpsc, oneshot};
+use tokio::{
+    sync::{mpsc, oneshot},
+    time::timeout,
+};
 use tokio_stream::wrappers::UnboundedReceiverStream;
 use tracing::{debug, debug_span, error, instrument, warn, Instrument};
 
@@ -79,7 +82,7 @@ impl Server {
                     });
                 }
                 Err(e) => {
-                    warn!("{:?}", e);
+                    warn!("tcp accept error: {:?}", e);
                     break;
                 }
             };
@@ -223,13 +226,15 @@ fn full<T: Into<Bytes>>(chunk: T) -> BoxBody<Bytes, hyper::Error> {
 pub struct Client {
     connector: transport::Connector,
     monitor: TransferMonitor,
+    config: ClientConfig,
 }
 
 impl Client {
     pub async fn new(config: ClientConfig) -> Result<Self, anyhow::Error> {
         Ok(Self {
-            connector: transport::Connector::new(config.connector).await?,
+            connector: transport::Connector::new(config.connector.clone()).await?,
             monitor: TransferMonitor::new(),
+            config,
         })
     }
 
@@ -260,9 +265,12 @@ impl Client {
             )
         }
 
-        forward_conn
-            .forward_with_monitor(TokioIo::new(hyper::upgrade::on(res).await?), &self.monitor)
-            .await
+        timeout(
+            self.config.forward_timeout.clone(),
+            forward_conn
+                .forward_with_monitor(TokioIo::new(hyper::upgrade::on(res).await?), &self.monitor),
+        )
+        .await?
     }
 
     async fn handle_forward_http(
@@ -271,7 +279,11 @@ impl Client {
         mut forward_conn: HttpForwarder,
     ) -> Result<(u64, u64), anyhow::Error> {
         forward_conn.remove_proxy_header = false;
-        forward_conn.forward(s).await
+        timeout(
+            self.config.forward_timeout.clone(),
+            forward_conn.forward_with_monitor(s, &self.monitor),
+        )
+        .await?
     }
 
     pub async fn send(&self, req: ProxyRequest) -> Result<ProxyResponse, anyhow::Error> {
