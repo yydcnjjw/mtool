@@ -6,9 +6,9 @@ use tokio::{
 };
 use tracing::{info, instrument};
 
-use crate::config::transport::tcp::{AcceptorConfig, ConnectorConfig};
+use crate::{config::transport::tcp::{AcceptorConfig, ConnectorConfig}, net::tool::dynamic_port};
 
-use super::{dynamic_port, Connect};
+use super::Connect;
 
 #[derive(Debug)]
 pub struct Acceptor {

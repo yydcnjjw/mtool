@@ -10,11 +10,11 @@ use tokio::{
 };
 use tracing::{debug_span, error, info, instrument, warn, Instrument};
 
-use crate::config::transport::quic::{
+use crate::{config::transport::quic::{
     AcceptorConfig, CongestionType, ConnectorConfig, StatsConfig, TransportConfig,
-};
+}, net::tool::dynamic_port};
 
-use super::{dynamic_port, Connect};
+use super::Connect;
 
 impl From<TransportConfig> for quinn::TransportConfig {
     fn from(config: TransportConfig) -> Self {

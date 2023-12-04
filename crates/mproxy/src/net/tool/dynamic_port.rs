@@ -8,9 +8,7 @@ use std::{
 use anyhow::Context;
 use tracing::warn;
 
-use crate::{config::transport::Endpoint, proxy::Address};
-
-use super::Connect;
+use crate::{config::transport::Endpoint, net::transport::Connect, proxy::Address};
 
 #[derive(Debug)]
 pub struct Connector<T, S> {

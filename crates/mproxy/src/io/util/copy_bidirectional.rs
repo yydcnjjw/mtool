@@ -71,8 +71,8 @@ fn transfer_one_direction<A, B>(
     w: &mut B,
 ) -> Poll<io::Result<u64>>
 where
-    A: AsyncRead + AsyncWrite + Unpin + ?Sized,
-    B: AsyncRead + AsyncWrite + Unpin + ?Sized,
+    A: AsyncRead + AsyncWrite + ?Sized + Unpin,
+    B: AsyncRead + AsyncWrite + ?Sized + Unpin,
 {
     let mut r = Pin::new(r);
     let mut w = Pin::new(w);
@@ -95,8 +95,8 @@ where
 
 impl<'a, A, B> Future for CopyBidirectional<'a, A, B>
 where
-    A: AsyncRead + AsyncWrite + Unpin + ?Sized,
-    B: AsyncRead + AsyncWrite + Unpin + ?Sized,
+    A: AsyncRead + AsyncWrite + ?Sized + Unpin,
+    B: AsyncRead + AsyncWrite + ?Sized + Unpin,
 {
     type Output = Result<(u64, u64), (io::Error, (u64, u64))>;
 

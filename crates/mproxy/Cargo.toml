@@ -26,8 +26,8 @@ cfg-if = { workspace = true }
 async-trait = { workspace = true }
 pin-project = { workspace = true }
 
+pin-project-lite = "*"
 protobuf = "*"
-
 weak-table = "*"
 
 [target.'cfg(target_family = "wasm")'.dependencies]
@@ -59,10 +59,11 @@ strum = { version = "*", features = ["derive"] }
 enum_dispatch = "*"
 domain_matcher = { git = "https://github.com/Qv2ray/DomainMatcher" }
 warp = "*"
-rustls = { version = "0.21.1", features = ["quic"] }
+rustls = { version = "0.22.0" }
+rustls-pemfile = "1.0.4"
+rustls-pki-types = "*"
 tokio-rustls = "*"
 tokio-util = { version = "*", features = ["compat"] }
-rustls-pemfile = "*"
 tokio_kcp = "*"
 
 [target.'cfg(target_family = "unix")'.dependencies]

@@ -4,9 +4,9 @@ use tokio::sync::{Mutex, RwLock};
 use tokio_kcp::{KcpConfig, KcpListener, KcpStream};
 use tracing::{debug, info, instrument};
 
-use crate::config::transport::kcp::{AcceptorConfig, ConnectorConfig};
+use crate::{config::transport::kcp::{AcceptorConfig, ConnectorConfig}, net::tool::dynamic_port};
 
-use super::{dynamic_port, Connect};
+use super::Connect;
 
 #[derive(Debug)]
 pub struct Acceptor {

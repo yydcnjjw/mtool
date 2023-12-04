@@ -10,7 +10,7 @@ use tauri::{
     plugin::{Builder, TauriPlugin},
     AppHandle, Manager, PhysicalPosition, WindowBuilder, WindowEvent, WindowUrl, Wry,
 };
-use tokio::sync::mpsc;
+use tokio::sync::{mpsc, oneshot, OnceCell};
 use tracing::info;
 
 pub struct WGuiWindow {
@@ -40,16 +40,29 @@ impl Deref for WGuiWindow {
 }
 
 impl WGuiWindow {
-    pub fn new(window: tauri::Window, hide_on_unfocus: bool) -> Arc<Self> {
+    pub async fn new(
+        window: tauri::Window,
+        hide_on_unfocus: bool,
+    ) -> Result<Arc<Self>, anyhow::Error> {
         let this = Arc::new(Self {
-            inner: window,
+            inner: window.clone(),
             pos: RwLock::new(None),
             hide_on_unfocus,
         });
 
         Self::listen_window_event(this.clone());
 
-        this
+        Self::wait_for_ready(this.clone()).await?;
+
+        Ok(this)
+    }
+
+    async fn wait_for_ready(self: Arc<Self>) -> Result<(), anyhow::Error> {
+        let (tx, rx) = oneshot::channel();
+        self.once("window:ready", move |_| {
+            let _ = tx.send(());
+        });
+        Ok(rx.await?)
     }
 
     fn save_position(&self) -> Result<(), anyhow::Error> {
@@ -115,21 +128,21 @@ impl WGuiWindow {
 pub struct MtoolWindow(Arc<WGuiWindow>);
 
 impl MtoolWindow {
-    fn new(app: AppHandle) -> Self {
-        Self(WGuiWindow::new(
-            WindowBuilder::new(&app, "mtool", WindowUrl::App("index.html".into()))
-                .title("mtool")
-                .transparent(true)
-                .decorations(false)
-                .resizable(true)
-                .skip_taskbar(true)
-                .always_on_top(true)
-                .visible(false)
-                // TODO: disable shadow for transparent
-                .shadow(false)
-                .build()
-                .expect("create mtool window failed"),
-            cfg!(not(debug_assertions)),
+    async fn new(app: AppHandle) -> Result<Self, anyhow::Error> {
+        let win = WindowBuilder::new(&app, "mtool", WindowUrl::App("index.html".into()))
+            .title("mtool")
+            .transparent(true)
+            .decorations(false)
+            .resizable(true)
+            .skip_taskbar(true)
+            .always_on_top(true)
+            .visible(false)
+            // TODO: disable shadow for transparent
+            .shadow(false)
+            .build()
+            .expect("create mtool window failed");
+        Ok(Self(
+            WGuiWindow::new(win, cfg!(not(debug_assertions))).await?,
         ))
     }
 }
@@ -155,7 +168,7 @@ pub(crate) fn init(injector: Injector) -> TauriPlugin<Wry> {
         .setup(move |app, _| {
             let app = app.clone();
             spawn(async move {
-                injector.insert(Res::new(MtoolWindow::new(app)));
+                injector.insert(Res::new(MtoolWindow::new(app).await.unwrap()));
             });
             Ok(())
         })

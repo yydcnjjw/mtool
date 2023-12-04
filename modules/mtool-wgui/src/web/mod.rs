@@ -12,6 +12,7 @@ use mapp::{define_label, prelude::*, ScheduleGraph};
 pub use app::*;
 pub use auto_window::*;
 pub use keybinding::*;
+use mtauri_sys::window::Window;
 pub use route::*;
 pub use template::{EmptyView, Template, TemplateData, TemplateId, TemplateView, Templator};
 
@@ -41,6 +42,8 @@ impl AppLocalModule for Module {
 }
 
 async fn run(templator: Res<Templator>) -> Result<(), anyhow::Error> {
+    Window::current().unwrap().emit("window:ready", &()).await?;
+
     yew::Renderer::<WebApp>::with_props(WebAppContext {
         keybinding: Keybinding::new_with_window(),
         templator,

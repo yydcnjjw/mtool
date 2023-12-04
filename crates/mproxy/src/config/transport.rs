@@ -1,7 +1,8 @@
-use std::{fs::File, io::BufReader, path::PathBuf, sync::Arc};
+use std::{fs::File, io::BufReader, path::PathBuf, sync::Arc, time::Duration};
 
 use anyhow::Context;
 use serde::{Deserialize, Serialize};
+use serde_with::serde_as;
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
 #[serde(tag = "transport")]
@@ -16,11 +17,42 @@ pub enum AcceptorConfig {
 #[derive(Serialize, Deserialize, Debug, Clone)]
 #[serde(tag = "transport")]
 #[serde(rename_all = "lowercase")]
-pub enum ConnectorConfig {
+pub enum ConnectorConfigInner {
     Quic(quic::ConnectorConfig),
     Tcp(tcp::ConnectorConfig),
     Kcp(kcp::ConnectorConfig),
     Tls(Box<tls::ConnectorConfig>),
+}
+
+#[derive(Serialize, Deserialize, Debug, Clone)]
+#[serde_as]
+#[serde(default)]
+pub struct TransportConfig {
+    #[serde_as(as = "DurationSeconds")]
+    pub read_timeout: Duration,
+
+    #[serde_as(as = "DurationSeconds")]
+    pub write_timeout: Duration,
+}
+
+impl Default for TransportConfig {
+    fn default() -> Self {
+        Self {
+            read_timeout: Duration::from_secs(10),
+            write_timeout: Duration::from_secs(10),
+        }
+    }
+}
+
+#[derive(Serialize, Deserialize, Debug, Clone)]
+#[serde(rename_all = "lowercase")]
+#[serde_as]
+pub struct ConnectorConfig {
+    #[serde(flatten)]
+    pub inner: ConnectorConfigInner,
+
+    #[serde(flatten)]
+    pub transport: TransportConfig,
 }
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
@@ -161,7 +193,10 @@ pub mod kcp {
 }
 
 pub mod tls {
+    use std::time::Duration;
+
     use serde::{Deserialize, Serialize};
+    use serde_with::serde_as;
 
     use super::TlsConfig;
 
@@ -172,10 +207,14 @@ pub mod tls {
     }
 
     #[derive(Serialize, Deserialize, Debug, Clone)]
+    #[serde_as]
     pub struct ConnectorConfig {
         pub next_layer: super::ConnectorConfig,
         pub tls: TlsConfig,
         pub server_name: String,
+
+        #[serde_as(as = "DurationSeconds")]
+        pub handshake_timeout: Duration,
     }
 }
 

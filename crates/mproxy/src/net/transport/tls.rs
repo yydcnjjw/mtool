@@ -1,5 +1,7 @@
-use std::sync::Arc;
+use std::{sync::Arc, time::Duration};
 
+use rustls_pki_types::ServerName;
+use tokio::time::timeout;
 use tokio_rustls::{client, server, TlsAcceptor, TlsConnector};
 use tracing::instrument;
 
@@ -47,6 +49,8 @@ pub struct Connector {
     next_layer: super::Connector,
     connector: TlsConnector,
     server_name: String,
+
+    handshake_timeout: Duration,
 }
 
 impl std::fmt::Debug for Connector {
@@ -59,26 +63,35 @@ impl std::fmt::Debug for Connector {
 }
 
 impl Connector {
-    pub async fn new(config: ConnectorConfig) -> Result<Self, anyhow::Error> {
-        let mut tls_config = rustls::ClientConfig::try_from(&config.tls)?;
+    pub async fn new(
+        ConnectorConfig {
+            next_layer,
+            tls,
+            server_name,
+            handshake_timeout,
+        }: ConnectorConfig,
+    ) -> Result<Self, anyhow::Error> {
+        let mut tls_config = rustls::ClientConfig::try_from(&tls)?;
 
         tls_config.resumption = rustls::client::Resumption::in_memory_sessions(128);
 
         Ok(Self {
-            next_layer: super::Connector::new(config.next_layer).await?,
+            next_layer: super::Connector::new(next_layer).await?,
             connector: TlsConnector::from(Arc::new(tls_config)),
-            server_name: config.server_name,
+            server_name,
+            handshake_timeout,
         })
     }
 
     #[instrument(skip_all, fields(transport = "tls"))]
     pub async fn connect(&self) -> Result<client::TlsStream<BoxedAsyncIO>, anyhow::Error> {
-        Ok(self
-            .connector
-            .connect(
-                rustls::ServerName::try_from(self.server_name.as_str())?,
+        Ok(timeout(
+            self.handshake_timeout.clone(),
+            self.connector.connect(
+                ServerName::try_from(self.server_name.clone())?,
                 self.next_layer.connect().await?,
-            )
-            .await?)
+            ),
+        )
+        .await??)
     }
 }

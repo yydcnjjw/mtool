@@ -35,11 +35,12 @@ impl PdfViewerWindow {
     }
 
     pub fn open_file(&self, path: &str) -> Result<(), anyhow::Error> {
-        // win.emit(
-        //     "route",
-        //     format!("/pdfviewer/{}", BASE64_STANDARD.encode(path)),
-        // )
-        // .unwrap();
+        self.win
+            .emit(
+                "route",
+                format!("/pdfviewer/{}", BASE64_STANDARD.encode(path)),
+            )
+            .unwrap();
         Ok(())
     }
 
@@ -77,9 +78,8 @@ impl PdfViewerWindow {
                 builder.build()?
             },
             false,
-        );
-        
-        win.
+        )
+        .await?;
 
         let pdf_viewer = Arc::new(PdfViewer::new(win.inner_size()?).await?);
 

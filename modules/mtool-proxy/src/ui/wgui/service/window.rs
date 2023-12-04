@@ -17,20 +17,23 @@ use crate::{
 pub struct ProxyMonitorWindow(Arc<WGuiWindow>);
 
 impl ProxyMonitorWindow {
-    fn new(app: tauri::AppHandle) -> Self {
-        Self(WGuiWindow::new(
-            WindowBuilder::new(&app, "mtool-proxy", WindowUrl::App("/proxy".into()))
-                .title("mtool-proxy")
-                .transparent(true)
-                .decorations(false)
-                .resizable(false)
-                .skip_taskbar(true)
-                .visible(true)
-                // TODO: disable shadow for transparent
-                .shadow(false)
-                .build()
-                .expect("create proxy monitor window failed"),
-            false,
+    async fn new(app: tauri::AppHandle) -> Result<Self, anyhow::Error> {
+        Ok(Self(
+            WGuiWindow::new(
+                WindowBuilder::new(&app, "mtool-proxy", WindowUrl::App("/proxy".into()))
+                    .title("mtool-proxy")
+                    .transparent(true)
+                    .decorations(false)
+                    .resizable(false)
+                    .skip_taskbar(true)
+                    .visible(true)
+                    // TODO: disable shadow for transparent
+                    .shadow(false)
+                    .build()
+                    .expect("create proxy monitor window failed"),
+                false,
+            )
+            .await?,
         ))
     }
 }
@@ -71,7 +74,7 @@ pub(crate) fn init(proxy_app: Res<ProxyService>, injector: Injector) -> TauriPlu
         .setup(move |app, _| {
             let app = app.clone();
             app.manage(proxy_app);
-            spawn(async move { injector.insert(Res::new(ProxyMonitorWindow::new(app))) });
+            spawn(async move { injector.insert(Res::new(ProxyMonitorWindow::new(app).await.unwrap())) });
             Ok(())
         })
         .invoke_handler(tauri::generate_handler![stats])
