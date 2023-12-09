@@ -4,6 +4,7 @@ cfg_if::cfg_if! {
         pub mod ingress;
         pub mod routing;
         pub mod transport;
+        pub mod tls;
 
         use self::{egress::EgressConfig, ingress::IngressConfig, routing::RoutingConfig};
         use serde::{Deserialize, Serialize};

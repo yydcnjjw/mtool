@@ -1,7 +1,8 @@
 use mtauri_sys::window::Window;
+use serde::Serialize;
 use tracing::{debug, warn};
 use wasm_bindgen::JsValue;
-use yew::prelude::*;
+use yew::{prelude::*, platform::spawn_local};
 use yew_router::{prelude::*, switch::SwitchProps};
 
 use std::marker::PhantomData;
@@ -86,6 +87,7 @@ where
         match msg {
             Msg::RegisterRouteListener(unlisten) => {
                 self.route_unlisten = Some(unlisten);
+                emit_event("window:ready", ());
                 false
             }
         }
@@ -96,4 +98,22 @@ where
             <Switch<R> render={ ctx.props().render.clone() } />
         }
     }
+}
+
+fn emit_event<E, T>(event: E, payload: T)
+where
+    E: AsRef<str> + 'static,
+    T: Serialize + 'static,
+{
+    spawn_local(async move {
+        debug!("emit {}", event.as_ref());
+        match Window::current() {
+            Ok(win) => {
+                if let Err(e) = win.emit(event.as_ref(), &payload).await {
+                    warn!("{:?}", e);
+                }
+            }
+            Err(e) => warn!("{:?}", e),
+        }
+    });
 }

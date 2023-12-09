@@ -1,7 +1,6 @@
 use anyhow::Context;
 use skia_safe::{
     gpu::{self, d3d, DirectContext},
-    surface::BackendSurfaceAccess,
     Surface,
 };
 use tauri::PhysicalSize;
@@ -50,7 +49,7 @@ impl SkiaContext {
         self.surfaces[index].clone()
     }
 
-    pub(super) fn flush_and_submit(&mut self, surface: &mut Surface) {
+    pub(super) fn flush_and_submit(&mut self, _surface: &mut Surface) {
         self.context.flush_and_submit();
     }
 

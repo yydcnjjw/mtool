@@ -28,9 +28,17 @@ fn render(params: &RouteParams) -> Result<Html, anyhow::Error> {
     })
 }
 
+fn index(_params: &RouteParams) -> Result<Html, anyhow::Error> {
+    Ok(html! {
+        <div>{"Pdf Viewer"}</div>
+    })
+}
+
 async fn init(router: Res<Router>) -> Result<(), anyhow::Error> {
-    router.add("/pdfviewer/:path", |params| {
-        render_result_view(render(params))
-    });
+    router
+        .add("/pdfviewer/:path", |params| {
+            render_result_view(render(params))
+        })
+        .add("/pdfviewer", |params| render_result_view(index(params)));
     Ok(())
 }

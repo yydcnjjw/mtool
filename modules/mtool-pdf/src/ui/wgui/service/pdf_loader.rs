@@ -1,7 +1,7 @@
 use std::{ops::Deref, sync::Arc};
 
 use anyhow::Context;
-use futures::{future, Stream, StreamExt, TryStreamExt};
+use futures::{future, Stream, TryStreamExt};
 use mapp::prelude::*;
 use mcloud_api::adobe;
 use mtool_wgui::WindowDataBind;
@@ -16,6 +16,7 @@ use tokio::{
     sync::{broadcast, oneshot, OnceCell},
 };
 use tokio_stream::wrappers::{errors::BroadcastStreamRecvError, BroadcastStream};
+use tracing::debug;
 
 use crate::{
     pdf::Pdf,
@@ -185,6 +186,7 @@ async fn load_pdf_inner(
     loader: State<'_, PdfLoader>,
     file: PdfFile,
 ) -> Result<PdfDocumentInfo, anyhow::Error> {
+    debug!("load file {:?}", file);
     let win = window
         .get_data::<PdfViewerWindow>()
         .context("PdfViewerWindow is not binded")?;

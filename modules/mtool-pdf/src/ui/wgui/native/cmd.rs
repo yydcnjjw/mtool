@@ -4,7 +4,6 @@ use mapp::prelude::*;
 use mtool_interactive::{Completion, CompletionArgs};
 use tauri::AppHandle;
 use tokio::fs;
-use tracing::debug;
 
 use super::PdfViewerWindow;
 
@@ -46,7 +45,7 @@ pub async fn open_pdf(app_handle: Res<AppHandle>, c: Res<Completion>) -> Result<
         None => return Ok(()),
     };
 
-    let win = PdfViewerWindow::open((*app_handle).clone()).await?;
+    let win = PdfViewerWindow::new((*app_handle).clone()).await?;
 
     win.open_file(&path)?;
     win.show()?;

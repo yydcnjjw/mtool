@@ -77,7 +77,7 @@ impl WindowDataBind for tauri::Window {
         let binding = get_data_binding(self);
         binding.bind(self, v);
     }
-
+    
     fn get_data<T>(&self) -> Option<T>
     where
         T: Send + Sync + Clone + 'static,

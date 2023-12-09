@@ -50,7 +50,7 @@ tracing-opentelemetry = { version = "0.18", features = ["metrics"], optional = t
 opentelemetry-prometheus = { version = "0.11", optional = true }
 prometheus = { version = "0.13", optional = true }
 libc = "*"
-quinn = "*"
+quinn = { git = "https://github.com/quinn-rs/quinn", branch = "main" }
 hyper = { version = "1.0.0-rc.4", features = ["full"] }
 hyper-util = { version = "0.1", features = ["tokio"] }
 http-body-util = "0.1.0-rc.2"
@@ -59,8 +59,9 @@ strum = { version = "*", features = ["derive"] }
 enum_dispatch = "*"
 domain_matcher = { git = "https://github.com/Qv2ray/DomainMatcher" }
 warp = "*"
-rustls = { version = "0.22.0" }
-rustls-pemfile = "1.0.4"
+rustls = { version = "*" }
+
+rustls-pemfile = "*"
 rustls-pki-types = "*"
 tokio-rustls = "*"
 tokio-util = { version = "*", features = ["compat"] }

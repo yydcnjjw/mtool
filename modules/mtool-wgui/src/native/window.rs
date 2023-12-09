@@ -10,8 +10,8 @@ use tauri::{
     plugin::{Builder, TauriPlugin},
     AppHandle, Manager, PhysicalPosition, WindowBuilder, WindowEvent, WindowUrl, Wry,
 };
-use tokio::sync::{mpsc, oneshot, OnceCell};
-use tracing::info;
+use tokio::sync::{mpsc, oneshot};
+use tracing::{debug, warn};
 
 pub struct WGuiWindow {
     inner: tauri::Window,
@@ -61,6 +61,7 @@ impl WGuiWindow {
         let (tx, rx) = oneshot::channel();
         self.once("window:ready", move |_| {
             let _ = tx.send(());
+            debug!("window:ready");
         });
         Ok(rx.await?)
     }
@@ -68,7 +69,7 @@ impl WGuiWindow {
     fn save_position(&self) -> Result<(), anyhow::Error> {
         let mut pos = self.pos.write().unwrap();
         *pos = Some(self.inner.outer_position()?);
-        info!("save position: {:?}", &pos);
+        debug!("save position: {:?}", &pos);
         Ok(())
     }
 
@@ -76,7 +77,7 @@ impl WGuiWindow {
         let pos = self.pos.read().unwrap();
         if let Some(pos) = pos.as_ref() {
             self.inner.set_position(pos.clone())?;
-            info!("restore position: {:?}", &pos);
+            debug!("restore position: {:?}", &pos);
         }
         Ok(())
     }
@@ -168,7 +169,12 @@ pub(crate) fn init(injector: Injector) -> TauriPlugin<Wry> {
         .setup(move |app, _| {
             let app = app.clone();
             spawn(async move {
-                injector.insert(Res::new(MtoolWindow::new(app).await.unwrap()));
+                match MtoolWindow::new(app).await {
+                    Ok(win) => {
+                        injector.insert(Res::new(win));
+                    }
+                    Err(e) => warn!("{:?}", e),
+                }
             });
             Ok(())
         })

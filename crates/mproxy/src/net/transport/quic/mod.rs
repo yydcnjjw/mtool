@@ -1,20 +1,19 @@
+mod bistream;
+
 use anyhow::Context;
-use quinn::{
-    congestion::{BbrConfig, CubicConfig, NewRenoConfig},
-    RecvStream, SendStream, VarInt,
-};
-use std::{io, net::SocketAddr, pin::Pin, sync::Arc, task, time::Duration};
-use tokio::{
-    io::{AsyncRead, AsyncWrite},
-    sync::{mpsc, Mutex, RwLock},
-};
+use quinn::{congestion::{BbrConfig, CubicConfig, NewRenoConfig}, rustls};
+use std::{sync::Arc, time::Duration};
+use tokio::sync::{mpsc, Mutex, RwLock};
 use tracing::{debug_span, error, info, instrument, warn, Instrument};
 
-use crate::{config::transport::quic::{
-    AcceptorConfig, CongestionType, ConnectorConfig, StatsConfig, TransportConfig,
-}, net::tool::dynamic_port};
+use crate::{
+    config::transport::quic::{
+        AcceptorConfig, CongestionType, ConnectorConfig, StatsConfig, TransportConfig,
+    },
+    net::tool::dynamic_port,
+};
 
-use super::Connect;
+use self::bistream::BiStream;
 
 impl From<TransportConfig> for quinn::TransportConfig {
     fn from(config: TransportConfig) -> Self {
@@ -192,40 +191,6 @@ impl ConnectorInner {
     }
 }
 
-impl Connect<BiStream> for ConnectorInner {
-    async fn is_open(&self) -> bool {
-        let conn = self.conn.read().await;
-        if let Some(conn) = conn.as_ref() {
-            conn.close_reason().is_none()
-        } else {
-            false
-        }
-    }
-
-    async fn connect(&self, endpoint: SocketAddr) -> Result<(), anyhow::Error> {
-        let conn = Arc::new(self.endpoint.connect(endpoint, &self.server_name)?.await?);
-
-        record_stats(self.stats.clone(), conn.clone());
-
-        *self.conn.write().await = Some(conn);
-
-        Ok(())
-    }
-
-    async fn open_stream(&self) -> Result<BiStream, anyhow::Error> {
-        self.open_bistream().await
-    }
-
-    async fn close(&self) {
-        if !self.is_open().await {
-            return;
-        }
-        if let Some(conn) = self.conn.write().await.as_mut() {
-            conn.close(VarInt::from_u32(0), &[]);
-        }
-    }
-}
-
 impl ConnectorInner {
     async fn open_bistream(&self) -> Result<BiStream, anyhow::Error> {
         if let Some(conn) = self.conn.read().await.as_ref() {
@@ -233,57 +198,5 @@ impl ConnectorInner {
         } else {
             anyhow::bail!("connection is invalid")
         }
-    }
-}
-
-#[derive(Debug)]
-pub struct BiStream {
-    r: RecvStream,
-    w: SendStream,
-}
-
-impl BiStream {
-    pub async fn accept(conn: &quinn::Connection) -> Result<Self, anyhow::Error> {
-        let (w, r) = conn.accept_bi().await?;
-        Ok(Self { r, w })
-    }
-
-    pub async fn open(conn: &quinn::Connection) -> Result<Self, anyhow::Error> {
-        let (w, r) = conn.open_bi().await?;
-        Ok(Self { r, w })
-    }
-}
-
-impl AsyncWrite for BiStream {
-    fn poll_write(
-        mut self: Pin<&mut Self>,
-        cx: &mut task::Context<'_>,
-        buf: &[u8],
-    ) -> task::Poll<Result<usize, io::Error>> {
-        Pin::new(&mut self.w).poll_write(cx, buf)
-    }
-
-    fn poll_flush(
-        mut self: Pin<&mut Self>,
-        cx: &mut task::Context<'_>,
-    ) -> task::Poll<Result<(), io::Error>> {
-        Pin::new(&mut self.w).poll_flush(cx)
-    }
-
-    fn poll_shutdown(
-        mut self: Pin<&mut Self>,
-        cx: &mut task::Context<'_>,
-    ) -> task::Poll<Result<(), io::Error>> {
-        Pin::new(&mut self.w).poll_shutdown(cx)
-    }
-}
-
-impl AsyncRead for BiStream {
-    fn poll_read(
-        mut self: Pin<&mut Self>,
-        cx: &mut task::Context<'_>,
-        buf: &mut tokio::io::ReadBuf<'_>,
-    ) -> task::Poll<io::Result<()>> {
-        Pin::new(&mut self.r).poll_read(cx, buf)
     }
 }

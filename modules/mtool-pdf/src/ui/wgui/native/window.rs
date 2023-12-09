@@ -6,6 +6,7 @@ use std::{
     },
 };
 
+use anyhow::Context;
 use base64::prelude::*;
 use mtool_wgui::{WGuiWindow, WindowDataBind};
 
@@ -13,7 +14,7 @@ use tauri::{
     plugin::{Builder, TauriPlugin},
     Manager, WindowBuilder, WindowUrl, Wry,
 };
-use tracing::warn;
+use tracing::{warn, debug};
 
 use crate::ui::wgui::{service::PdfDocument, WPdfEvent};
 
@@ -25,23 +26,19 @@ use super::{
 #[derive(Clone)]
 pub struct PdfViewerWindow {
     win: Arc<WGuiWindow>,
-    _renderer: Renderer,
+    _renderer: Arc<Renderer>,
     pdf_viewer: Arc<PdfViewer>,
 }
 
 impl PdfViewerWindow {
-    pub async fn open(app: tauri::AppHandle) -> Result<Self, anyhow::Error> {
-        Self::new(app).await
-    }
-
     pub fn open_file(&self, path: &str) -> Result<(), anyhow::Error> {
+        debug!("open file: {}", path);
         self.win
             .emit(
                 "route",
                 format!("/pdfviewer/{}", BASE64_STANDARD.encode(path)),
             )
-            .unwrap();
-        Ok(())
+            .context("emit route failed")
     }
 
     pub fn render_document(&self, doc: Arc<PdfDocument>) {
@@ -53,33 +50,29 @@ impl PdfViewerWindow {
         INDEX.fetch_add(1, Ordering::Relaxed)
     }
 
-    async fn new(app: tauri::AppHandle) -> Result<Self, anyhow::Error> {
-        let win = WGuiWindow::new(
+    pub async fn new(app: tauri::AppHandle) -> Result<Self, anyhow::Error> {
+        let win = {
+            let label = format!("mtool-pdfviewer-{}", Self::window_index());
+
+            #[allow(unused_mut)]
+            let mut builder = WindowBuilder::new(&app, &label, WindowUrl::App("/pdfviewer".into()))
+                .title(label)
+                .resizable(true)
+                .skip_taskbar(false)
+                .visible(false)
+                .transparent(true)
+                .decorations(true)
+                .shadow(false)
+                .disable_file_drop_handler();
+
+            #[cfg(windows)]
             {
-                let label = format!("mtool-pdfviewer-{}", Self::window_index());
+                builder = builder.enable_composition();
+            }
 
-                #[allow(unused_mut)]
-                let mut builder =
-                    WindowBuilder::new(&app, &label, WindowUrl::App("/pdfviewer".into()))
-                        .title(label)
-                        .resizable(true)
-                        .skip_taskbar(false)
-                        .visible(false)
-                        .transparent(true)
-                        .decorations(true)
-                        .shadow(false)
-                        .disable_file_drop_handler();
-
-                #[cfg(windows)]
-                {
-                    builder = builder.enable_composition();
-                }
-
-                builder.build()?
-            },
-            false,
-        )
-        .await?;
+            builder.build()?
+        };
+        let win = WGuiWindow::new(win, false).await?;
 
         let pdf_viewer = Arc::new(PdfViewer::new(win.inner_size()?).await?);
 
@@ -93,7 +86,7 @@ impl PdfViewerWindow {
 
         let this = Self {
             win: win.clone(),
-            _renderer: renderer,
+            _renderer: Arc::new(renderer),
             pdf_viewer,
         };
 

@@ -18,23 +18,18 @@ pub struct ProxyMonitorWindow(Arc<WGuiWindow>);
 
 impl ProxyMonitorWindow {
     async fn new(app: tauri::AppHandle) -> Result<Self, anyhow::Error> {
-        Ok(Self(
-            WGuiWindow::new(
-                WindowBuilder::new(&app, "mtool-proxy", WindowUrl::App("/proxy".into()))
-                    .title("mtool-proxy")
-                    .transparent(true)
-                    .decorations(false)
-                    .resizable(false)
-                    .skip_taskbar(true)
-                    .visible(true)
-                    // TODO: disable shadow for transparent
-                    .shadow(false)
-                    .build()
-                    .expect("create proxy monitor window failed"),
-                false,
-            )
-            .await?,
-        ))
+        let win = WindowBuilder::new(&app, "mtool-proxy", WindowUrl::App("/proxy".into()))
+            .title("mtool-proxy")
+            .transparent(true)
+            .decorations(false)
+            .resizable(false)
+            .skip_taskbar(true)
+            .visible(true)
+            // TODO: disable shadow for transparent
+            .shadow(false)
+            .build()
+            .expect("create proxy monitor window failed");
+        Ok(Self(WGuiWindow::new(win, false).await?))
     }
 }
 
