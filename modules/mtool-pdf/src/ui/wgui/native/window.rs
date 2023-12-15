@@ -1,5 +1,6 @@
 use std::{
     ops::Deref,
+    path::PathBuf,
     sync::{
         atomic::{AtomicUsize, Ordering},
         Arc,
@@ -14,7 +15,7 @@ use tauri::{
     plugin::{Builder, TauriPlugin},
     Manager, WindowBuilder, WindowUrl, Wry,
 };
-use tracing::{warn, debug};
+use tracing::{debug, warn};
 
 use crate::ui::wgui::{service::PdfDocument, WPdfEvent};
 
@@ -31,12 +32,14 @@ pub struct PdfViewerWindow {
 }
 
 impl PdfViewerWindow {
-    pub fn open_file(&self, path: &str) -> Result<(), anyhow::Error> {
-        debug!("open file: {}", path);
+    pub fn open_file(&self, path: PathBuf) -> Result<(), anyhow::Error> {
         self.win
             .emit(
                 "route",
-                format!("/pdfviewer/{}", BASE64_STANDARD.encode(path)),
+                format!(
+                    "/pdfviewer/{}",
+                    BASE64_STANDARD.encode(path.display().to_string())
+                ),
             )
             .context("emit route failed")
     }

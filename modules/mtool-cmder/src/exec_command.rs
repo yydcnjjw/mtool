@@ -66,7 +66,13 @@ impl CompleteItem for CommandItem {
 #[function_component]
 pub fn CommandItemView(props: &CommandItem) -> Html {
     html! {
-        <div> { props.name.clone() } </div>
+        <div class={classes!(
+            "flex",
+            "items-center",
+            "h-10",
+        )}>
+          <span class={classes!("align-middle")}>{ props.name.clone() }</span>
+        </div>
     }
 }
 

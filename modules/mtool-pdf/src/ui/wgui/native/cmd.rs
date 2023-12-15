@@ -1,4 +1,4 @@
-use std::path::Path;
+use std::path::{Path, PathBuf};
 
 use mapp::prelude::*;
 use mtool_interactive::{Completion, CompletionArgs};
@@ -7,7 +7,7 @@ use tokio::fs;
 
 use super::PdfViewerWindow;
 
-async fn list_file<P: AsRef<Path>>(dir: P) -> Result<Vec<String>, anyhow::Error> {
+async fn list_file<P: AsRef<Path>>(dir: P) -> Result<Vec<PathBuf>, anyhow::Error> {
     if !fs::try_exists(&dir).await? {
         return Ok(Vec::new());
     }
@@ -17,20 +17,14 @@ async fn list_file<P: AsRef<Path>>(dir: P) -> Result<Vec<String>, anyhow::Error>
         if entry.file_type().await?.is_file()
             && entry.path().extension().is_some_and(|ext| ext == "pdf")
         {
-            files.push(
-                entry
-                    .path()
-                    .into_os_string()
-                    .into_string()
-                    .map_err(|e| anyhow::anyhow!("convert OsString failed: {:?}", e))?,
-            )
+            files.push(entry.path())
         }
     }
     Ok(files)
 }
 
 pub async fn open_pdf(app_handle: Res<AppHandle>, c: Res<Completion>) -> Result<(), anyhow::Error> {
-    let path: String = match c
+    let path: PathBuf = match c
         .complete_read(
             CompletionArgs::new(|completed: &str| {
                 let completed = completed.to_string();
@@ -47,7 +41,7 @@ pub async fn open_pdf(app_handle: Res<AppHandle>, c: Res<Completion>) -> Result<
 
     let win = PdfViewerWindow::new((*app_handle).clone()).await?;
 
-    win.open_file(&path)?;
+    win.open_file(path)?;
     win.show()?;
 
     Ok(())

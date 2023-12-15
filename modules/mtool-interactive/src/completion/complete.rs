@@ -1,74 +1,12 @@
-use std::{any::type_name, fmt::Display, future::Future, ops::Deref};
-
+use std::future::Future;
 use async_trait::async_trait;
 use fuzzy_matcher::{skim::SkimMatcherV2, FuzzyMatcher};
 use itertools::Itertools;
 use serde::{Deserialize, Serialize};
-use yew::prelude::*;
 
 use crate::rand::rand_string;
 
-#[derive(Properties, Clone, PartialEq, Serialize, Deserialize)]
-pub struct Props<T>
-where
-    T: PartialEq + Serialize,
-{
-    data: T,
-}
-
-impl<T> Props<T>
-where
-    T: PartialEq + Serialize,
-{
-    pub fn new(data: T) -> Self {
-        Self { data }
-    }
-}
-
-impl<T> Deref for Props<T>
-where
-    T: PartialEq + Serialize,
-{
-    type Target = T;
-
-    fn deref(&self) -> &Self::Target {
-        &self.data
-    }
-}
-
-impl<T> From<T> for Props<T>
-where
-    T: PartialEq + Serialize,
-{
-    fn from(value: T) -> Self {
-        Props::new(value)
-    }
-}
-
-impl<T: Display> Display for Props<T>
-where
-    T: PartialEq + Serialize,
-{
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        self.data.fmt(f)
-    }
-}
-
-pub trait CompleteItem: Serialize + Clone + Send + Sync + 'static {
-    type WGuiView: BaseComponent<Message = ()>;
-
-    fn complete_hint(&self) -> String;
-
-    fn try_from_completed(_completed: &str) -> Result<Self, anyhow::Error>
-    where
-        Self: Sized,
-    {
-        Err(anyhow::anyhow!(
-            "TryFrom of {} is not implemented",
-            type_name::<Self>()
-        ))
-    }
-}
+use super::complete_item::CompleteItem;
 
 #[async_trait]
 pub trait CompleteRead {
@@ -209,27 +147,6 @@ where
     }
 }
 
-impl CompleteItem for String {
-    type WGuiView = TextCompleteItemView;
-
-    fn complete_hint(&self) -> String {
-        self.to_string()
-    }
-
-    fn try_from_completed(completed: &str) -> Result<Self, anyhow::Error>
-    where
-        Self: Sized,
-    {
-        Ok(completed.to_string())
-    }
-}
-
-#[function_component]
-pub fn TextCompleteItemView(props: &Props<String>) -> Html {
-    html! {
-        <div> { props.deref().clone() } </div>
-    }
-}
 
 #[cfg(test)]
 mod tests {

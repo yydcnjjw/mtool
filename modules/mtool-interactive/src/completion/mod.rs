@@ -1,11 +1,13 @@
 mod complete;
+mod complete_item;
 
-use std::fmt;
+pub use complete::*;
+pub use complete_item::*;
 
 use async_trait::async_trait;
-pub use complete::*;
 use mapp::prelude::*;
 use mtool_wgui::Templator;
+use std::fmt;
 
 cfg_if::cfg_if! {
     if #[cfg(not(target_family = "wasm"))] {
@@ -51,6 +53,7 @@ impl AppLocalModule for Module {
         ctx.schedule()
             .add_once_task(WebStage::Init, |templator: Res<Templator>| async move {
                 templator.add_template::<TextCompleteItemView>();
+                templator.add_template::<PathBufCompleteItemView>();
                 Ok::<(), anyhow::Error>(())
             });
         Ok(())

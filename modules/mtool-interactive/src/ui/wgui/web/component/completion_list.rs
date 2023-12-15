@@ -113,7 +113,6 @@ impl Component for CompletionList {
                                 <div
                                     id={ Self::completion_item_id(i) }
                                     class={classes!("flex",
-                                                "h-10",
                                                 "items-center",
                                                 "px-4",
                                                 focus_class(i))}

@@ -8,7 +8,7 @@ use send_wrapper::SendWrapper;
 use serde::{de::DeserializeOwned, Deserialize};
 use yew::prelude::*;
 
-use crate::{WebStage, WebAppContext};
+use crate::{WebAppContext, WebStage};
 
 pub type TemplateId = String;
 pub type TemplateData = serde_json::Value;
@@ -69,7 +69,7 @@ impl Templator {
         self.templates
             .get(id)
             .context(format!("{} is not exist", id))?
-            .render(props)
+            .render(&props)
     }
 }
 
