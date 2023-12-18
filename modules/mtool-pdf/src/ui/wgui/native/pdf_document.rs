@@ -10,7 +10,7 @@ use pdfium_render::prelude::{PdfPageIndex, PdfiumLibraryBindings};
 
 use crate::ui::wgui::{
     service::PdfDocument as Document,
-    PdfDocumentInfo,
+    event::PdfDocumentInfo,
 };
 
 use super::pdf_page::PdfPage;
@@ -105,5 +105,9 @@ impl PdfDocument {
 
     pub fn get_page_paragraphs(&self, index: PdfPageIndex) -> Vec<adobe::Element> {
         self.inner.borrow().get_page_paragraphs(index)
+    }
+    
+    pub fn set_structure(&self, structure: adobe::PdfStructure) {
+        self.inner.borrow().set_structure(structure);
     }
 }

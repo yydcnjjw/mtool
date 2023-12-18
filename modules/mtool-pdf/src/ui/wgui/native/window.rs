@@ -17,7 +17,10 @@ use tauri::{
 };
 use tracing::{debug, warn};
 
-use crate::ui::wgui::{service::PdfDocument, WPdfEvent};
+use crate::ui::wgui::{
+    event::{WPdfEvent, WPdfLoadEvent},
+    service::{PdfLoadEvent, PdfLoadWorker},
+};
 
 use super::{
     pdf_viewer::{PdfEvent, PdfViewer},
@@ -41,11 +44,41 @@ impl PdfViewerWindow {
                     BASE64_STANDARD.encode(path.display().to_string())
                 ),
             )
-            .context("emit route failed")
+            .context("emit route failed")?;
+        Ok(())
     }
 
-    pub fn render_document(&self, doc: Arc<PdfDocument>) {
-        self.pdf_viewer.notify_event(PdfEvent::DocChanged(doc));
+    pub fn set_pdf_loader(&self, mut loader: PdfLoadWorker) {
+        {
+            let pdf_viewer = self.pdf_viewer.clone();
+            let win = self.win.clone();
+            tokio::spawn(async move {
+                let mut rx = if let Some(rx) = loader.subscribe() {
+                    rx
+                } else {
+                    return;
+                };
+
+                while let Some(e) = rx.recv().await {
+                    if let Err(e) = win.emit(
+                        "pdf_load",
+                        match &e {
+                            PdfLoadEvent::DocLoading => WPdfLoadEvent::DocLoading,
+                            PdfLoadEvent::DocLoaded(doc) => {
+                                WPdfLoadEvent::DocLoaded(doc.info().clone())
+                            }
+                            PdfLoadEvent::DocStructureLoading => WPdfLoadEvent::DocStructureLoading,
+                            PdfLoadEvent::DocStructureLoaded(_) => {
+                                WPdfLoadEvent::DocStructureLoaded
+                            }
+                        },
+                    ) {
+                        warn!("{:?}", e);
+                    }
+                    pdf_viewer.notify_event(PdfEvent::PdfLoad(e));
+                }
+            });
+        }
     }
 
     fn window_index() -> usize {

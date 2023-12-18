@@ -22,7 +22,6 @@ impl PdfTextRange {
 pub struct PdfPageInner {
     inner: pdfium::PdfPage<'static>,
     index: u16,
-    // sentences: Vec<TextRange>,
 }
 
 impl Deref for PdfPageInner {
@@ -35,11 +34,7 @@ impl Deref for PdfPageInner {
 
 impl PdfPageInner {
     pub fn new(inner: pdfium::PdfPage<'static>, index: u16) -> Result<Self, anyhow::Error> {
-        // let sentences = Self::parse_sentences(&inner)?;
-        Ok(Self {
-            inner, // sentences
-            index,
-        })
+        Ok(Self { inner, index })
     }
 
     pub fn index(&self) -> u16 {
@@ -143,24 +138,6 @@ impl PdfPageInner {
 
         Ok((page_x, page_y))
     }
-
-    // pub fn sentences(&self) -> &Vec<TextRange> {
-    //     &self.sentences
-    // }
-
-    // fn parse_sentences(inner: &pdfium::PdfPage) -> Result<Vec<TextRange>, anyhow::Error> {
-    //     let mut sentences = Vec::new();
-    //     let mut index = 0;
-    //     for ch in inner.text()?.chars().iter() {
-    //         if let Some(c) = ch.unicode_char() {
-    //             if c == '.' {
-    //                 sentences.push(TextRange::new(index, ch.index() - index));
-    //                 index = ch.index();
-    //             }
-    //         }
-    //     }
-    //     Ok(sentences)
-    // }
 }
 
 #[derive(Clone)]

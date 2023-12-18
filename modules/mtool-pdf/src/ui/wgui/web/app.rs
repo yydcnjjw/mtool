@@ -1,3 +1,5 @@
+use std::rc::Rc;
+
 use mtauri_sys::window::{Size, Window};
 use mtool_wgui::{component::error::render_result_view, generate_keymap, Keybinding};
 use serde::Serialize;
@@ -6,16 +8,21 @@ use wasm_bindgen::prelude::*;
 use web_sys::HtmlDivElement;
 use yew::{platform::spawn_local, prelude::*};
 
-use crate::ui::wgui::{PageInfo, PdfDocumentInfo, PdfFile, ScaleEvent, ScrollEvent, WPdfEvent};
+use super::event::{
+    self, PageInfo, PdfDocumentInfo, PdfFile, ScaleEvent, ScrollEvent, WMouseEvent, WPdfEvent,
+    WPdfLoadEvent,
+};
 
 pub struct App {
     root: NodeRef,
 
-    pdf_info: Option<Result<PdfDocumentInfo, anyhow::Error>>,
+    pdf_info: Option<Rc<event::PdfDocumentInfo>>,
 
     keybinding: Keybinding,
 
     scale: f32,
+
+    pdf_load_unlisten: Option<PdfLoadListener>,
 }
 
 pub enum DeviceEvent {
@@ -24,11 +31,13 @@ pub enum DeviceEvent {
 }
 
 pub enum AppMsg {
-    PdfLoaded(Result<PdfDocumentInfo, anyhow::Error>),
+    PdfLoadEvent(WPdfLoadEvent),
+    RegisterPdfLoadListener(PdfLoadListener),
+
     DeviceEvent(DeviceEvent),
 
-    PrevSentence,
-    NextSentence,
+    Error(anyhow::Error),
+    None,
 }
 
 #[derive(Properties, PartialEq)]
@@ -51,6 +60,8 @@ impl Component for App {
             keybinding: Keybinding::new(),
 
             scale: 1.,
+
+            pdf_load_unlisten: None,
         }
     }
 
@@ -61,13 +72,18 @@ impl Component for App {
 
     fn update(&mut self, _ctx: &Context<Self>, msg: Self::Message) -> bool {
         match msg {
-            AppMsg::PdfLoaded(info) => {
-                if let Ok(info) = info.as_ref() {
+            AppMsg::PdfLoadEvent(e) => match e {
+                WPdfLoadEvent::DocLoaded(info) => {
+                    let info = Rc::new(info);
                     Self::adjust_window(info.clone());
+                    self.pdf_info = Some(info);
+                    true
                 }
-
-                self.pdf_info = Some(info);
-                true
+                _ => false,
+            },
+            AppMsg::RegisterPdfLoadListener(unlisten) => {
+                self.pdf_load_unlisten = Some(unlisten);
+                false
             }
             AppMsg::DeviceEvent(e) => {
                 if let Err(e) = self.handle_device_event(e) {
@@ -75,14 +91,11 @@ impl Component for App {
                 }
                 true
             }
-            AppMsg::PrevSentence => {
-                send_pdf_event(WPdfEvent::PrevSentence);
+            AppMsg::Error(e) => {
+                warn!("{:?}", e);
                 false
             }
-            AppMsg::NextSentence => {
-                send_pdf_event(WPdfEvent::NextSentence);
-                false
-            }
+            _ => false,
         }
     }
 
@@ -115,11 +128,8 @@ impl Component for App {
                 {onscroll}
               >
                 {
-                    if let Some(pdf_info) = self.pdf_info.as_ref() {
-                      match pdf_info {
-                        Ok(info) => render_result_view(self.render_pdf(ctx, info)),
-                        Err(e) => html! { <div>{ format!("{:?}", e) }</div> }
-                      }
+                  if let Some(pdf_info) = self.pdf_info.as_ref() {
+                    render_result_view(self.render_pdf(ctx, &pdf_info))
                   } else {
                     html! {
                       <div>{"Loading pdf"}</div>
@@ -140,12 +150,39 @@ impl Component for App {
 
 impl App {
     fn send_load_pdf(ctx: &Context<Self>) {
+        let link = ctx.link().clone();
+        ctx.link().send_future(async move {
+            let unlisten = match Window::current()
+                .unwrap()
+                .listen(
+                    "pdf_load",
+                    move |e: mtauri_sys::event::Event<WPdfLoadEvent>| {
+                        link.send_message(AppMsg::PdfLoadEvent(e.payload));
+                        Ok(())
+                    },
+                )
+                .await
+            {
+                Ok(v) => Some(Box::new(v) as Box<dyn Fn() -> Result<(), JsValue>>),
+                Err(e) => {
+                    warn!("listen route event failed: {:?}", e);
+                    None
+                }
+            };
+            AppMsg::RegisterPdfLoadListener(PdfLoadListener { unlisten })
+        });
+
         let path = ctx.props().path.clone();
-        ctx.link()
-            .send_future(async move { AppMsg::PdfLoaded(Self::load_pdf(&path).await) });
+        ctx.link().send_future(async move {
+            if let Err(e) = Self::load_pdf(&path).await {
+                AppMsg::Error(e)
+            } else {
+                AppMsg::None
+            }
+        });
     }
 
-    async fn load_pdf(path: &str) -> Result<PdfDocumentInfo, anyhow::Error> {
+    async fn load_pdf(path: &str) -> Result<(), anyhow::Error> {
         #[derive(Serialize)]
         struct Args {
             file: PdfFile,
@@ -187,7 +224,6 @@ impl App {
 width: {width}px;
 height: {height}px;
 "#)}
-                // {onmousedown}
               >
                 {
                     for info.pages.iter().enumerate()
@@ -203,8 +239,8 @@ height: {height}px;
         })
     }
 
-    fn adjust_window(info: PdfDocumentInfo) {
-        async fn adjust_window_inner(info: &PdfDocumentInfo) -> Result<(), JsValue> {
+    fn adjust_window(info: Rc<PdfDocumentInfo>) {
+        async fn adjust_window_inner(info: &event::PdfDocumentInfo) -> Result<(), JsValue> {
             if let Some(page) = info.pages.get(0) {
                 let window = Window::current()?;
                 window
@@ -218,6 +254,7 @@ height: {height}px;
 
             Ok(())
         }
+
         spawn_local(async move {
             if let Err(e) = adjust_window_inner(&info).await {
                 warn!("adjust window error: {:?}", e);
@@ -261,11 +298,7 @@ height: {height}px;
             }
         };
 
-        let km = generate_keymap!(
-            ("n", send(|| AppMsg::NextSentence)),
-            ("p", send(|| AppMsg::PrevSentence)),
-        )
-        .unwrap();
+        let km = generate_keymap!(("p", send(|| AppMsg::None)),).unwrap();
 
         self.keybinding.push_keymap("pdfviewer", km);
 
@@ -300,15 +333,28 @@ fn PdfPage(props: &PdfPageProps) -> Html {
             scale,
         } = props;
 
-        let onmousemove = {
+        let (onmousemove, onmouseup, onmousedown) = {
             let page_index = *pageindex;
-            Callback::from(move |e: MouseEvent| {
-                send_pdf_event(WPdfEvent::HighlightSentence {
-                    page_index,
-                    x: e.offset_x(),
-                    y: e.offset_y(),
-                });
-            })
+            (
+                Callback::from(move |e: MouseEvent| {
+                    send_pdf_event(WPdfEvent::Mouse {
+                        page_index,
+                        e: event::MouseEvent::Move(WMouseEvent::from(e)),
+                    });
+                }),
+                Callback::from(move |e: MouseEvent| {
+                    send_pdf_event(WPdfEvent::Mouse {
+                        page_index,
+                        e: event::MouseEvent::Up(WMouseEvent::from(e)),
+                    });
+                }),
+                Callback::from(move |e: MouseEvent| {
+                    send_pdf_event(WPdfEvent::Mouse {
+                        page_index,
+                        e: event::MouseEvent::Down(WMouseEvent::from(e)),
+                    });
+                }),
+            )
         };
 
         Ok(html! {
@@ -319,6 +365,8 @@ width: {}px;
 height: {}px;
 "#, (info.width as f32 * scale).round(), (info.height as f32 * scale).round())}
               {onmousemove}
+              {onmouseup}
+              {onmousedown}
             >
             </div>
         })
@@ -333,4 +381,16 @@ fn send_pdf_event(e: WPdfEvent) {
             warn!("{:?}", e);
         }
     });
+}
+
+pub struct PdfLoadListener {
+    pub unlisten: Option<Box<dyn Fn() -> Result<(), JsValue>>>,
+}
+
+impl Drop for PdfLoadListener {
+    fn drop(&mut self) {
+        if let Some(unlisten) = &self.unlisten {
+            (*unlisten)().unwrap();
+        }
+    }
 }

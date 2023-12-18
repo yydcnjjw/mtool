@@ -5,8 +5,8 @@ use itertools::Itertools;
 use pdfium_render::prelude::*;
 use skia_safe as sk;
 use tauri::{PhysicalPosition, PhysicalSize, WindowEvent};
-use tokio::sync::{broadcast, watch};
-use tracing::{debug, warn};
+use tokio::sync::{mpsc, oneshot, watch};
+use tracing::{debug, warn, trace};
 
 use super::{
     pdf_document::PdfDocument,
@@ -14,7 +14,10 @@ use super::{
 };
 use crate::{
     pdf::Pdf,
-    ui::wgui::{service::PdfDocument as Document, PageInfo, ScaleEvent, ScrollEvent, WPdfEvent},
+    ui::wgui::{
+        event::{MouseEvent, PageInfo, Position, ScaleEvent, ScrollEvent, WMouseEvent, WPdfEvent},
+        service::PdfLoadEvent,
+    },
 };
 
 struct PdfViewerInner {
@@ -31,6 +34,8 @@ struct PdfViewerInner {
     viewpoint: PhysicalSize<u32>,
     scale: f32,
     scroll_offset: PhysicalPosition<i32>,
+
+    mouse_state: MouseState,
 }
 
 unsafe impl Send for PdfViewerInner {}
@@ -62,6 +67,7 @@ impl PdfViewerInner {
                 viewpoint,
                 scale: 1.,
                 scroll_offset: PhysicalPosition::new(0, 0),
+                mouse_state: MouseState::default(),
             },
             rx,
         ))
@@ -156,7 +162,7 @@ impl PdfViewerInner {
             scroll_offset.y + viewpoint_height as i32,
         );
 
-        debug!(
+        trace!(
             "viewpoint={:?} doc_viewpoint={:?}",
             self.viewpoint, doc_viewpoint
         );
@@ -187,8 +193,11 @@ impl PdfViewerInner {
 
         self.canvas().save();
 
-        self.canvas()
-            .translate((((viewpoint_width as i32 - doc_viewpoint.width()) / 2), 0));
+        // TODO why -8?
+        self.canvas().translate((
+            ((viewpoint_width as i32 - doc_viewpoint.width() - 8) / 2),
+            0,
+        ));
 
         for (i, page_size, clip) in pages {
             let page = doc.get_page(i)?;
@@ -196,7 +205,7 @@ impl PdfViewerInner {
             let page_width = page_size.width;
             let page_height = page_size.height;
 
-            debug!("{i}, {page_width}, {page_height}, ({:?})", clip);
+            trace!("{i}, {page_width}, {page_height}, ({:?})", clip);
 
             let mut pdf_bitmap = PdfBitmap::empty(
                 page_width,
@@ -279,6 +288,8 @@ impl PdfViewerInner {
         )
     }
 
+    fn extract_text(&self) -> () {}
+
     #[allow(unused)]
     fn highlight_sentence(
         &mut self,
@@ -359,10 +370,6 @@ impl PdfViewerInner {
         })
     }
 
-    fn prev_sentence(&mut self) {}
-
-    fn next_sentence(&mut self) {}
-
     fn resize(&mut self, size: PhysicalSize<u32>) -> Result<(), anyhow::Error> {
         let PhysicalSize { width, height } = size.cast::<i32>();
         self.surface =
@@ -379,12 +386,153 @@ impl PdfViewerInner {
         Ok(())
     }
 
+    fn get_doc(&self) -> Result<PdfDocument, anyhow::Error> {
+        self.doc.clone().context("Document is not loaded")
+    }
+
+    fn get_page_char_index(
+        &self,
+        page: &PdfPage,
+        offset: PhysicalPosition<i32>,
+    ) -> Result<Option<PdfPageTextCharIndex>, anyhow::Error> {
+        let page_index = page.index() as usize;
+        let PageInfo { width, height } = self
+            .get_doc()?
+            .document_info()
+            .pages
+            .get(page_index)
+            .context(format!("page is not exist: {page_index}"))?
+            .clone();
+
+        let (page_width, page_height) = self.size_with_scale(width, height);
+
+        let pos = page.device_to_page(
+            &sk::IRect::new(0, 0, page_width, page_height),
+            (offset.x, offset.y),
+        )?;
+
+        let (tolerance_width, tolerance_height) = (5, 5);
+
+        let text_page = page.text()?;
+        let chars = text_page.chars();
+        Ok(chars
+            .get_char_near_point(
+                PdfPoints::new(pos.0 as f32),
+                PdfPoints::new(tolerance_width as f32),
+                PdfPoints::new(pos.1 as f32),
+                PdfPoints::new(tolerance_height as f32),
+            )
+            .map(|char| char.index()))
+    }
+
+    fn get_page_text_range(
+        &self,
+        page_index1: u16,
+        offset1: PhysicalPosition<i32>,
+        page_index2: u16,
+        offset2: PhysicalPosition<i32>,
+    ) -> Result<Option<Vec<PdfTextRange>>, anyhow::Error> {
+        let doc = self.get_doc()?;
+
+        let is_same_page = page_index1 == page_index2;
+
+        let page1 = doc.get_page(page_index1)?;
+        let Some(char1) = self.get_page_char_index(&page1, offset1)? else {
+            return Ok(None);
+        };
+
+        let page2 = if is_same_page {
+            page1.clone()
+        } else {
+            doc.get_page(page_index2)?
+        };
+        let Some(char2) = self.get_page_char_index(&page2, offset2)? else {
+            return Ok(None);
+        };
+
+        let mut ranges = Vec::new();
+        if is_same_page {
+            let count = char1.abs_diff(char2);
+            let index = char1.min(char2);
+            ranges.push(PdfTextRange::new(page_index1, index, count));
+        } else {
+            let ((first_page, first_page_char), (second_page, second_page_char)) =
+                if page_index1 < page_index2 {
+                    ((page1, char1), (page2, char2))
+                } else {
+                    ((page2, char2), (page1, char1))
+                };
+
+            {
+                let count = first_page.text()?.chars().len() - first_page_char;
+                let index = first_page_char;
+                ranges.push(PdfTextRange::new(first_page.index(), index, count));
+            }
+
+            {
+                let count = second_page_char;
+                let index = 0;
+                ranges.push(PdfTextRange::new(second_page.index(), index, count));
+            }
+        }
+        Ok(Some(ranges))
+    }
+
+    fn get_selections(&mut self, page_index: u16) -> &mut Vec<PdfTextRange> {
+        self.selections.entry(page_index).or_default()
+    }
+
+    fn handle_mouse_event(&mut self, page_index: u16, e: MouseEvent) -> bool {
+        debug!("{}: {:?}", page_index, e);
+        match e {
+            MouseEvent::Up(_) => {
+                self.mouse_state.pressed = None;
+            }
+            MouseEvent::Down(e) => {
+                self.get_selections(page_index).clear();
+                self.mouse_state.pressed = Some(PressState {
+                    page: page_index,
+                    pos: PhysicalPosition::new(e.offset.x, e.offset.y),
+                });
+            }
+            MouseEvent::Move(e) => {
+                if let Some(pressed) = self.mouse_state.pressed.clone() {
+                    match self.get_page_text_range(
+                        pressed.page,
+                        pressed.pos,
+                        page_index,
+                        PhysicalPosition::new(e.offset.x, e.offset.y),
+                    ) {
+                        Ok(Some(ranges)) => {
+                            let list = self.get_selections(page_index);
+                            list.clear();
+                            list.extend(ranges);
+                        }
+                        Err(e) => warn!("{:?}", e),
+                        _ => {}
+                    }
+                }
+            }
+        }
+
+        true
+    }
+
     async fn handle_event(&mut self, e: PdfEvent) -> Result<bool, anyhow::Error> {
         Ok(match e {
-            PdfEvent::DocChanged(doc) => {
-                self.doc = Some(PdfDocument::new(doc));
-                true
-            }
+            PdfEvent::PdfLoad(e) => match e {
+                PdfLoadEvent::DocLoaded(doc) => {
+                    self.doc = Some(PdfDocument::new(Arc::new(doc)));
+                    true
+                }
+                PdfLoadEvent::DocStructureLoaded(structure) => {
+                    if let Some(doc) = &self.doc {
+                        doc.set_structure(structure);
+                    }
+                    true
+                }
+                _ => false,
+            },
             PdfEvent::Window(e) => match e {
                 WindowEvent::Resized(size) => {
                     if size.width == 0 || size.height == 0 {
@@ -408,23 +556,9 @@ impl PdfViewerInner {
                     self.scroll_offset = PhysicalPosition::new(left, top);
                     true
                 }
-                WPdfEvent::HighlightSentence {
-                    page_index: _,
-                    x: _,
-                    y: _,
-                } => {
-                    // self.highlight_sentence(page_index, sk::IPoint::new(x, y))?
-                    false
-                }
-                WPdfEvent::PrevSentence => {
-                    self.prev_sentence();
-                    true
-                }
-                WPdfEvent::NextSentence => {
-                    self.next_sentence();
-                    true
-                }
+                WPdfEvent::Mouse { page_index, e } => self.handle_mouse_event(page_index, e),
             },
+            PdfEvent::ExtractText { tx: _ } => true,
         })
     }
 
@@ -444,9 +578,9 @@ impl PdfViewerInner {
 
     async fn run_loop(
         mut self,
-        mut event_receiver: broadcast::Receiver<PdfEvent>,
+        mut event_receiver: mpsc::UnboundedReceiver<PdfEvent>,
     ) -> Result<(), anyhow::Error> {
-        while let Ok(e) = event_receiver.recv().await {
+        while let Some(e) = event_receiver.recv().await {
             let mut events = vec![e];
             while let Ok(e) = event_receiver.try_recv() {
                 events.push(e);
@@ -459,12 +593,12 @@ impl PdfViewerInner {
 
 pub struct PdfViewer {
     image_snapshot: watch::Receiver<sk::Image>,
-    event_sender: broadcast::Sender<PdfEvent>,
+    event_sender: mpsc::UnboundedSender<PdfEvent>,
 }
 
 impl PdfViewer {
     pub async fn new(viewpoint: PhysicalSize<u32>) -> Result<Self, anyhow::Error> {
-        let (event_sender, event_receiver) = broadcast::channel(64);
+        let (event_sender, event_receiver) = mpsc::unbounded_channel();
 
         let (renderer, image_snapshot) = PdfViewerInner::new(viewpoint)?;
 
@@ -490,13 +624,28 @@ impl PdfViewer {
     pub fn notify_event(&self, e: PdfEvent) {
         let _ = self.event_sender.send(e);
     }
+
+    pub async fn extract_text() {}
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug)]
 pub enum PdfEvent {
-    DocChanged(Arc<Document>),
+    PdfLoad(PdfLoadEvent),
 
     Window(WindowEvent),
 
     WGui(WPdfEvent),
+
+    ExtractText { tx: oneshot::Sender<String> },
+}
+
+#[derive(Debug, Clone)]
+struct PressState {
+    page: PdfPageIndex,
+    pos: PhysicalPosition<i32>,
+}
+
+#[derive(Debug, Default)]
+struct MouseState {
+    pressed: Option<PressState>,
 }

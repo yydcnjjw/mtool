@@ -5,7 +5,7 @@ use mcloud_api::adobe;
 use pdfium_render::prelude as pdfium;
 use tokio::sync::OnceCell;
 
-use crate::ui::wgui::{PageInfo, PdfDocumentInfo};
+use crate::ui::wgui::event::{PageInfo, PdfDocumentInfo};
 
 pub struct PdfDocument {
     doc: pdfium::PdfDocument<'static>,
