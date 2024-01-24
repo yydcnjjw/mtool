@@ -6,7 +6,7 @@ use pdfium_render::prelude::*;
 use skia_safe as sk;
 use tauri::{PhysicalPosition, PhysicalSize, WindowEvent};
 use tokio::sync::{mpsc, oneshot, watch};
-use tracing::{debug, warn, trace};
+use tracing::{debug, trace, warn};
 
 use super::{
     pdf_document::PdfDocument,
@@ -164,7 +164,8 @@ impl PdfViewerInner {
 
         trace!(
             "viewpoint={:?} doc_viewpoint={:?}",
-            self.viewpoint, doc_viewpoint
+            self.viewpoint,
+            doc_viewpoint
         );
 
         let mut doc_top_offset = 0;
@@ -489,7 +490,7 @@ impl PdfViewerInner {
                 self.mouse_state.pressed = None;
             }
             MouseEvent::Down(e) => {
-                self.get_selections(page_index).clear();
+                self.selections.clear();
                 self.mouse_state.pressed = Some(PressState {
                     page: page_index,
                     pos: PhysicalPosition::new(e.offset.x, e.offset.y),
@@ -504,9 +505,10 @@ impl PdfViewerInner {
                         PhysicalPosition::new(e.offset.x, e.offset.y),
                     ) {
                         Ok(Some(ranges)) => {
-                            let list = self.get_selections(page_index);
-                            list.clear();
-                            list.extend(ranges);
+                            self.selections.clear();
+                            for range in ranges {
+                                self.get_selections(range.page_index).push(range);
+                            }
                         }
                         Err(e) => warn!("{:?}", e),
                         _ => {}
@@ -625,7 +627,9 @@ impl PdfViewer {
         let _ = self.event_sender.send(e);
     }
 
-    pub async fn extract_text() {}
+    pub async fn extract_text() {
+        
+    }
 }
 
 #[derive(Debug)]
