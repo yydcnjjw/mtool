@@ -10,7 +10,7 @@ pub fn module() -> ModuleGroup {
     let mut group = ModuleGroup::new("mtool-translate-ui");
     group.add_module(cli::Module);
     group.add_module(wgui::module());
-    return group;
+    group
 }
 
 pub fn web_module() -> LocalModuleGroup {
@@ -18,5 +18,5 @@ pub fn web_module() -> LocalModuleGroup {
 
     group.add_module(wgui::web_module());
 
-    return group;
+    group
 }

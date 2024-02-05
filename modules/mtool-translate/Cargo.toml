@@ -3,6 +3,7 @@ name = "mtool-translate"
 version.workspace = true
 authors.workspace = true
 edition.workspace = true
+links = "mtool-translate"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
@@ -49,3 +50,6 @@ serde-error = { workspace = true }
 
 [target.'cfg(target_family = "wasm")'.dependencies]
 tokio = { workspace = true, features = ["sync", "rt"] }
+
+[build-dependencies]
+tauri-plugin = { workspace = true }

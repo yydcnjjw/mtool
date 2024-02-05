@@ -3,6 +3,7 @@ name = "mtool-dict"
 version.workspace = true
 authors.workspace = true
 edition.workspace = true
+links = "mtool-dict"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
@@ -53,3 +54,6 @@ tokio-stream = { workspace = true, features = ["fs"] }
 
 sea-orm = { version = "*", features = ["sqlx-sqlite", "runtime-tokio-rustls"] }
 clipboard = "*"
+
+[build-dependencies]
+tauri-plugin = { workspace = true }

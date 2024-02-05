@@ -8,7 +8,7 @@ fn main() {
         .unwrap()
         .add_module(mtool_core::module())
         .add_module(mtool_system::module())
-        .add_module(mtool_wgui::module())
+        .add_module(mtool_wgui::module(tauri::generate_context!()))
         .add_module(mtool_cmder::Module::default())
         .add_module(mtool_storage::module())
         .add_module(mtool_translate::module())

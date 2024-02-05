@@ -3,6 +3,7 @@ name = "mtool-proxy"
 version.workspace = true
 authors.workspace = true
 edition.workspace = true
+links = "mtool-proxy"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
@@ -51,3 +52,6 @@ clap = { workspace = true }
 tauri = { workspace = true }
 toml = { workspace = true }
 notify-rust = { workspace = true }
+
+[build-dependencies]
+tauri-plugin = { workspace = true }

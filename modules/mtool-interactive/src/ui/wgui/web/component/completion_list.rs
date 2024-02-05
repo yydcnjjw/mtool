@@ -1,7 +1,7 @@
 use gloo_utils::document;
 use mtool_wgui::{generate_keymap, KeyMap, Keybinding, SharedAction, TemplateView};
 use serde::{Deserialize, Serialize};
-use tracing::warn;
+use tracing::{debug, warn};
 use wasm_bindgen::JsCast;
 use web_sys::{HtmlElement, ScrollIntoViewOptions, ScrollLogicalPosition};
 use yew::{platform::spawn_local, prelude::*};
@@ -165,15 +165,21 @@ impl CompletionList {
         }
 
         let input = ctx.props().input.to_string();
+
+        debug!("try complete {}", input);
+
         ctx.link().send_future(async move {
             Msg::FetchCompleteRead(
                 match mtauri_sys::invoke(
-                    "plugin:interactive::completion|complete",
+                    "plugin:mtool-interactive|complete",
                     &CompletionArgs { completed: input },
                 )
                 .await
                 {
-                    Ok(items) => items,
+                    Ok(items) => {
+                        debug!("complete result: {:?}", items);
+                        items
+                    }
                     Err(e) => {
                         warn!("invoke complete failed: {:?}", e);
                         vec![]
@@ -239,7 +245,7 @@ impl CompletionList {
         let item = self.items[self.focused_item_index].to_owned();
         spawn_local(async move {
             if let Err(e) = mtauri_sys::invoke::<CompletionExitArgs, ()>(
-                "plugin:interactive::completion|complete_exit",
+                "plugin:mtool-interactive|complete_exit",
                 &CompletionExitArgs {
                     v: CompletionExit::Id(item.id),
                 },

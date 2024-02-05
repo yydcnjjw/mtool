@@ -1,0 +1,13 @@
+# Automatically generated - DO NOT EDIT!
+
+"$schema" = "../../schemas/schema.json"
+
+[[permission]]
+identifier = "allow-dict-query"
+description = "Enables the dict_query command without any pre-configured scope."
+commands.allow = ["dict_query"]
+
+[[permission]]
+identifier = "deny-dict-query"
+description = "Denies the dict_query command without any pre-configured scope."
+commands.deny = ["dict_query"]

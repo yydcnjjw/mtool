@@ -92,11 +92,11 @@ impl AppModule for Module {
 pub fn module() -> ModuleGroup {
     let mut group = ModuleGroup::new("mtool-cmder");
     group.add_module(Module);
-    return group;
+    group
 }
 
 pub fn web_module() -> LocalModuleGroup {
     let mut group = LocalModuleGroup::new("mtool-cmder");
     group.add_module(Module);
-    return group;
+    group
 }

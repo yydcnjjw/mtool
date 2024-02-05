@@ -130,8 +130,11 @@ impl CompleteRead for Completion {
         let (tx, rx) = oneshot::channel();
         self.set_context(CompletionContext::new(args, tx)).await;
 
-        self.win
-            .emit("route", format!("/interactive/completion/{}", id))?;
+        self.win.emit_to(
+            self.win.label(),
+            "route",
+            format!("/interactive/completion/{}", id),
+        )?;
 
         self.win.show().context("show completion window")?;
 
@@ -197,7 +200,7 @@ pub fn init<R>() -> TauriPlugin<R>
 where
     R: Runtime,
 {
-    Builder::new("interactive::completion")
+    Builder::new("mtool-interactive")
         .invoke_handler(tauri::generate_handler![
             complete,
             complete_exit,

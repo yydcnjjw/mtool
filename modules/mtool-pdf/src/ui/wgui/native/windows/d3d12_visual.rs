@@ -9,7 +9,17 @@ use tokio::{
 };
 use tracing::{debug, warn};
 use windows::{
-    core::PCWSTR,
+    core::PCSTR,
+    Foundation::Numerics::Vector2,
+    Win32::{
+        Foundation::HANDLE,
+        Graphics::Direct3D12::{ID3D12Fence, D3D12_FENCE_FLAG_NONE},
+        System::{Threading::CreateEventA, WinRT::Composition::ICompositorInterop},
+    },
+    UI::Composition::{CompositionSurfaceBrush, Compositor, SpriteVisual},
+};
+use windows::{
+    core::{PCWSTR, ComInterface},
     Win32::{
         Graphics::{
             Direct3D::D3D_FEATURE_LEVEL_11_0,
@@ -28,16 +38,6 @@ use windows::{
         },
         System::Threading::WaitForSingleObjectEx,
     },
-};
-use windows::{
-    core::{ComInterface, PCSTR},
-    Foundation::Numerics::Vector2,
-    Win32::{
-        Foundation::HANDLE,
-        Graphics::Direct3D12::{ID3D12Fence, D3D12_FENCE_FLAG_NONE},
-        System::{Threading::CreateEventA, WinRT::Composition::ICompositorInterop},
-    },
-    UI::Composition::{CompositionSurfaceBrush, Compositor, SpriteVisual},
 };
 
 use super::skia_context::SkiaContext;

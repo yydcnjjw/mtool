@@ -109,7 +109,7 @@ where
         debug!("emit {}", event.as_ref());
         match Window::current() {
             Ok(win) => {
-                if let Err(e) = win.emit(event.as_ref(), &payload).await {
+                if let Err(e) = win.emit_to_self(event.as_ref(), &payload).await {
                     warn!("{:?}", e);
                 }
             }

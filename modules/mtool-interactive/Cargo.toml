@@ -3,7 +3,7 @@ name = "mtool-interactive"
 version.workspace = true
 authors.workspace = true
 edition.workspace = true
-
+links = "mtool-interactive"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
@@ -46,3 +46,6 @@ mtool-system = { path = "../mtool-system" }
 
 tauri = { workspace = true }
 clap = { workspace = true }
+
+[build-dependencies]
+tauri-plugin = { workspace = true }

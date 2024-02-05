@@ -15,11 +15,11 @@ use mtool_core::{
 };
 use mtool_system::keybinding::Keybinding;
 use tauri::{
-    menu::{Menu, MenuItem},
+    menu::{Menu, MenuId, MenuItem},
     tray::TrayIconBuilder,
     Manager, RunEvent,
 };
-use tokio::sync::oneshot;
+use tokio::sync::{oneshot, Mutex};
 use tracing::{debug, info, warn};
 
 define_label! {
@@ -30,13 +30,27 @@ define_label! {
     }
 }
 
-#[derive(Default)]
-pub struct Module {}
+pub struct Module<A: tauri::Assets> {
+    tauri_context: Mutex<Option<tauri::Context<A>>>,
+}
+
+impl<A: tauri::Assets> Module<A> {
+    pub fn new(tauri_context: tauri::Context<A>) -> Self {
+        Self {
+            tauri_context: Mutex::new(Some(tauri_context)),
+        }
+    }
+}
 
 #[async_trait]
-impl AppModule for Module {
+impl<A> AppModule for Module<A>
+where
+    A: tauri::Assets,
+{
     async fn init(&self, app: &mut AppContext) -> Result<(), anyhow::Error> {
         app.injector().construct_once(Builder::new);
+        app.injector()
+            .insert(Take::new(self.tauri_context.lock().await.take().unwrap()));
 
         app.schedule()
             .insert_stage_vec_with_cond(
@@ -45,7 +59,7 @@ impl AppModule for Module {
                 is_startup_mode(StartupMode::WGui),
             )
             .add_once_task(WGuiStage::Setup, setup)
-            .add_once_task(WGuiStage::Init, init)
+            .add_once_task(WGuiStage::Init, init::<A>)
             .add_once_task(
                 AppStage::Init,
                 register_keybinding.cond(is_startup_mode(StartupMode::WGui)),
@@ -56,11 +70,15 @@ impl AppModule for Module {
     }
 }
 
-pub fn module() -> ModuleGroup {
+pub fn module<A>(tauri_context: tauri::Context<A>) -> ModuleGroup
+where
+    A: tauri::Assets,
+{
     let mut group = ModuleGroup::new("mtool-wgui-native");
-    group.add_module(Module::default());
+    group.add_module(Module::new(tauri_context));
+
     #[cfg(windows)]
-    group.add_module(global_hotkey::Module::default());
+    group.add_module(global_hotkey::Module);
     group
 }
 
@@ -73,8 +91,10 @@ async fn setup(builder: Res<Builder>, injector: Injector) -> Result<(), anyhow::
         .setup_with_app(move |app| {
             let app = app.handle();
             {
-                let menu =
-                    Menu::with_items(app, &[&MenuItem::with_id(app, "quit", "Quit", true, None)])?;
+                let menu = Menu::with_items(
+                    app,
+                    &[&MenuItem::with_id(app, "quit", "Quit", true, None::<&str>)?],
+                )?;
                 let builder = TrayIconBuilder::with_id("mtool")
                     .tooltip("MTool")
                     .icon(app.default_window_icon().unwrap().clone())
@@ -103,22 +123,25 @@ async fn setup(builder: Res<Builder>, injector: Injector) -> Result<(), anyhow::
 
 struct TauriWorker(tokio::task::JoinHandle<()>);
 
-async fn init(builder: Res<Builder>, injector: Injector) -> Result<(), anyhow::Error> {
+async fn init<A: tauri::Assets>(
+    builder: Res<Builder>,
+    injector: Injector,
+    tauri_context: Take<tauri::Context<A>>,
+) -> Result<(), anyhow::Error> {
     let builder = builder.take();
 
     let worker = tokio::task::spawn_blocking(move || {
         debug!("tauri run at {:?}", std::thread::current().name());
-        match builder.any_thread().build(tauri::generate_context!()) {
+
+        match builder.any_thread().build(tauri_context.take().unwrap()) {
             Ok(v) => v,
             Err(e) => {
                 warn!("tauri run loop is exited: {:?}", e);
                 return;
             }
         }
-        .run(|_, ev| {
-            if let RunEvent::ExitRequested { api, .. } = &ev {
-                api.prevent_exit();
-            }
+        .run(move |_, ev| match ev {
+            _ => {}
         });
         info!("tauri run loop is exited");
     });

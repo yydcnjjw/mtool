@@ -1,0 +1,14 @@
+{
+  "build": {
+    "devUrl": "http://localhost:18188",
+    "frontendDist": "./../modules/mtool-wgui/wmain/dist"
+  },
+  "productName": "mtool",
+  "version": "0.1.0",
+  "app": {
+    "withGlobalTauri": true,
+    "security": {
+      "csp": null
+    }
+  }
+}

@@ -43,7 +43,7 @@ pub struct GlobalHotKeyMgr {
 }
 
 impl GlobalHotKeyMgr {
-    const GLOBAL_KEYMAP: &str = "global";
+    const GLOBAL_KEYMAP: &'static str = "global";
 
     async fn construct(injector: Injector) -> Result<Res<Keybinding>, anyhow::Error> {
         let (tx, rx) = mpsc::unbounded_channel();

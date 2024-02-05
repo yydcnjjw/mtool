@@ -3,7 +3,7 @@ use std::{future::Future, marker::PhantomData};
 use anyhow::Context;
 
 use async_trait::async_trait;
-use minject::{self, inject_once, local_inject_once, InjectOnce, LocalProvide, Provide};
+use minject::{inject_once, local_inject_once, InjectOnce, LocalProvide, Provide};
 use tracing::trace;
 
 use crate::{App, CondLoad, FnCondLoad, Label, LocalApp, LocalCondLoad};

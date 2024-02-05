@@ -1,8 +1,6 @@
 #![feature(
     arbitrary_self_types,
-    result_option_inspect,
     iterator_try_collect,
-    slice_group_by,
     async_closure,
 )]
 

@@ -11,7 +11,7 @@ pub fn module() -> ModuleGroup {
 
     group.add_module(ui::module());
 
-    return group;
+    group
 }
 
 pub fn web_module() -> LocalModuleGroup {
@@ -19,5 +19,5 @@ pub fn web_module() -> LocalModuleGroup {
 
     group.add_module(ui::web_module());
 
-    return group;
+    group
 }

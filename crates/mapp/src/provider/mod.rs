@@ -6,6 +6,7 @@ mod take;
 
 pub use constructor::*;
 pub use injector::*;
+#[allow(unused)]
 pub use option::*;
 pub use res::*;
 pub use take::*;

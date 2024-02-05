@@ -18,8 +18,7 @@ use mtool_system::keybinding::{GlobalHotKeyEvent, Keybinding, SetGlobalHotKey};
 
 use crate::{Builder, WGuiStage};
 
-#[derive(Default)]
-pub struct Module {}
+pub struct Module;
 
 #[async_trait]
 impl AppModule for Module {
@@ -52,7 +51,7 @@ async fn add_wgui_plugin(builder: Res<Builder>, injector: Injector) -> Result<()
             .build()
         };
         Ok(builder.plugin(global_shortcut_plugin).plugin(
-            plugin::Builder::<tauri::Wry>::new("global-shortcut")
+            plugin::Builder::<tauri::Wry>::new("mtool-global-shortcut")
                 .setup(move |_app, _| {
                     let keybinding = Res::new(Keybinding::new(hotkey_mgr, krx));
                     if let Err(_) = tx.send(keybinding.clone()) {

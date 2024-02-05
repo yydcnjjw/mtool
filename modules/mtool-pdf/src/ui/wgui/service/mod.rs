@@ -10,6 +10,7 @@ use mtool_core::{
 };
 use mtool_wgui::{Builder, WGuiStage};
 
+#[allow(unused)]
 pub use error::Error;
 pub use pdf_document::*;
 pub use pdf_loader::*;

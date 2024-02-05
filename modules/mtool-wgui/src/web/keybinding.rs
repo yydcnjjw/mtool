@@ -6,7 +6,7 @@ use msysev::{
     keydef::{KeyCode, KeyModifier},
     KeyAction, KeyEvent,
 };
-use wasm_bindgen::{prelude::*, JsCast};
+use wasm_bindgen::{closure::Closure, JsCast};
 use web_sys::{window, KeyboardEvent};
 use yew::platform::spawn_local;
 

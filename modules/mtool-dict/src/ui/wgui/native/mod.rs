@@ -42,13 +42,17 @@ async fn query_dict_with_clipboard(window: Res<MtoolWindow>) -> Result<(), anyho
             .map_or(String::default(), |v| v.to_string()),
         Err(_) => "".into(),
     };
-    window.emit("route", format!("/dict/{}", text.to_lowercase()))?;
+    window.emit_to(
+        window.label(),
+        "route",
+        format!("/dict/{}", text.to_lowercase()),
+    )?;
     window.show()?;
     Ok(())
 }
 
 async fn query_dict(window: Res<MtoolWindow>) -> Result<(), anyhow::Error> {
-    window.emit("route", format!("/dict/"))?;
+    window.emit_to(window.label(), "route", format!("/dict/"))?;
     window.show()?;
     Ok(())
 }

@@ -24,3 +24,8 @@ mtool-toast = { path = "../modules/mtool-toast" }
 mtool-ai = { path = "../modules/mtool-ai" }
 mtool-pdf = { path = "../modules/mtool-pdf" }
 mtool-storage = { path = "../modules/mtool-storage" }
+
+tauri = { workspace = true }
+
+[build-dependencies]
+tauri-build = { workspace = true, features = ["codegen"] }

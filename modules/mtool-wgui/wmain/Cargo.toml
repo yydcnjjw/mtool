@@ -17,3 +17,4 @@ mtool-dict = { path = "../../mtool-dict" }
 mtool-pdf = { path = "../../mtool-pdf" }
 
 console_error_panic_hook = "*"
+wee_alloc = "*"

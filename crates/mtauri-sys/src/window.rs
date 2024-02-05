@@ -34,6 +34,9 @@ mod ffi {
         #[wasm_bindgen(constructor, catch)]
         pub fn new(label: &str) -> Result<WebviewWindow, JsValue>;
 
+        #[wasm_bindgen(method, getter)]
+        pub fn label(this: &WebviewWindow) -> String;
+
         #[wasm_bindgen(method, catch)]
         pub async fn setSize(this: &WebviewWindow, size: JsValue) -> Result<(), JsValue>;
 
@@ -53,6 +56,14 @@ mod ffi {
         #[wasm_bindgen(method, catch)]
         pub async fn emit(
             this: &WebviewWindow,
+            event: &str,
+            payload: JsValue,
+        ) -> Result<(), JsValue>;
+
+        #[wasm_bindgen(method, catch)]
+        pub async fn emitTo(
+            this: &WebviewWindow,
+            target: JsValue,
             event: &str,
             payload: JsValue,
         ) -> Result<(), JsValue>;
@@ -184,5 +195,45 @@ impl Window {
             )
             .await
             .map_err(|e| anyhow::anyhow!("{:?}", e))
+    }
+
+    // pub async fn emit_to<T>(&self, event: &str, payload: &T) -> Result<(), anyhow::Error>
+    // where
+    //     T: Serialize,
+    // {
+    //     self.handle
+    //         .emit(
+    //             event,
+    //             serde_wasm_bindgen::to_value(payload).map_err(|e| anyhow::anyhow!("{}", e))?,
+    //         )
+    //         .await
+    //         .map_err(|e| anyhow::anyhow!("{:?}", e))
+    // }
+
+    pub async fn emit_to_window<T>(
+        &self,
+        label: &str,
+        event: &str,
+        payload: &T,
+    ) -> Result<(), anyhow::Error>
+    where
+        T: Serialize,
+    {
+        self.handle
+            .emitTo(
+                serde_wasm_bindgen::to_value(label).map_err(|e| anyhow::anyhow!("{}", e))?,
+                event,
+                serde_wasm_bindgen::to_value(payload).map_err(|e| anyhow::anyhow!("{}", e))?,
+            )
+            .await
+            .map_err(|e| anyhow::anyhow!("{:?}", e))
+    }
+
+    pub async fn emit_to_self<T>(&self, event: &str, payload: &T) -> Result<(), anyhow::Error>
+    where
+        T: Serialize,
+    {
+        self.emit_to_window(&self.handle.label(), event, payload)
+            .await
     }
 }

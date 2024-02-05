@@ -98,8 +98,8 @@ pub struct PdfLoader {
 }
 
 pub struct PdfLoadWorker {
-    file: PdfFile,
-    set: JoinSet<Result<(), anyhow::Error>>,
+    _file: PdfFile,
+    _set: JoinSet<Result<(), anyhow::Error>>,
     rx: Option<mpsc::Receiver<PdfLoadEvent>>,
 }
 
@@ -154,15 +154,15 @@ impl PdfLoader {
         }
 
         Ok(PdfLoadWorker {
-            file,
-            set,
+            _file: file,
+            _set: set,
             rx: Some(rx),
         })
     }
 }
 
 async fn load_pdf_inner(
-    window: tauri::Window,
+    window: tauri::WebviewWindow,
     loader: State<'_, PdfLoader>,
     file: PdfFile,
 ) -> Result<(), anyhow::Error> {
@@ -176,7 +176,7 @@ async fn load_pdf_inner(
 
 #[command]
 async fn load_pdf(
-    window: tauri::Window,
+    window: tauri::WebviewWindow,
     loader: State<'_, PdfLoader>,
     file: PdfFile,
 ) -> Result<(), serde_error::Error> {
@@ -186,7 +186,7 @@ async fn load_pdf(
 }
 
 pub fn init(config: Config, db: Res<DatabaseConnection>) -> TauriPlugin<Wry> {
-    Builder::new("pdfloader")
+    Builder::new("mtool-pdf")
         .setup(move |app, _| {
             app.manage(PdfLoader::new(config.adobe_api, db));
             Ok(())

@@ -11,7 +11,7 @@ use gtk::prelude::*;
 use gtk::Overlay;
 use gtk::{gdk::GLError, GLArea};
 use mtool_wgui::WGuiWindow;
-use raw_window_handle::HasRawDisplayHandle;
+use raw_window_handle5::HasRawDisplayHandle;
 use skia_safe as sk;
 use std::ffi::CString;
 use std::sync::Arc;
@@ -55,7 +55,7 @@ pub struct RenderContext<'a> {
 
 #[derive(Clone)]
 pub struct Renderer {
-    win: Arc<WGuiWindow>,
+    _win: Arc<WGuiWindow>,
 }
 
 impl Renderer {
@@ -152,7 +152,7 @@ impl Renderer {
             }
             skctx.flush_and_submit();
         }
-        
+
         glarea.queue_draw();
         Ok(())
     }
@@ -208,6 +208,6 @@ impl Renderer {
             }
         })?;
 
-        Ok(Self { win })
+        Ok(Self { _win: win })
     }
 }

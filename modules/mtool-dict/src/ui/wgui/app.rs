@@ -187,7 +187,7 @@ impl App {
             backend: self.backend.clone(),
         };
         ctx.link().send_future(async move {
-            AppMsg::ShowDict(mtauri_sys::invoke("plugin:dict|dict_query", &args).await)
+            AppMsg::ShowDict(mtauri_sys::invoke("plugin:mtool-dict|dict_query", &args).await)
         })
     }
 

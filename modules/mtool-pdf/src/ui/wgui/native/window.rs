@@ -13,9 +13,9 @@ use mtool_wgui::{WGuiWindow, WindowDataBind};
 
 use tauri::{
     plugin::{Builder, TauriPlugin},
-    Manager, WindowBuilder, WindowUrl, Wry,
+    Manager, WebviewUrl, WebviewWindowBuilder, Wry,
 };
-use tracing::{debug, warn};
+use tracing::warn;
 
 use crate::ui::wgui::{
     event::{WPdfEvent, WPdfLoadEvent},
@@ -37,7 +37,8 @@ pub struct PdfViewerWindow {
 impl PdfViewerWindow {
     pub fn open_file(&self, path: PathBuf) -> Result<(), anyhow::Error> {
         self.win
-            .emit(
+            .emit_to(
+                self.win.label(),
                 "route",
                 format!(
                     "/pdfviewer/{}",
@@ -52,6 +53,7 @@ impl PdfViewerWindow {
         {
             let pdf_viewer = self.pdf_viewer.clone();
             let win = self.win.clone();
+            let label = self.win.label().to_string();
             tokio::spawn(async move {
                 let mut rx = if let Some(rx) = loader.subscribe() {
                     rx
@@ -60,7 +62,8 @@ impl PdfViewerWindow {
                 };
 
                 while let Some(e) = rx.recv().await {
-                    if let Err(e) = win.emit(
+                    if let Err(e) = win.emit_to(
+                        &label,
                         "pdf_load",
                         match &e {
                             PdfLoadEvent::DocLoading => WPdfLoadEvent::DocLoading,
@@ -91,19 +94,20 @@ impl PdfViewerWindow {
             let label = format!("mtool-pdfviewer-{}", Self::window_index());
 
             #[allow(unused_mut)]
-            let mut builder = WindowBuilder::new(&app, &label, WindowUrl::App("/pdfviewer".into()))
-                .title(label)
-                .resizable(true)
-                .skip_taskbar(false)
-                .visible(false)
-                .transparent(true)
-                .decorations(true)
-                .shadow(false)
-                .disable_file_drop_handler();
+            let mut builder =
+                WebviewWindowBuilder::new(&app, &label, WebviewUrl::App("/pdfviewer".into()))
+                    .title(label)
+                    .resizable(true)
+                    .skip_taskbar(false)
+                    .visible(false)
+                    .transparent(true)
+                    .decorations(true)
+                    .shadow(false)
+                    .disable_file_drop_handler();
 
             #[cfg(windows)]
             {
-                builder = builder.enable_composition();
+                builder = builder.composition(true);
             }
 
             builder.build()?

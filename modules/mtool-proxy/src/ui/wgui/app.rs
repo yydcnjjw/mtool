@@ -32,7 +32,7 @@ impl Component for App {
         ctx.link().send_stream(stream! {
             loop {
                 time::sleep(Duration::from_secs(1)).await;
-                match mtauri_sys::invoke::<(), Stats>("plugin:proxy|stats", &()).await {
+                match mtauri_sys::invoke::<(), Stats>("plugin:mtool-proxy|stats", &()).await {
                     Ok(stats) => yield AppMsg::UpdateStats(stats),
                     Err(e) => {
                         warn!("{:?}", e);

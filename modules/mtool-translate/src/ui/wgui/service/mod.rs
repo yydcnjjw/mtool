@@ -66,7 +66,7 @@ fn init<R>(injector: Injector) -> TauriPlugin<R>
 where
     R: Runtime,
 {
-    tauri::plugin::Builder::new("translate")
+    tauri::plugin::Builder::new("mtool-translate")
         .setup(|app, _| {
             app.manage(injector);
             Ok(())

@@ -118,7 +118,7 @@ impl Component for Completion {
 
                 spawn_local(async move {
                     if let Err(e) = mtauri_sys::invoke::<CompletionExitArgs, ()>(
-                        "plugin:interactive::completion|complete_exit",
+                        "plugin:mtool-interactive|complete_exit",
                         &CompletionExitArgs {
                             v: CompletionExit::Completed(completed),
                         },
@@ -216,7 +216,7 @@ impl Completion {
     fn fetch_completion_meta(ctx: &Context<Self>) {
         ctx.link().send_future(async move {
             Msg::CompletionMeta(
-                mtauri_sys::invoke("plugin:interactive::completion|completion_meta", &())
+                mtauri_sys::invoke("plugin:mtool-interactive|completion_meta", &())
                     .await
                     .unwrap(),
             )

@@ -3,6 +3,7 @@ name = "mtool-pdf"
 version.workspace = true
 authors.workspace = true
 edition.workspace = true
+links = "mtool-pdf"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
@@ -55,28 +56,25 @@ mtool-core = { path = "../mtool-core" }
 mtool-storage = { path = "../mtool-storage" }
 
 tauri = { workspace = true }
-tauri-runtime-wry = { workspace = true }
 quick-xml = { workspace = true, features = ["async-tokio"] }
 sea-orm = { workspace = true }
 sea-orm-migration = { workspace = true }
 tokio-stream = { workspace = true, features = ["sync"] }
 
-
-tao = "*"
-raw-window-handle = "0.5"
+raw-window-handle = { workspace = true }
+raw-window-handle5 = { version = "0.5", package = "raw-window-handle" }
 md5 = "*"
 
 [target.'cfg(target_os = "linux")'.dependencies]
 gtk = "*"
 gl = "*"
 glutin = "*"
-skia-safe = { version = "*", features = ["gpu", "gl"] }
+skia-safe = { version = "0.71", features = ["gpu", "gl"] }
 
 
 [target.'cfg(target_os = "windows")'.dependencies]
 webview2-com = "*"
-wio = "*"
-skia-safe = { version = "*", features = ["gpu", "d3d"] }
+skia-safe = { version = "0.71", features = ["gpu", "d3d"] }
 
 [target.'cfg(target_os = "windows")'.dependencies.windows]
 workspace = true
@@ -110,3 +108,5 @@ git = "https://github.com/yydcnjjw/pdfium-render"
 branch = "master"
 features = ["image", "sync"]
 
+[build-dependencies]
+tauri-plugin = { workspace = true }

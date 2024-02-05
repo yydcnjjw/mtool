@@ -61,7 +61,7 @@ impl SkiaContext {
         num_samples: usize,
         stencil_size: usize,
     ) -> Result<Self, anyhow::Error> {
-        let mut gr_context = skia_safe::gpu::DirectContext::new_gl(Some(interface), None)
+        let mut gr_context = skia_safe::gpu::DirectContext::new_gl(interface, None)
             .context("create gr context failed")?;
         let surface =
             Self::create_surface(size, fb_info, &mut gr_context, num_samples, stencil_size)?;

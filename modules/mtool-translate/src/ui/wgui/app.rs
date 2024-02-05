@@ -165,7 +165,7 @@ impl App {
         };
         ctx.link().send_future(async move {
             AppMsg::ShowTranslate(
-                mtauri_sys::invoke("plugin:translate|text_translate", &args).await,
+                mtauri_sys::invoke("plugin:mtool-translate|text_translate", &args).await,
             )
         })
     }

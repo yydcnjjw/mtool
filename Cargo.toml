@@ -47,14 +47,16 @@ futures = "*"
 parking_lot = "*"
 thiserror = "*"
 anyhow = "*"
-tauri = { version = "2.0.0-alpha.18" }
-tauri-runtime-wry = { version = "1.0.0-alpha.6" }
-tauri-build = "2.0.0-alpha.12"
+tauri = { version = "2.0.0-beta.2" }
+tauri-build = "2.0.0-beta.1"
+tauri-plugin = { version = "2.0.0-beta.1", features = ["build"] }
+tauri-utils = { version = "2.0.0-beta.1", features = ["build"] }
 serde = { version = "*", features = ["derive"] }
+raw-window-handle = "0.6"
 serde_with = "*"
 serde_json = "*"
 serde-error = "*"
-windows = "*"
+windows = "0.52"
 itertools = "*"
 cfg-if = "*"
 reqwest = "*"
@@ -87,11 +89,19 @@ sea-orm-migration = { version = "*", features = [ "sqlx-sqlite", "runtime-tokio-
 
 [patch.crates-io]
 tauri = { git = "https://github.com/yydcnjjw/tauri.git", branch = "dev" }
+tauri-runtime = { git = "https://github.com/yydcnjjw/tauri.git", branch = "dev" }
 tauri-runtime-wry = { git = "https://github.com/yydcnjjw/tauri.git", branch = "dev" }
 tauri-build = { git = "https://github.com/yydcnjjw/tauri.git", branch = "dev" }
+tauri-plugin = { git = "https://github.com/yydcnjjw/tauri.git", branch = "dev" }
+tauri-utils = { git = "https://github.com/yydcnjjw/tauri.git", branch = "dev" }
 wry = { git = "https://github.com/yydcnjjw/wry.git", branch = "dev" }
 
 # tauri = { path = "/home/yydcnjjw/workspace/project/tauri/core/tauri" }
 # tauri-runtime-wry = { path = "/home/yydcnjjw/workspace/project/tauri/core/tauri-runtime-wry" }
+# tauri-runtime = { path = "/home/yydcnjjw/workspace/project/tauri/core/tauri-runtime" }
+# tauri-plugin = { path = "/home/yydcnjjw/workspace/project/tauri/core/tauri-plugin" }
 # tauri-build = { path = "/home/yydcnjjw/workspace/project/tauri/core/tauri-build" }
+# tauri-utils = { path = "/home/yydcnjjw/workspace/project/tauri/core/tauri-utils" }
 # wry = { path = "/home/yydcnjjw/workspace/project/wry" }
+
+# tauri-codegen = { path = "/home/yydcnjjw/workspace/project/tauri/core/tauri-codegen" }

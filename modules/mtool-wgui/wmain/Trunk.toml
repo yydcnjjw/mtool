@@ -6,17 +6,6 @@ watch = [
 [serve]
 address = "127.0.0.1"
 port = 18188
-# headers = { "cross-origin-embedder-policy" = "require-corp", "cross-origin-opener-policy" = "same-origin" }
 
 [tools]
 wasm_bindgen = "0.2.89"
-
-# [build]
-# pattern_script = '''
-# <script type="module">
-#   import init, { run } from '{base}{js}';
-#   let __MTOOL__ = await init();
-#   window.__MTOOL__ = __MTOOL__;
-#   run();
-# </script>
-# '''

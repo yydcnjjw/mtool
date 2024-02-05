@@ -1,5 +1,5 @@
 #![allow(incomplete_features)]
-#![feature(iterator_try_collect, async_fn_in_trait, trait_alias)]
+#![feature(iterator_try_collect, trait_alias)]
 
 mod config;
 pub mod stats;

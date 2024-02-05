@@ -4,35 +4,45 @@ use std::{
 };
 
 use mapp::provider::{Injector, Res};
-use raw_window_handle::{HasRawDisplayHandle, HasRawWindowHandle};
+use raw_window_handle::{
+    DisplayHandle, HandleError, HasDisplayHandle, HasWindowHandle, WindowHandle,
+};
 use tauri::{
     async_runtime::spawn,
     plugin::{Builder, TauriPlugin},
-    AppHandle, Manager, PhysicalPosition, WindowBuilder, WindowEvent, WindowUrl, Wry,
+    AppHandle, Manager, PhysicalPosition, WebviewUrl, WebviewWindowBuilder, WindowEvent, Wry,
 };
 use tokio::sync::{mpsc, oneshot};
 use tracing::{debug, warn};
 
 pub struct WGuiWindow {
-    inner: tauri::Window,
+    inner: tauri::WebviewWindow,
     pos: RwLock<Option<PhysicalPosition<i32>>>,
     hide_on_unfocus: bool,
 }
 
-unsafe impl HasRawDisplayHandle for WGuiWindow {
-    fn raw_display_handle(&self) -> raw_window_handle::RawDisplayHandle {
+impl HasDisplayHandle for WGuiWindow {
+    fn display_handle(&self) -> Result<DisplayHandle<'_>, HandleError> {
+        self.app_handle().display_handle()
+    }
+}
+
+unsafe impl raw_window_handle5::HasRawDisplayHandle for WGuiWindow {
+    fn raw_display_handle(
+        &self,
+    ) -> raw_window_handle5::RawDisplayHandle {
         self.app_handle().raw_display_handle()
     }
 }
 
-unsafe impl HasRawWindowHandle for WGuiWindow {
-    fn raw_window_handle(&self) -> raw_window_handle::RawWindowHandle {
-        self.inner.raw_window_handle()
+impl HasWindowHandle for WGuiWindow {
+    fn window_handle(&self) -> Result<WindowHandle<'_>, HandleError> {
+        self.inner.window_handle()
     }
 }
 
 impl Deref for WGuiWindow {
-    type Target = tauri::Window;
+    type Target = tauri::WebviewWindow;
 
     fn deref(&self) -> &Self::Target {
         &self.inner
@@ -41,7 +51,7 @@ impl Deref for WGuiWindow {
 
 impl WGuiWindow {
     pub async fn new(
-        window: tauri::Window,
+        window: tauri::WebviewWindow,
         hide_on_unfocus: bool,
     ) -> Result<Arc<Self>, anyhow::Error> {
         let this = Arc::new(Self {
@@ -130,7 +140,7 @@ pub struct MtoolWindow(Arc<WGuiWindow>);
 
 impl MtoolWindow {
     async fn new(app: AppHandle) -> Result<Self, anyhow::Error> {
-        let win = WindowBuilder::new(&app, "mtool", WindowUrl::App("index.html".into()))
+        let win = WebviewWindowBuilder::new(&app, "mtool", WebviewUrl::App("index.html".into()))
             .title("mtool")
             .transparent(true)
             .decorations(false)

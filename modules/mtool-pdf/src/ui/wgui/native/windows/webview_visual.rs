@@ -12,6 +12,7 @@ use winapi::um::{
     winuser::{GET_KEYSTATE_WPARAM, GET_WHEEL_DELTA_WPARAM, GET_XBUTTON_WPARAM},
 };
 use windows::{
+    core::ComInterface,
     Foundation::Numerics::Vector2,
     Win32::{
         Foundation::{HWND, LPARAM, LRESULT, POINT, RECT, WPARAM},
@@ -26,7 +27,7 @@ use windows::{
             WindowsAndMessaging::*,
         },
     },
-    UI::Composition::{Compositor, ContainerVisual}, core::ComInterface,
+    UI::Composition::{Compositor, ContainerVisual},
 };
 
 #[derive(Clone)]

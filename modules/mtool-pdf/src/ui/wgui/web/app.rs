@@ -188,7 +188,7 @@ impl App {
             file: PdfFile,
         }
         mtauri_sys::invoke(
-            "plugin:pdfloader|load_pdf",
+            "plugin:mtool-pdf|load_pdf",
             &Args {
                 file: PdfFile {
                     path: path.to_string(),
@@ -377,7 +377,7 @@ height: {}px;
 fn send_pdf_event(e: WPdfEvent) {
     let window = Window::current().unwrap();
     spawn_local(async move {
-        if let Err(e) = window.emit("pdf-event", &e).await {
+        if let Err(e) = window.emit_to_self("pdf-event", &e).await {
             warn!("{:?}", e);
         }
     });

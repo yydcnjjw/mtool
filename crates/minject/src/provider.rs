@@ -1,5 +1,3 @@
-use std::result::Result;
-
 use async_trait::async_trait;
 use minject_macro::{enum_params, repeat};
 

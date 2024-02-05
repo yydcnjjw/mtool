@@ -15,7 +15,7 @@ use super::{
 use crate::{
     pdf::Pdf,
     ui::wgui::{
-        event::{MouseEvent, PageInfo, Position, ScaleEvent, ScrollEvent, WMouseEvent, WPdfEvent},
+        event::{MouseEvent, PageInfo, ScaleEvent, ScrollEvent, WPdfEvent},
         service::PdfLoadEvent,
     },
 };
@@ -289,7 +289,9 @@ impl PdfViewerInner {
         )
     }
 
-    fn extract_text(&self) -> () {}
+    fn extract_text(&self) -> () {
+
+    }
 
     #[allow(unused)]
     fn highlight_sentence(

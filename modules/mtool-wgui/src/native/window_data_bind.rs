@@ -19,7 +19,7 @@ impl DataBinding {
         }
     }
 
-    fn bind<T>(&self, win: &tauri::Window, v: T)
+    fn bind<T>(&self, win: &tauri::WebviewWindow, v: T)
     where
         T: Send + Sync + Clone + 'static,
     {
@@ -40,7 +40,7 @@ impl DataBinding {
             .insert(TypeId::of::<T>(), Box::new(v));
     }
 
-    fn get<T>(&self, win: &tauri::Window) -> Option<T>
+    fn get<T>(&self, win: &tauri::WebviewWindow) -> Option<T>
     where
         T: Send + Sync + Clone + 'static,
     {
@@ -61,7 +61,7 @@ pub trait WindowDataBind {
         T: Send + Sync + Clone + 'static;
 }
 
-fn get_data_binding(win: &tauri::Window) -> State<'_, DataBinding> {
+fn get_data_binding(win: &tauri::WebviewWindow) -> State<'_, DataBinding> {
     if win.try_state::<DataBinding>().is_none() {
         win.manage(DataBinding::new());
     }
@@ -69,7 +69,7 @@ fn get_data_binding(win: &tauri::Window) -> State<'_, DataBinding> {
     win.state::<DataBinding>()
 }
 
-impl WindowDataBind for tauri::Window {
+impl WindowDataBind for tauri::WebviewWindow {
     fn bind<T>(&self, v: T)
     where
         T: Send + Sync + Clone + 'static,

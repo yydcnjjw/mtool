@@ -3,18 +3,14 @@ use std::{mem::size_of, sync::Arc};
 use tauri::PhysicalSize;
 use tokio::sync::oneshot;
 use windows::{
-    core::ComInterface,
-    Foundation::Numerics::{Vector2, Vector3},
-    System::DispatcherQueueController,
-    Win32::{
+    core::ComInterface, Foundation::Numerics::{Vector2, Vector3}, System::DispatcherQueueController, Win32::{
         Foundation::BOOL,
         Graphics::Dxgi::IDXGISwapChain1,
         System::WinRT::{
             Composition::ICompositorDesktopInterop, CreateDispatcherQueueController,
             DispatcherQueueOptions, DQTAT_COM_ASTA, DQTYPE_THREAD_CURRENT,
         },
-    },
-    UI::Composition::{Compositor, ContainerVisual, Desktop::DesktopWindowTarget},
+    }, UI::Composition::{Compositor, ContainerVisual, Desktop::DesktopWindowTarget}
 };
 
 use super::{
@@ -97,7 +93,7 @@ impl Renderer {
             let (tx, rx) = oneshot::channel();
             let hwnd = hwnd.clone();
             win.run_on_main_thread(move || {
-                let _ = tx.send(|| -> Result<_, anyhow::Error> {
+                let _ = tx.send(move || -> Result<_, anyhow::Error> {
                     unsafe {
                         let dispatcher_queue_controller =
                             CreateDispatcherQueueController(DispatcherQueueOptions {

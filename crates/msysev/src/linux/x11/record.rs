@@ -1,7 +1,7 @@
 use std::{
     ffi::CStr,
     os::raw::{c_char, c_int, c_ulong},
-    ptr::{null, null_mut},
+    ptr::{addr_of_mut, null, null_mut},
     sync::atomic::{AtomicPtr, AtomicU64, Ordering},
 };
 
@@ -60,8 +60,14 @@ impl Context {
             return Err(Error::XLib("Can't init extension".into()));
         }
 
-        let context =
-            xrecord::XRecordCreateContext(dpy, 0, &mut RECORD_ALL_CLIENTS, 1, &mut record_range, 1);
+        let context = xrecord::XRecordCreateContext(
+            dpy,
+            0,
+            addr_of_mut!(RECORD_ALL_CLIENTS),
+            1,
+            &mut record_range,
+            1,
+        );
 
         if context == 0 {
             return Err(Error::XRecord("Can't create context".into()));

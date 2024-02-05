@@ -6,7 +6,7 @@ use tauri::{
     async_runtime::spawn,
     command,
     plugin::{Builder, TauriPlugin},
-    Manager, State, WindowBuilder, WindowUrl, Wry,
+    Manager, State, WebviewUrl, WebviewWindowBuilder, Wry,
 };
 
 use crate::{
@@ -18,7 +18,7 @@ pub struct ProxyMonitorWindow(Arc<WGuiWindow>);
 
 impl ProxyMonitorWindow {
     async fn new(app: tauri::AppHandle) -> Result<Self, anyhow::Error> {
-        let win = WindowBuilder::new(&app, "mtool-proxy", WindowUrl::App("/proxy".into()))
+        let win = WebviewWindowBuilder::new(&app, "mtool-proxy", WebviewUrl::App("/proxy".into()))
             .title("mtool-proxy")
             .transparent(true)
             .decorations(false)
@@ -65,7 +65,7 @@ async fn stats(proxy_app: State<'_, Res<ProxyService>>) -> Result<Stats, serde_e
 }
 
 pub(crate) fn init(proxy_app: Res<ProxyService>, injector: Injector) -> TauriPlugin<Wry> {
-    Builder::new("proxy")
+    Builder::new("mtool-proxy")
         .setup(move |app, _| {
             let app = app.clone();
             app.manage(proxy_app);

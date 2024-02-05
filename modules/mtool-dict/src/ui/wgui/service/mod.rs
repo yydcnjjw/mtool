@@ -61,7 +61,7 @@ fn init<R>(injector: Injector) -> TauriPlugin<R>
 where
     R: Runtime,
 {
-    tauri::plugin::Builder::new("dict")
+    tauri::plugin::Builder::new("mtool-dict")
         .setup(|app, _| {
             app.manage(injector);
             Ok(())
