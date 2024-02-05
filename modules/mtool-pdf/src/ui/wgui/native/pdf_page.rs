@@ -3,6 +3,7 @@ use std::{ops::Deref, rc::Rc};
 use pdfium_render::prelude as pdfium;
 use skia_safe as sk;
 
+#[derive(Debug)]
 pub struct PdfTextRange {
     pub page_index: u16,
     pub index: pdfium::PdfPageTextCharIndex,

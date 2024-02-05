@@ -55,7 +55,7 @@ pub struct RenderContext<'a> {
 
 #[derive(Clone)]
 pub struct Renderer {
-    _win: Arc<WGuiWindow>,
+    win: Arc<WGuiWindow>,
 }
 
 impl Renderer {
@@ -152,6 +152,8 @@ impl Renderer {
             }
             skctx.flush_and_submit();
         }
+        
+        glarea.queue_draw();
         Ok(())
     }
 
@@ -206,6 +208,6 @@ impl Renderer {
             }
         })?;
 
-        Ok(Self { _win: win })
+        Ok(Self { win })
     }
 }

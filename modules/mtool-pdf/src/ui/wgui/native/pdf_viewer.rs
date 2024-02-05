@@ -87,7 +87,7 @@ impl PdfViewerInner {
             Some(v) => v,
             None => return Ok(()),
         };
-
+        
         let mut highlight_rects = Vec::new();
 
         for text_range in text_ranges {
@@ -513,6 +513,8 @@ impl PdfViewerInner {
                         Err(e) => warn!("{:?}", e),
                         _ => {}
                     }
+                } else {
+                    return false
                 }
             }
         }
