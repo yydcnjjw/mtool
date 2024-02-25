@@ -1,4 +1,5 @@
-mod m20231128_120000_create_table;
+mod m20231128_120000_create_mtool_pdf_adobe_v1;
+mod m20240225_085708_create_mtool_pdf_adobe_v2;
 
 use async_trait::async_trait;
 use mapp::prelude::*;
@@ -16,6 +17,7 @@ impl AppModule for Module {
 }
 
 async fn register() -> Result<(), anyhow::Error> {
-    add_migration(m20231128_120000_create_table::Migration);
+    add_migration(m20231128_120000_create_mtool_pdf_adobe_v1::Migration);
+    add_migration(m20240225_085708_create_mtool_pdf_adobe_v2::Migration);
     Ok(())
 }
