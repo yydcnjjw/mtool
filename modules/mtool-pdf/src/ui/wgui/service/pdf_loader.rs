@@ -59,7 +59,7 @@ impl PdfLoaderInner {
             .one(self.db.deref())
             .await?
         {
-            Some(v) => Ok(v.structure.into()),
+            Some(v) => v.structure.context("structure is not exist"),
             None => {
                 let AdobeApiConfig {
                     url,
@@ -76,14 +76,14 @@ impl PdfLoaderInner {
                     Ok(cli) => {
                         let asset_id = cli.upload_asset("application/pdf", file).await?;
                         let structure = cli.extract_pdf(asset_id).await?;
-                        entity::adobe::Entity::insert(entity::adobe::ActiveModel {
-                            id: ActiveValue::Set(md5sum),
-                            structure: ActiveValue::Set(entity::adobe::PdfStructure::new(
-                                structure.clone(),
-                            )),
-                        })
-                        .exec(self.db.deref())
-                        .await?;
+                        // entity::adobe::Entity::insert(entity::adobe::ActiveModel {
+                        //     id: ActiveValue::Set(md5sum),
+                        //     structure: ActiveValue::Set(entity::PdfStructure::new(
+                        //         structure.clone(),
+                        //     )),
+                        // })
+                        // .exec(self.db.deref())
+                        // .await?;
                         Ok(structure)
                     }
                     Err(e) => Err(e),
