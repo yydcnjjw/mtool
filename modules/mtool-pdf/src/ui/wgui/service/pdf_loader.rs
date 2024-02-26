@@ -4,7 +4,7 @@ use anyhow::Context;
 use mapp::prelude::*;
 use mcloud_api::adobe::{self, PdfStructure};
 use mtool_wgui::WindowDataBind;
-use sea_orm::{ActiveValue, DatabaseConnection, EntityTrait};
+use sea_orm::*;
 use tauri::{
     command,
     plugin::{Builder, TauriPlugin},
@@ -55,41 +55,80 @@ impl PdfLoaderInner {
         let file = fs::read(path).await?;
         let md5sum = md5::compute(&file).to_vec();
 
-        match entity::adobe::Entity::find_by_id(md5sum.clone())
+        let adobe = match entity::adobe::Entity::find_by_id(md5sum.clone())
             .one(self.db.deref())
             .await?
         {
-            Some(v) => v.structure.context("structure is not exist"),
+            Some(v) => v,
             None => {
-                let AdobeApiConfig {
-                    url,
-                    client_id,
-                    key,
-                } = &self.adobe_api_cfg;
-                match self
-                    .adobe_api_cli
-                    .get_or_try_init(
-                        || async move { adobe::Client::new(url, client_id, key).await },
-                    )
-                    .await
-                {
-                    Ok(cli) => {
-                        let asset_id = cli.upload_asset("application/pdf", file).await?;
-                        let structure = cli.extract_pdf(asset_id).await?;
-                        // entity::adobe::Entity::insert(entity::adobe::ActiveModel {
-                        //     id: ActiveValue::Set(md5sum),
-                        //     structure: ActiveValue::Set(entity::PdfStructure::new(
-                        //         structure.clone(),
-                        //     )),
-                        // })
-                        // .exec(self.db.deref())
-                        // .await?;
-                        Ok(structure)
-                    }
-                    Err(e) => Err(e),
-                }
+                entity::adobe::Entity::insert(entity::adobe::ActiveModel {
+                    id: Set(md5sum),
+                    media_type: Set("application/pdf".into()),
+                    ..Default::default()
+                })
+                .exec_with_returning(self.db.deref())
+                .await?
             }
+        };
+
+        let AdobeApiConfig {
+            url,
+            client_id,
+            key,
+        } = &self.adobe_api_cfg;
+
+        let cli = self
+            .adobe_api_cli
+            .get_or_try_init(|| async move { adobe::Client::new(url, client_id, key).await })
+            .await?;
+
+        let (asset_id, upload_uri) = if adobe.state == entity::adobe::State::GetAssetId {
+            let (asset_id, upload_uri) = cli.get_asset_id(&adobe.media_type).await?;
+
+            entity::adobe::Entity::update(entity::adobe::ActiveModel {
+                id: Set(adobe.id.clone()),
+                asset_id: Set(Some(asset_id.clone())),
+                upload_uri: Set(Some(upload_uri.clone())),
+                state: Set(entity::adobe::State::Upload),
+                ..Default::default()
+            })
+            .exec(self.db.deref())
+            .await?;
+
+            (asset_id, upload_uri)
+        } else {
+            (adobe.asset_id.unwrap(), adobe.upload_uri.unwrap())
+        };
+
+        if adobe.state == entity::adobe::State::Upload {
+            cli.upload_asset(&adobe.media_type, &upload_uri, file)
+                .await?;
+
+            entity::adobe::Entity::update(entity::adobe::ActiveModel {
+                id: Set(adobe.id.clone()),
+                state: Set(entity::adobe::State::ExtractPdf),
+                ..Default::default()
+            })
+            .exec(self.db.deref())
+            .await?;
         }
+
+        Ok(if adobe.state == entity::adobe::State::ExtractPdf {
+            let structure = cli.extract_pdf(asset_id).await?;
+
+            entity::adobe::Entity::update(entity::adobe::ActiveModel {
+                id: Set(adobe.id.clone()),
+                state: Set(entity::adobe::State::End),
+                structure: Set(Some(entity::PdfStructure::new(structure.clone()))),
+                ..Default::default()
+            })
+            .exec(self.db.deref())
+            .await?;
+
+            structure
+        } else {
+            adobe.structure.unwrap().into()
+        })
     }
 }
 

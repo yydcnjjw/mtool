@@ -98,14 +98,7 @@ impl Client {
             .access_token)
     }
 
-    pub async fn upload_asset<T>(
-        &self,
-        media_type: &str,
-        asset: T,
-    ) -> Result<AssetId, anyhow::Error>
-    where
-        T: Into<Body>,
-    {
+    pub async fn get_asset_id(&self, media_type: &str) -> Result<(AssetId, String), anyhow::Error> {
         #[derive(Debug, Serialize)]
         struct Request {
             #[serde(rename = "mediaType")]
@@ -115,12 +108,15 @@ impl Client {
         #[derive(Debug, Deserialize)]
         pub struct Response {
             #[serde(rename = "assetID")]
-            assets_id: String,
+            asset_id: String,
             #[serde(rename = "uploadUri")]
             upload_uri: String,
         }
 
-        let resp = self
+        let Response {
+            asset_id,
+            upload_uri,
+        } = self
             .inner
             .post(format!("{}/assets", self.basic_url))
             .json(&Request {
@@ -132,16 +128,28 @@ impl Client {
             .json::<Response>()
             .await?;
 
+        Ok((asset_id, upload_uri))
+    }
+
+    pub async fn upload_asset<T>(
+        &self,
+        media_type: &str,
+        upload_uri: &str,
+        asset: T,
+    ) -> Result<(), anyhow::Error>
+    where
+        T: Into<Body>,
+    {
         reqwest::Client::builder()
             .build()?
-            .put(&resp.upload_uri)
+            .put(upload_uri)
             .header(CONTENT_TYPE, HeaderValue::from_str(media_type)?)
             .body(asset)
             .send()
             .await?
             .error_for_status()?;
 
-        Ok(resp.assets_id)
+        Ok(())
     }
 
     pub async fn get_download_asset(&self, asset_id: &AssetId) -> Result<String, anyhow::Error> {
