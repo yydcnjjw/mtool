@@ -106,11 +106,11 @@ impl AppContext {
     }
 
     pub fn schedule(&mut self) -> &Schedule {
-        return &self.schedule;
+        &self.schedule
     }
 
     pub fn injector(&self) -> &Injector {
-        return &self.injector;
+        &self.injector
     }
 }
 
@@ -131,7 +131,7 @@ impl App {
     }
 
     pub fn injector(&self) -> &Injector {
-        return &self.injector;
+        &self.injector
     }
 }
 

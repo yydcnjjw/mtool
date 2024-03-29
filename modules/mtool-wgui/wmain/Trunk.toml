@@ -8,4 +8,4 @@ address = "127.0.0.1"
 port = 18188
 
 [tools]
-wasm_bindgen = "0.2.89"
+wasm_bindgen = "0.2.92"

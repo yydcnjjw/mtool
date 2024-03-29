@@ -1,11 +1,11 @@
-use std::{pin::Pin, task, io, sync::Arc, net::SocketAddr};
+use std::{io, net::SocketAddr, pin::Pin, sync::Arc, task};
 
 use quinn::{RecvStream, SendStream, VarInt};
-use tokio::io::{AsyncWrite, AsyncRead};
+use tokio::io::{AsyncRead, AsyncWrite};
 
 use crate::net::transport::Connect;
 
-use super::{ConnectorInner, record_stats};
+use super::{record_stats, ConnectorInner};
 
 #[derive(Debug)]
 pub struct BiStream {
@@ -31,7 +31,7 @@ impl AsyncWrite for BiStream {
         cx: &mut task::Context<'_>,
         buf: &[u8],
     ) -> task::Poll<Result<usize, io::Error>> {
-        Pin::new(&mut self.w).poll_write(cx, buf)
+        AsyncWrite::poll_write(Pin::new(&mut self.w), cx, buf)
     }
 
     fn poll_flush(

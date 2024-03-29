@@ -3,6 +3,9 @@ mod action;
 #[cfg(not(windows))]
 mod sysev_backend;
 
+// #[cfg(not(windows))]
+// mod sway_backend;
+
 // #[cfg(windows)]
 // mod windows_backend;
 
@@ -10,9 +13,7 @@ use std::{collections::HashMap, future::Future, sync::Arc};
 
 use async_trait::async_trait;
 use mapp::{
-    inject::{Inject, Provide},
-    provider::{Injector, Res},
-    ModuleGroup,
+    define_label, inject::{Inject, Provide}, provider::{Injector, Res}, ModuleGroup
 };
 use mkeybinding::KeySequence;
 use tokio::sync::{mpsc, Mutex, RwLock};
@@ -107,3 +108,11 @@ pub trait SetGlobalHotKey {
     async fn register(&self, ks: &KeySequence) -> Result<(), anyhow::Error>;
     async fn unregister(&self, ks: &KeySequence) -> Result<(), anyhow::Error>;
 }
+
+define_label!(
+    pub enum GlobalHotKeyStage {
+        Register,
+        Setup,
+        UnRegister,
+    }
+);

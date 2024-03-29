@@ -6,21 +6,24 @@ use std::{
 use mapp::provider::Res;
 use tauri::{App, Wry};
 
-type GuiBuilder = tauri::Builder<tauri::Wry>;
+type GuiBuilder<R> = tauri::Builder<R>;
 type SetupHook<R> = Box<dyn FnOnce(&mut App<R>) -> Result<(), Box<dyn std::error::Error>> + Send>;
 
-pub struct Builder {
-    inner: Mutex<GuiBuilder>,
-    setup_with_app_callback: Arc<Mutex<Vec<SetupHook<Wry>>>>,
+pub struct Builder<R: tauri::Runtime = Wry> {
+    inner: Mutex<GuiBuilder<R>>,
+    setup_with_app_callback: Arc<Mutex<Vec<SetupHook<R>>>>,
 }
 
-impl Builder {
+impl<R> Builder<R>
+where
+    R: tauri::Runtime,
+{
     pub async fn new() -> Result<Res<Self>, anyhow::Error> {
-        let setup_with_app_callback: Arc<Mutex<Vec<SetupHook<Wry>>>> =
+        let setup_with_app_callback: Arc<Mutex<Vec<SetupHook<R>>>> =
             Arc::new(Mutex::new(Vec::new()));
         let builder = {
             let setup_with_app_callback = setup_with_app_callback.clone();
-            GuiBuilder::default().setup(move |app| {
+            GuiBuilder::<R>::new().setup(move |app| {
                 let mut callbacks = setup_with_app_callback.lock().unwrap();
                 for cb in callbacks.drain(..) {
                     cb(app)?;
@@ -36,7 +39,7 @@ impl Builder {
 
     pub fn setup<F>(&self, f: F) -> Result<(), anyhow::Error>
     where
-        F: FnOnce(GuiBuilder) -> Result<GuiBuilder, anyhow::Error>,
+        F: FnOnce(GuiBuilder<R>) -> Result<GuiBuilder<R>, anyhow::Error>,
     {
         self.replace(f(self.take())?);
         Ok(())
@@ -44,7 +47,7 @@ impl Builder {
 
     pub fn setup_with_app<F>(&self, f: F) -> &Self
     where
-        F: FnOnce(&mut App<Wry>) -> Result<(), Box<dyn std::error::Error>> + Send + 'static,
+        F: FnOnce(&mut App<R>) -> Result<(), Box<dyn std::error::Error>> + Send + 'static,
     {
         self.setup_with_app_callback
             .lock()
@@ -53,11 +56,11 @@ impl Builder {
         self
     }
 
-    pub fn take(&self) -> GuiBuilder {
-        self.replace(GuiBuilder::default())
+    pub fn take(&self) -> GuiBuilder<R> {
+        self.replace(GuiBuilder::<R>::new())
     }
 
-    fn replace(&self, builder: GuiBuilder) -> GuiBuilder {
+    fn replace(&self, builder: GuiBuilder<R>) -> GuiBuilder<R> {
         mem::replace(&mut self.inner.lock().unwrap(), builder)
     }
 }

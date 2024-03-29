@@ -1,6 +1,6 @@
 use std::rc::Rc;
 
-use mtauri_sys::window::{Size, Window};
+use mtauri_sys::window::{PhysicalSize, Window};
 use mtool_wgui::{component::error::render_result_view, generate_keymap, Keybinding};
 use serde::Serialize;
 use tracing::warn;
@@ -244,11 +244,12 @@ height: {height}px;
             if let Some(page) = info.pages.get(0) {
                 let window = Window::current()?;
                 window
-                    .set_size(Size::new_physical(
-                        (page.width + 10) as usize,
-                        (page.height as usize).max(960),
-                    ))
-                    .await?;
+                    .set_size(
+                        PhysicalSize::new((page.width + 10) as u32, (page.height as u32).max(960))
+                            .into(),
+                    )
+                    .await
+                    .map_err(|e| JsError::new(&e.to_string()))?;
                 window.center().await?;
             }
 

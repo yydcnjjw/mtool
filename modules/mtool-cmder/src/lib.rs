@@ -62,6 +62,10 @@ impl AppModule for Module {
             .add_once_task(
                 AppStage::Run,
                 exec_command_from_cli.cond(is_startup_mode(StartupMode::Cli)),
+            )
+            .add_once_task(
+                AppStage::Run,
+                exec_command_interactive.cond(not_startup_mode(StartupMode::Cli)),
             );
 
         async fn setup_cmdline(cmdline: Res<Cmdline>) -> Result<(), anyhow::Error> {

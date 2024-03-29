@@ -16,3 +16,5 @@ js-sys = { workspace = true }
 web-sys = { workspace = true }
 tracing = { workspace = true }
 anyhow = { workspace = true }
+
+dpi = { version = "0.1", features = ["serde"] }

@@ -83,11 +83,11 @@ impl PdfDocument {
         self.inner.borrow().bindings()
     }
 
-    pub fn width(&self) -> usize {
+    pub fn width(&self) -> u32 {
         self.inner.borrow().width()
     }
 
-    pub fn height(&self) -> usize {
+    pub fn height(&self) -> u32 {
         self.inner.borrow().height()
     }
 

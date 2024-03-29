@@ -2,7 +2,9 @@ use serde::{de::DeserializeOwned, Serialize};
 use serde_wasm_bindgen::from_value;
 use wasm_bindgen::{prelude::Closure, JsValue};
 
-use crate::event::Event;
+use crate::{event::Event, invoke};
+
+pub use dpi::*;
 
 mod ffi {
     use wasm_bindgen::prelude::*;
@@ -74,52 +76,6 @@ mod ffi {
     }
 }
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
-pub enum Size {
-    Physical { width: usize, height: usize },
-    Logical { width: usize, height: usize },
-}
-
-impl Size {
-    pub fn new_physical(width: usize, height: usize) -> Self {
-        Self::Physical { width, height }
-    }
-
-    pub fn new_logical(width: usize, height: usize) -> Self {
-        Self::Physical { width, height }
-    }
-
-    pub fn get(&self) -> (usize, usize) {
-        match self {
-            Size::Physical { width, height } => (*width, *height),
-            Size::Logical { width, height } => (*width, *height),
-        }
-    }
-}
-
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
-pub enum Position {
-    Physical { x: usize, y: usize },
-    Logical { x: usize, y: usize },
-}
-
-impl Position {
-    pub fn new_physical(x: usize, y: usize) -> Self {
-        Self::Physical { x, y }
-    }
-
-    pub fn new_logical(x: usize, y: usize) -> Self {
-        Self::Physical { x, y }
-    }
-
-    pub fn get(&self) -> (usize, usize) {
-        match self {
-            Position::Physical { x, y } => (*x, *y),
-            Position::Logical { x, y } => (*x, *y),
-        }
-    }
-}
-
 #[derive(Debug, Clone)]
 pub struct Window {
     handle: ffi::WebviewWindow,
@@ -138,22 +94,51 @@ impl Window {
         })
     }
 
-    pub async fn set_size(&self, size: Size) -> Result<(), JsValue> {
-        self.handle
-            .setSize(match size {
-                Size::Physical { width, height } => ffi::PhysicalSize::new(width, height).into(),
-                Size::Logical { width, height } => ffi::LogicalSize::new(width, height).into(),
-            })
-            .await
+    pub async fn set_size(&self, size: Size) -> Result<(), anyhow::Error> {
+        #[derive(Serialize)]
+        struct Args {
+            label: String,
+            value: Size,
+        }
+
+        invoke(
+            "plugin:window|set_size",
+            &Args {
+                label: self.handle.label(),
+                value: size,
+            },
+        )
+        .await
+
+        // .setSize(match size {
+        //     Size::Physical { width, height } => ffi::PhysicalSize::new(width, height).into(),
+        //     Size::Logical { width, height } => ffi::LogicalSize::new(width, height).into(),
+        // })
+        // .await
     }
 
-    pub async fn set_position(&self, pos: Position) -> Result<(), JsValue> {
-        self.handle
-            .setPosition(match pos {
-                Position::Physical { x, y } => ffi::PhysicalPosition::new(x, y).into(),
-                Position::Logical { x, y } => ffi::LogicalPosition::new(x, y).into(),
-            })
-            .await
+    pub async fn set_position(&self, pos: Position) -> Result<(), anyhow::Error> {
+        #[derive(Serialize)]
+        struct Args {
+            label: String,
+            value: Position,
+        }
+
+        invoke(
+            "plugin:window|set_position",
+            &Args {
+                label: self.handle.label(),
+                value: pos,
+            },
+        )
+        .await
+
+        // self.handle
+        //     .setPosition(match pos {
+        //         Position::Physical { x, y } => ffi::PhysicalPosition::new(x, y).into(),
+        //         Position::Logical { x, y } => ffi::LogicalPosition::new(x, y).into(),
+        //     })
+        //     .await
     }
 
     pub async fn center(&self) -> Result<(), JsValue> {

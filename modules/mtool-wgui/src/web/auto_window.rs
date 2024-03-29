@@ -1,11 +1,11 @@
-use mtauri_sys::window::{Position, Size, Window};
+use mtauri_sys::window::{PhysicalPosition, PhysicalSize, Window};
 use wasm_bindgen::prelude::*;
 use web_sys::{window, HtmlDivElement, ResizeObserver, ResizeObserverEntry};
 use yew::{platform::spawn_local, prelude::*};
 
 #[derive(Clone)]
 pub enum Msg {
-    Resize(Size),
+    Resize(PhysicalSize<u32>),
 }
 
 #[derive(Debug, Clone, PartialEq)]
@@ -13,7 +13,7 @@ pub enum Vertical {
     TopAlign,
     Center,
     BottomAlign,
-    Absolute(usize),
+    Absolute(i32),
 }
 
 #[derive(Debug, Clone, PartialEq)]
@@ -21,15 +21,14 @@ pub enum Horizontal {
     LeftAlign,
     Center,
     RightAlign,
-    Absolute(usize),
+    Absolute(i32),
 }
 
 #[derive(Debug, Clone, PartialEq)]
 pub struct WindowProps {
     pub vertical: Vertical,
     pub horizontal: Horizontal,
-    pub initial_width: usize,
-    pub initial_height: usize,
+    pub initial_size: PhysicalSize<u32>,
 }
 
 impl Default for WindowProps {
@@ -37,8 +36,7 @@ impl Default for WindowProps {
         Self {
             vertical: Vertical::Absolute(0),
             horizontal: Horizontal::Absolute(0),
-            initial_width: 800,
-            initial_height: 600,
+            initial_size: PhysicalSize::new(800, 600),
         }
     }
 }
@@ -57,42 +55,44 @@ pub struct AutoWindow {
     window: Window,
 }
 impl AutoWindow {
-    fn adjust_window(&self, width: usize, height: usize) -> Result<(), JsValue> {
+    fn adjust_window(&self, size: PhysicalSize<u32>) -> Result<(), JsValue> {
         let WindowProps {
             vertical,
             horizontal,
             ..
         } = &self.window_props;
 
-        self.set_window_size(width, height);
+        let PhysicalSize { width, height } = size;
+
+        self.set_window_size(size);
 
         let screen = window().unwrap().screen()?;
         let x = match horizontal {
-            Horizontal::LeftAlign => 0 as usize,
-            Horizontal::Center => ((screen.width()? - width as i32) / 2) as usize,
-            Horizontal::RightAlign => (screen.width()? - width as i32) as usize,
+            Horizontal::LeftAlign => 0,
+            Horizontal::Center => (screen.width()? - width as i32) / 2,
+            Horizontal::RightAlign => screen.width()? - width as i32,
             Horizontal::Absolute(x) => *x,
         };
 
         let y = match vertical {
-            Vertical::TopAlign => 0 as usize,
-            Vertical::Center => ((screen.height()? - height as i32) / 2) as usize,
-            Vertical::BottomAlign => (screen.height()? - height as i32) as usize,
+            Vertical::TopAlign => 0,
+            Vertical::Center => (screen.height()? - height as i32) / 2,
+            Vertical::BottomAlign => screen.height()? - height as i32,
             Vertical::Absolute(y) => *y,
         };
 
-        self.set_window_position(x, y);
+        self.set_window_position(PhysicalPosition::new(x, y));
         Ok(())
     }
 
-    fn set_window_size(&self, width: usize, height: usize) {
+    fn set_window_size(&self, size: PhysicalSize<u32>) {
         let window = self.window.clone();
-        spawn_local(async move { window.set_size(Size::new_physical(width, height)).await.unwrap() });
+        spawn_local(async move { window.set_size(size.into()).await.unwrap() });
     }
 
-    fn set_window_position(&self, x: usize, y: usize) {
+    fn set_window_position(&self, pos: PhysicalPosition<i32>) {
         let window = self.window.clone();
-        spawn_local(async move { window.set_position(Position::new_physical(x, y)).await.unwrap() });
+        spawn_local(async move { window.set_position(pos.into()).await.unwrap() });
     }
 }
 
@@ -109,19 +109,14 @@ impl Component for AutoWindow {
             window_props,
             window: Window::current().unwrap(),
         };
-        this.adjust_window(
-            this.window_props.initial_width,
-            this.window_props.initial_height,
-        )
-        .unwrap();
+        this.adjust_window(this.window_props.initial_size).unwrap();
         this
     }
 
     fn update(&mut self, _ctx: &Context<Self>, msg: Self::Message) -> bool {
         match msg {
             Msg::Resize(size) => {
-                let (width, height) = size.get();
-                self.adjust_window(width, height).unwrap();
+                self.adjust_window(size).unwrap();
                 false
             }
         }
@@ -141,10 +136,9 @@ impl Component for AutoWindow {
                 move |entries: Vec<ResizeObserverEntry>| {
                     let elem = entries[0].target();
 
-                    let (width, height) =
-                        (elem.client_width() as usize, elem.client_height() as usize);
+                    let (width, height) = (elem.client_width() as u32, elem.client_height() as u32);
 
-                    link.send_message(Msg::Resize(Size::new_physical(width, height)));
+                    link.send_message(Msg::Resize(PhysicalSize::new(width, height).into()));
                 },
             );
 

@@ -8,8 +8,8 @@ pub struct PdfFile {
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct PageInfo {
-    pub width: usize,
-    pub height: usize,
+    pub width: u32,
+    pub height: u32,
 }
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
@@ -18,11 +18,11 @@ pub struct PdfDocumentInfo {
 }
 
 impl PdfDocumentInfo {
-    pub fn width(&self) -> usize {
+    pub fn width(&self) -> u32 {
         self.pages.iter().map(|size| size.width).max().unwrap_or(0)
     }
 
-    pub fn height(&self) -> usize {
+    pub fn height(&self) -> u32 {
         self.pages.iter().map(|size| size.height).sum()
     }
 }

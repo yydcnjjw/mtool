@@ -15,9 +15,9 @@ use mtool_core::{
 };
 use mtool_system::keybinding::Keybinding;
 use tauri::{
-    menu::{Menu, MenuId, MenuItem},
+    menu::{Menu, MenuItem},
     tray::TrayIconBuilder,
-    Manager, RunEvent,
+    Manager,
 };
 use tokio::sync::{oneshot, Mutex};
 use tracing::{debug, info, warn};
@@ -30,12 +30,12 @@ define_label! {
     }
 }
 
-pub struct Module<A: tauri::Assets> {
-    tauri_context: Mutex<Option<tauri::Context<A>>>,
+pub struct Module<R: tauri::Runtime> {
+    tauri_context: Mutex<Option<tauri::Context<R>>>,
 }
 
-impl<A: tauri::Assets> Module<A> {
-    pub fn new(tauri_context: tauri::Context<A>) -> Self {
+impl<R: tauri::Runtime> Module<R> {
+    pub fn new(tauri_context: tauri::Context<R>) -> Self {
         Self {
             tauri_context: Mutex::new(Some(tauri_context)),
         }
@@ -43,12 +43,12 @@ impl<A: tauri::Assets> Module<A> {
 }
 
 #[async_trait]
-impl<A> AppModule for Module<A>
+impl<R> AppModule for Module<R>
 where
-    A: tauri::Assets,
+    R: tauri::Runtime,
 {
     async fn init(&self, app: &mut AppContext) -> Result<(), anyhow::Error> {
-        app.injector().construct_once(Builder::new);
+        app.injector().construct_once(Builder::<R>::new);
         app.injector()
             .insert(Take::new(self.tauri_context.lock().await.take().unwrap()));
 
@@ -58,11 +58,11 @@ where
                 vec![WGuiStage::Setup, WGuiStage::Init, WGuiStage::AfterInit],
                 is_startup_mode(StartupMode::WGui),
             )
-            .add_once_task(WGuiStage::Setup, setup)
-            .add_once_task(WGuiStage::Init, init::<A>)
+            .add_once_task(WGuiStage::Setup, setup::<R>)
+            .add_once_task(WGuiStage::Init, init::<R>)
             .add_once_task(
                 AppStage::Init,
-                register_keybinding.cond(is_startup_mode(StartupMode::WGui)),
+                register_keybinding::<R>.cond(is_startup_mode(StartupMode::WGui)),
             )
             .add_once_task(AppStage::Run, wait_for_exit);
 
@@ -70,9 +70,9 @@ where
     }
 }
 
-pub fn module<A>(tauri_context: tauri::Context<A>) -> ModuleGroup
+pub fn module<R>(tauri_context: tauri::Context<R>) -> ModuleGroup
 where
-    A: tauri::Assets,
+    R: tauri::Runtime,
 {
     let mut group = ModuleGroup::new("mtool-wgui-native");
     group.add_module(Module::new(tauri_context));
@@ -82,10 +82,12 @@ where
     group
 }
 
-async fn setup(builder: Res<Builder>, injector: Injector) -> Result<(), anyhow::Error> {
-    let (tx, rx) = oneshot::channel();
-
-    injector.construct_once(|| async move { Ok(rx.await?) });
+async fn setup<R>(builder: Res<Builder<R>>, injector: Injector) -> Result<(), anyhow::Error>
+where
+    R: tauri::Runtime,
+{
+    let app_tx = injector.construct_oneshot();
+    let mtool_win_tx: oneshot::Sender<Res<MtoolWindow<R>>> = injector.construct_oneshot();
 
     builder
         .setup_with_app(move |app| {
@@ -113,20 +115,20 @@ async fn setup(builder: Res<Builder>, injector: Injector) -> Result<(), anyhow::
                     .build(app)?;
             }
 
-            tx.send(Res::new(app.clone())).unwrap();
+            app_tx.send(Res::new(app.clone())).unwrap();
             Ok(())
         })
-        .setup(move |builder| Ok(builder.plugin(window::init(injector))))?;
+        .setup(move |builder| Ok(builder.plugin(window::init::<R>(mtool_win_tx))))?;
 
     Ok(())
 }
 
 struct TauriWorker(tokio::task::JoinHandle<()>);
 
-async fn init<A: tauri::Assets>(
-    builder: Res<Builder>,
+async fn init<R: tauri::Runtime>(
+    builder: Res<Builder<R>>,
     injector: Injector,
-    tauri_context: Take<tauri::Context<A>>,
+    tauri_context: Take<tauri::Context<R>>,
 ) -> Result<(), anyhow::Error> {
     let builder = builder.take();
 
@@ -159,12 +161,14 @@ async fn wait_for_exit(worker: TakeOpt<TauriWorker>) -> Result<(), anyhow::Error
     Ok(())
 }
 
-async fn register_keybinding(keybinding: Res<Keybinding>) -> Result<(), anyhow::Error> {
+async fn register_keybinding<R: tauri::Runtime>(
+    keybinding: Res<Keybinding>,
+) -> Result<(), anyhow::Error> {
     keybinding
-        .define_global("M-A-o", window::show_window)
+        .define_global("M-A-o", window::show_window::<R>)
         .await?;
     keybinding
-        .define_global("M-A-S-o", window::hide_window)
+        .define_global("M-A-S-o", window::hide_window::<R>)
         .await?;
     Ok(())
 }

@@ -24,12 +24,18 @@ pub struct Module;
 impl AppModule for Module {
     async fn init(&self, app: &mut AppContext) -> Result<(), anyhow::Error> {
         app.schedule()
-            .add_once_task(WGuiStage::Setup, add_wgui_plugin);
+            .add_once_task(WGuiStage::Setup, register_wgui_plugin::<tauri::Wry>);
         Ok(())
     }
 }
 
-async fn add_wgui_plugin(builder: Res<Builder>, injector: Injector) -> Result<(), anyhow::Error> {
+async fn register_wgui_plugin<R>(
+    builder: Res<Builder<R>>,
+    injector: Injector,
+) -> Result<(), anyhow::Error>
+where
+    R: tauri::Runtime,
+{
     let tx = injector.construct_oneshot();
     builder.setup(move |builder| {
         let (ktx, krx) = mpsc::unbounded_channel();
@@ -38,20 +44,21 @@ async fn add_wgui_plugin(builder: Res<Builder>, injector: Injector) -> Result<()
 
         let global_shortcut_plugin = {
             let hotkey_mgr = hotkey_mgr.clone();
-            tauri_plugin_global_shortcut::Builder::with_handler(move |_, shortcut| {
-                if let Some(kv) = hotkey_mgr.shortcut_index.get(shortcut) {
-                    if let Err(e) = hotkey_mgr
-                        .sender
-                        .send(GlobalHotKeyEvent(kv.value().clone()))
-                    {
-                        warn!("send global hotkey event failed: {}", e);
+            tauri_plugin_global_shortcut::Builder::<R>::new()
+                .with_handler(move |_, shortcut| {
+                    if let Some(kv) = hotkey_mgr.shortcut_index.get(shortcut) {
+                        if let Err(e) = hotkey_mgr
+                            .sender
+                            .send(GlobalHotKeyEvent(kv.value().clone()))
+                        {
+                            warn!("send global hotkey event failed: {}", e);
+                        }
                     }
-                }
-            })
-            .build()
+                })
+                .build()
         };
         Ok(builder.plugin(global_shortcut_plugin).plugin(
-            plugin::Builder::<tauri::Wry>::new("mtool-global-shortcut")
+            plugin::Builder::<R>::new("mtool-global-shortcut")
                 .setup(move |_app, _| {
                     let keybinding = Res::new(Keybinding::new(hotkey_mgr, krx));
                     if let Err(_) = tx.send(keybinding.clone()) {

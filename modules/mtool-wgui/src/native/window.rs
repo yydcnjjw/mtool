@@ -3,7 +3,7 @@ use std::{
     sync::{Arc, RwLock},
 };
 
-use mapp::provider::{Injector, Res};
+use mapp::prelude::*;
 use raw_window_handle::{
     DisplayHandle, HandleError, HasDisplayHandle, HasWindowHandle, WindowHandle,
 };
@@ -15,43 +15,41 @@ use tauri::{
 use tokio::sync::{mpsc, oneshot};
 use tracing::{debug, warn};
 
-pub struct WGuiWindow {
-    inner: tauri::WebviewWindow,
+pub struct WGuiWindow<R: tauri::Runtime = Wry> {
+    inner: tauri::WebviewWindow<R>,
     pos: RwLock<Option<PhysicalPosition<i32>>>,
     hide_on_unfocus: bool,
 }
 
-impl HasDisplayHandle for WGuiWindow {
+impl<R: tauri::Runtime> HasDisplayHandle for WGuiWindow<R> {
     fn display_handle(&self) -> Result<DisplayHandle<'_>, HandleError> {
         self.app_handle().display_handle()
     }
 }
 
-unsafe impl raw_window_handle5::HasRawDisplayHandle for WGuiWindow {
-    fn raw_display_handle(
-        &self,
-    ) -> raw_window_handle5::RawDisplayHandle {
+unsafe impl<R: tauri::Runtime> raw_window_handle5::HasRawDisplayHandle for WGuiWindow<R> {
+    fn raw_display_handle(&self) -> raw_window_handle5::RawDisplayHandle {
         self.app_handle().raw_display_handle()
     }
 }
 
-impl HasWindowHandle for WGuiWindow {
+impl<R: tauri::Runtime> HasWindowHandle for WGuiWindow<R> {
     fn window_handle(&self) -> Result<WindowHandle<'_>, HandleError> {
         self.inner.window_handle()
     }
 }
 
-impl Deref for WGuiWindow {
-    type Target = tauri::WebviewWindow;
+impl<R: tauri::Runtime> Deref for WGuiWindow<R> {
+    type Target = tauri::WebviewWindow<R>;
 
     fn deref(&self) -> &Self::Target {
         &self.inner
     }
 }
 
-impl WGuiWindow {
+impl<R: tauri::Runtime> WGuiWindow<R> {
     pub async fn new(
-        window: tauri::WebviewWindow,
+        window: tauri::WebviewWindow<R>,
         hide_on_unfocus: bool,
     ) -> Result<Arc<Self>, anyhow::Error> {
         let this = Arc::new(Self {
@@ -136,10 +134,10 @@ impl WGuiWindow {
     }
 }
 
-pub struct MtoolWindow(Arc<WGuiWindow>);
+pub struct MtoolWindow<R: tauri::Runtime = Wry>(Arc<WGuiWindow<R>>);
 
-impl MtoolWindow {
-    async fn new(app: AppHandle) -> Result<Self, anyhow::Error> {
+impl<R: tauri::Runtime> MtoolWindow<R> {
+    async fn new(app: AppHandle<R>) -> Result<Self, anyhow::Error> {
         let win = WebviewWindowBuilder::new(&app, "mtool", WebviewUrl::App("index.html".into()))
             .title("mtool")
             .transparent(true)
@@ -147,41 +145,47 @@ impl MtoolWindow {
             .resizable(true)
             .skip_taskbar(true)
             .always_on_top(true)
-            .visible(false)
+            .visible(true)
             // TODO: disable shadow for transparent
             .shadow(false)
             .build()
             .expect("create mtool window failed");
         Ok(Self(
-            WGuiWindow::new(win, cfg!(not(debug_assertions))).await?,
+            WGuiWindow::<R>::new(win, cfg!(not(debug_assertions))).await?,
         ))
     }
 }
 
-impl Deref for MtoolWindow {
-    type Target = WGuiWindow;
+impl<R: tauri::Runtime> Deref for MtoolWindow<R> {
+    type Target = WGuiWindow<R>;
 
     fn deref(&self) -> &Self::Target {
         &self.0
     }
 }
 
-pub async fn show_window(window: Res<MtoolWindow>) -> Result<(), anyhow::Error> {
+pub async fn show_window<R: tauri::Runtime>(
+    window: Res<MtoolWindow<R>>,
+) -> Result<(), anyhow::Error> {
     window.show()
 }
 
-pub async fn hide_window(window: Res<MtoolWindow>) -> Result<(), anyhow::Error> {
+pub async fn hide_window<R: tauri::Runtime>(
+    window: Res<MtoolWindow<R>>,
+) -> Result<(), anyhow::Error> {
     window.hide()
 }
 
-pub(crate) fn init(injector: Injector) -> TauriPlugin<Wry> {
-    Builder::new("mtool_window")
+pub(crate) fn init<R: tauri::Runtime>(
+    win_tx: oneshot::Sender<Res<MtoolWindow<R>>>,
+) -> TauriPlugin<R> {
+    Builder::<R>::new("mtool_window")
         .setup(move |app, _| {
             let app = app.clone();
             spawn(async move {
-                match MtoolWindow::new(app).await {
+                match MtoolWindow::<R>::new(app).await {
                     Ok(win) => {
-                        injector.insert(Res::new(win));
+                        let _ = win_tx.send(Res::new(win));
                     }
                     Err(e) => warn!("{:?}", e),
                 }

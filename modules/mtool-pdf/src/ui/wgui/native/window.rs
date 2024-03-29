@@ -103,7 +103,7 @@ impl PdfViewerWindow {
                     .transparent(true)
                     .decorations(true)
                     .shadow(false)
-                    .disable_file_drop_handler();
+                    .disable_drag_drop_handler();
 
             #[cfg(windows)]
             {

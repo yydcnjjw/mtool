@@ -87,7 +87,7 @@ impl PdfViewerInner {
             Some(v) => v,
             None => return Ok(()),
         };
-        
+
         let mut highlight_rects = Vec::new();
 
         for text_range in text_ranges {
@@ -282,16 +282,14 @@ impl PdfViewerInner {
         Ok(())
     }
 
-    fn size_with_scale(&self, width: usize, height: usize) -> (i32, i32) {
+    fn size_with_scale(&self, width: u32, height: u32) -> (i32, i32) {
         (
             (width as f32 * self.scale).round() as i32,
             (height as f32 * self.scale).round() as i32,
         )
     }
 
-    fn extract_text(&self) -> () {
-
-    }
+    fn extract_text(&self) -> () {}
 
     #[allow(unused)]
     fn highlight_sentence(
@@ -516,7 +514,7 @@ impl PdfViewerInner {
                         _ => {}
                     }
                 } else {
-                    return false
+                    return false;
                 }
             }
         }
@@ -631,9 +629,7 @@ impl PdfViewer {
         let _ = self.event_sender.send(e);
     }
 
-    pub async fn extract_text() {
-        
-    }
+    pub async fn extract_text() {}
 }
 
 #[derive(Debug)]

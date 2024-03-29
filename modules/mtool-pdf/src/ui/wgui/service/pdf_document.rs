@@ -48,11 +48,11 @@ impl PdfDocument {
         &self.info
     }
 
-    pub fn width(&self) -> usize {
+    pub fn width(&self) -> u32 {
         self.info().width()
     }
 
-    pub fn height(&self) -> usize {
+    pub fn height(&self) -> u32 {
         self.info().height()
     }
 
@@ -73,8 +73,8 @@ async fn load_document_info(
     let pages = (0..n_pages)
         .map(|i| {
             doc.page_size_by_index(i as usize).map(|size| PageInfo {
-                width: (size.width().to_inches() * 96.) as usize,
-                height: (size.height().to_inches() * 96.) as usize,
+                width: (size.width().to_inches() * 96.) as u32,
+                height: (size.height().to_inches() * 96.) as u32,
             })
         })
         .try_collect()?;
