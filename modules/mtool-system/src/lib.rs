@@ -9,7 +9,7 @@ pub fn module() -> ModuleGroup {
     let mut group = ModuleGroup::new("system_group");
 
     group
-        .add_module(event::Module::default())
+        .add_module(event::Module)
         .add_module(keybinding::module());
 
     group

@@ -3,8 +3,8 @@ mod action;
 #[cfg(not(windows))]
 mod sysev_backend;
 
-// #[cfg(not(windows))]
-// mod sway_backend;
+#[cfg(not(windows))]
+mod dbus_backend;
 
 // #[cfg(windows)]
 // mod windows_backend;
@@ -13,7 +13,10 @@ use std::{collections::HashMap, future::Future, sync::Arc};
 
 use async_trait::async_trait;
 use mapp::{
-    define_label, inject::{Inject, Provide}, provider::{Injector, Res}, ModuleGroup
+    define_label,
+    inject::{Inject, Provide},
+    provider::{Injector, Res},
+    ModuleGroup,
 };
 use mkeybinding::KeySequence;
 use tokio::sync::{mpsc, Mutex, RwLock};
@@ -28,8 +31,11 @@ pub fn module() -> ModuleGroup {
     #[allow(unused_mut)]
     let mut group = ModuleGroup::new("keybinding_group");
 
+    // #[cfg(not(windows))]
+    // group.add_module(sysev_backend::Module);
+
     #[cfg(not(windows))]
-    group.add_module(sysev_backend::Module::default());
+    group.add_module(dbus_backend::Module);
 
     // #[cfg(windows)]
     // group.add_module(windows_backend::Module::default());
@@ -40,13 +46,13 @@ pub fn module() -> ModuleGroup {
 pub struct Keybinding {
     kbs: RwLock<HashMap<KeySequence, SharedAction>>,
     rx: Mutex<mpsc::UnboundedReceiver<GlobalHotKeyEvent>>,
-    hotkey_mgr: Res<dyn SetGlobalHotKey + Send + Sync>,
+    hotkey_mgr: Res<dyn SetupGlobalHotKey + Send + Sync>,
 }
 
 impl Keybinding {
     pub fn new<T>(hotkey_mgr: Res<T>, rx: mpsc::UnboundedReceiver<GlobalHotKeyEvent>) -> Self
     where
-        T: SetGlobalHotKey + Send + Sync + 'static,
+        T: SetupGlobalHotKey + Send + Sync + 'static,
     {
         Self {
             kbs: RwLock::new(HashMap::new()),
@@ -104,7 +110,7 @@ impl Keybinding {
 pub struct GlobalHotKeyEvent(pub KeySequence);
 
 #[async_trait]
-pub trait SetGlobalHotKey {
+pub trait SetupGlobalHotKey {
     async fn register(&self, ks: &KeySequence) -> Result<(), anyhow::Error>;
     async fn unregister(&self, ks: &KeySequence) -> Result<(), anyhow::Error>;
 }

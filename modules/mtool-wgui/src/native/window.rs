@@ -99,21 +99,25 @@ impl<R: tauri::Runtime> WGuiWindow<R> {
 
         tokio::spawn(async move {
             while let Some(e) = rx.recv().await {
-                self.handle_window_event(e);
+                if let Err(e) = self.handle_window_event(e) {
+                    warn!("{:?}", e);
+                }
             }
         });
     }
 
-    fn handle_window_event(&self, e: WindowEvent) {
+    fn handle_window_event(&self, e: WindowEvent) -> Result<(), anyhow::Error> {
         match e {
             WindowEvent::Focused(focused) => {
                 if !focused && self.hide_on_unfocus {
-                    let _ = self.hide();
+                    self.hide()?;
+                } else {
+                    self.show()?;
                 }
             }
-
             _ => {}
         }
+        Ok(())
     }
 
     pub fn show(&self) -> Result<(), anyhow::Error> {
@@ -151,7 +155,10 @@ impl<R: tauri::Runtime> MtoolWindow<R> {
             .build()
             .expect("create mtool window failed");
         Ok(Self(
-            WGuiWindow::<R>::new(win, cfg!(not(debug_assertions))).await?,
+            WGuiWindow::<R>::new(
+                win, true, // cfg!(not(debug_assertions))
+            )
+            .await?,
         ))
     }
 }
@@ -162,18 +169,6 @@ impl<R: tauri::Runtime> Deref for MtoolWindow<R> {
     fn deref(&self) -> &Self::Target {
         &self.0
     }
-}
-
-pub async fn show_window<R: tauri::Runtime>(
-    window: Res<MtoolWindow<R>>,
-) -> Result<(), anyhow::Error> {
-    window.show()
-}
-
-pub async fn hide_window<R: tauri::Runtime>(
-    window: Res<MtoolWindow<R>>,
-) -> Result<(), anyhow::Error> {
-    window.hide()
 }
 
 pub(crate) fn init<R: tauri::Runtime>(

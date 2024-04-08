@@ -14,7 +14,7 @@ use tauri_plugin_global_shortcut::{self, GlobalShortcutExt, Shortcut};
 use tokio::sync::{mpsc, oneshot};
 use tracing::warn;
 
-use mtool_system::keybinding::{GlobalHotKeyEvent, Keybinding, SetGlobalHotKey};
+use mtool_system::keybinding::{GlobalHotKeyEvent, Keybinding, SetupGlobalHotKey};
 
 use crate::{Builder, WGuiStage};
 
@@ -23,8 +23,10 @@ pub struct Module;
 #[async_trait]
 impl AppModule for Module {
     async fn init(&self, app: &mut AppContext) -> Result<(), anyhow::Error> {
-        app.schedule()
-            .add_once_task(WGuiStage::Setup, register_wgui_plugin::<tauri::Wry>);
+        if cfg!(windows) {
+            app.schedule()
+                .add_once_task(WGuiStage::Setup, register_wgui_plugin::<tauri::Wry>);
+        }
         Ok(())
     }
 }
@@ -133,7 +135,7 @@ impl GlobalHotKeyMgr {
 }
 
 #[async_trait]
-impl SetGlobalHotKey for GlobalHotKeyMgr {
+impl SetupGlobalHotKey for GlobalHotKeyMgr {
     async fn register(&self, ks: &KeySequence) -> Result<(), anyhow::Error> {
         self.define(ks).await
     }

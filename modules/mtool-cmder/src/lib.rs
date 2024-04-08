@@ -62,10 +62,6 @@ impl AppModule for Module {
             .add_once_task(
                 AppStage::Run,
                 exec_command_from_cli.cond(is_startup_mode(StartupMode::Cli)),
-            )
-            .add_once_task(
-                AppStage::Run,
-                exec_command_interactive.cond(not_startup_mode(StartupMode::Cli)),
             );
 
         async fn setup_cmdline(cmdline: Res<Cmdline>) -> Result<(), anyhow::Error> {
@@ -78,6 +74,11 @@ impl AppModule for Module {
 
         async fn register_command(cmder: Res<Cmder>) -> Result<(), anyhow::Error> {
             cmder.add_command(list_command.name("list_command").add_alias("lc"));
+            cmder.add_command(
+                exec_command_interactive
+                    .name("exec_command_interactive")
+                    .add_alias("exec"),
+            );
             Ok(())
         }
 

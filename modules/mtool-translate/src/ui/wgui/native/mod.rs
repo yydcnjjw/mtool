@@ -5,7 +5,6 @@ use mtool_core::{
     config::{is_startup_mode, StartupMode},
     AppStage,
 };
-use mtool_system::keybinding::Keybinding;
 use mtool_wgui::MtoolWindow;
 use tauri::Manager;
 
@@ -23,8 +22,7 @@ impl AppModule for Module {
     }
 }
 
-async fn init(keybinding: Res<Keybinding>, cmder: Res<Cmder>) -> Result<(), anyhow::Error> {
-    keybinding.define_global("M-A-S-t", text_translate).await?;
+async fn init(cmder: Res<Cmder>) -> Result<(), anyhow::Error> {
     cmder.add_command(text_translate.name("text_translate").desc("text translate"));
     Ok(())
 }

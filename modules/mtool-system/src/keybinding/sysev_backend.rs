@@ -19,10 +19,9 @@ use tracing::warn;
 
 use crate::event;
 
-use super::{GlobalHotKeyEvent, Keybinding, SetGlobalHotKey};
+use super::{GlobalHotKeyEvent, Keybinding, SetupGlobalHotKey};
 
-#[derive(Default)]
-pub struct Module {}
+pub struct Module;
 
 #[async_trait]
 impl AppModule for Module {
@@ -137,7 +136,7 @@ impl GlobalHotKeyMgr {
 }
 
 #[async_trait]
-impl SetGlobalHotKey for GlobalHotKeyMgr {
+impl SetupGlobalHotKey for GlobalHotKeyMgr {
     async fn register(&self, ks: &KeySequence) -> Result<(), anyhow::Error> {
         self.define_global_raw(ks)
     }

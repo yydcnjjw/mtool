@@ -8,12 +8,11 @@ pub use window::{MtoolWindow, WGuiWindow};
 pub use window_data_bind::WindowDataBind;
 
 use async_trait::async_trait;
-use mapp::{define_label, prelude::*, CreateOnceTaskDescriptor};
+use mapp::{define_label, prelude::*};
 use mtool_core::{
     config::{is_startup_mode, StartupMode},
     AppStage, CmdlineStage,
 };
-use mtool_system::keybinding::Keybinding;
 use tauri::{
     menu::{Menu, MenuItem},
     tray::TrayIconBuilder,
@@ -60,10 +59,6 @@ where
             )
             .add_once_task(WGuiStage::Setup, setup::<R>)
             .add_once_task(WGuiStage::Init, init::<R>)
-            .add_once_task(
-                AppStage::Init,
-                register_keybinding::<R>.cond(is_startup_mode(StartupMode::WGui)),
-            )
             .add_once_task(AppStage::Run, wait_for_exit);
 
         Ok(())
@@ -158,17 +153,5 @@ async fn wait_for_exit(worker: TakeOpt<TauriWorker>) -> Result<(), anyhow::Error
         worker.take()?.0.await?;
     }
 
-    Ok(())
-}
-
-async fn register_keybinding<R: tauri::Runtime>(
-    keybinding: Res<Keybinding>,
-) -> Result<(), anyhow::Error> {
-    keybinding
-        .define_global("M-A-o", window::show_window::<R>)
-        .await?;
-    keybinding
-        .define_global("M-A-S-o", window::hide_window::<R>)
-        .await?;
     Ok(())
 }

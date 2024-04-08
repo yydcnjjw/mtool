@@ -6,7 +6,6 @@ use mtool_core::{
     config::{is_startup_mode, StartupMode},
     AppStage,
 };
-use mtool_system::keybinding::Keybinding;
 use mtool_wgui::MtoolWindow;
 use tauri::Manager;
 
@@ -23,10 +22,12 @@ impl AppModule for Module {
     }
 }
 
-async fn init(keybinding: Res<Keybinding>, cmder: Res<Cmder>) -> Result<(), anyhow::Error> {
-    keybinding
-        .define_global("M-S-d", query_dict_with_clipboard)
-        .await?;
+async fn init(cmder: Res<Cmder>) -> Result<(), anyhow::Error> {
+    cmder.add_command(
+        query_dict_with_clipboard
+            .name("query_dict_with_clipboard")
+            .desc("query dict with clipboard"),
+    );
     cmder.add_command(query_dict.name("query_dict").desc("query dict"));
     Ok(())
 }

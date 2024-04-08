@@ -14,8 +14,7 @@ use mtool_core::{AppStage, ConfigStore};
 
 pub use msysev::Event;
 
-#[derive(Default)]
-pub struct Module {}
+pub struct Module;
 
 #[async_trait]
 impl AppModule for Module {
