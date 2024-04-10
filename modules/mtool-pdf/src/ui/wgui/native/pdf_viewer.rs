@@ -2,6 +2,7 @@ use std::{collections::HashMap, ffi::c_void, sync::Arc};
 
 use anyhow::Context;
 use itertools::Itertools;
+use mapp::provider::Res;
 use pdfium_render::prelude::*;
 use skia_safe as sk;
 use tauri::{PhysicalPosition, PhysicalSize, WindowEvent};
@@ -13,7 +14,7 @@ use super::{
     pdf_page::{PdfPage, PdfTextRange},
 };
 use crate::{
-    pdf::Pdf,
+    pdf::PdfApi,
     ui::wgui::{
         event::{MouseEvent, PageInfo, ScaleEvent, ScrollEvent, WPdfEvent},
         service::PdfLoadEvent,
@@ -21,6 +22,8 @@ use crate::{
 };
 
 struct PdfViewerInner {
+    pdf_api: Res<PdfApi>,
+
     doc: Option<PdfDocument>,
 
     surface: sk::Surface,
@@ -42,6 +45,7 @@ unsafe impl Send for PdfViewerInner {}
 
 impl PdfViewerInner {
     fn new(
+        pdf_api: Res<PdfApi>,
         viewpoint: PhysicalSize<u32>,
     ) -> Result<(Self, watch::Receiver<sk::Image>), anyhow::Error> {
         let PhysicalSize { width, height } = viewpoint.cast::<i32>();
@@ -52,13 +56,14 @@ impl PdfViewerInner {
 
         Ok((
             Self {
+                pdf_api: pdf_api.clone(),
                 doc: None,
                 surface,
                 pdf_bitmap: PdfBitmap::empty(
                     width,
                     height,
                     PdfBitmapFormat::BGRA,
-                    Pdf::get_unwrap().bindings(),
+                    pdf_api.get().bindings(),
                 )?,
                 image_snapshot,
 
@@ -289,8 +294,6 @@ impl PdfViewerInner {
         )
     }
 
-    fn extract_text(&self) -> () {}
-
     #[allow(unused)]
     fn highlight_sentence(
         &mut self,
@@ -380,7 +383,7 @@ impl PdfViewerInner {
             width,
             height,
             PdfBitmapFormat::BGRA,
-            Pdf::get_unwrap().bindings(),
+            self.pdf_api.get().bindings(),
         )?;
 
         self.viewpoint = size;
@@ -601,10 +604,13 @@ pub struct PdfViewer {
 }
 
 impl PdfViewer {
-    pub async fn new(viewpoint: PhysicalSize<u32>) -> Result<Self, anyhow::Error> {
+    pub async fn new(
+        pdf_api: Res<PdfApi>,
+        viewpoint: PhysicalSize<u32>,
+    ) -> Result<Self, anyhow::Error> {
         let (event_sender, event_receiver) = mpsc::unbounded_channel();
 
-        let (renderer, image_snapshot) = PdfViewerInner::new(viewpoint)?;
+        let (renderer, image_snapshot) = PdfViewerInner::new(pdf_api, viewpoint)?;
 
         tokio::spawn(async move {
             if let Err(e) = renderer.run_loop(event_receiver).await {
@@ -628,8 +634,6 @@ impl PdfViewer {
     pub fn notify_event(&self, e: PdfEvent) {
         let _ = self.event_sender.send(e);
     }
-
-    pub async fn extract_text() {}
 }
 
 #[derive(Debug)]

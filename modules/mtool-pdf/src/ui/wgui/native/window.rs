@@ -9,6 +9,7 @@ use std::{
 
 use anyhow::Context;
 use base64::prelude::*;
+use mapp::provider::Res;
 use mtool_wgui::{WGuiWindow, WindowDataBind};
 
 use tauri::{
@@ -17,9 +18,12 @@ use tauri::{
 };
 use tracing::warn;
 
-use crate::ui::wgui::{
-    event::{WPdfEvent, WPdfLoadEvent},
-    service::{PdfLoadEvent, PdfLoadWorker},
+use crate::{
+    pdf::PdfApi,
+    ui::wgui::{
+        event::{WPdfEvent, WPdfLoadEvent},
+        service::{PdfLoadEvent, PdfLoadWorker},
+    },
 };
 
 use super::{
@@ -89,7 +93,7 @@ impl PdfViewerWindow {
         INDEX.fetch_add(1, Ordering::Relaxed)
     }
 
-    pub async fn new(app: tauri::AppHandle) -> Result<Self, anyhow::Error> {
+    pub async fn new(app: tauri::AppHandle, pdf_api: Res<PdfApi>) -> Result<Self, anyhow::Error> {
         let win = {
             let label = format!("mtool-pdfviewer-{}", Self::window_index());
 
@@ -114,7 +118,7 @@ impl PdfViewerWindow {
         };
         let win = WGuiWindow::new(win, false).await?;
 
-        let pdf_viewer = Arc::new(PdfViewer::new(win.inner_size()?).await?);
+        let pdf_viewer = Arc::new(PdfViewer::new(pdf_api, win.inner_size()?).await?);
 
         let renderer = {
             let viewer = pdf_viewer.clone();

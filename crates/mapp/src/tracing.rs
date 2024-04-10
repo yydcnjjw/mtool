@@ -43,7 +43,7 @@ impl Tracing {
         let (logger_layer, logger) = reload::Layer::new({
             #[allow(unused)]
             let mut layer = fmt::layer()
-                .without_time()
+                // .without_time()
                 .with_ansi(if cfg!(target_arch = "wasm32") {
                     false
                 } else {
@@ -54,11 +54,18 @@ impl Tracing {
                 .with_target(false)
                 .with_writer(writer);
 
-            // #[cfg(not(target_family = "wasm"))]
-            // {
-            //     use tracing_subscriber::fmt::time::{LocalTime, UtcTime};
-            //     layer.with_timer(LocalTime::rfc_3339()).boxed()
-            // }
+            #[cfg(not(target_family = "wasm"))]
+            let layer = {
+                use time::{format_description::well_known::Rfc3339, UtcOffset};
+                use tracing_subscriber::fmt::time::OffsetTime;
+                layer.with_timer(
+                    OffsetTime::local_rfc_3339()
+                        .unwrap_or(OffsetTime::new(UtcOffset::from_hms(8, 0, 0)?, Rfc3339)),
+                )
+            };
+
+            #[cfg(target_family = "wasm")]
+            let layer = { layer.without_time() };
 
             // #[cfg(target_family = "wasm")]
             { layer.boxed() }.with_filter(filter)

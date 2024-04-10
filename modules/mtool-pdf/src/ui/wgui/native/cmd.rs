@@ -5,6 +5,8 @@ use mtool_interactive::{Completion, CompletionArgs};
 use tauri::AppHandle;
 use tokio::fs;
 
+use crate::pdf::PdfApi;
+
 use super::PdfViewerWindow;
 
 async fn list_file<P: AsRef<Path>>(dir: P) -> Result<Vec<PathBuf>, anyhow::Error> {
@@ -23,7 +25,11 @@ async fn list_file<P: AsRef<Path>>(dir: P) -> Result<Vec<PathBuf>, anyhow::Error
     Ok(files)
 }
 
-pub async fn open_pdf(app_handle: Res<AppHandle>, c: Res<Completion>) -> Result<(), anyhow::Error> {
+pub async fn open_pdf(
+    app_handle: Res<AppHandle>,
+    c: Res<Completion>,
+    pdf_api: Res<PdfApi>,
+) -> Result<(), anyhow::Error> {
     let path: PathBuf = match c
         .complete_read(
             CompletionArgs::new(|completed: &str| {
@@ -39,7 +45,7 @@ pub async fn open_pdf(app_handle: Res<AppHandle>, c: Res<Completion>) -> Result<
         None => return Ok(()),
     };
 
-    let win = PdfViewerWindow::new((*app_handle).clone()).await?;
+    let win = PdfViewerWindow::new((*app_handle).clone(), pdf_api).await?;
 
     win.open_file(path)?;
     win.show()?;

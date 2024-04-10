@@ -23,7 +23,7 @@ tracing-appender = { workspace = true }
 petgraph = "0.6"
 ringbuf = "0.3"
 rand = "0.8"
-
+time = { version = "0.3.20", features = ["formatting"] }
 
 [target.'cfg(not(target_family = "wasm"))'.dependencies]
 tokio = { workspace = true, features = ["full"] }

@@ -23,6 +23,7 @@ itertools = { workspace = true }
 yew = { workspace = true }
 
 shellwords = "*"
+tabled = "*"
 
 [target.'cfg(not(target_family = "wasm"))'.dependencies]
 mtool-core = { path = "../mtool-core" }

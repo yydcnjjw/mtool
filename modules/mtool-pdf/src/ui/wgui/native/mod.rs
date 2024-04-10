@@ -16,12 +16,8 @@ cfg_if::cfg_if! {
 
 use async_trait::async_trait;
 use cmd::open_pdf;
-use mapp::{prelude::*, CreateOnceTaskDescriptor};
+use mapp::prelude::*;
 use mtool_cmder::{Cmder, CreateCommandDescriptor};
-use mtool_core::{
-    config::{not_startup_mode, StartupMode},
-    CmdlineStage,
-};
 use mtool_wgui::{Builder, WGuiStage};
 pub use window::PdfViewerWindow;
 
@@ -30,21 +26,14 @@ pub struct Module;
 #[async_trait]
 impl AppModule for Module {
     async fn init(&self, ctx: &mut AppContext) -> Result<(), anyhow::Error> {
-        ctx.schedule()
-            .add_once_task(WGuiStage::Setup, setup)
-            .add_once_task(
-                CmdlineStage::AfterInit,
-                register_command.cond(not_startup_mode(StartupMode::Cli)),
-            );
+        ctx.schedule().add_once_task(WGuiStage::Setup, setup);
         Ok(())
     }
 }
 
-async fn setup(builder: Res<Builder>) -> Result<(), anyhow::Error> {
-    builder.setup(|builder| Ok(builder.plugin(window::init())))
-}
+async fn setup(builder: Res<Builder>, cmder: Res<Cmder>) -> Result<(), anyhow::Error> {
+    builder.setup(|builder| Ok(builder.plugin(window::init())))?;
 
-async fn register_command(cmder: Res<Cmder>) -> Result<(), anyhow::Error> {
     cmder.add_command(open_pdf.name("open_pdf"));
     Ok(())
 }

@@ -1,49 +1,45 @@
 use async_trait::async_trait;
 use mapp::prelude::*;
-use mtool_core::{CmdlineStage, ConfigStore};
+use mtool_core::ConfigStore;
 use pdfium_render::prelude::*;
-use std::{ops::Deref, sync::OnceLock};
+use std::ops::Deref;
+use tokio::sync::OnceCell;
 
 use crate::Config;
 
-static PDF_INST: OnceLock<Pdf> = OnceLock::new();
+static PDFIUM: OnceCell<Pdfium> = OnceCell::const_new();
 
-pub struct Pdf {
-    inner: Pdfium,
+pub struct PdfApi {
+    inner: &'static Pdfium,
 }
 
-impl Deref for Pdf {
+impl Deref for PdfApi {
     type Target = Pdfium;
 
     fn deref(&self) -> &Self::Target {
-        &self.inner
+        self.inner
     }
 }
 
-impl Pdf {
-    async fn init(cs: Res<ConfigStore>) -> Result<(), anyhow::Error> {
-        PDF_INST
-            .set(Self::new(&cs.get("pdf").await?)?)
-            .map_err(|_| anyhow::anyhow!("initialize Pdf instance failed"))
+impl PdfApi {
+    async fn construct(cs: Res<ConfigStore>) -> Result<Res<Self>, anyhow::Error> {
+        Ok(Res::new(Self::new(&cs.get("pdf").await?)?))
     }
 
     fn new(config: &Config) -> Result<Self, anyhow::Error> {
         let bindings = Pdfium::bind_to_library(&config.pdfium)
             .map_err(|e| anyhow::anyhow!("Failed to load pdfium library: {}", e))?;
 
+        PDFIUM.set(Pdfium::new(bindings))?;
+
         Ok(Self {
-            inner: Pdfium::new(bindings),
+            inner: PDFIUM.get().unwrap(),
         })
     }
 
-    #[allow(unused)]
-    pub fn get() -> Option<&'static Pdf> {
-        PDF_INST.get()
+    pub fn get(&self) -> &'static Pdfium {
+        self.inner
     }
-
-    pub fn get_unwrap() -> &'static Pdf {
-        PDF_INST.get().unwrap()
-    }    
 }
 
 pub struct Module;
@@ -51,8 +47,7 @@ pub struct Module;
 #[async_trait]
 impl AppModule for Module {
     async fn init(&self, ctx: &mut AppContext) -> Result<(), anyhow::Error> {
-        ctx.schedule()
-            .add_once_task(CmdlineStage::AfterInit, Pdf::init);
+        ctx.injector().construct_once(PdfApi::construct);
         Ok(())
     }
 }

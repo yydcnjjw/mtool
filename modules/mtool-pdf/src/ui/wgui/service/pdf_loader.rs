@@ -18,7 +18,7 @@ use tokio::{
 use tracing::debug;
 
 use crate::{
-    pdf::Pdf,
+    pdf::PdfApi,
     storage::entity,
     ui::wgui::{event::PdfFile, native::PdfViewerWindow},
     AdobeApiConfig, Config,
@@ -134,6 +134,7 @@ impl PdfLoaderInner {
 
 pub struct PdfLoader {
     inner: Arc<PdfLoaderInner>,
+    pdf_api: Res<PdfApi>,
 }
 
 pub struct PdfLoadWorker {
@@ -149,9 +150,14 @@ impl PdfLoadWorker {
 }
 
 impl PdfLoader {
-    pub fn new(adobe_api_cfg: AdobeApiConfig, db: Res<DatabaseConnection>) -> Self {
+    pub fn new(
+        adobe_api_cfg: AdobeApiConfig,
+        db: Res<DatabaseConnection>,
+        pdf_api: Res<PdfApi>,
+    ) -> Self {
         Self {
             inner: PdfLoaderInner::new(adobe_api_cfg, db),
+            pdf_api,
         }
     }
 
@@ -161,12 +167,15 @@ impl PdfLoader {
         {
             let file = file.clone();
             let tx = tx.clone();
+            let api = self.pdf_api.get();
+
             set.spawn(async move {
                 let _ = tx.send(PdfLoadEvent::DocLoading).await;
                 let doc = {
                     let file = file.clone();
+
                     tokio::task::spawn_blocking(move || {
-                        Pdf::get_unwrap().load_pdf_from_file(
+                        api.load_pdf_from_file(
                             &file.path,
                             file.password.clone().map(|p| p.leak() as &'static str),
                         )
@@ -224,10 +233,10 @@ async fn load_pdf(
         .map_err(|e| serde_error::Error::new(&*e))
 }
 
-pub fn init(config: Config, db: Res<DatabaseConnection>) -> TauriPlugin<Wry> {
+pub fn init(config: Config, db: Res<DatabaseConnection>, pdf_api: Res<PdfApi>) -> TauriPlugin<Wry> {
     Builder::new("mtool-pdf")
         .setup(move |app, _| {
-            app.manage(PdfLoader::new(config.adobe_api, db));
+            app.manage(PdfLoader::new(config.adobe_api, db, pdf_api));
             Ok(())
         })
         .invoke_handler(tauri::generate_handler![load_pdf])
