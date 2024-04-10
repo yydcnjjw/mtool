@@ -4,7 +4,6 @@ mod complete_item;
 pub use complete::*;
 pub use complete_item::*;
 
-use async_trait::async_trait;
 use mapp::prelude::*;
 use mtool_wgui::Templator;
 use std::fmt;

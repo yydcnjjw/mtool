@@ -4,10 +4,9 @@ mod window;
 mod window_data_bind;
 
 pub use builder::*;
-pub use window::{MtoolWindow, WGuiWindow};
-pub use window_data_bind::WindowDataBind;
+pub use window::*;
+pub use window_data_bind::*;
 
-use async_trait::async_trait;
 use mapp::{define_label, prelude::*};
 use mtool_core::{
     config::{is_startup_mode, StartupMode},
@@ -18,7 +17,7 @@ use tauri::{
     tray::TrayIconBuilder,
     Manager,
 };
-use tokio::sync::{oneshot, Mutex};
+use tokio::sync::Mutex;
 use tracing::{debug, info, warn};
 
 define_label! {
@@ -82,38 +81,35 @@ where
     R: tauri::Runtime,
 {
     let app_tx = injector.construct_oneshot();
-    let mtool_win_tx: oneshot::Sender<Res<MtoolWindow<R>>> = injector.construct_oneshot();
 
-    builder
-        .setup_with_app(move |app| {
-            let app = app.handle();
-            {
-                let menu = Menu::with_items(
-                    app,
-                    &[&MenuItem::with_id(app, "quit", "Quit", true, None::<&str>)?],
-                )?;
-                let builder = TrayIconBuilder::with_id("mtool")
-                    .tooltip("MTool")
-                    .icon(app.default_window_icon().unwrap().clone())
-                    .menu(&menu);
+    builder.setup_with_app(move |app| {
+        let app = app.handle();
+        {
+            let menu = Menu::with_items(
+                app,
+                &[&MenuItem::with_id(app, "quit", "Quit", true, None::<&str>)?],
+            )?;
+            let builder = TrayIconBuilder::with_id("mtool")
+                .tooltip("MTool")
+                .icon(app.default_window_icon().unwrap().clone())
+                .menu(&menu);
 
-                // HACK: for keepalive
-                app.manage(menu);
-                builder
-                    .menu_on_left_click(false)
-                    .on_menu_event(move |app, event| match event.id.as_ref() {
-                        "quit" => {
-                            app.exit(0);
-                        }
-                        _ => (),
-                    })
-                    .build(app)?;
-            }
+            // HACK: for keepalive
+            app.manage(menu);
+            builder
+                .menu_on_left_click(false)
+                .on_menu_event(move |app, event| match event.id.as_ref() {
+                    "quit" => {
+                        app.exit(0);
+                    }
+                    _ => (),
+                })
+                .build(app)?;
+        }
 
-            app_tx.send(Res::new(app.clone())).unwrap();
-            Ok(())
-        })
-        .setup(move |builder| Ok(builder.plugin(window::init::<R>(mtool_win_tx))))?;
+        app_tx.send(Res::new(app.clone())).unwrap();
+        Ok(())
+    });
 
     Ok(())
 }

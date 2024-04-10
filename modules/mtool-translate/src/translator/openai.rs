@@ -1,7 +1,6 @@
 use anyhow::Context;
-use async_trait::async_trait;
 use itertools::Itertools;
-use mapp::provider::Res;
+use mapp::prelude::*;
 use mcloud_api::openai::{
     chat::{ChatMessage, ChatRequest, ChatResponse},
     Client,

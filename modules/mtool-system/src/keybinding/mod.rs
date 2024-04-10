@@ -11,12 +11,9 @@ mod dbus_backend;
 
 use std::{collections::HashMap, future::Future, sync::Arc};
 
-use async_trait::async_trait;
 use mapp::{
     define_label,
-    inject::{Inject, Provide},
-    provider::{Injector, Res},
-    ModuleGroup,
+    prelude::{inject::*, *},
 };
 use mkeybinding::KeySequence;
 use tokio::sync::{mpsc, Mutex, RwLock};

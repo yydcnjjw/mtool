@@ -3,7 +3,7 @@ name = "mtool-wgui"
 version.workspace = true
 authors.workspace = true
 edition.workspace = true
-links = "mtool-wgui"
+# links = "mtool-wgui"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
@@ -21,7 +21,6 @@ mkeybinding = { path = "../../crates/mkeybinding" }
 msysev = { path = "../../crates/msysev" }
 
 tokio = { workspace = true }
-async-trait = { workspace = true }
 futures = { workspace = true }
 anyhow = { workspace = true }
 serde = { workspace = true }
@@ -52,8 +51,6 @@ features = [
 ]
 
 [target.'cfg(not(target_family = "wasm"))'.dependencies]
-msysev = { path = "../../crates/msysev" }
-mkeybinding = { path = "../../crates/mkeybinding" }
 mtool-core = { path = "../mtool-core" }
 mtool-system = { path = "../mtool-system" }
 
@@ -66,4 +63,3 @@ tauri-plugin-global-shortcut = { git = "https://github.com/tauri-apps/plugins-wo
 
 [build-dependencies]
 tauri-plugin = { workspace = true }
-tauri-utils = { workspace = true }

@@ -1,6 +1,5 @@
 use std::ops::Deref;
 
-use async_trait::async_trait;
 use mapp::{define_label, prelude::*};
 use parking_lot::Mutex;
 use sea_orm::DatabaseConnection;

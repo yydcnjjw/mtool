@@ -1,12 +1,8 @@
 use std::io::{stdin, stdout, Write};
 
-use async_trait::async_trait;
-use mapp::{
-    provider::{Injector, Res, Take},
-    AppContext, AppModule, CreateOnceTaskDescriptor,
-};
+use mapp::{prelude::*, CreateOnceTaskDescriptor};
 
-use mtool_cmder::{Cmder, CommandArgs, CreateCommandDescriptor};
+use mtool_cmder::{Cmder, CommandArgs, CommandBuilder};
 use mtool_core::{
     config::{is_startup_mode, StartupMode},
     CmdlineStage,
@@ -78,7 +74,9 @@ async fn text_translate_from_cli(
                 .await?;
             println!("{}", result);
         }
-    } else if let Some(text) = text {
+    }
+
+    if let Some(text) = text {
         let result = translator
             .text_translate(text, source.clone(), target.clone())
             .await?;
@@ -125,19 +123,19 @@ pub async fn register_command(cmder: Res<Cmder>) -> Result<(), anyhow::Error> {
             text_translate_into_english
                 .name("text_translate_into_english")
                 .add_alias("te")
-                .desc("Translate into English"),
+                .descrption("Translate into English"),
         )
         .add_command(
             text_translate_into_chinese
                 .name("text_translate_into_chinese")
                 .add_alias("tz")
-                .desc("Translate into Chinese"),
+                .descrption("Translate into Chinese"),
         )
         .add_command(
             text_translate_into_japanese
                 .name("text_translate_into_japanese")
                 .add_alias("tj")
-                .desc("Translate into Japanese"),
+                .descrption("Translate into Japanese"),
         );
     Ok(())
 }

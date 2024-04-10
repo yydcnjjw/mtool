@@ -1,8 +1,4 @@
-use async_trait::async_trait;
-use mapp::{
-    inject::{inject, Inject, Provide},
-    provider::Injector,
-};
+use mapp::prelude::{inject::*, *};
 use std::{future::Future, marker::PhantomData, sync::Arc};
 
 #[async_trait]

@@ -2,7 +2,6 @@ mod app;
 pub mod event;
 
 use anyhow::Context;
-use async_trait::async_trait;
 use base64::prelude::*;
 use mapp::prelude::*;
 use mtool_wgui::{component::error::render_result_view, RouteParams, Router, WebStage};

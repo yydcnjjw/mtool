@@ -2,11 +2,7 @@ use std::sync::RwLock;
 
 use anyhow::Context;
 
-use async_trait::async_trait;
-use mapp::{
-    provider::{Injector, Res},
-    AppContext, AppModule, CreateOnceTaskDescriptor,
-};
+use mapp::{prelude::*, CreateOnceTaskDescriptor};
 use mkeybinding::{KeyCombine, KeyDispatcher, KeyMap, KeySequence};
 use msysev::{Event, KeyAction};
 

@@ -13,7 +13,6 @@ cfg_if::cfg_if! {
     }
 }
 
-use async_trait::async_trait;
 use mapp::prelude::*;
 
 pub struct Module;

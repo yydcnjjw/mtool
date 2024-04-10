@@ -1,4 +1,3 @@
-use async_trait::async_trait;
 use mapp::prelude::*;
 use mtool_core::ConfigStore;
 use pdfium_render::prelude::*;

@@ -3,16 +3,14 @@ name = "mtool-cmder"
 version.workspace = true
 authors.workspace = true
 edition.workspace = true
+links = "mtool-cmder"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
 mapp = { path = "../../crates/mapp" }
-mtool-wgui = { path = "../mtool-wgui" }
-mtool-interactive = { path = "../mtool-interactive" }
 
 tokio = { workspace = true }
-async-trait = { workspace = true }
 parking_lot = { workspace = true }
 anyhow = { workspace = true }
 thiserror = { workspace = true }
@@ -20,11 +18,9 @@ serde = { workspace = true }
 clap = { workspace = true }
 tracing = { workspace = true }
 itertools = { workspace = true }
-yew = { workspace = true }
+dashmap = { workspace = true }
 
-shellwords = "*"
 tabled = "*"
 
 [target.'cfg(not(target_family = "wasm"))'.dependencies]
 mtool-core = { path = "../mtool-core" }
-mtool-system = { path = "../mtool-system" }

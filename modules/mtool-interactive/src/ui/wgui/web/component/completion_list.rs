@@ -6,7 +6,7 @@ use wasm_bindgen::JsCast;
 use web_sys::{HtmlElement, ScrollIntoViewOptions, ScrollLogicalPosition};
 use yew::{platform::spawn_local, prelude::*};
 
-use crate::ui::wgui::model::{CompletionExit, CompletionItem};
+use crate::ui::wgui::generic::{CompletionExit, CompletionItem};
 
 #[derive(Properties, PartialEq)]
 pub struct Props {

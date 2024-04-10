@@ -1,12 +1,7 @@
 use std::{mem, sync::Mutex};
 
-use async_trait::async_trait;
 use clap::{command, Command};
-use mapp::{
-    define_label,
-    provider::{Injector, Res},
-    AppContext, AppModule,
-};
+use mapp::{define_label, prelude::*};
 
 use crate::AppStage;
 

@@ -1,5 +1,6 @@
 use sea_orm::DatabaseBackend;
 use sea_orm_migration::prelude::*;
+use mapp::prelude::*;
 
 #[derive(DeriveMigrationName)]
 pub struct Migration;
@@ -17,7 +18,7 @@ enum Adobe {
     State,
 }
 
-#[async_trait::async_trait]
+#[async_trait]
 impl MigrationTrait for Migration {
     async fn up(&self, manager: &SchemaManager) -> Result<(), DbErr> {
         const TABLE: &'static str = "mtool_pdf_adobe";

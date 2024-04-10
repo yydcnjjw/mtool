@@ -4,7 +4,6 @@ mod migration;
 use db_conn::create_db_conn;
 pub use migration::*;
 
-use async_trait::async_trait;
 use mapp::prelude::*;
 use mtool_core::{AppStage, CmdlineStage};
 

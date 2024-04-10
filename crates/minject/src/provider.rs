@@ -50,3 +50,29 @@ repeat!(
     impl_local_provider_for_tuple_with_container,
     P
 );
+
+// pub trait AnyProvide<C>: Sized {
+//     type Output: Future<Output = Result<Self, anyhow::Error>>;
+//     fn provide(c: &C) -> Output;
+// }
+
+// macro_rules! impl_any_provider_for_tuple_with_container {
+//     ($($param: ident),*) => {
+//         impl<C, $($param,)*> AnyProvide<C> for ($($param,)*)
+//         where
+//             $($param: AnyProvide<C>,)*
+//         {
+//             #[allow(unused_variables)]
+//             fn provide(c: &C) -> Self::Output {
+//                 Ok(($($param::local_provide(c).await?,)*))
+//             }
+//         }
+//     };
+// }
+
+// repeat!(
+//     9,
+//     enum_params,
+//     impl_any_provider_for_tuple_with_container,
+//     P
+// );

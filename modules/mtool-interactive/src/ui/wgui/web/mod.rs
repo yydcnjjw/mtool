@@ -4,7 +4,6 @@ mod event;
 mod route;
 
 use app::App;
-use async_trait::async_trait;
 use mapp::prelude::*;
 use mtool_wgui::{RouteParams, Router, WebStage};
 use yew::prelude::*;

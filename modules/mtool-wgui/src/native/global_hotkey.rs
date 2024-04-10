@@ -1,12 +1,8 @@
 use std::str::FromStr;
 
 use anyhow::Context;
-use async_trait::async_trait;
 use dashmap::DashMap;
-use mapp::{
-    provider::{Injector, Res},
-    AppContext, AppModule,
-};
+use mapp::prelude::*;
 use mkeybinding::KeySequence;
 use msysev::keydef::{KeyCode, KeyModifier};
 use tauri::{plugin, AppHandle};

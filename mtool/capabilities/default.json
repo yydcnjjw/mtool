@@ -4,6 +4,7 @@
   "description": "enables the default permissions",
   "windows": ["mtool", "mtool-*"],
   "permissions": [
+    "mtool-main-window:default",
     "mtool-interactive:default",
     "mtool-dict:default",
     "mtool-translate:default",

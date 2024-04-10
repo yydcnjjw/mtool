@@ -1,5 +1,6 @@
 use sea_orm::{EntityName, Schema};
 use sea_orm_migration::prelude::*;
+use mapp::prelude::*;
 
 #[derive(DeriveMigrationName)]
 pub struct Migration;
@@ -12,7 +13,7 @@ enum Adobe {
     Structure,
 }
 
-#[async_trait::async_trait]
+#[async_trait]
 impl MigrationTrait for Migration {
     async fn up(&self, manager: &SchemaManager) -> Result<(), DbErr> {
         manager

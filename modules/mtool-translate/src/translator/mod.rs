@@ -3,11 +3,10 @@ cfg_if::cfg_if! {
         pub mod llama;
         pub mod openai;
         pub mod tencent;
-        use mapp::prelude::*;
     }
 }
 
-use async_trait::async_trait;
+use mapp::prelude::*;
 use serde::{Deserialize, Serialize};
 use std::fmt;
 

@@ -8,7 +8,6 @@ cfg_if::cfg_if! {
 mod view;
 pub use view::*;
 
-use async_trait::async_trait;
 use mapp::prelude::*;
 
 pub struct Module;

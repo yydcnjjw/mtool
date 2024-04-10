@@ -52,7 +52,10 @@ impl<Value> KeyMap<Value> {
         }
     }
 
-    pub fn new_with_vec(km: Vec<(&str, Value)>) -> Result<KeyMap<Value>> {
+    pub fn new_with_vec<Key>(km: Vec<(Key, Value)>) -> Result<KeyMap<Value>>
+    where
+        Key: ToKeySequence,
+    {
         let mut self_ = Self {
             inner: HashMap::new(),
         };

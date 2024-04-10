@@ -4,7 +4,6 @@ pub use completion::Completion;
 
 use mtool_wgui::{Builder, WGuiStage};
 
-use async_trait::async_trait;
 use mapp::prelude::*;
 
 pub struct Module;

@@ -1,5 +1,5 @@
+mod cmd;
 mod completion;
-mod rand;
 mod ui;
 
 pub use completion::*;
@@ -10,6 +10,7 @@ use mapp::prelude::*;
 pub fn module() -> ModuleGroup {
     let mut group = ModuleGroup::new("mtool-interactive");
     group.add_module(ui::module());
+    group.add_module(cmd::Module);
     group
 }
 
@@ -18,5 +19,6 @@ pub fn web_module() -> LocalModuleGroup {
     group.add_module(ui::web_module());
 
     group.add_module(completion::Module);
+    group.add_module(cmd::Module);
     group
 }

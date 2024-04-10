@@ -1,6 +1,3 @@
-use async_trait::async_trait;
-use mapp::{define_label, AppContext, AppModule, ModuleGroup, ScheduleGraph};
-
 mod cmdline;
 pub mod config;
 pub mod logger;
@@ -8,6 +5,8 @@ mod test;
 
 pub use cmdline::*;
 pub use config::ConfigStore;
+
+use mapp::{define_label, prelude::*, ScheduleGraph};
 
 pub fn module() -> ModuleGroup {
     let mut group = ModuleGroup::new("core_group");

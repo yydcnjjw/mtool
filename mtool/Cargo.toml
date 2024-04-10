@@ -15,6 +15,7 @@ mapp = { path = "../crates/mapp" }
 mtool-core = { path = "../modules/mtool-core" }
 mtool-system = { path = "../modules/mtool-system" }
 mtool-wgui = { path = "../modules/mtool-wgui" }
+mtool-main-window = { path = "../modules/mtool-main-window" }
 mtool-cmder = { path = "../modules/mtool-cmder" }
 mtool-translate = { path = "../modules/mtool-translate" }
 mtool-dict = { path = "../modules/mtool-dict" }

@@ -56,7 +56,6 @@ impl AppBuilder {
 
             #[cfg(not(target_family = "wasm"))]
             let mut rt = tokio::runtime::Builder::new_multi_thread();
-            rt.worker_threads(2);
 
             let run = || async move {
                 modules.init(&mut ctx).await?;

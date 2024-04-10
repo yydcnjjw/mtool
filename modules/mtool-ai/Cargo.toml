@@ -14,6 +14,5 @@ mllama-sys = { path = "../../crates/mllama-sys" }
 serde = { workspace = true }
 tracing = { workspace = true }
 tokio = { workspace = true }
-async-trait = { workspace = true }
 anyhow = { workspace = true }
 candle-core = { git = "https://github.com/huggingface/candle.git", version = "0.5.0" }

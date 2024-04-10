@@ -1,7 +1,6 @@
 use std::{any::type_name, marker::PhantomData};
 
 use anyhow::Context;
-use async_trait::async_trait;
 use dashmap::DashMap;
 use mapp::prelude::*;
 use send_wrapper::SendWrapper;

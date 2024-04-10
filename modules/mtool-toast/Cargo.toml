@@ -15,6 +15,5 @@ mtool-interactive = { path = "../mtool-interactive" }
 clap = { workspace = true }
 tracing = { workspace = true }
 tokio = { workspace = true }
-async-trait = { workspace = true }
 anyhow = { workspace = true }
 notify-rust = { workspace = true }

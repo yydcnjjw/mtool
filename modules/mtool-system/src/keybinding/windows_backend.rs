@@ -7,11 +7,7 @@ use std::{
 };
 
 use anyhow::Context;
-use async_trait::async_trait;
-use mapp::{
-    provider::{Injector, Res},
-    AppContext, AppModule,
-};
+use mapp::prelude::*;
 use mkeybinding::KeySequence;
 use msysev::keydef::KeyModifier;
 use tokio::sync::{oneshot, OnceCell, RwLock};

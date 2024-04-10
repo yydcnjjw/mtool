@@ -1,6 +1,6 @@
 use std::{cell::RefCell, future::Future, rc::Rc};
 
-use async_trait::async_trait;
+use mapp::prelude::*;
 use js_sys::Function;
 use msysev::{
     keydef::{KeyCode, KeyModifier},

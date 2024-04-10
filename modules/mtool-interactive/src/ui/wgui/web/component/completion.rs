@@ -5,7 +5,7 @@ use tracing::warn;
 use web_sys::{HtmlElement, HtmlInputElement};
 use yew::{platform::spawn_local, prelude::*};
 
-use crate::{completion::CompletionMeta, ui::wgui::model::CompletionExit};
+use crate::{completion::CompletionMeta, ui::wgui::generic::CompletionExit};
 
 use super::completion_list::{CompletionExitArgs, CompletionList};
 

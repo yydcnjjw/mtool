@@ -1,10 +1,9 @@
-use std::future::Future;
-use async_trait::async_trait;
 use fuzzy_matcher::{skim::SkimMatcherV2, FuzzyMatcher};
 use itertools::Itertools;
 use serde::{Deserialize, Serialize};
+use std::future::Future;
 
-use crate::rand::rand_string;
+use mapp::prelude::*;
 
 use super::complete_item::CompleteItem;
 
@@ -146,7 +145,6 @@ where
             .collect_vec())
     }
 }
-
 
 #[cfg(test)]
 mod tests {

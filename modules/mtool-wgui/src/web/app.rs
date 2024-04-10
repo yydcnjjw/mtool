@@ -6,7 +6,7 @@ use super::{keybinding::Keybinding, route::Route, switch::ListenSwitch, template
 
 #[derive(Clone, PartialEq, Properties)]
 pub struct WebAppContext {
-    pub keybinding: Keybinding,
+    pub keybinding: Res<Keybinding>,
     pub templator: Res<Templator>,
 }
 

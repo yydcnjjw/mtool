@@ -1,4 +1,3 @@
-use tracing::debug;
 use yew::prelude::*;
 use yew_router::prelude::*;
 
@@ -13,7 +12,6 @@ pub enum Route {
 }
 
 pub fn switch(routes: Route) -> Html {
-    debug!("{}", routes.to_path());
     match routes {
         Route::Home => html! { <h1>{ "Mtool Interactive" }</h1> },
         Route::Completion { id } => html! { <Completion id={id} /> },

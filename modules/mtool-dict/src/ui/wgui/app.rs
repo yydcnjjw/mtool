@@ -1,6 +1,5 @@
 use std::any::type_name;
 
-use async_trait::async_trait;
 use mapp::prelude::*;
 use mtool_wgui::{
     component::error::error_view, generate_keymap, AutoWindow, EmptyView, Horizontal, Keybinding,

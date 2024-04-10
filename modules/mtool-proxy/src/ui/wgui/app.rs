@@ -2,7 +2,6 @@ use std::time::Duration;
 
 use crate::ui::wgui::stats::{Stats, TransferStats};
 use async_stream::stream;
-use async_trait::async_trait;
 use mapp::prelude::*;
 use mtool_wgui::{AutoWindow, Horizontal, RouteParams, Router, Vertical, WebStage, WindowProps};
 use tracing::{debug, warn};

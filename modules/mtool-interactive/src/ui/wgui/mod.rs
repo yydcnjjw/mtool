@@ -1,12 +1,12 @@
 cfg_if::cfg_if! {
     if #[cfg(not(target_family = "wasm"))] {
-        mod service;
-        pub use service::Completion;
+        mod native;
+        pub use native::*;
     }
 
 }
 
-mod model;
+mod generic;
 mod web;
 
 use mapp::prelude::*;
@@ -14,7 +14,7 @@ use mapp::prelude::*;
 #[cfg(not(target_family = "wasm"))]
 pub fn module() -> ModuleGroup {
     let mut group = ModuleGroup::new("mtool-interactive-wgui");
-    group.add_module(service::Module);
+    group.add_module(native::Module);
     group
 }
 

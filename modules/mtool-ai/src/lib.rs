@@ -1,7 +1,6 @@
 mod model;
 
-use async_trait::async_trait;
-use mapp::{AppContext, AppModule};
+use mapp::prelude::*;
 
 pub use model::llama_chat::LLamaChat;
 

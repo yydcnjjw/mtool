@@ -1,11 +1,10 @@
-use async_trait::async_trait;
-use mapp::{provider::Res, AppContext, AppModule, CreateOnceTaskDescriptor};
-use mtool_cmder::{Cmder, CreateCommandDescriptor};
+use mapp::{prelude::*, CreateOnceTaskDescriptor};
+use mtool_cmder::{Cmder, CommandBuilder};
 use mtool_core::{
     config::{is_startup_mode, StartupMode},
     AppStage,
 };
-use mtool_wgui::MtoolWindow;
+use mtool_main_window::wgui::native::MtoolWindow;
 use tauri::Manager;
 
 #[derive(Default)]
@@ -23,7 +22,11 @@ impl AppModule for Module {
 }
 
 async fn init(cmder: Res<Cmder>) -> Result<(), anyhow::Error> {
-    cmder.add_command(text_translate.name("text_translate").desc("text translate"));
+    cmder.add_command(
+        text_translate
+            .name("text_translate")
+            .descrption("text translate"),
+    );
     Ok(())
 }
 

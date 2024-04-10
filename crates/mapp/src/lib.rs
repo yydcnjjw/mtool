@@ -11,6 +11,7 @@ mod module;
 pub mod provider;
 mod schedule;
 mod tracing;
+mod utils;
 
 pub mod prelude {
 
@@ -24,8 +25,11 @@ pub mod prelude {
         },
         provider::*,
         tracing::*,
+        utils::*,
         Error,
     };
+
+    pub use async_trait::*;
 }
 
 pub use minject as inject;
@@ -36,6 +40,7 @@ pub use crate::{
     module::{LocalModule as AppLocalModule, LocalModuleGroup, Module as AppModule, ModuleGroup},
     schedule::*,
     tracing::*,
+    utils::*,
 };
 
 use thiserror::Error;

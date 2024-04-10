@@ -11,8 +11,8 @@ links = "mtool-translate"
 mapp = { path = "../../crates/mapp" }
 mtauri-sys = { path = "../../crates/mtauri-sys" }
 mtool-wgui = { path = "../mtool-wgui" }
+mtool-main-window = { path = "../mtool-main-window" }
 
-async-trait = { workspace = true }
 serde = { workspace = true }
 serde-wasm-bindgen = { workspace = true }
 futures = { workspace = true }

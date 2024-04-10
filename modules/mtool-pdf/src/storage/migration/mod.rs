@@ -1,7 +1,6 @@
 mod m20231128_120000_create_mtool_pdf_adobe_v1;
 mod m20240225_085708_create_mtool_pdf_adobe_v2;
 
-use async_trait::async_trait;
 use mapp::prelude::*;
 use mtool_storage::{add_migration, DBMigrationStage};
 

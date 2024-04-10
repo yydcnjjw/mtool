@@ -1,6 +1,5 @@
 use std::{env, path::PathBuf, str::FromStr, sync::Arc};
 
-use async_trait::async_trait;
 use clap::{arg, ArgMatches};
 use serde::Deserialize;
 use time::{format_description::well_known::Rfc3339, UtcOffset};
@@ -11,11 +10,7 @@ use tracing_subscriber::{
     EnvFilter,
 };
 
-use mapp::{
-    define_label,
-    provider::{Injector, Res, Take},
-    AppContext, AppModule, Tracing,
-};
+use mapp::{define_label, prelude::*};
 
 use crate::{Cmdline, CmdlineStage};
 

@@ -13,7 +13,6 @@ mkeybinding = { path = "../../crates/mkeybinding" } # for keybinding module
 mtool-core = { path = "../mtool-core" }
 
 tokio = { workspace = true }
-async-trait = { workspace = true }
 tauri = { workspace = true }
 anyhow = { workspace = true }
 thiserror = { workspace = true }

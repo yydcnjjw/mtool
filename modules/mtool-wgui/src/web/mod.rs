@@ -6,7 +6,6 @@ mod route;
 mod switch;
 mod template;
 
-use async_trait::async_trait;
 use mapp::{define_label, prelude::*, ScheduleGraph};
 
 pub use app::*;
@@ -29,6 +28,8 @@ define_label!(
 impl AppLocalModule for Module {
     async fn local_init(&self, ctx: &mut LocalAppContext) -> Result<(), anyhow::Error> {
         ctx.injector().insert(Res::new(global_router()));
+        ctx.injector()
+            .insert(Res::new(Keybinding::new_with_window()));
 
         ctx.schedule().insert_stage_vec(
             ScheduleGraph::Root,
@@ -40,9 +41,9 @@ impl AppLocalModule for Module {
     }
 }
 
-async fn run(templator: Res<Templator>) -> Result<(), anyhow::Error> {
+async fn run(keybinding: Res<Keybinding>, templator: Res<Templator>) -> Result<(), anyhow::Error> {
     yew::Renderer::<WebApp>::with_props(WebAppContext {
-        keybinding: Keybinding::new_with_window(),
+        keybinding,
         templator,
     })
     .render();

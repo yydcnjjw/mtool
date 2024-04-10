@@ -4545,6 +4545,7 @@ dependencies = [
  "mtool-core",
  "mtool-dict",
  "mtool-interactive",
+ "mtool-main-window",
  "mtool-pdf",
  "mtool-proxy",
  "mtool-storage",
@@ -4561,7 +4562,6 @@ name = "mtool-ai"
 version = "0.0.0"
 dependencies = [
  "anyhow",
- "async-trait",
  "candle-core",
  "mapp",
  "mllama-sys",
@@ -4576,22 +4576,17 @@ name = "mtool-cmder"
 version = "0.0.0"
 dependencies = [
  "anyhow",
- "async-trait",
  "clap",
+ "dashmap",
  "itertools 0.12.1",
  "mapp",
  "mtool-core",
- "mtool-interactive",
- "mtool-system",
- "mtool-wgui",
  "parking_lot",
  "serde",
- "shellwords",
  "tabled",
  "thiserror",
  "tokio",
  "tracing",
- "yew",
 ]
 
 [[package]]
@@ -4599,7 +4594,6 @@ name = "mtool-core"
 version = "0.0.0"
 dependencies = [
  "anyhow",
- "async-trait",
  "clap",
  "dirs",
  "futures",
@@ -4619,7 +4613,6 @@ name = "mtool-dict"
 version = "0.0.0"
 dependencies = [
  "anyhow",
- "async-trait",
  "cfg-if 1.0.0",
  "clap",
  "clipboard",
@@ -4631,6 +4624,7 @@ dependencies = [
  "mtool-cmder",
  "mtool-core",
  "mtool-interactive",
+ "mtool-main-window",
  "mtool-system",
  "mtool-wgui",
  "nom",
@@ -4657,7 +4651,6 @@ name = "mtool-interactive"
 version = "0.0.0"
 dependencies = [
  "anyhow",
- "async-trait",
  "cfg-if 1.0.0",
  "clap",
  "futures",
@@ -4668,14 +4661,16 @@ dependencies = [
  "js-sys",
  "mapp",
  "mtauri-sys",
+ "mtool-cmder",
  "mtool-core",
+ "mtool-main-window",
  "mtool-system",
  "mtool-wgui",
- "rand 0.8.5",
  "serde",
  "serde-error",
  "serde-wasm-bindgen 0.6.5",
  "serde_json",
+ "shellwords",
  "tauri",
  "tauri-plugin",
  "tokio",
@@ -4688,11 +4683,37 @@ dependencies = [
 ]
 
 [[package]]
+name = "mtool-main-window"
+version = "0.0.0"
+dependencies = [
+ "anyhow",
+ "cfg-if 1.0.0",
+ "futures",
+ "js-sys",
+ "mapp",
+ "mkeybinding",
+ "mtauri-sys",
+ "mtool-cmder",
+ "mtool-core",
+ "mtool-wgui",
+ "serde",
+ "serde-error",
+ "serde-wasm-bindgen 0.6.5",
+ "serde_with",
+ "tauri",
+ "tauri-plugin",
+ "tokio",
+ "tracing",
+ "wasm-bindgen",
+ "web-sys",
+ "yew",
+]
+
+[[package]]
 name = "mtool-pdf"
 version = "0.0.0"
 dependencies = [
  "anyhow",
- "async-trait",
  "base64 0.22.0",
  "cfg-if 1.0.0",
  "clap",
@@ -4747,7 +4768,6 @@ version = "0.0.0"
 dependencies = [
  "anyhow",
  "async-stream",
- "async-trait",
  "cfg-if 1.0.0",
  "clap",
  "gloo-utils 0.2.0",
@@ -4784,7 +4804,6 @@ name = "mtool-storage"
 version = "0.0.0"
 dependencies = [
  "anyhow",
- "async-trait",
  "mapp",
  "mtool-core",
  "parking_lot",
@@ -4799,7 +4818,6 @@ name = "mtool-system"
 version = "0.0.0"
 dependencies = [
  "anyhow",
- "async-trait",
  "clap",
  "mapp",
  "mkeybinding",
@@ -4819,7 +4837,6 @@ name = "mtool-toast"
 version = "0.0.0"
 dependencies = [
  "anyhow",
- "async-trait",
  "clap",
  "mapp",
  "mtool-cmder",
@@ -4835,7 +4852,6 @@ name = "mtool-translate"
 version = "0.0.0"
 dependencies = [
  "anyhow",
- "async-trait",
  "cfg-if 1.0.0",
  "clap",
  "futures",
@@ -4847,6 +4863,7 @@ dependencies = [
  "mtool-cmder",
  "mtool-core",
  "mtool-interactive",
+ "mtool-main-window",
  "mtool-system",
  "mtool-wgui",
  "serde",
@@ -4866,7 +4883,6 @@ name = "mtool-wgui"
 version = "0.0.0"
 dependencies = [
  "anyhow",
- "async-trait",
  "cfg-if 1.0.0",
  "dashmap",
  "futures",
@@ -4890,7 +4906,6 @@ dependencies = [
  "tauri",
  "tauri-plugin",
  "tauri-plugin-global-shortcut",
- "tauri-utils",
  "tokio",
  "tracing",
  "wasm-bindgen",
@@ -4908,6 +4923,7 @@ dependencies = [
  "mtool-cmder",
  "mtool-dict",
  "mtool-interactive",
+ "mtool-main-window",
  "mtool-pdf",
  "mtool-proxy",
  "mtool-translate",

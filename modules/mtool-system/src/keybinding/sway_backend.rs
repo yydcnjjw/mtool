@@ -1,4 +1,3 @@
-use async_trait::async_trait;
 use mapp::prelude::*;
 use mkeybinding::KeySequence;
 use mtool_core::{

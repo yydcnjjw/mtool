@@ -1,9 +1,9 @@
 use std::future::Future;
 
 use anyhow::Context;
-use mapp::provider::Res;
+use mapp::prelude::*;
 
-use mtool_cmder::{Cmder, CreateCommandDescriptor};
+use mtool_cmder::{Cmder, CommandBuilder};
 use mtool_interactive::{Completion, CompletionArgs};
 use notify_rust::{Notification, Timeout};
 
@@ -18,7 +18,7 @@ enum Error {
     Other(#[from] anyhow::Error),
 }
 
-async fn add_proxy_rule_inner(app: Res<ProxyService>, c: Res<Completion>) -> Result<(), Error> {
+async fn add_rule_inner(app: Res<ProxyService>, c: Res<Completion>) -> Result<(), Error> {
     let target = c
         .complete_read(
             CompletionArgs::<String>::without_completion()
@@ -37,7 +37,7 @@ async fn add_proxy_rule_inner(app: Res<ProxyService>, c: Res<Completion>) -> Res
     Ok(app.inner.router().add_rule_target(&app.proxy_id, &target)?)
 }
 
-async fn remove_proxy_rule_inner(app: Res<ProxyService>, c: Res<Completion>) -> Result<(), Error> {
+async fn remove_rule_inner(app: Res<ProxyService>, c: Res<Completion>) -> Result<(), Error> {
     let target = {
         let items = {
             let gs = app.resource.lock().unwrap();
@@ -96,30 +96,27 @@ where
     Ok(())
 }
 
-async fn add_proxy_rule(app: Res<ProxyService>, c: Res<Completion>) -> Result<(), anyhow::Error> {
+async fn add_rule(app: Res<ProxyService>, c: Res<Completion>) -> Result<(), anyhow::Error> {
     with_notify_result("add proxy rule", || async move {
-        add_proxy_rule_inner(app, c).await
+        add_rule_inner(app, c).await
     })
     .await
 }
 
-async fn remove_proxy_rule(
-    app: Res<ProxyService>,
-    c: Res<Completion>,
-) -> Result<(), anyhow::Error> {
+async fn remove_rule(app: Res<ProxyService>, c: Res<Completion>) -> Result<(), anyhow::Error> {
     with_notify_result("remove proxy rule", || async move {
-        remove_proxy_rule_inner(app, c).await
+        remove_rule_inner(app, c).await
     })
     .await
 }
 
 pub async fn register(cmder: Res<Cmder>) -> Result<(), anyhow::Error> {
     cmder
-        .add_command(add_proxy_rule.name("add_proxy_rule"))
+        .add_command(add_rule.name("proxy.add_rule"))
         .add_command(
-            remove_proxy_rule
-                .name("remove_proxy_rule")
-                .desc("remove proxy rule from file"),
+            remove_rule
+                .name("proxy.remove_rule")
+                .descrption("remove proxy rule from file"),
         );
 
     Ok(())

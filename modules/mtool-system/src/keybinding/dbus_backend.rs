@@ -1,8 +1,4 @@
-use async_trait::async_trait;
-use mapp::{
-    provider::{Injector, Res, Take, TakeOpt},
-    AppContext, AppModule, CreateOnceTaskDescriptor,
-};
+use mapp::{prelude::*, CreateOnceTaskDescriptor};
 use mkeybinding::{KeySequence, ToKeySequence};
 
 use mtool_core::{

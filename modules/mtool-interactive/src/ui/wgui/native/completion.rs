@@ -1,9 +1,8 @@
 use std::{any::type_name, sync::Arc};
 
 use anyhow::Context as _;
-use async_trait::async_trait;
-use mapp::provider::Res;
-use mtool_wgui::MtoolWindow;
+use mapp::prelude::*;
+use mtool_main_window::wgui::native::MtoolWindow;
 use tauri::{
     command,
     plugin::{Builder, TauriPlugin},
@@ -13,7 +12,7 @@ use tokio::sync::{oneshot, Mutex};
 
 use crate::{
     completion::{Complete, CompleteItem, CompleteRead, CompletionArgs, CompletionMeta},
-    ui::wgui::model::{CompletionExit, CompletionItem},
+    ui::wgui::generic::{CompletionExit, CompletionItem},
 };
 
 #[async_trait]

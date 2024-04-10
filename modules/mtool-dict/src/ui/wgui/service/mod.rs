@@ -1,11 +1,7 @@
 use std::any::type_name;
 
 use anyhow::Context;
-use async_trait::async_trait;
-use mapp::{
-    provider::{Injector, Res},
-    AppContext, AppModule,
-};
+use mapp::prelude::*;
 use mtool_wgui::{Builder, WGuiStage};
 use tauri::{command, plugin::TauriPlugin, Manager, Runtime, State};
 use tracing::warn;

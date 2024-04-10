@@ -12,7 +12,6 @@ mtool-core = { path = "../mtool-core" }
 
 tracing = { workspace = true }
 tokio = { workspace = true }
-async-trait = { workspace = true }
 anyhow = { workspace = true }
 parking_lot = { workspace = true }
 sea-orm = { workspace = true }

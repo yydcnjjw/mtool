@@ -1,12 +1,11 @@
-use async_trait::async_trait;
 use clipboard::{ClipboardContext, ClipboardProvider};
-use mapp::{provider::Res, AppContext, AppModule, CreateOnceTaskDescriptor};
-use mtool_cmder::{Cmder, CreateCommandDescriptor};
+use mapp::{prelude::*, CreateOnceTaskDescriptor};
+use mtool_cmder::{Cmder, CommandBuilder};
 use mtool_core::{
     config::{is_startup_mode, StartupMode},
     AppStage,
 };
-use mtool_wgui::MtoolWindow;
+use mtool_main_window::wgui::native::MtoolWindow;
 use tauri::Manager;
 
 pub struct Module;
@@ -26,9 +25,9 @@ async fn init(cmder: Res<Cmder>) -> Result<(), anyhow::Error> {
     cmder.add_command(
         query_dict_with_clipboard
             .name("query_dict_with_clipboard")
-            .desc("query dict with clipboard"),
+            .descrption("query dict with clipboard"),
     );
-    cmder.add_command(query_dict.name("query_dict").desc("query dict"));
+    cmder.add_command(query_dict.name("query_dict").descrption("query dict"));
     Ok(())
 }
 

@@ -2,11 +2,7 @@ mod window;
 
 use mtool_wgui::{Builder, WGuiStage};
 
-use async_trait::async_trait;
-use mapp::{
-    provider::{Injector, Res},
-    AppContext, AppModule, CreateOnceTaskDescriptor,
-};
+use mapp::{prelude::*, CreateOnceTaskDescriptor};
 
 use crate::service::{is_runnable, ProxyService};
 

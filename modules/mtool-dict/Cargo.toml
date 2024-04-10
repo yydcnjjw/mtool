@@ -11,6 +11,7 @@ links = "mtool-dict"
 mapp = { path = "../../crates/mapp" }
 mtauri-sys = { path = "../../crates/mtauri-sys" }
 mtool-wgui = { path = "../mtool-wgui" }
+mtool-main-window = { path = "../mtool-main-window" }
 mtool-cmder = { path = "../mtool-cmder" }
 mtool-interactive = { path = "../mtool-interactive" }
 
@@ -20,7 +21,6 @@ serde-error = { workspace = true }
 serde_json = { workspace = true }
 serde-wasm-bindgen = { workspace = true }
 tokio = { workspace = true }
-async-trait = { workspace = true }
 futures = { workspace = true }
 anyhow = { workspace = true }
 tracing = { workspace = true }

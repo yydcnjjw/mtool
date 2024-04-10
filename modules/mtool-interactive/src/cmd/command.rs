@@ -1,39 +1,13 @@
 use anyhow::Context;
-use clap::ArgMatches;
 use itertools::Itertools;
-use mapp::provider::{Injector, Res, Take};
-use mtool_interactive::{CompleteItem, Completion, CompletionArgs};
+use mapp::prelude::*;
+use mtool_cmder::{Cmder, CommandArgs, SharedCommandPtr};
+use mtool_system::keybinding::Keybinding;
+use mtool_wgui::Templator;
 use serde::{Deserialize, Serialize};
 use yew::prelude::*;
 
-use crate::{Cmder, CommandArgs, SharedCommandDescriptor};
-
-#[allow(unused)]
-pub async fn exec_command_from_cli(
-    args: Res<ArgMatches>,
-    cmder: Res<Cmder>,
-    injector: Injector,
-) -> Result<(), anyhow::Error> {
-    if let Some(cmd) = args
-        .get_many::<String>("command")
-        .map(|cmd| cmd.collect_vec())
-    {
-        let (cmd, args) = cmd.split_first().unwrap();
-
-        match cmder.get_command_exact(cmd) {
-            Some(cmd) => {
-                injector.insert(Take::new(CommandArgs::new(
-                    args.iter().map(|arg| arg.to_string()).collect_vec(),
-                )));
-                cmd.exec(&injector).await?;
-            }
-            None => {
-                eprintln!("{} not found", cmd);
-            }
-        };
-    }
-    Ok(())
-}
+use crate::{CompleteItem, Completion, CompletionArgs};
 
 #[derive(Properties, PartialEq, Clone, Serialize, Deserialize)]
 pub struct CommandItem {
@@ -41,11 +15,11 @@ pub struct CommandItem {
     alias: Vec<String>,
     desc: String,
     #[serde(skip)]
-    cmd: Option<SharedCommandDescriptor>,
+    cmd: Option<SharedCommandPtr>,
 }
 
-impl From<SharedCommandDescriptor> for CommandItem {
-    fn from(value: SharedCommandDescriptor) -> Self {
+impl From<SharedCommandPtr> for CommandItem {
+    fn from(value: SharedCommandPtr) -> Self {
         Self {
             name: value.get_name().into(),
             alias: value.get_aliases().clone(),
@@ -76,8 +50,7 @@ pub fn CommandItemView(props: &CommandItem) -> Html {
     }
 }
 
-#[allow(unused)]
-pub async fn exec_command_interactive(
+pub async fn exec_command(
     c: Res<Completion>,
     cmder: Res<Cmder>,
     injector: Injector,
@@ -88,9 +61,8 @@ pub async fn exec_command_interactive(
             .complete_read(
                 CompletionArgs::with_vec(
                     cmder
-                        .list_command()
-                        .into_iter()
-                        .map(|v| CommandItem::from(v))
+                        .iter()
+                        .map(|v| CommandItem::from(v.clone()))
                         .collect_vec(),
                 )
                 .prompt("Input command..."),
@@ -114,5 +86,15 @@ pub async fn exec_command_interactive(
     }
 
     command.cmd.unwrap().exec(&injector).await?;
+    Ok(())
+}
+
+pub async fn web_init(templator: Res<Templator>) -> Result<(), anyhow::Error> {
+    templator.add_template::<CommandItemView>();
+    Ok(())
+}
+
+pub async fn init(keybinding: Res<Keybinding>) -> Result<(), anyhow::Error> {
+    keybinding.define_global("M-A-x", exec_command).await?;
     Ok(())
 }

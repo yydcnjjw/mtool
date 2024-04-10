@@ -14,10 +14,9 @@ cfg_if::cfg_if! {
     }
 }
 
-use async_trait::async_trait;
 use cmd::open_pdf;
 use mapp::prelude::*;
-use mtool_cmder::{Cmder, CreateCommandDescriptor};
+use mtool_cmder::{Cmder, CommandBuilder};
 use mtool_wgui::{Builder, WGuiStage};
 pub use window::PdfViewerWindow;
 

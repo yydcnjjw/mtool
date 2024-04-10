@@ -20,6 +20,7 @@ members = [
   "modules/mtool-translate",
   "modules/mtool-interactive",
   "modules/mtool-wgui",
+  "modules/mtool-main-window",
   "modules/mtool-wgui/wmain",
   "modules/mtool-storage",
   "modules/mtool-proxy",

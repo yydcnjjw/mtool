@@ -1,0 +1,42 @@
+[package]
+name = "mtool-main-window"
+version.workspace = true
+authors.workspace = true
+edition.workspace = true
+links = "mtool-main-window"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+mapp = { path = "../../crates/mapp" }
+mtauri-sys = { path = "../../crates/mtauri-sys" }
+mkeybinding = { path = "../../crates/mkeybinding" }
+
+mtool-cmder = { path = "../mtool-cmder" }
+mtool-wgui = { path = "../mtool-wgui" }
+
+tokio = { workspace = true }
+futures = { workspace = true }
+anyhow = { workspace = true }
+serde = { workspace = true }
+serde_with = { workspace = true }
+serde-error = { workspace = true }
+serde-wasm-bindgen = { workspace = true }
+tracing = { workspace = true }
+cfg-if = { workspace = true }
+yew = { workspace = true, features = ["csr"] }
+js-sys = { workspace = true }
+wasm-bindgen = { workspace = true }
+
+[dependencies.web-sys]
+workspace = true
+features = [
+]
+
+[target.'cfg(not(target_family = "wasm"))'.dependencies]
+mtool-core = { path = "../mtool-core" }
+
+tauri = { workspace = true }
+
+[build-dependencies]
+tauri-plugin = { workspace = true }
