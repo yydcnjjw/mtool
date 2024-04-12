@@ -1,11 +1,12 @@
 use std::{ops::Deref, sync::Arc};
 
 use mapp::prelude::*;
-use mtool_wgui::WGuiWindow;
+use mtool_wgui::{WGuiWindow, WindowDataBind};
 use tauri::{AppHandle, WebviewUrl, WebviewWindowBuilder, Wry};
 use tokio::sync::oneshot;
 use tracing::warn;
 
+#[derive(Clone)]
 pub struct MtoolWindow<R: tauri::Runtime = Wry>(Arc<WGuiWindow<R>>);
 
 impl<R: tauri::Runtime> MtoolWindow<R> {
@@ -22,9 +23,8 @@ impl<R: tauri::Runtime> MtoolWindow<R> {
             .shadow(false)
             .build()
             .expect("create mtool window failed");
-        Ok(Self(
-            WGuiWindow::<R>::new(win, cfg!(not(debug_assertions))).await?,
-        ))
+
+        Ok(Self(WGuiWindow::<R>::new(win, cfg!(not(debug_assertions))).await?))
     }
 }
 
@@ -44,6 +44,7 @@ pub(crate) fn plugin_setup<R: tauri::Runtime>(
     tokio::spawn(async move {
         match MtoolWindow::<R>::new(app).await {
             Ok(win) => {
+                win.bind(win.clone());
                 let _ = win_tx.send(Res::new(win));
             }
             Err(e) => warn!("{:?}", e),

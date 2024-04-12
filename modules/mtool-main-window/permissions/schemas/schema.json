@@ -295,6 +295,20 @@
       "type": "string",
       "oneOf": [
         {
+          "description": "allow-exec-command -> Enables the exec_command command without any pre-configured scope.",
+          "type": "string",
+          "enum": [
+            "allow-exec-command"
+          ]
+        },
+        {
+          "description": "deny-exec-command -> Denies the exec_command command without any pre-configured scope.",
+          "type": "string",
+          "enum": [
+            "deny-exec-command"
+          ]
+        },
+        {
           "description": "allow-get-hotkeys -> Enables the get_hotkeys command without any pre-configured scope.",
           "type": "string",
           "enum": [

@@ -9,6 +9,7 @@
     "mtool-dict:default",
     "mtool-translate:default",
     "mtool-pdf:default",
+    "mtool-proxy:default",
     "path:default",
     "event:default",
     "window:default",

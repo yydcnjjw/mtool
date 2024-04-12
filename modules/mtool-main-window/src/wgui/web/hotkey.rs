@@ -4,6 +4,7 @@ use mapp::prelude::*;
 use mkeybinding::KeyMap;
 use mtool_cmder::LocalCmder;
 use mtool_wgui::{Keybinding, SharedAction};
+use serde::Serialize;
 use tracing::{debug, warn};
 use yew::platform::spawn_local;
 
@@ -23,6 +24,22 @@ pub async fn register(
         debug!("{}", command);
         if let Some(cmd) = cmder.get_command_with_name(&command) {
             cmd.exec_local(&injector).await?;
+        } else {
+            #[derive(Serialize)]
+            struct Args {
+                command: String,
+            }
+
+            spawn_local(async move {
+                if let Err(e) = mtauri_sys::invoke::<_, ()>(
+                    "plugin:mtool-main-window|exec_command",
+                    &Args { command },
+                )
+                .await
+                {
+                    warn!("{:}", e);
+                }
+            });
         }
 
         Ok(())
