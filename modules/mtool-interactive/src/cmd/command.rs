@@ -6,13 +6,25 @@ use yew::prelude::*;
 
 use crate::*;
 
-#[derive(Properties, PartialEq, Clone, Serialize, Deserialize)]
+#[derive(Properties, PartialEq, Eq, Clone, Serialize, Deserialize)]
 pub struct CommandItem {
     name: String,
     alias: Vec<String>,
     desc: String,
     #[serde(skip)]
     cmd: Option<SharedCommandPtr>,
+}
+
+impl PartialOrd for CommandItem {
+    fn partial_cmp(&self, other: &Self) -> Option<std::cmp::Ordering> {
+        self.name.partial_cmp(&other.name)
+    }
+}
+
+impl Ord for CommandItem {
+    fn cmp(&self, other: &Self) -> std::cmp::Ordering {
+        self.name.cmp(&other.name)
+    }
 }
 
 impl From<SharedCommandPtr> for CommandItem {
@@ -77,6 +89,7 @@ pub async fn init(keybinding: Res<Keybinding>) -> Result<(), anyhow::Error> {
                         cmder
                             .iter()
                             .map(|v| CommandItem::from(v.clone()))
+                            .sorted()
                             .collect_vec(),
                     )
                     .prompt("Input command..."),
