@@ -12,6 +12,7 @@ struct CommandItem {
     description: String,
 }
 
+#[allow(unused)]
 pub async fn list_command(cmder: Res<Cmder>) -> Result<(), anyhow::Error> {
     let output = cmder
         .iter()
@@ -27,6 +28,7 @@ pub async fn list_command(cmder: Res<Cmder>) -> Result<(), anyhow::Error> {
     Ok(())
 }
 
+#[allow(unused)]
 pub async fn exec_command(
     args: Res<ArgMatches>,
     cmder: Res<Cmder>,

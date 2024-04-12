@@ -3,10 +3,10 @@ cfg_if::cfg_if! {
         pub mod llama;
         pub mod openai;
         pub mod tencent;
+        use mapp::prelude::*;
     }
 }
 
-use mapp::prelude::*;
 use serde::{Deserialize, Serialize};
 use std::fmt;
 
@@ -46,6 +46,7 @@ impl fmt::Display for Backend {
     }
 }
 
+#[cfg(not(target_family = "wasm"))]
 #[async_trait]
 pub trait Translator {
     async fn text_translate(

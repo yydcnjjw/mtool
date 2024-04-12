@@ -49,6 +49,9 @@ mod ffi {
         pub async fn center(this: &WebviewWindow) -> Result<(), JsValue>;
 
         #[wasm_bindgen(method, catch)]
+        pub async fn hide(this: &WebviewWindow) -> Result<(), JsValue>;        
+
+        #[wasm_bindgen(method, catch)]
         pub async fn listen(
             this: &WebviewWindow,
             event: &str,
@@ -144,6 +147,10 @@ impl Window {
     pub async fn center(&self) -> Result<(), JsValue> {
         self.handle.center().await
     }
+
+    pub async fn hide(&self) -> Result<(), JsValue> {
+        self.handle.hide().await
+    }    
 
     pub async fn listen<Handler, T>(
         &self,

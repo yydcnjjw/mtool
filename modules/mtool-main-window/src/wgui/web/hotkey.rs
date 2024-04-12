@@ -4,7 +4,7 @@ use mapp::prelude::*;
 use mkeybinding::KeyMap;
 use mtool_cmder::LocalCmder;
 use mtool_wgui::{Keybinding, SharedAction};
-use tracing::warn;
+use tracing::{debug, warn};
 use yew::platform::spawn_local;
 
 use crate::wgui::generic::hotkey::{Hotkey, HotkeyMap};
@@ -18,8 +18,9 @@ pub async fn register(
         cmder: Res<LocalCmder>,
         injector: LocalInjector,
         command: String,
-        when: String,
+        _when: String,
     ) -> Result<(), anyhow::Error> {
+        debug!("{}", command);
         if let Some(cmd) = cmder.get_command_with_name(&command) {
             cmd.exec_local(&injector).await?;
         }

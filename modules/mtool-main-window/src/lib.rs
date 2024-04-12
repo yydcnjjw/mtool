@@ -2,6 +2,7 @@ pub mod wgui;
 
 use mapp::prelude::*;
 
+#[cfg(not(target_family = "wasm"))]
 pub fn module() -> ModuleGroup {
     wgui::module()
 }

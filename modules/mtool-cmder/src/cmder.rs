@@ -1,4 +1,4 @@
-use std::{collections::HashSet, ops::Deref, rc::Rc, sync::Arc};
+use std::{ops::Deref, rc::Rc, sync::Arc};
 
 use dashmap::DashSet;
 use mapp::prelude::*;
@@ -87,7 +87,7 @@ impl Deref for Cmder {
 }
 
 pub struct LocalCmder {
-    storage: HashSet<LocalCommandPtr>,
+    storage: DashSet<LocalCommandPtr>,
 }
 
 impl LocalCmder {
@@ -97,11 +97,11 @@ impl LocalCmder {
 
     pub fn new() -> Self {
         Self {
-            storage: HashSet::new(),
+            storage: DashSet::new(),
         }
     }
 
-    pub fn add_command<T, Executor>(&mut self, cmd: T) -> &Self
+    pub fn add_command<T, Executor>(&self, cmd: T) -> &Self
     where
         T: CommandBuilder<Box<Executor>> + 'static,
         Executor: crate::LocalCommandExecutor<LocalInjector> + 'static,
@@ -143,7 +143,7 @@ impl LocalCmder {
 }
 
 impl Deref for LocalCmder {
-    type Target = HashSet<LocalCommandPtr>;
+    type Target = DashSet<LocalCommandPtr>;
 
     fn deref(&self) -> &Self::Target {
         &self.storage

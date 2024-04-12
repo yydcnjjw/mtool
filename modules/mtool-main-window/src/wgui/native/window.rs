@@ -2,10 +2,7 @@ use std::{ops::Deref, sync::Arc};
 
 use mapp::prelude::*;
 use mtool_wgui::WGuiWindow;
-use tauri::{
-    plugin::{Builder, TauriPlugin},
-    AppHandle, WebviewUrl, WebviewWindowBuilder, Wry,
-};
+use tauri::{AppHandle, WebviewUrl, WebviewWindowBuilder, Wry};
 use tokio::sync::oneshot;
 use tracing::warn;
 
@@ -20,16 +17,13 @@ impl<R: tauri::Runtime> MtoolWindow<R> {
             .resizable(true)
             .skip_taskbar(true)
             .always_on_top(true)
-            .visible(true)
+            .visible(false)
             // TODO: disable shadow for transparent
             .shadow(false)
             .build()
             .expect("create mtool window failed");
         Ok(Self(
-            WGuiWindow::<R>::new(
-                win, true, // cfg!(not(debug_assertions))
-            )
-            .await?,
+            WGuiWindow::<R>::new(win, cfg!(not(debug_assertions))).await?,
         ))
     }
 }
@@ -42,21 +36,18 @@ impl<R: tauri::Runtime> Deref for MtoolWindow<R> {
     }
 }
 
-pub(crate) fn init<R: tauri::Runtime>(
+pub(crate) fn plugin_setup<R: tauri::Runtime>(
+    app: &AppHandle<R>,
     win_tx: oneshot::Sender<Res<MtoolWindow<R>>>,
-) -> TauriPlugin<R> {
-    Builder::<R>::new("mtool-main-window")
-        .setup(move |app, _| {
-            let app = app.clone();
-            tokio::spawn(async move {
-                match MtoolWindow::<R>::new(app).await {
-                    Ok(win) => {
-                        let _ = win_tx.send(Res::new(win));
-                    }
-                    Err(e) => warn!("{:?}", e),
-                }
-            });
-            Ok(())
-        })
-        .build()
+) -> Result<(), anyhow::Error> {
+    let app = app.clone();
+    tokio::spawn(async move {
+        match MtoolWindow::<R>::new(app).await {
+            Ok(win) => {
+                let _ = win_tx.send(Res::new(win));
+            }
+            Err(e) => warn!("{:?}", e),
+        }
+    });
+    Ok(())
 }
