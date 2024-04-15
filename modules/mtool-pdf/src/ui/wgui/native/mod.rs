@@ -33,6 +33,6 @@ impl AppModule for Module {
 async fn setup(builder: Res<Builder>, cmder: Res<Cmder>) -> Result<(), anyhow::Error> {
     builder.setup(|builder| Ok(builder.plugin(window::init())))?;
 
-    cmder.add_command(open_pdf.name("open_pdf"));
+    cmder.add_command(open_pdf.name("pdf.open").descrption("Open pdf from file"));
     Ok(())
 }

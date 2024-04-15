@@ -97,9 +97,10 @@ where
 }
 
 async fn add_rule(app: Res<ProxyService>, c: Res<Completion>) -> Result<(), anyhow::Error> {
-    with_notify_result("add proxy rule", || async move {
-        add_rule_inner(app, c).await
-    })
+    with_notify_result(
+        "add proxy rule",
+        || async move { add_rule_inner(app, c).await },
+    )
     .await
 }
 
@@ -112,11 +113,11 @@ async fn remove_rule(app: Res<ProxyService>, c: Res<Completion>) -> Result<(), a
 
 pub async fn register(cmder: Res<Cmder>) -> Result<(), anyhow::Error> {
     cmder
-        .add_command(add_rule.name("proxy.add_rule"))
+        .add_command(add_rule.name("proxy.add_rule").descrption("Add proxy rule"))
         .add_command(
             remove_rule
                 .name("proxy.remove_rule")
-                .descrption("remove proxy rule from file"),
+                .descrption("Remove proxy rule"),
         );
 
     Ok(())

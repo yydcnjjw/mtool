@@ -37,7 +37,7 @@ impl Component for App {
             keybinding: Keybinding::new(),
             root: NodeRef::default(),
             editor: NodeRef::default(),
-            backend: Backend::Openai,
+            backend: Backend::Tencent,
             source: LanguageType::Auto,
             target: LanguageType::En,
             result: Some(Ok("".into())),

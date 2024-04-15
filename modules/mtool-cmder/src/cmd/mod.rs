@@ -19,7 +19,7 @@ pub async fn list_command(cmder: Res<Cmder>) -> Result<(), anyhow::Error> {
         .map(|cmd| CommandItem {
             full_name: cmd.get_name().to_string(),
             aliases: cmd.get_aliases().join(",").to_string(),
-            description: cmd.get_desc().to_string(),
+            description: cmd.get_descrption().to_string(),
         })
         .collect_vec();
 

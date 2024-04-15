@@ -9,8 +9,7 @@ use crate::*;
 #[derive(Properties, PartialEq, Eq, Clone, Serialize, Deserialize)]
 pub struct CommandItem {
     name: String,
-    alias: Vec<String>,
-    desc: String,
+    descrption: String,
     #[serde(skip)]
     cmd: Option<SharedCommandPtr>,
 }
@@ -31,8 +30,7 @@ impl From<SharedCommandPtr> for CommandItem {
     fn from(value: SharedCommandPtr) -> Self {
         Self {
             name: value.get_name().into(),
-            alias: value.get_aliases().clone(),
-            desc: value.get_desc().into(),
+            descrption: value.get_descrption().into(),
             cmd: Some(value),
         }
     }
@@ -54,7 +52,7 @@ pub fn CommandItemView(props: &CommandItem) -> Html {
             "items-center",
             "h-10",
         )}>
-          <span class={classes!("align-middle")}>{ props.name.clone() }</span>
+          <span class={classes!("align-middle")} title={ props.name.clone() }>{ props.descrption.clone() }</span>
         </div>
     }
 }

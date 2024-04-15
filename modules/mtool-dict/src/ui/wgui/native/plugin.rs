@@ -2,13 +2,14 @@ use std::any::type_name;
 
 use anyhow::Context;
 use mapp::prelude::*;
-use mtool_wgui::{Builder, WGuiStage};
+use mtool_wgui::Builder;
 use tauri::{command, plugin::TauriPlugin, Manager, Runtime, State};
 use tracing::warn;
 
-use crate::dict::{ecdict, mdx, Backend};
-
-use super::app::QueryResult;
+use crate::{
+    dict::{ecdict, mdx, Backend},
+    ui::wgui::web::QueryResult,
+};
 
 #[command]
 async fn dict_query(
@@ -66,17 +67,7 @@ where
         .build()
 }
 
-pub struct Module;
-
-#[async_trait]
-impl AppModule for Module {
-    async fn init(&self, app: &mut AppContext) -> Result<(), anyhow::Error> {
-        app.schedule().add_once_task(WGuiStage::Setup, setup);
-        Ok(())
-    }
-}
-
-async fn setup(builder: Res<Builder>, injector: Injector) -> Result<(), anyhow::Error> {
+pub async fn setup(builder: Res<Builder>, injector: Injector) -> Result<(), anyhow::Error> {
     builder.setup(|builder| Ok(builder.plugin(init(injector))))?;
     Ok(())
 }

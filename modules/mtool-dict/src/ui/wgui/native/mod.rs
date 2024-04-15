@@ -1,58 +1,30 @@
-use clipboard::{ClipboardContext, ClipboardProvider};
-use mapp::{prelude::*, CreateOnceTaskDescriptor};
+mod cmd;
+mod plugin;
+
+use mapp::prelude::*;
 use mtool_cmder::{Cmder, CommandBuilder};
-use mtool_core::{
-    config::{is_startup_mode, StartupMode},
-    AppStage,
-};
-use mtool_main_window::wgui::native::MtoolWindow;
-use tauri::Manager;
+use mtool_wgui::WGuiStage;
 
 pub struct Module;
 
 #[async_trait]
 impl AppModule for Module {
     async fn init(&self, app: &mut AppContext) -> Result<(), anyhow::Error> {
-        app.schedule().add_once_task(
-            AppStage::Init,
-            init.cond(is_startup_mode(StartupMode::WGui)),
-        );
+        app.schedule()
+            .add_once_task(WGuiStage::Setup, plugin::setup)
+            .add_once_task(WGuiStage::AfterInit, init);
         Ok(())
     }
 }
 
 async fn init(cmder: Res<Cmder>) -> Result<(), anyhow::Error> {
-    cmder.add_command(
-        query_dict_with_clipboard
-            .name("query_dict_with_clipboard")
-            .descrption("query dict with clipboard"),
-    );
-    cmder.add_command(query_dict.name("query_dict").descrption("query dict"));
-    Ok(())
-}
+    cmder
+        .add_command(
+            cmd::query_dict_with_clipboard
+                .name("dict.query_with_clipboard")
+                .descrption("Query dict with clipboard"),
+        )
+        .add_command(cmd::query_dict.name("dict.query").descrption("Query dict"));
 
-async fn query_dict_with_clipboard(window: Res<MtoolWindow>) -> Result<(), anyhow::Error> {
-    let mut context: ClipboardContext = ClipboardProvider::new()
-        .map_err(|e| anyhow::anyhow!("Failed to get Clipboard: {}", e.to_string()))?;
-
-    let text = match context.get_contents() {
-        Ok(v) => v
-            .split_ascii_whitespace()
-            .next()
-            .map_or(String::default(), |v| v.to_string()),
-        Err(_) => "".into(),
-    };
-    window.emit_to(
-        window.label(),
-        "route",
-        format!("/dict/{}", text.to_lowercase()),
-    )?;
-    window.show()?;
-    Ok(())
-}
-
-async fn query_dict(window: Res<MtoolWindow>) -> Result<(), anyhow::Error> {
-    window.emit_to(window.label(), "route", format!("/dict/"))?;
-    window.show()?;
     Ok(())
 }

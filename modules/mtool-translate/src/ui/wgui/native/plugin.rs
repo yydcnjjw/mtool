@@ -1,26 +1,9 @@
-use anyhow::Context;
 use mapp::prelude::*;
-use mtool_wgui::{Builder, WGuiStage};
+use mtool_wgui::Builder;
 use tauri::{command, plugin::TauriPlugin, Manager, Runtime, State};
 use tracing::warn;
 
 use crate::translator::{llama, openai, tencent, Backend, LanguageType, Translator};
-
-#[derive(Default)]
-pub struct Module {}
-
-#[async_trait]
-impl AppModule for Module {
-    async fn init(&self, app: &mut AppContext) -> Result<(), anyhow::Error> {
-        app.schedule().add_once_task(WGuiStage::Setup, setup);
-        Ok(())
-    }
-}
-
-async fn setup(builder: Res<Builder>, injector: Injector) -> Result<(), anyhow::Error> {
-    builder.setup(|builder| Ok(builder.plugin(init(injector))))?;
-    Ok(())
-}
 
 async fn text_translate_inner(
     input: String,
@@ -46,16 +29,10 @@ async fn text_translate(
     backend: Backend,
     injector: State<'_, Injector>,
 ) -> Result<String, serde_error::Error> {
-    match text_translate_inner(input, source, target, backend, &injector)
+    text_translate_inner(input, source, target, backend, &injector)
         .await
-        .context("text translate")
-    {
-        Ok(result) => Ok(result),
-        Err(e) => {
-            warn!("{:?}", e);
-            Err(serde_error::Error::new(&*e))
-        }
-    }
+        .inspect_err(|e| warn!("{:?}", e))
+        .map_err(|e| serde_error::Error::new(&*e))
 }
 
 fn init<R>(injector: Injector) -> TauriPlugin<R>
@@ -69,4 +46,9 @@ where
         })
         .invoke_handler(tauri::generate_handler![text_translate])
         .build()
+}
+
+pub async fn setup(builder: Res<Builder>, injector: Injector) -> Result<(), anyhow::Error> {
+    builder.setup(|builder| Ok(builder.plugin(init(injector))))?;
+    Ok(())
 }

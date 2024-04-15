@@ -1,4 +1,4 @@
-mod window;
+mod plugin;
 
 use mtool_wgui::{Builder, WGuiStage};
 
@@ -22,6 +22,6 @@ async fn setup(
     service: Res<ProxyService>,
     injector: Injector,
 ) -> Result<(), anyhow::Error> {
-    builder.setup(|builder| Ok(builder.plugin(window::init(service, injector))))?;
+    builder.setup(|builder| Ok(builder.plugin(plugin::init(service, injector))))?;
     Ok(())
 }

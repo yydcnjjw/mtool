@@ -11,7 +11,7 @@ use tauri::{
 
 use crate::{
     service::ProxyService,
-    ui::wgui::stats::{Stats, TransferStats},
+    ui::wgui::generic::{Stats, TransferStats},
 };
 
 pub struct ProxyMonitorWindow(Arc<WGuiWindow>);
@@ -39,14 +39,6 @@ impl Deref for ProxyMonitorWindow {
     fn deref(&self) -> &Self::Target {
         &self.0
     }
-}
-
-pub async fn show_window(window: Res<ProxyMonitorWindow>) -> Result<(), anyhow::Error> {
-    window.show()
-}
-
-pub async fn hide_window(window: Res<ProxyMonitorWindow>) -> Result<(), anyhow::Error> {
-    window.hide()
 }
 
 #[command]

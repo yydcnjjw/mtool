@@ -146,7 +146,7 @@ impl<Executor> Command<Executor> {
         &self.alias
     }
 
-    pub fn get_desc(&self) -> &str {
+    pub fn get_descrption(&self) -> &str {
         self.descrption
             .as_ref()
             .map(|v| v.as_str())

@@ -26,7 +26,7 @@ enum Backend {
 struct Args {
     text: Option<String>,
     #[clap(short, long, value_enum)]
-    #[arg(default_value_t = Backend::Openai)]
+    #[arg(default_value_t = Backend::Tencent)]
     backend: Backend,
     #[clap(short, long)]
     interactive: bool,
@@ -121,21 +121,21 @@ pub async fn register_command(cmder: Res<Cmder>) -> Result<(), anyhow::Error> {
     cmder
         .add_command(
             text_translate_into_english
-                .name("text_translate_into_english")
+                .name("translate.text.auto_into_english")
                 .add_alias("te")
-                .descrption("Translate into English"),
+                .descrption("Translate text into English"),
         )
         .add_command(
             text_translate_into_chinese
-                .name("text_translate_into_chinese")
+                .name("translate.text.auto_into_chinese")
                 .add_alias("tz")
-                .descrption("Translate into Chinese"),
+                .descrption("Translate text into Chinese"),
         )
         .add_command(
             text_translate_into_japanese
-                .name("text_translate_into_japanese")
+                .name("translate.text.auto_into_japanese")
                 .add_alias("tj")
-                .descrption("Translate into Japanese"),
+                .descrption("Translate text into Japanese"),
         );
     Ok(())
 }

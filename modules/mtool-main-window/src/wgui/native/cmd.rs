@@ -9,6 +9,10 @@ async fn hide_window(win: Res<MtoolWindow>) -> Result<(), anyhow::Error> {
 }
 
 pub async fn init(cmder: Res<Cmder>) -> Result<(), anyhow::Error> {
-    cmder.add_command(hide_window.name("main-window.hide"));
+    cmder.add_command(
+        hide_window
+            .name("main-window.hide")
+            .descrption("Hide main window"),
+    );
     Ok(())
 }
