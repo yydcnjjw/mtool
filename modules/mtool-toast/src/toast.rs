@@ -38,7 +38,7 @@ pub async fn toast(args: Take<CommandArgs>) -> Result<(), anyhow::Error> {
     let args = match Args::try_parse_from(args.take()?.iter()) {
         Ok(args) => args,
         Err(e) => {
-            println!("{}", e.render());
+            e.print()?;
             return Ok(());
         }
     };
