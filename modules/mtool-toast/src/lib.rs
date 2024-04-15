@@ -23,6 +23,6 @@ impl AppModule for Module {
 }
 
 async fn register_command(cmder: Res<Cmder>) -> Result<(), anyhow::Error> {
-    cmder.add_command(toast.name("toast"));
+    cmder.add_command(toast.name("toast").descrption("Show toast"));
     Ok(())
 }

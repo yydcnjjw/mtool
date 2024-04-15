@@ -5,9 +5,9 @@ use tabled::{Table, Tabled};
 
 use crate::{Cmder, CommandArgs};
 
-#[derive(Tabled)]
+#[derive(Tabled, PartialEq, Eq, PartialOrd, Ord)]
 struct CommandItem {
-    full_name: String,
+    name: String,
     aliases: String,
     description: String,
 }
@@ -17,10 +17,11 @@ pub async fn list_command(cmder: Res<Cmder>) -> Result<(), anyhow::Error> {
     let output = cmder
         .iter()
         .map(|cmd| CommandItem {
-            full_name: cmd.get_name().to_string(),
+            name: cmd.get_name().to_string(),
             aliases: cmd.get_aliases().join(",").to_string(),
             description: cmd.get_descrption().to_string(),
         })
+        .sorted()
         .collect_vec();
 
     println!("{}", Table::new(output).to_string());

@@ -54,7 +54,12 @@ impl AppModule for Module {
         }
 
         async fn register_command(cmder: Res<Cmder>) -> Result<(), anyhow::Error> {
-            cmder.add_command(cmd::list_command.name("list_command").add_alias("lc"));
+            cmder.add_command(
+                cmd::list_command
+                    .name("list_command")
+                    .add_alias("lc")
+                    .descrption("List commands"),
+            );
             Ok(())
         }
 
