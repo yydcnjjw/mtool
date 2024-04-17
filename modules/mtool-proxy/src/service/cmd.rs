@@ -92,7 +92,7 @@ where
         },
     }
 
-    notify.show().context("Failed to show notify")?;
+    notify.show_async().await.context("Failed to show notify")?;
     Ok(())
 }
 
