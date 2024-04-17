@@ -4699,7 +4699,6 @@ dependencies = [
  "serde",
  "serde-error",
  "serde-wasm-bindgen 0.6.5",
- "serde_with",
  "tauri",
  "tauri-plugin",
  "tokio",

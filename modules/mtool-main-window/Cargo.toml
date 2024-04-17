@@ -19,7 +19,6 @@ tokio = { workspace = true }
 futures = { workspace = true }
 anyhow = { workspace = true }
 serde = { workspace = true }
-serde_with = { workspace = true }
 serde-error = { workspace = true }
 serde-wasm-bindgen = { workspace = true }
 tracing = { workspace = true }
