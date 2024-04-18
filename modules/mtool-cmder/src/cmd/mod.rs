@@ -1,7 +1,7 @@
 use clap::ArgMatches;
 use itertools::Itertools;
 use mapp::prelude::*;
-use tabled::{Table, Tabled};
+use tabled::{settings::Style, Table, Tabled};
 
 use crate::{Cmder, CommandArgs};
 
@@ -24,7 +24,7 @@ pub async fn list_command(cmder: Res<Cmder>) -> Result<(), anyhow::Error> {
         .sorted()
         .collect_vec();
 
-    println!("{}", Table::new(output).to_string());
+    println!("{}", Table::new(output).with(Style::modern()));
 
     Ok(())
 }
