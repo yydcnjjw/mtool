@@ -19,8 +19,9 @@ impl AppLocalModule for Module {
 #[async_trait]
 impl AppModule for Module {
     async fn init(&self, ctx: &mut AppContext) -> Result<(), anyhow::Error> {
-        use mtool_core::AppStage;
-        ctx.schedule().add_once_task(AppStage::Init, command::init);
+        use mtool_wgui::WGuiStage;
+        ctx.schedule()
+            .add_once_task(WGuiStage::AfterInit, command::init);
         Ok(())
     }
 }

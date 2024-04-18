@@ -64,6 +64,10 @@ pub async fn toast(args: Take<CommandArgs>) -> Result<(), anyhow::Error> {
 
     notify.timeout(Timeout::Milliseconds(args.timeout));
 
+    #[cfg(windows)]
+    notify.show().context("Failed to show notify")?;
+
+    #[cfg(unix)]
     notify.show_async().await.context("Failed to show notify")?;
 
     Ok(())

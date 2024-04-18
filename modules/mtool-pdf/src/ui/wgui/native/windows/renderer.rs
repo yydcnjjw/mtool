@@ -3,7 +3,7 @@ use std::{mem::size_of, sync::Arc};
 use tauri::PhysicalSize;
 use tokio::sync::oneshot;
 use windows::{
-    core::ComInterface, Foundation::Numerics::{Vector2, Vector3}, System::DispatcherQueueController, Win32::{
+    core::Interface, Foundation::Numerics::{Vector2, Vector3}, System::DispatcherQueueController, Win32::{
         Foundation::BOOL,
         Graphics::Dxgi::IDXGISwapChain1,
         System::WinRT::{

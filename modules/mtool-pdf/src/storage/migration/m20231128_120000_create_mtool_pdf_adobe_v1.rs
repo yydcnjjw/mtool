@@ -1,4 +1,3 @@
-use sea_orm::{EntityName, Schema};
 use sea_orm_migration::prelude::*;
 use mapp::prelude::*;
 

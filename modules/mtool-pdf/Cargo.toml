@@ -72,11 +72,36 @@ skia-safe = { version = "0.71", features = ["gpu", "gl"] }
 
 
 [target.'cfg(target_os = "windows")'.dependencies]
-webview2-com = "*"
+webview2-com = "0.29"
 skia-safe = { version = "0.71", features = ["gpu", "d3d"] }
 
 [target.'cfg(target_os = "windows")'.dependencies.windows]
 workspace = true
+features = [
+  "System",
+  "implement",
+  "Win32_UI_Controls",
+  "Win32_UI_Input_KeyboardAndMouse",
+  "Win32_UI_Shell",
+  "Win32_UI_WindowsAndMessaging",
+  "Win32_Security",
+  "Win32_Foundation",
+  "Win32_System_WinRT",
+  "Win32_System_WinRT_Composition",
+  "Win32_System_Threading",
+  "Foundation_Numerics",
+  "UI_Composition",
+  "UI_Composition_Desktop",
+  "Win32_Graphics_Gdi",
+  "Win32_Graphics_Dxgi",
+  "Win32_Graphics_Dxgi_Common",
+  "Win32_Graphics_Direct3D",
+  "Win32_Graphics_Direct3D12"
+]
+
+[target.'cfg(target_os = "windows")'.dependencies.windows52]
+package = "windows"
+version = "0.52"
 features = [
   "System",
   "implement",

@@ -1,11 +1,18 @@
 use anyhow::Context;
 use skia_safe::{
-    gpu::{self, d3d, DirectContext},
+    gpu::{
+        self,
+        d3d::{self, ID3D12CommandQueue, ID3D12Device, ID3D12Resource, IDXGIAdapter1},
+        DirectContext,
+    },
     Surface,
 };
 use tauri::PhysicalSize;
-use windows::Win32::Graphics::{
-    Direct3D12::D3D12_RESOURCE_STATE_PRESENT, Dxgi::Common::DXGI_FORMAT_B8G8R8A8_UNORM,
+use windows52::{
+    core::Interface,
+    Win32::Graphics::{
+        Direct3D12::D3D12_RESOURCE_STATE_PRESENT, Dxgi::Common::DXGI_FORMAT_B8G8R8A8_UNORM,
+    },
 };
 
 use super::d3d12_visual::D3d12Context;
@@ -20,9 +27,18 @@ impl SkiaContext {
         let mut context = unsafe {
             DirectContext::new_d3d(
                 &d3d::BackendContext {
-                    adapter: d3d_context.adapter.clone(),
-                    device: d3d_context.device.clone(),
-                    queue: d3d_context.queue.clone(),
+                    adapter: IDXGIAdapter1::from_raw({
+                        use windows::core::Interface;
+                        d3d_context.adapter.clone().into_raw()
+                    }),
+                    device: ID3D12Device::from_raw({
+                        use windows::core::Interface;
+                        d3d_context.device.clone().into_raw()
+                    }),
+                    queue: ID3D12CommandQueue::from_raw({
+                        use windows::core::Interface;
+                        d3d_context.queue.clone().into_raw()
+                    }),
                     memory_allocator: None,
                     protected_context: gpu::Protected::No,
                 },
@@ -56,7 +72,12 @@ impl SkiaContext {
             let buffer = d3d_context.get_frame_buffer(i as usize)?;
 
             let info = d3d::TextureResourceInfo {
-                resource: buffer.clone(),
+                resource: unsafe {
+                    ID3D12Resource::from_raw({
+                        use windows::core::Interface;
+                        buffer.clone().into_raw()
+                    })
+                },
                 alloc: None,
                 resource_state: D3D12_RESOURCE_STATE_PRESENT,
                 format: DXGI_FORMAT_B8G8R8A8_UNORM,

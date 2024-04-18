@@ -12,7 +12,7 @@ use winapi::um::{
     winuser::{GET_KEYSTATE_WPARAM, GET_WHEEL_DELTA_WPARAM, GET_XBUTTON_WPARAM},
 };
 use windows::{
-    core::ComInterface,
+    core::Interface,
     Foundation::Numerics::Vector2,
     Win32::{
         Foundation::{HWND, LPARAM, LRESULT, POINT, RECT, WPARAM},
