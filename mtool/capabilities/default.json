@@ -15,6 +15,7 @@
     "window:default",
     "window:allow-set-size",
     "window:allow-set-position",
+    "window:allow-center",
     "window:allow-hide",
     "webview:default",
     "app:default",
