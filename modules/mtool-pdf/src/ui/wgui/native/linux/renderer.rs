@@ -95,6 +95,7 @@ impl Renderer {
         let overlay = Overlay::new();
         overlay.add_overlay(&glarea);
         overlay.add_overlay(&webview);
+        webview.set_opacity(0.);
         win.add(&overlay);
 
         Ok(glarea)
