@@ -59,11 +59,11 @@ strum = { version = "*", features = ["derive"] }
 enum_dispatch = "*"
 domain_matcher = { git = "https://github.com/Qv2ray/DomainMatcher" }
 warp = "*"
-rustls = { version = "*" }
+rustls = { version = "*", default-features = false, features = ["ring", "logging", "std", "tls12"] }
 
 rustls-pemfile = "*"
 rustls-pki-types = "*"
-tokio-rustls = "*"
+tokio-rustls = { version = "*", default-features = false, features = ["ring", "logging", "tls12"] }
 tokio-util = { version = "*", features = ["compat"] }
 tokio_kcp = "*"
 
