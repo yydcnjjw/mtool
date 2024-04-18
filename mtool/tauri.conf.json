@@ -4,6 +4,7 @@
     "frontendDist": "./../modules/mtool-wgui/wmain/dist"
   },
   "productName": "mtool",
+  "identifier": "com.yydcnjjw.mtool",
   "version": "0.1.0",
   "app": {
     "withGlobalTauri": true,
