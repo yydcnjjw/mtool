@@ -8,7 +8,7 @@ edition.workspace = true
 
 [dependencies]
 mapp = { path = "../../crates/mapp" }
-msysev = { path = "../../crates/msysev" } # for event module
+msysev = { path = "../../crates/msysev", features = ["event-loop"] } # for event module
 mkeybinding = { path = "../../crates/mkeybinding" } # for keybinding module
 mtool-core = { path = "../mtool-core" }
 
