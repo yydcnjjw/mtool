@@ -2,7 +2,7 @@ use std::{collections::HashMap, fmt::Debug};
 
 use anyhow::Context;
 
-use crate::kbd::{self, KeyCombine, KeySequence, ToKeySequence};
+use crate::kbd::{KeyCombine, KeySequence, ToKeySequence};
 
 use thiserror::Error;
 
@@ -15,8 +15,6 @@ pub enum Error {
         key: KeySequence,
         prefix: KeySequence,
     },
-    #[error("{0}")]
-    Kbd(#[from] kbd::Error),
     #[error(transparent)]
     Other(#[from] anyhow::Error),
 }

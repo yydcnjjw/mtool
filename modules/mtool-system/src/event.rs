@@ -1,14 +1,10 @@
 use mapp::prelude::*;
+use msysev::*;
 use serde::Deserialize;
-use tokio::{
-    sync::broadcast::{self, Receiver, Sender},
-    task::JoinHandle,
-};
+use tokio::sync::broadcast::{self, Receiver, Sender};
 use tracing::warn;
 
 use mtool_core::{AppStage, ConfigStore};
-
-pub use msysev::Event;
 
 pub struct Module;
 
@@ -17,7 +13,7 @@ impl AppModule for Module {
     async fn init(&self, app: &mut AppContext) -> Result<(), anyhow::Error> {
         app.injector().construct_once(Observer::new);
 
-        app.schedule().add_once_task(AppStage::Run, wait_for_exit);
+        app.schedule().add_once_task(AppStage::Run, run_event_loop);
         Ok(())
     }
 }
@@ -34,19 +30,21 @@ struct Config {
 
 pub struct Observer {
     tx: Sender<Event>,
+    exit_signal: ExitSignal,
 }
-
-struct Worker(JoinHandle<Result<(), anyhow::Error>>);
 
 impl Observer {
     async fn new(injector: Injector, cs: Res<ConfigStore>) -> Result<Res<Self>, anyhow::Error> {
         let config = cs.get::<Config>("system.event").await?;
 
-        let (tx, worker) = run_loop(config.channel_size);
+        let (tx, _) = broadcast::channel(config.channel_size);
 
-        injector.insert(Take::new(worker));
+        let event_loop = EventLoop::new()?;
+        let exit_signal = event_loop.exit_signal();
 
-        Ok(Res::new(Self { tx }))
+        injector.insert(Take::new(event_loop));
+
+        Ok(Res::new(Self { tx, exit_signal }))
     }
 
     pub fn subscribe(&self) -> Receiver<Event> {
@@ -59,33 +57,30 @@ impl Observer {
     }
 
     pub fn close(&self) -> Result<(), anyhow::Error> {
-        msysev::quit()
+        self.exit_signal.exit();
+        Ok(())
     }
 }
 
-fn run_loop(size: usize) -> (Sender<Event>, Worker) {
-    let (tx, _) = broadcast::channel(size);
-    let tx_ = tx.clone();
-
-    let worker = tokio::task::spawn_blocking(move || {
-        msysev::run_loop(move |e| {
-            if let Err(e) = tx.send(e) {
-                warn!(
-                    "send system event error: {}, receiver count {}",
-                    e,
-                    tx.receiver_count()
-                );
-            }
-            Ok(())
-        })
-    });
-
-    (tx_, Worker(worker))
-}
-
-async fn wait_for_exit(worker: TakeOpt<Worker>) -> Result<(), anyhow::Error> {
-    if let Some(worker) = worker.unwrap() {
-        worker.take()?.0.await??;
+async fn run_event_loop(
+    event_loop: TakeOpt<EventLoop>,
+    observer: Res<Observer>,
+) -> Result<(), anyhow::Error> {
+    let tx = observer.tx.clone();
+    if let Some(event_loop) = event_loop.unwrap() {
+        event_loop
+            .take()?
+            .run(move |ev| -> ControlFlow {
+                if let Err(e) = tx.send(ev) {
+                    warn!(
+                        "send system event error: {}, receiver count {}",
+                        e,
+                        tx.receiver_count()
+                    );
+                }
+                ControlFlow::Continue(())
+            })
+            .await?
     }
     Ok(())
 }

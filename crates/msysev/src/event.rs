@@ -1,45 +1,23 @@
-use crate::keydef::{KeyCode, KeyModifier};
+use mime::Mime;
 
-#[derive(Debug, Clone)]
-pub enum KeyAction {
-    Press,
-    Release,
-}
+use crate::keyboard::*;
 
 #[derive(Debug, Clone)]
 pub enum Event {
     Key(KeyEvent),
+    Selection(SelectionEvent),
+    Exit,
 }
 
 #[derive(Debug, Clone)]
 pub struct KeyEvent {
-    pub scancode: u32,
-    pub keycode: KeyCode,
-    pub modifiers: KeyModifier,
-    pub action: KeyAction,
+    pub key: PhysicalKey,
+    pub modifiers: ModifierState,
+    pub state: KeyState,
 }
 
-pub type BoxedEventCallback = Box<dyn Fn(Event) -> Result<(), anyhow::Error> + Send + Sync>;
-
-pub fn run_loop<F>(#[allow(unused)] cb: F) -> Result<(), anyhow::Error>
-where
-    F: Fn(Event) -> Result<(), anyhow::Error> + Send + Sync + 'static,
-{
-    #[cfg(target_os = "windows")]
-    crate::windows::event::run_loop(Box::new(cb))?;
-
-    #[cfg(target_os = "linux")]
-    crate::linux::event::run_loop(Box::new(cb))?;
-
-    Ok(())
-}
-
-pub fn quit() -> Result<(), anyhow::Error> {
-    #[cfg(target_os = "windows")]
-    crate::windows::event::quit()?;
-
-    #[cfg(target_os = "linux")]
-    crate::linux::event::quit()?;
-
-    Ok(())
+#[derive(Debug, Clone)]
+pub struct SelectionEvent {
+    pub data: Vec<u8>,
+    pub mime_type: Mime,
 }

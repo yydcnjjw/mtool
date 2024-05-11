@@ -1,11 +1,8 @@
 use std::{cell::RefCell, future::Future, rc::Rc};
 
-use mapp::prelude::*;
 use js_sys::Function;
-use msysev::{
-    keydef::{KeyCode, KeyModifier},
-    KeyAction, KeyEvent,
-};
+use mapp::prelude::*;
+use msysev::*;
 use wasm_bindgen::{closure::Closure, JsCast};
 use web_sys::{window, KeyboardEvent};
 use yew::platform::spawn_local;
@@ -83,12 +80,14 @@ impl Keybinding {
         {
             let keybinding = self.clone();
             let a = Closure::<dyn FnMut(_)>::new(move |e: KeyboardEvent| {
-                let keyev = into_key_event(e.clone(), KeyAction::Press);
-                if keybinding.dispatch(KeyCombine {
-                    key: keyev.keycode,
-                    mods: keyev.modifiers,
-                }) {
-                    e.prevent_default();
+                let keyev = into_key_event(e.clone(), KeyState::Press);
+                if let PhysicalKey::Code(key) = keyev.key {
+                    if keybinding.dispatch(KeyCombine {
+                        key,
+                        mods: keyev.modifiers,
+                    }) {
+                        e.prevent_default();
+                    }
                 }
             });
 
@@ -136,97 +135,166 @@ impl Keybinding {
     }
 }
 
-pub fn into_key_event(e: KeyboardEvent, action: KeyAction) -> KeyEvent {
-    let scancode = e.key_code();
-
-    let keycode = match e.code().as_str() {
-        "Backquote" => KeyCode::GraveAccent,
-        "Digit1" => KeyCode::Num1,
-        "Digit2" => KeyCode::Num2,
-        "Digit3" => KeyCode::Num3,
-        "Digit4" => KeyCode::Num4,
-        "Digit5" => KeyCode::Num5,
-        "Digit6" => KeyCode::Num6,
-        "Digit7" => KeyCode::Num7,
-        "Digit8" => KeyCode::Num8,
-        "Digit9" => KeyCode::Num9,
-        "Digit0" => KeyCode::Num0,
-        "Minus" => KeyCode::Minus, // -
-        "Equal" => KeyCode::Equal, // =
-        "Backspace" => KeyCode::BackSpace,
-        "Tab" => KeyCode::Tab,
-        "KeyQ" => KeyCode::Q,
-        "KeyW" => KeyCode::W,
-        "KeyE" => KeyCode::E,
-        "KeyR" => KeyCode::R,
-        "KeyT" => KeyCode::T,
-        "KeyY" => KeyCode::Y,
-        "KeyU" => KeyCode::U,
-        "KeyI" => KeyCode::I,
-        "KeyO" => KeyCode::O,
-        "KeyP" => KeyCode::P,
-        "BracketLeft" => KeyCode::BracketLeft,   // [
-        "BracketRight" => KeyCode::BracketRight, // ]
-        "Backslash" => KeyCode::Backslash,       // \
+fn from_key_code_attribute_value(kcav: &str) -> PhysicalKey {
+    PhysicalKey::Code(match kcav {
+        "Backquote" => KeyCode::Backquote,
+        "Backslash" => KeyCode::Backslash,
+        "BracketLeft" => KeyCode::BracketLeft,
+        "BracketRight" => KeyCode::BracketRight,
+        "Comma" => KeyCode::Comma,
+        "Digit0" => KeyCode::Digit0,
+        "Digit1" => KeyCode::Digit1,
+        "Digit2" => KeyCode::Digit2,
+        "Digit3" => KeyCode::Digit3,
+        "Digit4" => KeyCode::Digit4,
+        "Digit5" => KeyCode::Digit5,
+        "Digit6" => KeyCode::Digit6,
+        "Digit7" => KeyCode::Digit7,
+        "Digit8" => KeyCode::Digit8,
+        "Digit9" => KeyCode::Digit9,
+        "Equal" => KeyCode::Equal,
+        "IntlBackslash" => KeyCode::IntlBackslash,
+        "IntlRo" => KeyCode::IntlRo,
+        "IntlYen" => KeyCode::IntlYen,
+        "KeyA" => KeyCode::KeyA,
+        "KeyB" => KeyCode::KeyB,
+        "KeyC" => KeyCode::KeyC,
+        "KeyD" => KeyCode::KeyD,
+        "KeyE" => KeyCode::KeyE,
+        "KeyF" => KeyCode::KeyF,
+        "KeyG" => KeyCode::KeyG,
+        "KeyH" => KeyCode::KeyH,
+        "KeyI" => KeyCode::KeyI,
+        "KeyJ" => KeyCode::KeyJ,
+        "KeyK" => KeyCode::KeyK,
+        "KeyL" => KeyCode::KeyL,
+        "KeyM" => KeyCode::KeyM,
+        "KeyN" => KeyCode::KeyN,
+        "KeyO" => KeyCode::KeyO,
+        "KeyP" => KeyCode::KeyP,
+        "KeyQ" => KeyCode::KeyQ,
+        "KeyR" => KeyCode::KeyR,
+        "KeyS" => KeyCode::KeyS,
+        "KeyT" => KeyCode::KeyT,
+        "KeyU" => KeyCode::KeyU,
+        "KeyV" => KeyCode::KeyV,
+        "KeyW" => KeyCode::KeyW,
+        "KeyX" => KeyCode::KeyX,
+        "KeyY" => KeyCode::KeyY,
+        "KeyZ" => KeyCode::KeyZ,
+        "Minus" => KeyCode::Minus,
+        "Period" => KeyCode::Period,
+        "Quote" => KeyCode::Quote,
+        "Semicolon" => KeyCode::Semicolon,
+        "Slash" => KeyCode::Slash,
+        "AltLeft" => KeyCode::AltLeft,
+        "AltRight" => KeyCode::AltRight,
+        "Backspace" => KeyCode::Backspace,
         "CapsLock" => KeyCode::CapsLock,
-        "KeyA" => KeyCode::A,
-        "KeyS" => KeyCode::S,
-        "KeyD" => KeyCode::D,
-        "KeyF" => KeyCode::F,
-        "KeyG" => KeyCode::G,
-        "KeyH" => KeyCode::H,
-        "KeyJ" => KeyCode::J,
-        "KeyK" => KeyCode::K,
-        "KeyL" => KeyCode::L,
-        "Semicolon" => KeyCode::Semicolon, // ;
-        "Quoto" => KeyCode::Apostrophe,    // '
-        "Enter" => KeyCode::Return,
-        "ShiftLeft" => KeyCode::LeftShift,
-        "KeyZ" => KeyCode::Z,
-        "KeyX" => KeyCode::X,
-        "KeyC" => KeyCode::C,
-        "KeyV" => KeyCode::V,
-        "KeyB" => KeyCode::B,
-        "KeyN" => KeyCode::N,
-        "KeyM" => KeyCode::M,
-        "Comma" => KeyCode::Comma,   // ,
-        "Period" => KeyCode::Period, // .
-        "Slash" => KeyCode::Slash,   // /
-        "ShiftRight" => KeyCode::RightShift,
-        "ControlLeft" => KeyCode::LeftControl,
-        "AltLeft" => KeyCode::LeftAlt,
-        "Space" => KeyCode::Spacebar,
-        "AltRight" => KeyCode::RightAlt,
-        "ControlRight" => KeyCode::RightControl,
-        "Insert" => KeyCode::Insert,
+        "ContextMenu" => KeyCode::ContextMenu,
+        "ControlLeft" => KeyCode::ControlLeft,
+        "ControlRight" => KeyCode::ControlRight,
+        "Enter" => KeyCode::Enter,
+        "MetaLeft" => KeyCode::SuperLeft,
+        "MetaRight" => KeyCode::SuperRight,
+        "ShiftLeft" => KeyCode::ShiftLeft,
+        "ShiftRight" => KeyCode::ShiftRight,
+        "Space" => KeyCode::Space,
+        "Tab" => KeyCode::Tab,
+        "Convert" => KeyCode::Convert,
+        "KanaMode" => KeyCode::KanaMode,
+        "Lang1" => KeyCode::Lang1,
+        "Lang2" => KeyCode::Lang2,
+        "Lang3" => KeyCode::Lang3,
+        "Lang4" => KeyCode::Lang4,
+        "Lang5" => KeyCode::Lang5,
+        "NonConvert" => KeyCode::NonConvert,
         "Delete" => KeyCode::Delete,
-        "ArrowLeft" => KeyCode::LeftArrow,
-        "Home" => KeyCode::Home,
         "End" => KeyCode::End,
-        "ArrowUp" => KeyCode::UpArrow,
-        "ArrowDown" => KeyCode::DownArrow,
-        "PageUp" => KeyCode::PageUp,
+        "Help" => KeyCode::Help,
+        "Home" => KeyCode::Home,
+        "Insert" => KeyCode::Insert,
         "PageDown" => KeyCode::PageDown,
-        "ArrowRight" => KeyCode::RightArrow,
+        "PageUp" => KeyCode::PageUp,
+        "ArrowDown" => KeyCode::ArrowDown,
+        "ArrowLeft" => KeyCode::ArrowLeft,
+        "ArrowRight" => KeyCode::ArrowRight,
+        "ArrowUp" => KeyCode::ArrowUp,
         "NumLock" => KeyCode::NumLock,
-        "Numpad7" => KeyCode::Keypad7,
-        "Numpad4" => KeyCode::Keypad4,
-        "Numpad1" => KeyCode::Keypad1,
-        "NumpadDivide" => KeyCode::Divide, // /
-        "Numpad8" => KeyCode::Keypad8,
-        "Numpad5" => KeyCode::Keypad5,
-        "Numpad2" => KeyCode::Keypad2,
-        "Numpad0" => KeyCode::Keypad0,
-        "NumpadMultiply" => KeyCode::Multiply,
-        "Numpad9" => KeyCode::Keypad9,
-        "Numpad6" => KeyCode::Keypad6,
-        "Numpad3" => KeyCode::Keypad3,
-        "NumpadPeriod" => KeyCode::KeypadPeriod,
-        "NumpadSubtract" => KeyCode::Subtract,
-        "NumpadAdd" => KeyCode::Add,
-        "NumpadComma" => KeyCode::KeypadComma,
-        "NumpadEnter" => KeyCode::KeypadEnter,
+        "Numpad0" => KeyCode::Numpad0,
+        "Numpad1" => KeyCode::Numpad1,
+        "Numpad2" => KeyCode::Numpad2,
+        "Numpad3" => KeyCode::Numpad3,
+        "Numpad4" => KeyCode::Numpad4,
+        "Numpad5" => KeyCode::Numpad5,
+        "Numpad6" => KeyCode::Numpad6,
+        "Numpad7" => KeyCode::Numpad7,
+        "Numpad8" => KeyCode::Numpad8,
+        "Numpad9" => KeyCode::Numpad9,
+        "NumpadAdd" => KeyCode::NumpadAdd,
+        "NumpadBackspace" => KeyCode::NumpadBackspace,
+        "NumpadClear" => KeyCode::NumpadClear,
+        "NumpadClearEntry" => KeyCode::NumpadClearEntry,
+        "NumpadComma" => KeyCode::NumpadComma,
+        "NumpadDecimal" => KeyCode::NumpadDecimal,
+        "NumpadDivide" => KeyCode::NumpadDivide,
+        "NumpadEnter" => KeyCode::NumpadEnter,
+        "NumpadEqual" => KeyCode::NumpadEqual,
+        "NumpadHash" => KeyCode::NumpadHash,
+        "NumpadMemoryAdd" => KeyCode::NumpadMemoryAdd,
+        "NumpadMemoryClear" => KeyCode::NumpadMemoryClear,
+        "NumpadMemoryRecall" => KeyCode::NumpadMemoryRecall,
+        "NumpadMemoryStore" => KeyCode::NumpadMemoryStore,
+        "NumpadMemorySubtract" => KeyCode::NumpadMemorySubtract,
+        "NumpadMultiply" => KeyCode::NumpadMultiply,
+        "NumpadParenLeft" => KeyCode::NumpadParenLeft,
+        "NumpadParenRight" => KeyCode::NumpadParenRight,
+        "NumpadStar" => KeyCode::NumpadStar,
+        "NumpadSubtract" => KeyCode::NumpadSubtract,
         "Escape" => KeyCode::Escape,
+        "Fn" => KeyCode::Fn,
+        "FnLock" => KeyCode::FnLock,
+        "PrintScreen" => KeyCode::PrintScreen,
+        "ScrollLock" => KeyCode::ScrollLock,
+        "Pause" => KeyCode::Pause,
+        "BrowserBack" => KeyCode::BrowserBack,
+        "BrowserFavorites" => KeyCode::BrowserFavorites,
+        "BrowserForward" => KeyCode::BrowserForward,
+        "BrowserHome" => KeyCode::BrowserHome,
+        "BrowserRefresh" => KeyCode::BrowserRefresh,
+        "BrowserSearch" => KeyCode::BrowserSearch,
+        "BrowserStop" => KeyCode::BrowserStop,
+        "Eject" => KeyCode::Eject,
+        "LaunchApp1" => KeyCode::LaunchApp1,
+        "LaunchApp2" => KeyCode::LaunchApp2,
+        "LaunchMail" => KeyCode::LaunchMail,
+        "MediaPlayPause" => KeyCode::MediaPlayPause,
+        "MediaSelect" => KeyCode::MediaSelect,
+        "MediaStop" => KeyCode::MediaStop,
+        "MediaTrackNext" => KeyCode::MediaTrackNext,
+        "MediaTrackPrevious" => KeyCode::MediaTrackPrevious,
+        "Power" => KeyCode::Power,
+        "Sleep" => KeyCode::Sleep,
+        "AudioVolumeDown" => KeyCode::AudioVolumeDown,
+        "AudioVolumeMute" => KeyCode::AudioVolumeMute,
+        "AudioVolumeUp" => KeyCode::AudioVolumeUp,
+        "WakeUp" => KeyCode::WakeUp,
+        "Hyper" => KeyCode::Hyper,
+        "Turbo" => KeyCode::Turbo,
+        "Abort" => KeyCode::Abort,
+        "Resume" => KeyCode::Resume,
+        "Suspend" => KeyCode::Suspend,
+        "Again" => KeyCode::Again,
+        "Copy" => KeyCode::Copy,
+        "Cut" => KeyCode::Cut,
+        "Find" => KeyCode::Find,
+        "Open" => KeyCode::Open,
+        "Paste" => KeyCode::Paste,
+        "Props" => KeyCode::Props,
+        "Select" => KeyCode::Select,
+        "Undo" => KeyCode::Undo,
+        "Hiragana" => KeyCode::Hiragana,
+        "Katakana" => KeyCode::Katakana,
         "F1" => KeyCode::F1,
         "F2" => KeyCode::F2,
         "F3" => KeyCode::F3,
@@ -239,45 +307,64 @@ pub fn into_key_event(e: KeyboardEvent, action: KeyAction) -> KeyEvent {
         "F10" => KeyCode::F10,
         "F11" => KeyCode::F11,
         "F12" => KeyCode::F12,
-        "PrintScreen" => KeyCode::PrintScreen,
-        "ScrollLock" => KeyCode::ScrollLock,
-        "Pause" => KeyCode::Pause,
-        "MetaLeft" => KeyCode::LeftGUI,        // super_L
-        "MetaRight" => KeyCode::RightGUI,      // super_R
-        "ContextMenu" => KeyCode::Application, // menu
+        "F13" => KeyCode::F13,
+        "F14" => KeyCode::F14,
+        "F15" => KeyCode::F15,
+        "F16" => KeyCode::F16,
+        "F17" => KeyCode::F17,
+        "F18" => KeyCode::F18,
+        "F19" => KeyCode::F19,
+        "F20" => KeyCode::F20,
+        "F21" => KeyCode::F21,
+        "F22" => KeyCode::F22,
+        "F23" => KeyCode::F23,
+        "F24" => KeyCode::F24,
+        "F25" => KeyCode::F25,
+        "F26" => KeyCode::F26,
+        "F27" => KeyCode::F27,
+        "F28" => KeyCode::F28,
+        "F29" => KeyCode::F29,
+        "F30" => KeyCode::F30,
+        "F31" => KeyCode::F31,
+        "F32" => KeyCode::F32,
+        "F33" => KeyCode::F33,
+        "F34" => KeyCode::F34,
+        "F35" => KeyCode::F35,
+        _ => return PhysicalKey::Unidentified(NativeKeyCode::Unidentified),
+    })
+}
 
-        _ => KeyCode::Unknown,
-    };
+pub fn into_key_event(e: KeyboardEvent, state: KeyState) -> KeyEvent {
+    let key = from_key_code_attribute_value(e.code().as_str());
 
-    let mut modifiers = KeyModifier::NONE;
+    let mut modifiers = ModifierState::NONE;
     if e.get_modifier_state("Alt") {
-        modifiers |= KeyModifier::ALT;
+        modifiers |= ModifierState::ALT;
     }
 
     if e.get_modifier_state("Shift") {
-        modifiers |= KeyModifier::SHIFT;
+        modifiers |= ModifierState::SHIFT;
     }
 
     if e.get_modifier_state("Control") {
-        modifiers |= KeyModifier::CONTROL;
+        modifiers |= ModifierState::CONTROL;
     }
 
     if e.get_modifier_state("Meta") {
-        modifiers |= KeyModifier::SUPER;
+        modifiers |= ModifierState::SUPER;
     }
 
     if e.get_modifier_state("NumLock") {
-        modifiers |= KeyModifier::NUMLOCK;
+        modifiers |= ModifierState::NUMLOCK;
     }
 
     if e.get_modifier_state("CapsLock") {
-        modifiers |= KeyModifier::CAPSLOCK;
+        modifiers |= ModifierState::CAPSLOCK;
     }
 
     KeyEvent {
-        scancode,
-        keycode,
+        key,
         modifiers,
-        action,
+        state,
     }
 }
