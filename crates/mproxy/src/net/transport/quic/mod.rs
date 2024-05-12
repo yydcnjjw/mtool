@@ -1,7 +1,11 @@
 mod bistream;
 
 use anyhow::Context;
-use quinn::{congestion::{BbrConfig, CubicConfig, NewRenoConfig}, rustls};
+use quinn::{
+    congestion::{BbrConfig, CubicConfig, NewRenoConfig},
+    crypto::rustls::{QuicClientConfig, QuicServerConfig},
+    rustls,
+};
 use std::{sync::Arc, time::Duration};
 use tokio::sync::{mpsc, Mutex, RwLock};
 use tracing::{debug_span, error, info, instrument, warn, Instrument};
@@ -78,7 +82,8 @@ impl Acceptor {
     pub async fn new(config: AcceptorConfig) -> Result<Self, anyhow::Error> {
         let tls_config = rustls::ServerConfig::try_from(&config.tls)?;
 
-        let mut quic_config = quinn::ServerConfig::with_crypto(Arc::new(tls_config));
+        let mut quic_config =
+            quinn::ServerConfig::with_crypto(Arc::new(QuicServerConfig::try_from(tls_config)?));
 
         quic_config.transport_config(Arc::new(quinn::TransportConfig::from(config.transport)));
 
@@ -176,7 +181,8 @@ impl ConnectorInner {
     async fn new(config: ConnectorConfig) -> Result<Self, anyhow::Error> {
         let tls_config = rustls::ClientConfig::try_from(&config.tls)?;
 
-        let mut quic_config = quinn::ClientConfig::new(Arc::new(tls_config));
+        let mut quic_config =
+            quinn::ClientConfig::new(Arc::new(QuicClientConfig::try_from(tls_config)?));
         quic_config.transport_config(Arc::new(quinn::TransportConfig::from(config.transport)));
 
         let mut endpoint = quinn::Endpoint::client(config.local.clone())?;

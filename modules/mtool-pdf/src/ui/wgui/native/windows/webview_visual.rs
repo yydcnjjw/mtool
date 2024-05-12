@@ -63,7 +63,7 @@ impl WebviewVisual {
                         controller.SetRootVisualTarget(&webview_visual)?;
                     }
 
-                    unsafe {
+                    if !unsafe {
                         SetWindowSubclass(
                             hwnd,
                             Some(Self::subclass_proc),
@@ -73,7 +73,11 @@ impl WebviewVisual {
                                 is_capturing_mouse: false,
                                 is_tracking_mouse: false,
                             })) as _,
-                        );
+                        )
+                    }
+                    .as_bool()
+                    {
+                        anyhow::bail!("SetWindowSubclass failed");
                     }
 
                     Ok(webview_visual)
@@ -118,7 +122,7 @@ impl WebviewVisual {
                     y: points.y as i32,
                 };
                 if let WM_MOUSEWHEEL | WM_MOUSEHWHEEL = msg {
-                    ScreenToClient(hwnd, &mut point);
+                    let _ = ScreenToClient(hwnd, &mut point);
                 };
 
                 let mut bounds = RECT::default();

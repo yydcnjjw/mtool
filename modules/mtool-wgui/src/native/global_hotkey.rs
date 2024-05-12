@@ -43,7 +43,7 @@ where
         let global_shortcut_plugin = {
             let hotkey_mgr = hotkey_mgr.clone();
             tauri_plugin_global_shortcut::Builder::<R>::new()
-                .with_handler(move |_, shortcut| {
+                .with_handler(move |_, shortcut, _| {
                     if let Some(kv) = hotkey_mgr.shortcut_index.get(shortcut) {
                         if let Err(e) = hotkey_mgr
                             .sender

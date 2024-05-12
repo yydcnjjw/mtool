@@ -79,7 +79,7 @@ impl PlatformEventLoop {
         let mut msg = MSG::default();
         unsafe {
             while GetMessageW(&mut msg, HWND::default(), 0, 0).as_bool() {
-                TranslateMessage(&msg);
+                let _ = TranslateMessage(&msg);
                 DispatchMessageW(&msg);
             }
         }
