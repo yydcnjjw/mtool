@@ -8,7 +8,7 @@ use tracing::warn;
 
 use crate::{
     dict::{ecdict, mdx, Backend},
-    ui::wgui::web::QueryResult,
+    ui::wgui::generic::QueryResult,
 };
 
 #[command]
