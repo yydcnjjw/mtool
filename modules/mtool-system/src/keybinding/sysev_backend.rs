@@ -4,7 +4,7 @@ use anyhow::Context;
 
 use mapp::{prelude::*, CreateOnceTaskDescriptor};
 use mkeybinding::{KeyCombine, KeyDispatcher, KeyMap, KeySequence};
-use msysev::{Event, KeyAction};
+use msysev::*;
 
 use mtool_core::{
     config::{not_startup_mode, StartupMode},
@@ -81,11 +81,17 @@ impl GlobalHotKeyMgr {
         loop {
             match rx.recv().await {
                 Ok(e) => match e {
-                    Event::Key(e) if matches!(e.action, KeyAction::Press) => {
-                        self.dispatcher.write().unwrap().dispatch(KeyCombine {
-                            key: e.keycode,
-                            mods: e.modifiers,
-                        });
+                    Event::Key(KeyEvent {
+                        key,
+                        modifiers,
+                        state,
+                    }) if matches!(state, KeyState::Press) => {
+                        if let PhysicalKey::Code(key) = key {
+                            self.dispatcher.write().unwrap().dispatch(KeyCombine {
+                                key,
+                                mods: modifiers,
+                            });
+                        }
                     }
                     _ => {}
                 },
