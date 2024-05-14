@@ -19,6 +19,7 @@ thiserror = { workspace = true }
 tracing = { workspace = true }
 clap = { workspace = true }
 serde = { workspace = true }
+dashmap = { workspace = true }
 
 [target.'cfg(target_os = "windows")'.dependencies]
 [target.'cfg(target_os = "windows")'.dependencies.windows]
@@ -33,3 +34,4 @@ features = [
 
 [target.'cfg(target_os = "linux")'.dependencies]
 zbus = { version = "4", default-features = false, features = ["tokio"] }
+swayipc-async = "*"

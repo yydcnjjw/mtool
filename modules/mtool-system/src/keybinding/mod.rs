@@ -1,22 +1,24 @@
 mod action;
 
-#[cfg(not(windows))]
+#[cfg(target_os = "linux")]
 mod sysev_backend;
 
-#[cfg(not(windows))]
+#[cfg(target_os = "linux")]
 mod dbus_backend;
 
 // #[cfg(windows)]
 // mod windows_backend;
 
-use std::{collections::HashMap, future::Future, sync::Arc};
+use std::{future::Future, sync::Arc};
 
+use dashmap::DashMap;
 use mapp::{
     define_label,
     prelude::{inject::*, *},
 };
 use mkeybinding::KeySequence;
-use tokio::sync::{mpsc, Mutex, RwLock};
+use mtool_core::config::{is_wayland, is_x11};
+use tokio::sync::mpsc;
 
 use action::{FnAction, SharedAction};
 use tracing::{debug, warn};
@@ -28,11 +30,16 @@ pub fn module() -> ModuleGroup {
     #[allow(unused_mut)]
     let mut group = ModuleGroup::new("keybinding_group");
 
-    // #[cfg(not(windows))]
-    // group.add_module(sysev_backend::Module);
+    #[cfg(target_os = "linux")]
+    {
+        if is_wayland() {
+            group.add_module(dbus_backend::Module);
+        }
 
-    #[cfg(not(windows))]
-    group.add_module(dbus_backend::Module);
+        if is_x11() {
+            group.add_module(sysev_backend::Module);
+        }
+    }
 
     // #[cfg(windows)]
     // group.add_module(windows_backend::Module::default());
@@ -41,19 +48,18 @@ pub fn module() -> ModuleGroup {
 }
 
 pub struct Keybinding {
-    kbs: RwLock<HashMap<KeySequence, SharedAction>>,
-    rx: Mutex<mpsc::UnboundedReceiver<GlobalHotKeyEvent>>,
+    kbs: DashMap<KeySequence, SharedAction>,
+
     hotkey_mgr: Res<dyn SetupGlobalHotKey + Send + Sync>,
 }
 
 impl Keybinding {
-    pub fn new<T>(hotkey_mgr: Res<T>, rx: mpsc::UnboundedReceiver<GlobalHotKeyEvent>) -> Self
+    pub fn new<T>(hotkey_mgr: Res<T>) -> Self
     where
         T: SetupGlobalHotKey + Send + Sync + 'static,
     {
         Self {
-            kbs: RwLock::new(HashMap::new()),
-            rx: Mutex::new(rx),
+            kbs: DashMap::new(),
             hotkey_mgr,
         }
     }
@@ -70,10 +76,7 @@ impl Keybinding {
 
         let ks = KeySequence::parse(kbd)?;
 
-        self.kbs
-            .write()
-            .await
-            .insert(ks.clone(), Arc::new(FnAction::new(action)));
+        self.kbs.insert(ks.clone(), Arc::new(FnAction::new(action)));
 
         self.hotkey_mgr.register(&ks).await
     }
@@ -82,14 +85,18 @@ impl Keybinding {
         debug!("remove global keybinding {}", kbd);
 
         let ks = KeySequence::parse(kbd)?;
-        self.kbs.write().await.remove(&ks);
+        self.kbs.remove(&ks);
         self.hotkey_mgr.unregister(&ks).await
     }
 
-    pub async fn handle_event_loop(self: Res<Keybinding>, injector: Injector) {
-        while let Some(ev) = { self.rx.lock().await.recv().await } {
+    pub async fn run(
+        self: Res<Keybinding>,
+        injector: Injector,
+        mut rx: mpsc::UnboundedReceiver<GlobalHotKeyEvent>,
+    ) {
+        while let Some(ev) = { rx.recv().await } {
             debug!("handle action {}", ev.0.to_string());
-            if let Some(action) = { self.kbs.read().await.get(&ev.0).cloned() } {
+            if let Some(action) = self.kbs.get(&ev.0).map(|v| v.clone()) {
                 let injector = injector.clone();
                 tokio::spawn(async move {
                     if let Err(e) = action.do_action(&injector).await {

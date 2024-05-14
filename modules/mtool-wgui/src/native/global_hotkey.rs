@@ -58,12 +58,12 @@ where
         Ok(builder.plugin(global_shortcut_plugin).plugin(
             plugin::Builder::<R>::new("mtool-global-shortcut")
                 .setup(move |_app, _| {
-                    let keybinding = Res::new(Keybinding::new(hotkey_mgr, krx));
+                    let keybinding = Res::new(Keybinding::new(hotkey_mgr));
                     if let Err(_) = tx.send(keybinding.clone()) {
                         warn!("Failed to send wgui Keybinding");
                     }
 
-                    tokio::spawn(keybinding.clone().handle_event_loop(injector));
+                    tokio::spawn(Keybinding::run(keybinding.clone(), injector, krx));
                     Ok(())
                 })
                 .build(),

@@ -46,8 +46,8 @@ impl GlobalHotKeyMgr {
         let hotkey_mgr = Res::new(Self::new(tx));
         injector.insert(hotkey_mgr.clone());
 
-        let keybinding = Res::new(Keybinding::new(hotkey_mgr, rx));
-        tokio::spawn(keybinding.clone().handle_event_loop(injector));
+        let keybinding = Res::new(Keybinding::new(hotkey_mgr));
+        tokio::spawn(Keybinding::run(keybinding.clone(), injector, rx));
 
         Ok(keybinding)
     }

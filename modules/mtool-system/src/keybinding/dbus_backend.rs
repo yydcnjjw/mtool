@@ -47,8 +47,9 @@ impl GlobalHotKeyMgr {
         let hotkey_mgr = Self::new(tx);
         injector.insert(Take::new(hotkey_mgr.clone()));
 
-        let keybinding = Res::new(Keybinding::new(Res::new(hotkey_mgr), rx));
-        tokio::spawn(keybinding.clone().handle_event_loop(injector));
+        let keybinding = Res::new(Keybinding::new(Res::new(hotkey_mgr)));
+
+        tokio::spawn(Keybinding::run(keybinding.clone(), injector, rx));
 
         Ok(keybinding)
     }
@@ -66,6 +67,25 @@ impl GlobalHotKeyMgr {
                 .await?;
             injector.insert(conn);
         }
+
+        match std::env::var("XDG_CURRENT_DESKTOP")
+            .unwrap_or_default()
+            .to_lowercase()
+            .as_str()
+        {
+            "sway" => Self::setup_sway_keybindings().await?,
+            _ => {}
+        }
+
+        Ok(())
+    }
+
+    async fn setup_sway_keybindings() -> Result<(), anyhow::Error> {
+        // use swayipc_async::Connection as SwayConnection;
+
+        // let mut conn = SwayConnection::new().await?;
+
+        // conn.run_command(&command_text).await?;
         Ok(())
     }
 }

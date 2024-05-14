@@ -57,7 +57,9 @@ impl ConfigInner {
         let mut value: &toml::Value = &self.table;
 
         for key in keys.split(".") {
-            value = value.get(key).context(format!("{} field is not exist", keys))?;
+            value = value
+                .get(key)
+                .context(format!("{} field is not exist", keys))?;
         }
 
         value
@@ -164,4 +166,20 @@ pub fn not_startup_mode(
     mode: StartupMode,
 ) -> impl Fn(Res<ConfigStore>) -> BoxFuture<'static, Result<bool, anyhow::Error>> + Clone {
     move |config: Res<ConfigStore>| async move { Ok(config.startup_mode() != mode) }.boxed()
+}
+
+#[cfg(target_os = "linux")]
+pub fn is_wayland() -> bool {
+    std::env::var("XDG_SESSION_TYPE")
+        .unwrap_or_default()
+        .to_lowercase()
+        == "wayland"
+}
+
+#[cfg(target_os = "linux")]
+pub fn is_x11() -> bool {
+    std::env::var("XDG_SESSION_TYPE")
+        .unwrap_or_default()
+        .to_lowercase()
+        == "x11"
 }
