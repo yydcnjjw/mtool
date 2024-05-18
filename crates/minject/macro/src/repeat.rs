@@ -14,7 +14,7 @@ pub struct Repeat {
 }
 
 impl Repeat {
-    fn gen(&self) -> TokenStream2 {
+    fn r#gen(&self) -> TokenStream2 {
         let items = (0..self.count).// map(|v| v + 1).
             map(|v| {
             let (r#macro, rest_args) = (&self.r#macro, self.rest_args.iter());
@@ -44,6 +44,6 @@ impl Parse for Repeat {
 
 impl ToTokens for Repeat {
     fn to_tokens(&self, tokens: &mut TokenStream2) {
-        tokens.extend([self.gen()]);
+        tokens.extend([self.r#gen()]);
     }
 }

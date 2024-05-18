@@ -16,3 +16,6 @@ tracing = { workspace = true }
 tokio = { workspace = true }
 anyhow = { workspace = true }
 candle-core = { git = "https://github.com/huggingface/candle.git", version = "0.5.0", optional = true }
+
+[features]
+candle-core = ["dep:candle-core"]

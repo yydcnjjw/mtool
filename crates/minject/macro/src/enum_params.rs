@@ -14,7 +14,7 @@ pub struct EnumParams {
 }
 
 impl EnumParams {
-    fn gen(&self) -> TokenStream2 {
+    fn r#gen(&self) -> TokenStream2 {
         let r#macro = &self.r#macro;
         let enum_idents = self.idents.iter().map(|ident| {
             let idents = (0..self.count).map(|v| format_ident!("{}{}", ident, v));
@@ -42,6 +42,6 @@ impl Parse for EnumParams {
 
 impl ToTokens for EnumParams {
     fn to_tokens(&self, tokens: &mut TokenStream2) {
-        tokens.extend([self.gen()]);
+        tokens.extend([self.r#gen()]);
     }
 }

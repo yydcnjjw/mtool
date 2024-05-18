@@ -15,6 +15,11 @@ telemetry = [
   "opentelemetry-prometheus",
   "prometheus"
 ]
+opentelemetry = ["dep:opentelemetry"]
+opentelemetry-jaeger = ["dep:opentelemetry-jaeger"]
+opentelemetry-prometheus = ["dep:opentelemetry-prometheus"]
+prometheus = ["dep:prometheus"]
+tracing-opentelemetry = ["dep:tracing-opentelemetry"]
 
 [dependencies]
 serde = { workspace = true }
