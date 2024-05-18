@@ -4585,6 +4585,7 @@ dependencies = [
  "mtauri-sys",
  "mtool-cmder",
  "mtool-core",
+ "mtool-system",
  "mtool-wgui",
  "serde",
  "serde-error",

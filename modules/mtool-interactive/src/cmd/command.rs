@@ -64,15 +64,15 @@ pub async fn web_init(templator: Res<Templator>) -> Result<(), anyhow::Error> {
 
 cfg_if::cfg_if! {
     if #[cfg(not(target_family = "wasm"))] {
-        use mtool_system::keybinding::Keybinding;
+        use mtool_cmder::Cmder;
     }
 }
 
 #[cfg(not(target_family = "wasm"))]
-pub async fn init(keybinding: Res<Keybinding>) -> Result<(), anyhow::Error> {
+pub async fn init(cmder: Res<Cmder>) -> Result<(), anyhow::Error> {
     use anyhow::Context;
     use itertools::Itertools;
-    use mtool_cmder::{Cmder, CommandArgs};
+    use mtool_cmder::{Cmder, CommandArgs, CommandBuilder};
 
     pub async fn exec_command(
         c: Res<Completion>,
@@ -116,6 +116,10 @@ pub async fn init(keybinding: Res<Keybinding>) -> Result<(), anyhow::Error> {
         Ok(())
     }
 
-    keybinding.define_global("M-A-x", exec_command).await?;
+    cmder.add_command(
+        exec_command
+            .name("interactive.command.exec")
+            .descrption("execute command"),
+    );
     Ok(())
 }

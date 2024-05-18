@@ -113,7 +113,7 @@ impl GlobalHotKeyMgr {
         self.run_on_main_thread(move || {
             app.global_shortcut()
                 .register(shortcut)
-                .context("tauri unregister global key")
+                .context("tauri register global key")
         })
         .await?
     }

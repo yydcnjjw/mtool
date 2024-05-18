@@ -4,7 +4,7 @@ use serde::{Deserialize, Serialize};
 pub struct Hotkey {
     pub command: String,
     pub kbd: String,
-    pub when: String,
+    pub when: Option<String>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]

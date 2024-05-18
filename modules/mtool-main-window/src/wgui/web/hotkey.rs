@@ -19,7 +19,7 @@ pub async fn register(
         cmder: Res<LocalCmder>,
         injector: LocalInjector,
         command: String,
-        _when: String,
+        _when: Option<String>,
     ) -> Result<(), anyhow::Error> {
         debug!("{}", command);
         if let Some(cmd) = cmder.get_command_with_name(&command) {
@@ -59,7 +59,7 @@ pub async fn register(
                         .map(|Hotkey { command, kbd, when }| {
                             let cmder = cmder.clone();
                             let injector = injector.clone();
-                            debug!("register keybinding: {} -> {} when {}", command, kbd, when);
+                            debug!("register keybinding: {} -> {} when {:?}", command, kbd, when);
                             (
                                 kbd,
                                 Rc::new(RefCell::new(move || {
