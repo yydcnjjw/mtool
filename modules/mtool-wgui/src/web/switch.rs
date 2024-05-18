@@ -2,7 +2,7 @@ use mtauri_sys::window::Window;
 use serde::Serialize;
 use tracing::{debug, warn};
 use wasm_bindgen::JsValue;
-use yew::{prelude::*, platform::spawn_local};
+use yew::{platform::spawn_local, prelude::*};
 use yew_router::{prelude::*, switch::SwitchProps};
 
 use std::marker::PhantomData;

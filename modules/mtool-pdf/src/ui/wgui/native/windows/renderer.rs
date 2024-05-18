@@ -3,14 +3,18 @@ use std::{mem::size_of, sync::Arc};
 use tauri::PhysicalSize;
 use tokio::sync::oneshot;
 use windows::{
-    core::Interface, Foundation::Numerics::{Vector2, Vector3}, System::DispatcherQueueController, Win32::{
+    core::Interface,
+    Foundation::Numerics::{Vector2, Vector3},
+    System::DispatcherQueueController,
+    Win32::{
         Foundation::BOOL,
         Graphics::Dxgi::IDXGISwapChain1,
         System::WinRT::{
             Composition::ICompositorDesktopInterop, CreateDispatcherQueueController,
             DispatcherQueueOptions, DQTAT_COM_ASTA, DQTYPE_THREAD_CURRENT,
         },
-    }, UI::Composition::{Compositor, ContainerVisual, Desktop::DesktopWindowTarget}
+    },
+    UI::Composition::{Compositor, ContainerVisual, Desktop::DesktopWindowTarget},
 };
 
 use super::{

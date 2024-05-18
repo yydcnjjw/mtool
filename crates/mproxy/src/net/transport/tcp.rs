@@ -6,7 +6,10 @@ use tokio::{
 };
 use tracing::{info, instrument};
 
-use crate::{config::transport::tcp::{AcceptorConfig, ConnectorConfig}, net::tool::dynamic_port};
+use crate::{
+    config::transport::tcp::{AcceptorConfig, ConnectorConfig},
+    net::tool::dynamic_port,
+};
 
 use super::Connect;
 

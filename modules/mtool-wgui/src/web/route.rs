@@ -1,4 +1,4 @@
-use std::{cell::RefCell, collections::HashMap, rc::Rc, fmt};
+use std::{cell::RefCell, collections::HashMap, fmt, rc::Rc};
 
 use tracing::debug;
 

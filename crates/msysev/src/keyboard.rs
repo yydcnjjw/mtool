@@ -529,7 +529,6 @@ pub enum PhysicalKey {
     Unidentified(NativeKeyCode),
 }
 
-
 bitflags! {
  pub struct ModifierState : u32 {
      const SHIFT = 0x00000001;

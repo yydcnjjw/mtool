@@ -1,6 +1,6 @@
+mod cmd;
 mod hotkey;
 mod window;
-mod cmd;
 
 use mapp::prelude::*;
 use mtool_cmder::Cmder;
@@ -18,7 +18,8 @@ pub(crate) struct Module;
 #[async_trait]
 impl AppModule for Module {
     async fn init(&self, app: &mut AppContext) -> Result<(), anyhow::Error> {
-        app.schedule().add_once_task(WGuiStage::Setup, setup)
+        app.schedule()
+            .add_once_task(WGuiStage::Setup, setup)
             .add_once_task(WGuiStage::Setup, cmd::init);
         Ok(())
     }

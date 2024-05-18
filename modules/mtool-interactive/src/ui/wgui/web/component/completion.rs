@@ -1,6 +1,4 @@
-use mtool_wgui::{
-    generate_keymap, AutoWindow, Horizontal, Keybinding, Vertical, WindowProps,
-};
+use mtool_wgui::{generate_keymap, AutoWindow, Horizontal, Keybinding, Vertical, WindowProps};
 use tracing::warn;
 use web_sys::{HtmlElement, HtmlInputElement};
 use yew::{platform::spawn_local, prelude::*};

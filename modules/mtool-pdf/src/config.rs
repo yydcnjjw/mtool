@@ -7,7 +7,6 @@ pub struct AdobeApiConfig {
     pub key: String,
 }
 
-
 #[derive(Debug, Deserialize)]
 pub struct Config {
     pub pdfium: String,

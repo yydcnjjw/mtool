@@ -38,7 +38,7 @@ impl CopyBuffer {
 
     pub fn copyed(&self) -> u64 {
         self.amt.load(Ordering::Relaxed)
-    }    
+    }
 
     fn poll_fill_buf<R>(
         &mut self,

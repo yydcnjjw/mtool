@@ -1,5 +1,5 @@
-mod web;
 mod generic;
+mod web;
 
 #[cfg(not(target_family = "wasm"))]
 mod native;

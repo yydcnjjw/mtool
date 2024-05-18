@@ -18,7 +18,7 @@ pub struct Model {
     #[sea_orm(primary_key, auto_increment = false)]
     pub id: Vec<u8>,
     pub media_type: String,
-    
+
     pub asset_id: Option<String>,
     pub upload_uri: Option<String>,
 

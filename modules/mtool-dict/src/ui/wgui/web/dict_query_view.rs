@@ -1,6 +1,6 @@
 use std::any::type_name;
 
-use mtool_wgui::{*, component::error::error_view, generate_keymap};
+use mtool_wgui::{component::error::error_view, generate_keymap, *};
 use serde::Serialize;
 use web_sys::HtmlInputElement;
 use yew::prelude::*;

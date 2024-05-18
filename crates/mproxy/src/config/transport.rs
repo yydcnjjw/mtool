@@ -3,7 +3,6 @@ use std::time::Duration;
 use serde::{Deserialize, Serialize};
 use serde_with::serde_as;
 
-
 #[derive(Serialize, Deserialize, Debug, Clone)]
 #[serde(tag = "transport")]
 #[serde(rename_all = "lowercase")]
@@ -218,5 +217,4 @@ pub mod tls {
         #[serde_as(as = "DurationSeconds")]
         pub handshake_timeout: Duration,
     }
-    
 }

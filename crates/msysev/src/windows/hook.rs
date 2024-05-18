@@ -2,7 +2,11 @@ use once_cell::sync::OnceCell;
 use tracing::{trace, warn};
 use windows::Win32::{Foundation::*, UI::WindowsAndMessaging::*};
 
-use crate::{keyboard::*, windows::{event_loop::GLOBAL_EVENT_SENDER, keyboard::*}, Event, KeyEvent};
+use crate::{
+    keyboard::*,
+    windows::{event_loop::GLOBAL_EVENT_SENDER, keyboard::*},
+    Event, KeyEvent,
+};
 
 pub struct Hook(pub HHOOK);
 

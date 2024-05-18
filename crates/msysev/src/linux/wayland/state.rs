@@ -2,11 +2,7 @@ use std::os::fd::AsFd;
 
 use crate::{Event, SelectionEvent};
 use mime::Mime;
-use tokio::{
-    io::AsyncReadExt,
-    net::unix::pipe::pipe,
-    sync::mpsc,
-};
+use tokio::{io::AsyncReadExt, net::unix::pipe::pipe, sync::mpsc};
 use tracing::{debug, warn};
 use wayland_client::{
     event_created_child,

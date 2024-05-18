@@ -2,7 +2,7 @@ use std::{any::Any, marker::PhantomData};
 
 use async_trait::async_trait;
 use futures::Future;
-use minject::{inject, inject_once, Inject, InjectOnce, LocalProvide, Provide, local_inject_once};
+use minject::{inject, inject_once, local_inject_once, Inject, InjectOnce, LocalProvide, Provide};
 
 pub type BoxedAny = Box<dyn Any + Send + Sync>;
 

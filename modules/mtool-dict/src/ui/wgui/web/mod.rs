@@ -1,9 +1,7 @@
 mod dict_query_view;
 
 use mapp::prelude::*;
-use mtool_wgui::{
-    Router, WebStage,
-};
+use mtool_wgui::{Router, WebStage};
 
 pub struct Module;
 

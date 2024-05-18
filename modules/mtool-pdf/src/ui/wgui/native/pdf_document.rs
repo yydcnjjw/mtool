@@ -2,16 +2,14 @@ use std::{
     cell::{Ref, RefCell},
     collections::VecDeque,
     ops::Deref,
-    rc::Rc, sync::Arc,
+    rc::Rc,
+    sync::Arc,
 };
 
 use mcloud_api::adobe;
 use pdfium_render::prelude::{PdfPageIndex, PdfiumLibraryBindings};
 
-use crate::ui::wgui::{
-    service::PdfDocument as Document,
-    event::PdfDocumentInfo,
-};
+use crate::ui::wgui::{event::PdfDocumentInfo, service::PdfDocument as Document};
 
 use super::pdf_page::PdfPage;
 
@@ -106,7 +104,7 @@ impl PdfDocument {
     pub fn get_page_paragraphs(&self, index: PdfPageIndex) -> Vec<adobe::Element> {
         self.inner.borrow().get_page_paragraphs(index)
     }
-    
+
     pub fn set_structure(&self, structure: adobe::PdfStructure) {
         self.inner.borrow().set_structure(structure);
     }

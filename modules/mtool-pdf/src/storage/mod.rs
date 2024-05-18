@@ -1,5 +1,5 @@
-mod migration;
 pub mod entity;
+mod migration;
 
 use mapp::prelude::*;
 

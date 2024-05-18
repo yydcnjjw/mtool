@@ -24,7 +24,9 @@ impl<R: tauri::Runtime> MtoolWindow<R> {
             .build()
             .expect("create mtool window failed");
 
-        Ok(Self(WGuiWindow::<R>::new(win, cfg!(not(debug_assertions))).await?))
+        Ok(Self(
+            WGuiWindow::<R>::new(win, cfg!(not(debug_assertions))).await?,
+        ))
     }
 }
 

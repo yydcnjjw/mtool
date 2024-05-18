@@ -15,10 +15,10 @@ cfg_if::cfg_if! {
 
         #[cfg(feature = "telemetry")]
         pub mod metrics;
-        
+
         mod app;
         pub use app::*;
-        
+
         pub use config::AppConfig;
     }
 }

@@ -22,12 +22,11 @@ impl AppModule for Module {
     }
 }
 
-
 #[async_trait(?Send)]
 impl AppLocalModule for Module {
     async fn local_init(&self, ctx: &mut LocalAppContext) -> Result<(), anyhow::Error> {
         use mapp::provider::Res;
-        use mtool_wgui::{WebStage, Templator};
+        use mtool_wgui::{Templator, WebStage};
         ctx.schedule()
             .add_once_task(WebStage::Init, |templator: Res<Templator>| async move {
                 templator.add_template::<DictView>();

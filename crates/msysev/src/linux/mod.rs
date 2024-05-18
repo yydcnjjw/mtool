@@ -1,5 +1,5 @@
-mod wayland;
 pub mod event_loop;
+mod wayland;
 
 // use std::env;
 

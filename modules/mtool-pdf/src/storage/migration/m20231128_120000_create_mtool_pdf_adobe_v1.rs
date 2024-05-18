@@ -1,5 +1,5 @@
-use sea_orm_migration::prelude::*;
 use mapp::prelude::*;
+use sea_orm_migration::prelude::*;
 
 #[derive(DeriveMigrationName)]
 pub struct Migration;
