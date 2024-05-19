@@ -11,15 +11,13 @@ pub fn module() -> ModuleGroup {
     let mut group = ModuleGroup::new("mtool-dict");
     group
         .add_module(ui::module())
-        .add_module(dict::module())
+        .add_module(dict::Module)
         .add_module(service::Module);
     group
 }
 
 pub fn web_module() -> LocalModuleGroup {
     let mut group = LocalModuleGroup::new("mtool-dict");
-    group
-        .add_module(ui::web_module())
-        .add_module(dict::web_module());
+    group.add_module(ui::web_module()).add_module(dict::Module);
     group
 }

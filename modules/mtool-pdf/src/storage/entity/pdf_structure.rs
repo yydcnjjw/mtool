@@ -1,5 +1,5 @@
 use mcloud_api::adobe;
-use sea_orm::{entity::prelude::*, FromJsonQueryResult};
+use sea_orm::FromJsonQueryResult;
 use serde::{Deserialize, Serialize};
 use std::ops::{Deref, DerefMut};
 

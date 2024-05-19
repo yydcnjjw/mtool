@@ -12,6 +12,7 @@ mapp = { path = "../../crates/mapp" }
 mproxy = { path = "../../crates/mproxy" }
 mtauri-sys = { path = "../../crates/mtauri-sys" }
 mtool-wgui = { path = "../mtool-wgui" }
+mtool-main-window = { path = "../mtool-main-window" }
 mtool-interactive = { path = "../mtool-interactive" }
 
 tokio = { workspace = true }

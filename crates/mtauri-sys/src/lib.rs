@@ -1,7 +1,8 @@
+mod error;
 pub mod event;
 pub mod window;
 
-use std::fmt;
+pub use error::IntoAnyhowError;
 
 use serde::{de::DeserializeOwned, Serialize};
 use serde_wasm_bindgen::{from_value, to_value};
@@ -16,23 +17,11 @@ mod ffi {
     }
 }
 
-fn to_anyhow<E>(e: E) -> anyhow::Error
-where
-    E: fmt::Display,
-{
-    anyhow::anyhow!("{}", e)
-}
-
 pub async fn invoke_raw<Output>(cmd: &str, args: JsValue) -> Result<Output, anyhow::Error>
 where
     Output: DeserializeOwned,
 {
-    match ffi::invoke(cmd, args).await {
-        Ok(v) => Ok(from_value(v).map_err(to_anyhow)?),
-        Err(e) => Err(anyhow::Error::from(
-            from_value::<serde_error::Error>(e).map_err(to_anyhow)?,
-        )),
-    }
+    from_value(ffi::invoke(cmd, args).await.into_anyhow()?).into_anyhow()
 }
 
 pub async fn invoke<Args, Output>(cmd: &str, args: &Args) -> Result<Output, anyhow::Error>
@@ -40,5 +29,5 @@ where
     Args: Serialize + ?Sized,
     Output: DeserializeOwned,
 {
-    invoke_raw(cmd, to_value(args).map_err(to_anyhow)?).await
+    invoke_raw(cmd, to_value(args).into_anyhow()?).await
 }

@@ -2,7 +2,7 @@ use serde::{de::DeserializeOwned, Serialize};
 use serde_wasm_bindgen::from_value;
 use wasm_bindgen::{prelude::Closure, JsValue};
 
-use crate::{event::Event, invoke};
+use crate::{event::Event, invoke, IntoAnyhowError};
 
 pub use dpi::*;
 
@@ -85,16 +85,20 @@ pub struct Window {
 }
 
 impl Window {
-    pub fn current() -> Result<Self, JsValue> {
+    pub fn current() -> Result<Self, anyhow::Error> {
         Ok(Self {
-            handle: ffi::getCurrent()?,
+            handle: ffi::getCurrent().into_anyhow()?,
         })
     }
 
-    pub fn new(label: &str) -> Result<Self, JsValue> {
+    pub fn new(label: &str) -> Result<Self, anyhow::Error> {
         Ok(Self {
-            handle: ffi::WebviewWindow::new(&label)?,
+            handle: ffi::WebviewWindow::new(&label).into_anyhow()?,
         })
+    }
+
+    pub fn label(&self) -> String {
+        self.handle.label()
     }
 
     pub async fn set_size(&self, size: Size) -> Result<(), anyhow::Error> {
@@ -144,19 +148,19 @@ impl Window {
         //     .await
     }
 
-    pub async fn center(&self) -> Result<(), JsValue> {
-        self.handle.center().await
+    pub async fn center(&self) -> Result<(), anyhow::Error> {
+        self.handle.center().await.into_anyhow()
     }
 
-    pub async fn hide(&self) -> Result<(), JsValue> {
-        self.handle.hide().await
+    pub async fn hide(&self) -> Result<(), anyhow::Error> {
+        self.handle.hide().await.into_anyhow()
     }
 
     pub async fn listen<Handler, T>(
         &self,
         event: &str,
         mut handler: Handler,
-    ) -> Result<impl Fn() -> Result<(), JsValue>, JsValue>
+    ) -> Result<impl Fn() -> Result<(), JsValue>, anyhow::Error>
     where
         Handler: FnMut(Event<T>) -> Result<(), JsValue> + 'static,
         T: DeserializeOwned + 'static,
@@ -167,13 +171,15 @@ impl Window {
 
         closure.forget();
 
-        unlisten.map(|v| {
-            let v = js_sys::Function::from(v);
-            move || {
-                v.call0(&JsValue::NULL)?;
-                Ok(())
-            }
-        })
+        unlisten
+            .map(|v| {
+                let v = js_sys::Function::from(v);
+                move || {
+                    v.call0(&JsValue::NULL)?;
+                    Ok(())
+                }
+            })
+            .into_anyhow()
     }
 
     pub async fn emit<T>(&self, event: &str, payload: &T) -> Result<(), anyhow::Error>

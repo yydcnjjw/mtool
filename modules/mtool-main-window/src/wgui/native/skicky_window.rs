@@ -6,29 +6,29 @@ use tauri::{AppHandle, WebviewUrl, WebviewWindowBuilder, Wry};
 use tokio::sync::oneshot;
 use tracing::warn;
 
-use crate::wgui::generic::MTOOL_WINDOW_LABEL;
+use crate::wgui::generic::SKICKY_WINDOW_LABEL;
 
 #[derive(Clone)]
-pub struct MtoolWindow<R: tauri::Runtime = Wry>(Arc<WGuiWindow<R>>);
+pub struct SkickyWindow<R: tauri::Runtime = Wry>(Arc<WGuiWindow<R>>);
 
-impl<R: tauri::Runtime> MtoolWindow<R> {
+impl<R: tauri::Runtime> SkickyWindow<R> {
     async fn new(app: AppHandle<R>) -> Result<Self, anyhow::Error> {
         let win = WebviewWindowBuilder::new(
             &app,
-            MTOOL_WINDOW_LABEL,
+            SKICKY_WINDOW_LABEL,
             WebviewUrl::App("index.html".into()),
         )
-        .title(MTOOL_WINDOW_LABEL)
+        .title(SKICKY_WINDOW_LABEL)
         .transparent(true)
         .decorations(false)
         .resizable(true)
         .skip_taskbar(true)
         .always_on_top(true)
-        .visible(false)
+        .visible(true)
         // TODO: disable shadow for transparent
         .shadow(false)
         .build()
-        .expect("create mtool window failed");
+        .expect(&format!("create {} window failed", SKICKY_WINDOW_LABEL));
 
         Ok(Self(
             WGuiWindow::<R>::new(win, cfg!(not(debug_assertions))).await?,
@@ -36,7 +36,7 @@ impl<R: tauri::Runtime> MtoolWindow<R> {
     }
 }
 
-impl<R: tauri::Runtime> Deref for MtoolWindow<R> {
+impl<R: tauri::Runtime> Deref for SkickyWindow<R> {
     type Target = WGuiWindow<R>;
 
     fn deref(&self) -> &Self::Target {
@@ -46,11 +46,11 @@ impl<R: tauri::Runtime> Deref for MtoolWindow<R> {
 
 pub(crate) fn plugin_setup<R: tauri::Runtime>(
     app: &AppHandle<R>,
-    win_tx: oneshot::Sender<Res<MtoolWindow<R>>>,
+    win_tx: oneshot::Sender<Res<SkickyWindow<R>>>,
 ) -> Result<(), anyhow::Error> {
     let app = app.clone();
     tokio::spawn(async move {
-        match MtoolWindow::<R>::new(app).await {
+        match SkickyWindow::<R>::new(app).await {
             Ok(win) => {
                 win.bind(win.clone());
                 let _ = win_tx.send(Res::new(win));

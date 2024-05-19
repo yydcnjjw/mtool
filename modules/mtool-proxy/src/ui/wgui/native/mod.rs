@@ -17,11 +17,7 @@ impl AppModule for Module {
     }
 }
 
-async fn setup(
-    builder: Res<Builder>,
-    service: Res<ProxyService>,
-    injector: Injector,
-) -> Result<(), anyhow::Error> {
-    builder.setup(|builder| Ok(builder.plugin(plugin::init(service, injector))))?;
+async fn setup(builder: Res<Builder>, service: Res<ProxyService>) -> Result<(), anyhow::Error> {
+    builder.setup(|builder| Ok(builder.plugin(plugin::init(service))))?;
     Ok(())
 }

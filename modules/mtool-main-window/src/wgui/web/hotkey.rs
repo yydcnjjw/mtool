@@ -59,7 +59,10 @@ pub async fn register(
                         .map(|Hotkey { command, kbd, when }| {
                             let cmder = cmder.clone();
                             let injector = injector.clone();
-                            debug!("register keybinding: {} -> {} when {:?}", command, kbd, when);
+                            debug!(
+                                "register keybinding: {} -> {} when {:?}",
+                                command, kbd, when
+                            );
                             (
                                 kbd,
                                 Rc::new(RefCell::new(move || {

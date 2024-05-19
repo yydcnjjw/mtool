@@ -644,7 +644,10 @@ pub enum PdfEvent {
 
     WGui(WPdfEvent),
 
-    ExtractText { tx: oneshot::Sender<String> },
+    #[allow(unused)]
+    ExtractText {
+        tx: oneshot::Sender<String>,
+    },
 }
 
 #[derive(Debug, Clone)]

@@ -1,36 +1,42 @@
+mod backend;
 pub mod ecdict;
 pub mod mdx;
 
-use mapp::prelude::*;
-use serde::{Deserialize, Serialize};
-use std::fmt;
+pub use backend::*;
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
-pub enum Backend {
-    Mdx,
-    ECDict,
-}
+use mapp::{prelude::*, CreateLocalOnceTaskDescriptor};
+use mtool_main_window::wgui::generic::MTOOL_WINDOW_LABEL;
+use mtool_wgui::is_window;
 
-impl fmt::Display for Backend {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        match self {
-            Backend::Mdx => write!(f, "mdx"),
-            Backend::ECDict => write!(f, "ecdict"),
-        }
+pub struct Module;
+
+#[cfg(not(target_family = "wasm"))]
+#[async_trait]
+impl AppModule for Module {
+    async fn init(&self, ctx: &mut AppContext) -> Result<(), anyhow::Error> {
+        ctx.injector().construct_once(ecdict::Dict::construct);
+        ctx.injector().construct_once(mdx::Dict::construct);
+        Ok(())
     }
 }
 
-#[cfg(not(target_family = "wasm"))]
-pub fn module() -> ModuleGroup {
-    let mut group = ModuleGroup::new("mtool-dict-backend");
-    group.add_module(mdx::Module);
-    group.add_module(ecdict::Module);
-    group
-}
+#[async_trait(?Send)]
+impl AppLocalModule for Module {
+    async fn local_init(&self, ctx: &mut LocalAppContext) -> Result<(), anyhow::Error> {
+        use mapp::provider::Res;
+        use mtool_wgui::{Templator, WebStage};
 
-pub fn web_module() -> LocalModuleGroup {
-    let mut group = LocalModuleGroup::new("mtool-dict-backend");
-    group.add_module(mdx::Module);
-    group.add_module(ecdict::Module);
-    group
+        async fn setup_template(templator: Res<Templator>) -> Result<(), anyhow::Error> {
+            templator.add_template::<ecdict::DictView>();
+            templator.add_template::<mdx::DictView>();
+            Ok(())
+        }
+
+        ctx.schedule().add_once_task(
+            WebStage::Init,
+            setup_template.cond(is_window(MTOOL_WINDOW_LABEL)),
+        );
+
+        Ok(())
+    }
 }

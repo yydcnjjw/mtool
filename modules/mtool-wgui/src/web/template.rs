@@ -101,11 +101,12 @@ pub struct Module;
 impl AppLocalModule for Module {
     async fn local_init(&self, ctx: &mut LocalAppContext) -> Result<(), anyhow::Error> {
         ctx.injector().insert(Res::new(Templator::new()));
-        ctx.schedule()
-            .add_once_task(WebStage::Init, |templator: Res<Templator>| async move {
-                templator.add_template::<EmptyView>();
-                Ok::<(), anyhow::Error>(())
-            });
+
+        async fn setup_template(templator: Res<Templator>) -> Result<(), anyhow::Error> {
+            templator.add_template::<EmptyView>();
+            Ok(())
+        }
+        ctx.schedule().add_once_task(WebStage::Init, setup_template);
         Ok(())
     }
 }

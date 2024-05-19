@@ -1,7 +1,8 @@
-use mapp::prelude::*;
+use mapp::{prelude::*, CreateLocalOnceTaskDescriptor};
+use mtool_main_window::wgui::generic::MTOOL_WINDOW_LABEL;
 use mtool_wgui::{
-    component::error::error_view, generate_keymap, AutoWindow, Horizontal, Keybinding, RouteParams,
-    Router, Vertical, WebStage, WindowProps,
+    component::error::error_view, generate_keymap, is_window, AutoWindow, Horizontal, Keybinding,
+    RouteParams, Router, Vertical, WebStage, WindowProps,
 };
 use serde::Serialize;
 use web_sys::{HtmlElement, HtmlTextAreaElement};
@@ -215,7 +216,8 @@ pub struct Module;
 #[async_trait(?Send)]
 impl AppLocalModule for Module {
     async fn local_init(&self, ctx: &mut LocalAppContext) -> Result<(), anyhow::Error> {
-        ctx.schedule().add_once_task(WebStage::Init, init);
+        ctx.schedule()
+            .add_once_task(WebStage::Init, init.cond(is_window(MTOOL_WINDOW_LABEL)));
         Ok(())
     }
 }

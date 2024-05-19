@@ -1,5 +1,6 @@
 mod cmd;
 mod hotkey;
+mod skicky_window;
 mod window;
 
 use mapp::prelude::*;
@@ -8,7 +9,6 @@ use mtool_core::{AppStage, ConfigStore};
 use mtool_system::keybinding::Keybinding;
 use mtool_wgui::{Builder, WGuiStage};
 use tauri::generate_handler;
-use tokio::sync::oneshot;
 
 pub use window::*;
 
@@ -58,14 +58,14 @@ async fn setup_plugin(
     injector: Injector,
     cmder: Res<Cmder>,
 ) -> Result<(), anyhow::Error> {
-    let win_tx: oneshot::Sender<Res<MtoolWindow>> = injector.construct_oneshot();
     let hkm = cs.get::<HotkeyMap>("wgui.hotkey").await?;
 
     builder.setup(|builder| {
         Ok(builder.plugin(
             tauri::plugin::Builder::<_, ()>::new("mtool-main-window")
                 .setup(move |app, _| {
-                    window::plugin_setup(app, win_tx)?;
+                    window::plugin_setup(app, injector.construct_oneshot())?;
+                    skicky_window::plugin_setup(app, injector.construct_oneshot())?;
                     hotkey::plugin_setup(app, hkm, injector, cmder)?;
                     Ok(())
                 })

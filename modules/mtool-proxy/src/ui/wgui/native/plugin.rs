@@ -1,12 +1,8 @@
-use std::{ops::Deref, sync::Arc};
-
-use mapp::provider::{Injector, Res};
-use mtool_wgui::WGuiWindow;
+use mapp::prelude::*;
 use tauri::{
-    async_runtime::spawn,
     command,
     plugin::{Builder, TauriPlugin},
-    Manager, State, WebviewUrl, WebviewWindowBuilder, Wry,
+    Manager, State, Wry,
 };
 
 use crate::{
@@ -14,36 +10,9 @@ use crate::{
     ui::wgui::generic::{Stats, TransferStats},
 };
 
-pub struct ProxyMonitorWindow(Arc<WGuiWindow>);
-
-impl ProxyMonitorWindow {
-    async fn new(app: tauri::AppHandle) -> Result<Self, anyhow::Error> {
-        let win = WebviewWindowBuilder::new(&app, "mtool-proxy", WebviewUrl::App("/proxy".into()))
-            .title("mtool-proxy")
-            .transparent(true)
-            .decorations(false)
-            .resizable(false)
-            .skip_taskbar(true)
-            .visible(true)
-            // TODO: disable shadow for transparent
-            .shadow(false)
-            .build()
-            .expect("create proxy monitor window failed");
-        Ok(Self(WGuiWindow::new(win, false).await?))
-    }
-}
-
-impl Deref for ProxyMonitorWindow {
-    type Target = WGuiWindow;
-
-    fn deref(&self) -> &Self::Target {
-        &self.0
-    }
-}
-
 #[command]
-async fn stats(proxy_app: State<'_, Res<ProxyService>>) -> Result<Stats, serde_error::Error> {
-    let stats = proxy_app
+async fn stats(proxy_service: State<'_, Res<ProxyService>>) -> Result<Stats, serde_error::Error> {
+    let stats = proxy_service
         .stats()
         .await
         .map_err(|e| serde_error::Error::new(&*e))?;
@@ -56,12 +25,10 @@ async fn stats(proxy_app: State<'_, Res<ProxyService>>) -> Result<Stats, serde_e
     })
 }
 
-pub(crate) fn init(proxy_app: Res<ProxyService>, injector: Injector) -> TauriPlugin<Wry> {
+pub(crate) fn init(proxy_service: Res<ProxyService>) -> TauriPlugin<Wry> {
     Builder::new("mtool-proxy")
         .setup(move |app, _| {
-            let app = app.clone();
-            app.manage(proxy_app);
-            spawn(async move { injector.insert(Res::new(ProxyMonitorWindow::new(app).await.unwrap())) });
+            app.manage(proxy_service);
             Ok(())
         })
         .invoke_handler(tauri::generate_handler![stats])

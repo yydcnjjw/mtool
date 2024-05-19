@@ -17,6 +17,7 @@ pub struct Completion {
 
 #[derive(Clone)]
 pub enum Msg {
+    #[allow(dead_code)]
     Input(String),
     CompletionMeta(CompletionMeta),
     ForwardChar,

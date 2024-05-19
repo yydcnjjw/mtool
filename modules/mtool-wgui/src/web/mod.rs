@@ -6,13 +6,15 @@ mod route;
 mod switch;
 mod template;
 
-use mapp::{define_label, prelude::*, ScheduleGraph};
-
 pub use app::*;
 pub use auto_window::*;
 pub use keybinding::*;
 pub use route::*;
 pub use template::{EmptyView, Template, TemplateData, TemplateId, TemplateView, Templator};
+
+use futures::{future::BoxFuture, FutureExt};
+use mapp::{define_label, prelude::*, ScheduleGraph};
+use mtauri_sys::window::Window;
 
 struct Module;
 
@@ -55,4 +57,16 @@ pub fn web_module() -> LocalModuleGroup {
     group.add_module(Module);
     group.add_module(template::Module);
     group
+}
+
+pub fn is_window(
+    label: &'static str,
+) -> impl Fn() -> BoxFuture<'static, Result<bool, anyhow::Error>> + Clone {
+    move || async move { Ok(Window::current()?.label() == label) }.boxed()
+}
+
+pub fn contains_window_label(
+    label: &'static str,
+) -> impl Fn() -> BoxFuture<'static, Result<bool, anyhow::Error>> + Clone {
+    move || async move { Ok(Window::current()?.label().contains(label)) }.boxed()
 }

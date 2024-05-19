@@ -2,8 +2,11 @@ use std::time::Duration;
 
 use crate::ui::wgui::generic::{Stats, TransferStats};
 use async_stream::stream;
-use mapp::prelude::*;
-use mtool_wgui::{AutoWindow, Horizontal, RouteParams, Router, Vertical, WebStage, WindowProps};
+use mapp::{prelude::*, CreateLocalOnceTaskDescriptor};
+use mtool_main_window::wgui::generic::SKICKY_WINDOW_LABEL;
+use mtool_wgui::{
+    is_window, AutoWindow, Horizontal, RouteParams, Router, Vertical, WebStage, WindowProps,
+};
 use tracing::{debug, warn};
 use yew::{platform::time, prelude::*};
 use yew_icons::{Icon, IconId};
@@ -149,7 +152,8 @@ pub struct Module;
 #[async_trait(?Send)]
 impl AppLocalModule for Module {
     async fn local_init(&self, ctx: &mut LocalAppContext) -> Result<(), anyhow::Error> {
-        ctx.schedule().add_once_task(WebStage::Init, init);
+        ctx.schedule()
+            .add_once_task(WebStage::Init, init.cond(is_window(SKICKY_WINDOW_LABEL)));
         Ok(())
     }
 }

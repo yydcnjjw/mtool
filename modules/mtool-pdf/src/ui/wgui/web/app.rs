@@ -240,7 +240,7 @@ height: {height}px;
     }
 
     fn adjust_window(info: Rc<PdfDocumentInfo>) {
-        async fn adjust_window_inner(info: &event::PdfDocumentInfo) -> Result<(), JsValue> {
+        async fn adjust_window_inner(info: &event::PdfDocumentInfo) -> Result<(), anyhow::Error> {
             if let Some(page) = info.pages.get(0) {
                 let window = Window::current()?;
                 window
@@ -248,8 +248,7 @@ height: {height}px;
                         PhysicalSize::new((page.width + 10) as u32, (page.height as u32).max(960))
                             .into(),
                     )
-                    .await
-                    .map_err(|e| JsError::new(&e.to_string()))?;
+                    .await?;
                 window.center().await?;
             }
 

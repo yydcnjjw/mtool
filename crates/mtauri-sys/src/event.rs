@@ -2,6 +2,8 @@ use serde::{de::DeserializeOwned, Deserialize};
 use serde_wasm_bindgen::from_value;
 use wasm_bindgen::{prelude::Closure, JsValue};
 
+use crate::IntoAnyhowError;
+
 #[derive(Debug, Clone, PartialEq, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct Event<T> {
@@ -30,7 +32,7 @@ mod ffi {
 pub async fn listen<Handler, T>(
     event: &str,
     mut handler: Handler,
-) -> Result<impl Fn() -> Result<(), JsValue>, JsValue>
+) -> Result<impl Fn() -> Result<(), JsValue>, anyhow::Error>
 where
     Handler: FnMut(Event<T>) -> Result<(), JsValue> + 'static,
     T: DeserializeOwned + 'static,
@@ -41,11 +43,13 @@ where
 
     closure.forget();
 
-    unlisten.map(|v| {
-        let v = js_sys::Function::from(v);
-        move || {
-            v.call0(&JsValue::NULL)?;
-            Ok(())
-        }
-    })
+    unlisten
+        .map(|v| {
+            let v = js_sys::Function::from(v);
+            move || {
+                v.call0(&JsValue::NULL)?;
+                Ok(())
+            }
+        })
+        .into_anyhow()
 }

@@ -119,7 +119,7 @@ pub async fn init(cmder: Res<Cmder>) -> Result<(), anyhow::Error> {
     cmder.add_command(
         exec_command
             .name("interactive.command.exec")
-            .descrption("execute command"),
+            .descrption("Execute command"),
     );
     Ok(())
 }
