@@ -6,6 +6,7 @@ watch = [
 [serve]
 address = "127.0.0.1"
 port = 18188
+ws_protocol = "ws"
 
 [tools]
 wasm_bindgen = "0.2.92"

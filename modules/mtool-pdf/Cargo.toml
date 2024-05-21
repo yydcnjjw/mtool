@@ -72,7 +72,7 @@ skia-safe = { version = "0.71", features = ["gpu", "gl"] }
 
 
 [target.'cfg(target_os = "windows")'.dependencies]
-webview2-com = "0.30"
+webview2-com = "0.31"
 skia-safe = { version = "0.71", features = ["gpu", "d3d"] }
 
 [target.'cfg(target_os = "windows")'.dependencies.windows]

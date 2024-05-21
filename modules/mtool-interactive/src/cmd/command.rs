@@ -72,7 +72,8 @@ cfg_if::cfg_if! {
 pub async fn init(cmder: Res<Cmder>) -> Result<(), anyhow::Error> {
     use anyhow::Context;
     use itertools::Itertools;
-    use mtool_cmder::{Cmder, CommandArgs, CommandBuilder};
+    use mtool_cmder::{CommandArgs, CommandBuilder};
+    use tracing::debug;
 
     pub async fn exec_command(
         c: Res<Completion>,
@@ -111,6 +112,8 @@ pub async fn init(cmder: Res<Cmder>) -> Result<(), anyhow::Error> {
                 Ok(Take::new(CommandArgs::new(shellwords::split(&completed)?)))
             });
         }
+
+        debug!("execute command with interactive: {}", command.name);
 
         command.cmd.unwrap().exec(&injector).await?;
         Ok(())

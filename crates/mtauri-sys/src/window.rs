@@ -187,12 +187,9 @@ impl Window {
         T: Serialize,
     {
         self.handle
-            .emit(
-                event,
-                serde_wasm_bindgen::to_value(payload).map_err(|e| anyhow::anyhow!("{}", e))?,
-            )
+            .emit(event, serde_wasm_bindgen::to_value(payload).into_anyhow()?)
             .await
-            .map_err(|e| anyhow::anyhow!("{:?}", e))
+            .into_anyhow()
     }
 
     // pub async fn emit_to<T>(&self, event: &str, payload: &T) -> Result<(), anyhow::Error>
@@ -219,12 +216,12 @@ impl Window {
     {
         self.handle
             .emitTo(
-                serde_wasm_bindgen::to_value(label).map_err(|e| anyhow::anyhow!("{}", e))?,
+                serde_wasm_bindgen::to_value(label).into_anyhow()?,
                 event,
-                serde_wasm_bindgen::to_value(payload).map_err(|e| anyhow::anyhow!("{}", e))?,
+                serde_wasm_bindgen::to_value(payload).into_anyhow()?,
             )
             .await
-            .map_err(|e| anyhow::anyhow!("{:?}", e))
+            .into_anyhow()
     }
 
     pub async fn emit_to_self<T>(&self, event: &str, payload: &T) -> Result<(), anyhow::Error>

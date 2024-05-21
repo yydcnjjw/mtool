@@ -6,37 +6,37 @@ use tauri::{AppHandle, WebviewUrl, WebviewWindowBuilder, Wry};
 use tokio::sync::oneshot;
 use tracing::warn;
 
-use crate::wgui::generic::SKICKY_WINDOW_LABEL;
+use crate::wgui::generic::STICKY_WINDOW_LABEL;
 
 #[derive(Clone)]
-pub struct SkickyWindow<R: tauri::Runtime = Wry>(Arc<WGuiWindow<R>>);
+pub struct StickyWindow<R: tauri::Runtime = Wry>(Arc<WGuiWindow<R>>);
 
-impl<R: tauri::Runtime> SkickyWindow<R> {
+impl<R: tauri::Runtime> StickyWindow<R> {
     async fn new(app: AppHandle<R>) -> Result<Self, anyhow::Error> {
         let win = WebviewWindowBuilder::new(
             &app,
-            SKICKY_WINDOW_LABEL,
-            WebviewUrl::App("index.html".into()),
+            STICKY_WINDOW_LABEL,
+            WebviewUrl::App("".into()),
         )
-        .title(SKICKY_WINDOW_LABEL)
-        .transparent(true)
+        .title(STICKY_WINDOW_LABEL)
+        .transparent(false)
         .decorations(false)
         .resizable(true)
         .skip_taskbar(true)
         .always_on_top(true)
-        .visible(true)
+        .visible(false)
         // TODO: disable shadow for transparent
         .shadow(false)
         .build()
-        .expect(&format!("create {} window failed", SKICKY_WINDOW_LABEL));
+        .expect(&format!("create {} window failed", STICKY_WINDOW_LABEL));
 
         Ok(Self(
-            WGuiWindow::<R>::new(win, cfg!(not(debug_assertions))).await?,
+            WGuiWindow::<R>::new_and_wait_for_ready(win, false).await?,
         ))
     }
 }
 
-impl<R: tauri::Runtime> Deref for SkickyWindow<R> {
+impl<R: tauri::Runtime> Deref for StickyWindow<R> {
     type Target = WGuiWindow<R>;
 
     fn deref(&self) -> &Self::Target {
@@ -46,11 +46,11 @@ impl<R: tauri::Runtime> Deref for SkickyWindow<R> {
 
 pub(crate) fn plugin_setup<R: tauri::Runtime>(
     app: &AppHandle<R>,
-    win_tx: oneshot::Sender<Res<SkickyWindow<R>>>,
+    win_tx: oneshot::Sender<Res<StickyWindow<R>>>,
 ) -> Result<(), anyhow::Error> {
     let app = app.clone();
     tokio::spawn(async move {
-        match SkickyWindow::<R>::new(app).await {
+        match StickyWindow::<R>::new(app).await {
             Ok(win) => {
                 win.bind(win.clone());
                 let _ = win_tx.send(Res::new(win));

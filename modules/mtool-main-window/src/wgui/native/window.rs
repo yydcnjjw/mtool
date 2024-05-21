@@ -16,7 +16,7 @@ impl<R: tauri::Runtime> MtoolWindow<R> {
         let win = WebviewWindowBuilder::new(
             &app,
             MTOOL_WINDOW_LABEL,
-            WebviewUrl::App("index.html".into()),
+            WebviewUrl::App("".into()),
         )
         .title(MTOOL_WINDOW_LABEL)
         .transparent(true)
@@ -31,7 +31,7 @@ impl<R: tauri::Runtime> MtoolWindow<R> {
         .expect("create mtool window failed");
 
         Ok(Self(
-            WGuiWindow::<R>::new(win, cfg!(not(debug_assertions))).await?,
+            WGuiWindow::<R>::new_and_wait_for_ready(win, cfg!(not(debug_assertions))).await?,
         ))
     }
 }

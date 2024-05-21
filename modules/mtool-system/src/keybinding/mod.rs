@@ -66,8 +66,6 @@ impl Keybinding {
         T::Output: Future<Output = Result<(), anyhow::Error>> + Send,
         Args: Provide<Injector> + Send + Sync + 'static,
     {
-        debug!("define global keybinding {}", kbd);
-
         let ks = KeySequence::parse(kbd)?;
 
         self.kbs

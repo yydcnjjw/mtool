@@ -34,9 +34,9 @@ impl fmt::Display for Label {
             write!(f, "::{}", self.2)?;
         }
 
-        if let Some(v) = self.3 {
-            write!(f, "::{}", v)?;
-        }
+        // if let Some(v) = self.3 {
+        //     write!(f, "::{}", v)?;
+        // }
         Ok(())
     }
 }

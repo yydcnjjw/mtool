@@ -18,7 +18,7 @@ use tauri::{
     Manager,
 };
 use tokio::sync::Mutex;
-use tracing::{debug, info, warn};
+use tracing::{debug, info, trace, warn};
 
 define_label! {
     pub enum WGuiStage {
@@ -129,12 +129,15 @@ async fn init<R: tauri::Runtime>(
         match builder.any_thread().build(tauri_context.take().unwrap()) {
             Ok(v) => v,
             Err(e) => {
-                warn!("tauri run loop is exited: {:?}", e);
+                warn!("build tauri failed: {:?}", e);
                 return;
             }
         }
-        .run(move |_, ev| match ev {
-            _ => {}
+        .run(move |_, ev| {
+            trace!("{:?}", ev);
+            match ev {
+                _ => {}
+            }
         });
         info!("tauri run loop is exited");
     });

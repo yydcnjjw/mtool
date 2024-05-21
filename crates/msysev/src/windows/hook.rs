@@ -1,5 +1,5 @@
 use once_cell::sync::OnceCell;
-use tracing::{trace, warn};
+use tracing::{debug, trace, warn};
 use windows::Win32::{Foundation::*, UI::WindowsAndMessaging::*};
 
 use crate::{
@@ -12,6 +12,7 @@ pub struct Hook(pub HHOOK);
 
 impl Hook {
     pub fn global_low_level_keyboard_hook() -> Result<Hook, anyhow::Error> {
+        debug!("set low level keyboard hook");
         Ok(Self(unsafe {
             SetWindowsHookExW(
                 WH_KEYBOARD_LL,

@@ -8,7 +8,7 @@ use msysev::*;
 use tauri::{plugin, AppHandle};
 use tauri_plugin_global_shortcut::{self, GlobalShortcutExt, Shortcut};
 use tokio::sync::{mpsc, oneshot};
-use tracing::warn;
+use tracing::{trace, warn};
 
 use mtool_system::keybinding::{GlobalHotKeyEvent, Keybinding, SetupGlobalHotKey};
 
@@ -111,6 +111,7 @@ impl GlobalHotKeyMgr {
         self.shortcut_index.insert(shortcut.clone(), ks.clone());
         let app = self.app_handle().await;
         self.run_on_main_thread(move || {
+            trace!("tauri global shortcut register: {}", shortcut);
             app.global_shortcut()
                 .register(shortcut)
                 .context("tauri register global key")

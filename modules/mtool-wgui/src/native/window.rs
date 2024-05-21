@@ -43,7 +43,7 @@ impl<R: tauri::Runtime> Deref for WGuiWindow<R> {
 }
 
 impl<R: tauri::Runtime> WGuiWindow<R> {
-    pub async fn new(
+    pub async fn new_and_wait_for_ready(
         window: tauri::WebviewWindow<R>,
         hide_on_unfocus: bool,
     ) -> Result<Arc<Self>, anyhow::Error> {
@@ -60,11 +60,27 @@ impl<R: tauri::Runtime> WGuiWindow<R> {
         Ok(this)
     }
 
-    async fn wait_for_ready(self: Arc<Self>) -> Result<(), anyhow::Error> {
+    pub fn new(
+        window: tauri::WebviewWindow<R>,
+        hide_on_unfocus: bool,
+    ) -> Result<Arc<Self>, anyhow::Error> {
+        let this = Arc::new(Self {
+            inner: window.clone(),
+            pos: RwLock::new(None),
+            hide_on_unfocus,
+        });
+
+        Self::listen_window_event(this.clone());
+
+        Ok(this)
+    }
+
+    pub async fn wait_for_ready(self: Arc<Self>) -> Result<(), anyhow::Error> {
         let (tx, rx) = oneshot::channel();
+        let label = self.label().to_owned();
         self.once("window:ready", move |_| {
             let _ = tx.send(());
-            debug!("window:ready");
+            debug!("{} window:ready", label);
         });
         Ok(rx.await?)
     }
@@ -106,8 +122,6 @@ impl<R: tauri::Runtime> WGuiWindow<R> {
             WindowEvent::Focused(focused) => {
                 if !focused && self.hide_on_unfocus {
                     self.hide()?;
-                } else {
-                    self.show()?;
                 }
             }
             _ => {}

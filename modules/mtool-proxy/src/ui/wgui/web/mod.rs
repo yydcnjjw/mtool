@@ -3,7 +3,7 @@ use std::time::Duration;
 use crate::ui::wgui::generic::{Stats, TransferStats};
 use async_stream::stream;
 use mapp::{prelude::*, CreateLocalOnceTaskDescriptor};
-use mtool_main_window::wgui::generic::SKICKY_WINDOW_LABEL;
+use mtool_main_window::wgui::generic::STICKY_WINDOW_LABEL;
 use mtool_wgui::{
     is_window, AutoWindow, Horizontal, RouteParams, Router, Vertical, WebStage, WindowProps,
 };
@@ -11,22 +11,22 @@ use tracing::{debug, warn};
 use yew::{platform::time, prelude::*};
 use yew_icons::{Icon, IconId};
 
-pub struct App {
+pub struct View {
     stats: Stats,
     diff_stats: Stats,
 }
 
 #[derive(Properties, PartialEq)]
-pub struct AppProps {
+pub struct Props {
     path: String,
 }
 
-pub enum AppMsg {
+pub enum Msg {
     UpdateStats(Stats),
 }
 
-impl Component for App {
-    type Message = AppMsg;
+impl Component for View {
+    type Message = Msg;
 
     type Properties = ();
 
@@ -35,7 +35,7 @@ impl Component for App {
             loop {
                 time::sleep(Duration::from_secs(1)).await;
                 match mtauri_sys::invoke::<(), Stats>("plugin:mtool-proxy|stats", &()).await {
-                    Ok(stats) => yield AppMsg::UpdateStats(stats),
+                    Ok(stats) => yield Msg::UpdateStats(stats),
                     Err(e) => {
                         warn!("{:?}", e);
                         break;
@@ -52,7 +52,7 @@ impl Component for App {
 
     fn update(&mut self, _ctx: &Context<Self>, msg: Self::Message) -> bool {
         match msg {
-            AppMsg::UpdateStats(stats) => self.update_stats(stats),
+            Msg::UpdateStats(stats) => self.update_stats(stats),
         }
     }
 
@@ -74,7 +74,7 @@ impl Component for App {
               )}>
                 {
                    for self.diff_stats.transfer.iter().map(|(k, v)| {
-                     App::render_stats(k, v)
+                     View::render_stats(k, v)
                    })
                 }
               </div>
@@ -84,7 +84,7 @@ impl Component for App {
     }
 }
 
-impl App {
+impl View {
     fn render_stats(dest: &str, stats: &TransferStats) -> Html {
         html! {
             <div class={classes!(
@@ -129,7 +129,7 @@ impl App {
     }
 
     fn update_stats(&mut self, new: Stats) -> bool {
-        self.diff_stats = App::diff_stats(new.clone(), &self.stats);
+        self.diff_stats = View::diff_stats(new.clone(), &self.stats);
         self.stats = new;
         true
     }
@@ -153,14 +153,14 @@ pub struct Module;
 impl AppLocalModule for Module {
     async fn local_init(&self, ctx: &mut LocalAppContext) -> Result<(), anyhow::Error> {
         ctx.schedule()
-            .add_once_task(WebStage::Init, init.cond(is_window(SKICKY_WINDOW_LABEL)));
+            .add_once_task(WebStage::Init, init.cond(is_window(STICKY_WINDOW_LABEL)));
         Ok(())
     }
 }
 
 fn render(_: &RouteParams) -> Html {
     html! {
-        <App/>
+        <View/>
     }
 }
 

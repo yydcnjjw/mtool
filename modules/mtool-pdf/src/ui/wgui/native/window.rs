@@ -116,7 +116,7 @@ impl PdfViewerWindow {
 
             builder.build()?
         };
-        let win = WGuiWindow::new(win, false).await?;
+        let win = WGuiWindow::new_and_wait_for_ready(win, false).await?;
 
         let pdf_viewer = Arc::new(PdfViewer::new(pdf_api, win.inner_size()?).await?);
 
