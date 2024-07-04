@@ -19,7 +19,7 @@ impl<R: tauri::Runtime> StickyWindow<R> {
             WebviewUrl::App("".into()),
         )
         .title(STICKY_WINDOW_LABEL)
-        .transparent(false)
+        .transparent(true)
         .decorations(false)
         .resizable(true)
         .skip_taskbar(true)
