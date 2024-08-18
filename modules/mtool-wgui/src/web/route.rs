@@ -62,7 +62,9 @@ impl Route {
         if let Some(handler) = &self.handler {
             (*handler)(&self.params)
         } else {
-            html! {}
+            html! {
+                <div>{{format!("No route {}", self.path)}}</div>
+            }
         }
     }
 }

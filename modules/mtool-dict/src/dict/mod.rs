@@ -4,9 +4,7 @@ pub mod mdx;
 
 pub use backend::*;
 
-use mapp::{prelude::*, CreateLocalOnceTaskDescriptor};
-use mtool_main_window::wgui::generic::MTOOL_WINDOW_LABEL;
-use mtool_wgui::is_window;
+use mapp::prelude::*;
 
 pub struct Module;
 
@@ -32,10 +30,7 @@ impl AppLocalModule for Module {
             Ok(())
         }
 
-        ctx.schedule().add_once_task(
-            WebStage::Init,
-            setup_template.cond(is_window(MTOOL_WINDOW_LABEL)),
-        );
+        ctx.schedule().add_once_task(WebStage::Init, setup_template);
 
         Ok(())
     }

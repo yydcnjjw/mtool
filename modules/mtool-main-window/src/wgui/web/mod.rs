@@ -1,6 +1,6 @@
 mod cmd;
 pub mod hotkey;
-mod sticky;
+mod view;
 
 use mapp::prelude::*;
 use mtool_wgui::prelude::*;
@@ -13,7 +13,7 @@ impl AppLocalModule for Module {
     async fn local_init(&self, app: &mut LocalAppContext) -> Result<(), anyhow::Error> {
         app.schedule()
             .add_once_task(WebStage::Init, hotkey::register)
-            .add_once_task(WebStage::Init, sticky::register);
+            .add_once_task(WebStage::Init, view::sticky::register);
         Ok(())
     }
 }

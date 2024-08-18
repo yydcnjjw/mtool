@@ -1,9 +1,9 @@
 use clipboard::{ClipboardContext, ClipboardProvider};
 use mapp::prelude::*;
-use mtool_main_window::wgui::native::MtoolWindow;
+use mtool_main_window::wgui::native::{sticky::window::StickyWindow, MtoolWindow};
 use tauri::Emitter;
 
-pub async fn query_dict_with_clipboard(window: Res<MtoolWindow>) -> Result<(), anyhow::Error> {
+pub async fn query_dict_with_clipboard(window: Res<StickyWindow>) -> Result<(), anyhow::Error> {
     let mut context: ClipboardContext = ClipboardProvider::new()
         .map_err(|e| anyhow::anyhow!("Failed to get Clipboard: {}", e.to_string()))?;
 

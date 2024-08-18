@@ -11,7 +11,7 @@ use gtk::prelude::*;
 use gtk::Overlay;
 use gtk::{gdk::GLError, GLArea};
 use mtool_wgui::WGuiWindow;
-use raw_window_handle5::HasRawDisplayHandle;
+use raw_window_handle::HasDisplayHandle;
 use skia_safe as sk;
 use std::ffi::CString;
 use std::sync::Arc;
@@ -161,7 +161,8 @@ impl Renderer {
     fn setup(builder: RendererBuilder) -> Result<(), anyhow::Error> {
         let RendererBuilder { win, draw_hook } = builder;
 
-        let display = unsafe { Display::new(win.raw_display_handle(), DisplayApiPreference::Egl)? };
+        let display =
+            unsafe { Display::new(win.display_handle()?.as_raw(), DisplayApiPreference::Egl)? };
 
         gl::load_with(|s| display.get_proc_address(CString::new(s).unwrap().as_c_str()));
 
