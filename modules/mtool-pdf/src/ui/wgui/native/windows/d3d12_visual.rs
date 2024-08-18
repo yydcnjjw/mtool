@@ -22,7 +22,11 @@ use windows::{
                 D3D12_COMMAND_QUEUE_FLAG_NONE, D3D12_FENCE_FLAG_NONE,
             },
             Dxgi::{
-                Common::{DXGI_ALPHA_MODE_PREMULTIPLIED, DXGI_FORMAT_B8G8R8A8_UNORM}, CreateDXGIFactory1, IDXGIAdapter1, IDXGIFactory4, IDXGISwapChain1, IDXGISwapChain3, DXGI_ADAPTER_DESC1, DXGI_ADAPTER_FLAG, DXGI_ADAPTER_FLAG_SOFTWARE, DXGI_PRESENT, DXGI_SWAP_CHAIN_DESC1, DXGI_SWAP_CHAIN_FLAG, DXGI_SWAP_EFFECT_FLIP_DISCARD, DXGI_USAGE_RENDER_TARGET_OUTPUT
+                Common::{DXGI_ALPHA_MODE_PREMULTIPLIED, DXGI_FORMAT_B8G8R8A8_UNORM},
+                CreateDXGIFactory1, IDXGIAdapter1, IDXGIFactory4, IDXGISwapChain1, IDXGISwapChain3,
+                DXGI_ADAPTER_DESC1, DXGI_ADAPTER_FLAG, DXGI_ADAPTER_FLAG_SOFTWARE, DXGI_PRESENT,
+                DXGI_SWAP_CHAIN_DESC1, DXGI_SWAP_CHAIN_FLAG, DXGI_SWAP_EFFECT_FLIP_DISCARD,
+                DXGI_USAGE_RENDER_TARGET_OUTPUT,
             },
         },
         System::{
@@ -154,7 +158,7 @@ impl D3d12Context {
 
     fn swap_buffer(&mut self) -> Result<(), anyhow::Error> {
         unsafe {
-            self.swap_chain.Present(1,  DXGI_PRESENT(0)).ok()?;
+            self.swap_chain.Present(1, DXGI_PRESENT(0)).ok()?;
             self.queue
                 .Signal(&self.fench, self.fench_values[self.frame_buffer_index])?;
         };
