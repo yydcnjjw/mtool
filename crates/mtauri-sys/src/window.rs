@@ -46,10 +46,16 @@ mod ffi {
         pub async fn setPosition(this: &WebviewWindow, pos: JsValue) -> Result<(), JsValue>;
 
         #[wasm_bindgen(method, catch)]
+        pub async fn outerPosition(this: &WebviewWindow) -> Result<JsValue, JsValue>;
+
+        #[wasm_bindgen(method, catch)]
         pub async fn center(this: &WebviewWindow) -> Result<(), JsValue>;
 
         #[wasm_bindgen(method, catch)]
         pub async fn hide(this: &WebviewWindow) -> Result<(), JsValue>;
+
+        #[wasm_bindgen(method, catch)]
+        pub async fn setResizable(this: &WebviewWindow, value: JsValue) -> Result<(), JsValue>;
 
         #[wasm_bindgen(method, catch)]
         pub async fn listen(
@@ -116,12 +122,6 @@ impl Window {
             },
         )
         .await
-
-        // .setSize(match size {
-        //     Size::Physical { width, height } => ffi::PhysicalSize::new(width, height).into(),
-        //     Size::Logical { width, height } => ffi::LogicalSize::new(width, height).into(),
-        // })
-        // .await
     }
 
     pub async fn set_position(&self, pos: Position) -> Result<(), anyhow::Error> {
@@ -139,13 +139,13 @@ impl Window {
             },
         )
         .await
+    }
 
-        // self.handle
-        //     .setPosition(match pos {
-        //         Position::Physical { x, y } => ffi::PhysicalPosition::new(x, y).into(),
-        //         Position::Logical { x, y } => ffi::LogicalPosition::new(x, y).into(),
-        //     })
-        //     .await
+    pub async fn outer_position(&self) -> Result<PhysicalPosition<i32>, anyhow::Error> {
+        Ok(
+            serde_wasm_bindgen::from_value(self.handle.outerPosition().await.into_anyhow()?)
+                .into_anyhow()?,
+        )
     }
 
     pub async fn center(&self) -> Result<(), anyhow::Error> {
@@ -154,6 +154,13 @@ impl Window {
 
     pub async fn hide(&self) -> Result<(), anyhow::Error> {
         self.handle.hide().await.into_anyhow()
+    }
+
+    pub async fn set_resizable(&self, value: bool) -> Result<(), anyhow::Error> {
+        self.handle
+            .setResizable(JsValue::from_bool(value))
+            .await
+            .into_anyhow()
     }
 
     pub async fn listen<Handler, T>(
@@ -191,19 +198,6 @@ impl Window {
             .await
             .into_anyhow()
     }
-
-    // pub async fn emit_to<T>(&self, event: &str, payload: &T) -> Result<(), anyhow::Error>
-    // where
-    //     T: Serialize,
-    // {
-    //     self.handle
-    //         .emit(
-    //             event,
-    //             serde_wasm_bindgen::to_value(payload).map_err(|e| anyhow::anyhow!("{}", e))?,
-    //         )
-    //         .await
-    //         .map_err(|e| anyhow::anyhow!("{:?}", e))
-    // }
 
     pub async fn emit_to_window<T>(
         &self,

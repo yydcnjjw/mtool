@@ -29,6 +29,7 @@ pub struct WindowProps {
     pub vertical: Vertical,
     pub horizontal: Horizontal,
     pub initial_size: PhysicalSize<u32>,
+    pub resizable: bool,
 }
 
 impl Default for WindowProps {
@@ -37,6 +38,7 @@ impl Default for WindowProps {
             vertical: Vertical::Absolute(0),
             horizontal: Horizontal::Absolute(0),
             initial_size: PhysicalSize::new(800, 600),
+            resizable: false,
         }
     }
 }
@@ -106,10 +108,17 @@ impl Component for AutoWindow {
 
         let this = Self {
             cont: NodeRef::default(),
-            window_props,
+            window_props: window_props.clone(),
             window: Window::current().unwrap(),
         };
         this.adjust_window(this.window_props.initial_size).unwrap();
+
+        let window = this.window.clone();
+        let WindowProps { resizable, .. } = window_props;
+        spawn_local(async move {
+            window.set_resizable(resizable).await.unwrap();
+        });
+
         this
     }
 
@@ -130,7 +139,7 @@ impl Component for AutoWindow {
         }
     }
     fn rendered(&mut self, ctx: &Context<Self>, first_render: bool) {
-        if first_render {
+        if first_render && !ctx.props().window.resizable {
             let link = ctx.link().clone();
             let f = Closure::<dyn Fn(Vec<ResizeObserverEntry>)>::new(
                 move |entries: Vec<ResizeObserverEntry>| {

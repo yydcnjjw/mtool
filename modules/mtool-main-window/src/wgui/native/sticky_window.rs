@@ -13,7 +13,7 @@ pub struct StickyWindow<R: tauri::Runtime = Wry>(Arc<WGuiWindow<R>>);
 
 impl<R: tauri::Runtime> StickyWindow<R> {
     async fn new(app: AppHandle<R>) -> Result<Self, anyhow::Error> {
-        let win = WebviewWindowBuilder::new(&app, STICKY_WINDOW_LABEL, WebviewUrl::App("".into()))
+        let win = WebviewWindowBuilder::new(&app, STICKY_WINDOW_LABEL, WebviewUrl::App("/sticky".into()))
             .title(STICKY_WINDOW_LABEL)
             .transparent(true)
             .decorations(false)
