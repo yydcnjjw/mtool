@@ -1,7 +1,7 @@
 use clipboard::{ClipboardContext, ClipboardProvider};
 use mapp::prelude::*;
 use mtool_main_window::wgui::native::MtoolWindow;
-use tauri::Manager;
+use tauri::Emitter;
 
 pub async fn query_dict_with_clipboard(window: Res<MtoolWindow>) -> Result<(), anyhow::Error> {
     let mut context: ClipboardContext = ClipboardProvider::new()

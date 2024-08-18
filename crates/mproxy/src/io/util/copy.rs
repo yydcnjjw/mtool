@@ -155,6 +155,7 @@ impl CopyBuffer {
 /// writer.
 #[derive(Debug)]
 #[must_use = "futures do nothing unless you `.await` or poll them"]
+#[allow(dead_code)]
 struct Copy<'a, R: ?Sized, W: ?Sized> {
     reader: &'a mut R,
     writer: &'a mut W,

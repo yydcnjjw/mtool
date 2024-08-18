@@ -24,9 +24,9 @@ impl MessageOnlyWindow {
                 cbClsExtra: 0,
                 cbWndExtra: 0,
                 hInstance: get_instance_handle().into(),
-                hIcon: HICON(0),
-                hCursor: HCURSOR(0), // must be null in order for cursor state to work properly
-                hbrBackground: HBRUSH(0),
+                hIcon: HICON::default(),
+                hCursor: HCURSOR::default(), // must be null in order for cursor state to work properly
+                hbrBackground: HBRUSH::default(),
                 lpszMenuName: PCSTR::null(),
                 lpszClassName: class_name.clone(),
             };
@@ -49,7 +49,7 @@ impl MessageOnlyWindow {
                 get_instance_handle(),
                 None,
             )
-        };
+        }?;
 
         if handle == HWND::default() {
             return Err(io::Error::last_os_error())?;
@@ -121,5 +121,5 @@ pub fn get_instance_handle() -> HMODULE {
         static __ImageBase: IMAGE_DOS_HEADER;
     }
 
-    HMODULE(unsafe { &__ImageBase as *const _ as isize })
+    HMODULE(unsafe { &__ImageBase as *const _ as *mut _ })
 }

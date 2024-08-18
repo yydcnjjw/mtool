@@ -6,7 +6,7 @@ use mtool_main_window::wgui::native::MtoolWindow;
 use tauri::{
     command,
     plugin::{Builder, TauriPlugin},
-    AppHandle, Manager, Runtime, State,
+    AppHandle, Emitter, Manager, Runtime, State,
 };
 use tokio::sync::{oneshot, Mutex};
 

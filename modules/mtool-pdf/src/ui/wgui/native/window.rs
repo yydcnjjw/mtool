@@ -14,7 +14,7 @@ use mtool_wgui::{WGuiWindow, WindowDataBind};
 
 use tauri::{
     plugin::{Builder, TauriPlugin},
-    Manager, WebviewUrl, WebviewWindowBuilder, Wry,
+    Emitter, Listener, WebviewUrl, WebviewWindowBuilder, Wry,
 };
 use tracing::warn;
 

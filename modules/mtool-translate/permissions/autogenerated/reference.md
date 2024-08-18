@@ -4,7 +4,7 @@ Default permissions for the plugin.
 
 - `allow-text-translate`
 
-### Permission Table 
+## Permission Table 
 
 <table>
 <tr>

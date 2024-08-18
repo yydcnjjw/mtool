@@ -43,14 +43,12 @@ struct WebviewVisualData {
 
 impl WebviewVisual {
     pub async fn new(win: Arc<WGuiWindow>, compositor: &Compositor) -> Result<Self, anyhow::Error> {
-        let hwnd = win.hwnd()?;
-
         let webview_visual = {
             let compositor = compositor.clone();
 
             let (tx, rx) = oneshot::channel();
 
-            let hwnd = hwnd.clone();
+            let win_ = win.clone();
             win.with_webview(move |webview| {
                 let _ = tx.send(|| -> Result<_, anyhow::Error> {
                     let controller = webview
@@ -65,7 +63,7 @@ impl WebviewVisual {
 
                     if !unsafe {
                         SetWindowSubclass(
-                            hwnd,
+                            win_.hwnd()?,
                             Some(Self::subclass_proc),
                             8081,
                             Box::into_raw(Box::new(WebviewVisualData {

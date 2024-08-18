@@ -3,7 +3,7 @@ pub mod hotkey;
 
 use mapp::prelude::*;
 use mtool_wgui::prelude::*;
-use yew::prelude::*;
+// use yew::prelude::*;
 
 pub(crate) struct Module;
 

@@ -6,7 +6,7 @@ use std::{
 use raw_window_handle::{
     DisplayHandle, HandleError, HasDisplayHandle, HasWindowHandle, WindowHandle,
 };
-use tauri::{Manager, PhysicalPosition, WindowEvent, Wry};
+use tauri::{Listener, Manager, PhysicalPosition, WindowEvent, Wry};
 use tokio::sync::{mpsc, oneshot};
 use tracing::{debug, warn};
 

@@ -211,8 +211,8 @@ impl CompletionList {
 
     fn scroll_into_focused_item(&self) {
         if let Some(elm) = self.focused_item() {
-            let mut opt = ScrollIntoViewOptions::new();
-            opt.block(ScrollLogicalPosition::Nearest);
+            let opt = ScrollIntoViewOptions::new();
+            opt.set_block(ScrollLogicalPosition::Nearest);
 
             elm.scroll_into_view_with_scroll_into_view_options(&opt);
         }

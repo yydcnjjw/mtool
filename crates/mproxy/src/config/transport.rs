@@ -176,6 +176,8 @@ pub mod kcp {
         pub flush_acks_input: bool,
         /// Stream mode
         pub stream: bool,
+        /// Allow recv 0 byte packet. KCP Segments with 0 byte data are skipped by default.
+        pub allow_recv_empty_packet: bool,
     }
 
     #[derive(Serialize, Deserialize, Debug, Clone)]

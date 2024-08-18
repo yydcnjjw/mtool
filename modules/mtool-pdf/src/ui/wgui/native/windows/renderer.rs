@@ -92,10 +92,10 @@ impl Renderer {
             post_resize_buffers_hook,
         } = builder;
 
-        let hwnd = win.hwnd()?;
         let (compositor, target, dispatcher_queue_controller, root_visual) = {
             let (tx, rx) = oneshot::channel();
-            let hwnd = hwnd.clone();
+
+            let win_ = win.clone();
             win.run_on_main_thread(move || {
                 let _ = tx.send(move || -> Result<_, anyhow::Error> {
                     unsafe {
@@ -110,7 +110,7 @@ impl Renderer {
 
                         let target = compositor
                             .cast::<ICompositorDesktopInterop>()?
-                            .CreateDesktopWindowTarget(hwnd, BOOL::from(false))?;
+                            .CreateDesktopWindowTarget(win_.hwnd()?, BOOL::from(false))?;
 
                         let root_visual = {
                             let root = compositor.CreateContainerVisual()?;
