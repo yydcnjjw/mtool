@@ -13,22 +13,18 @@ pub struct StickyWindow<R: tauri::Runtime = Wry>(Arc<WGuiWindow<R>>);
 
 impl<R: tauri::Runtime> StickyWindow<R> {
     async fn new(app: AppHandle<R>) -> Result<Self, anyhow::Error> {
-        let win = WebviewWindowBuilder::new(
-            &app,
-            STICKY_WINDOW_LABEL,
-            WebviewUrl::App("".into()),
-        )
-        .title(STICKY_WINDOW_LABEL)
-        .transparent(true)
-        .decorations(false)
-        .resizable(true)
-        .skip_taskbar(true)
-        .always_on_top(true)
-        .visible(false)
-        // TODO: disable shadow for transparent
-        .shadow(false)
-        .build()
-        .expect(&format!("create {} window failed", STICKY_WINDOW_LABEL));
+        let win = WebviewWindowBuilder::new(&app, STICKY_WINDOW_LABEL, WebviewUrl::App("".into()))
+            .title(STICKY_WINDOW_LABEL)
+            .transparent(true)
+            .decorations(false)
+            .resizable(true)
+            .skip_taskbar(true)
+            .always_on_top(true)
+            .visible(false)
+            // TODO: disable shadow for transparent
+            .shadow(false)
+            .build()
+            .expect(&format!("create {} window failed", STICKY_WINDOW_LABEL));
 
         Ok(Self(
             WGuiWindow::<R>::new_and_wait_for_ready(win, false).await?,

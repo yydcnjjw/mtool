@@ -13,22 +13,18 @@ pub struct MtoolWindow<R: tauri::Runtime = Wry>(Arc<WGuiWindow<R>>);
 
 impl<R: tauri::Runtime> MtoolWindow<R> {
     async fn new(app: AppHandle<R>) -> Result<Self, anyhow::Error> {
-        let win = WebviewWindowBuilder::new(
-            &app,
-            MTOOL_WINDOW_LABEL,
-            WebviewUrl::App("".into()),
-        )
-        .title(MTOOL_WINDOW_LABEL)
-        .transparent(true)
-        .decorations(false)
-        .resizable(true)
-        .skip_taskbar(true)
-        .always_on_top(true)
-        .visible(false)
-        // TODO: disable shadow for transparent
-        .shadow(false)
-        .build()
-        .expect("create mtool window failed");
+        let win = WebviewWindowBuilder::new(&app, MTOOL_WINDOW_LABEL, WebviewUrl::App("".into()))
+            .title(MTOOL_WINDOW_LABEL)
+            .transparent(true)
+            .decorations(false)
+            .resizable(true)
+            .skip_taskbar(true)
+            .always_on_top(true)
+            .visible(false)
+            // TODO: disable shadow for transparent
+            .shadow(false)
+            .build()
+            .expect("create mtool window failed");
 
         Ok(Self(
             WGuiWindow::<R>::new_and_wait_for_ready(win, cfg!(not(debug_assertions))).await?,

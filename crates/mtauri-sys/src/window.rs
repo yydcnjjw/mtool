@@ -74,7 +74,7 @@ mod ffi {
         ) -> Result<(), JsValue>;
 
         #[wasm_bindgen(catch)]
-        pub fn getCurrent() -> Result<WebviewWindow, JsValue>;
+        pub fn getCurrentWindow() -> Result<WebviewWindow, JsValue>;
 
     }
 }
@@ -87,7 +87,7 @@ pub struct Window {
 impl Window {
     pub fn current() -> Result<Self, anyhow::Error> {
         Ok(Self {
-            handle: ffi::getCurrent().into_anyhow()?,
+            handle: ffi::getCurrentWindow().into_anyhow()?,
         })
     }
 
