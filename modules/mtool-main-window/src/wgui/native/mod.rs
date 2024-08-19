@@ -1,6 +1,6 @@
 mod cmd;
 mod hotkey;
-mod sticky_window;
+pub mod sticky;
 mod window;
 
 use mapp::prelude::*;
@@ -10,7 +10,6 @@ use mtool_system::keybinding::Keybinding;
 use mtool_wgui::{Builder, WGuiStage};
 use tauri::generate_handler;
 
-pub use sticky_window::*;
 use tracing::debug;
 pub use window::*;
 
@@ -24,6 +23,7 @@ impl AppModule for Module {
         app.schedule()
             .add_once_task(WGuiStage::Setup, setup_plugin)
             .add_once_task(WGuiStage::Setup, cmd::init)
+            .add_once_task(WGuiStage::Setup, sticky::init)
             .add_once_task(AppStage::Init, setup_global_hotkey);
 
         Ok(())
@@ -66,7 +66,7 @@ async fn setup_plugin(
             tauri::plugin::Builder::<_, ()>::new("mtool-main-window")
                 .setup(move |app, _| {
                     window::plugin_setup(app, injector.construct_oneshot())?;
-                    sticky_window::plugin_setup(app, injector.construct_oneshot())?;
+                    sticky::window::plugin_setup(app, injector.construct_oneshot())?;
                     hotkey::plugin_setup(app, injector, cmder)?;
                     Ok(())
                 })

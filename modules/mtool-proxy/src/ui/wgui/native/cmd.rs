@@ -1,5 +1,5 @@
 use mapp::prelude::*;
-use mtool_main_window::wgui::native::StickyWindow;
+use mtool_main_window::wgui::native::sticky::window::StickyWindow;
 use tauri::Emitter;
 
 pub async fn show_stats(window: Res<StickyWindow>) -> Result<(), anyhow::Error> {

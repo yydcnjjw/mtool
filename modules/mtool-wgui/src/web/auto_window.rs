@@ -10,17 +10,17 @@ pub enum Msg {
 
 #[derive(Debug, Clone, PartialEq)]
 pub enum Vertical {
-    TopAlign,
+    TopAlign(i32),
     Center,
-    BottomAlign,
+    BottomAlign(i32),
     Absolute(i32),
 }
 
 #[derive(Debug, Clone, PartialEq)]
 pub enum Horizontal {
-    LeftAlign,
+    LeftAlign(i32),
     Center,
-    RightAlign,
+    RightAlign(i32),
     Absolute(i32),
 }
 
@@ -70,16 +70,16 @@ impl AutoWindow {
 
         let screen = window().unwrap().screen()?;
         let x = match horizontal {
-            Horizontal::LeftAlign => 0,
+            Horizontal::LeftAlign(x) => *x,
             Horizontal::Center => (screen.width()? - width as i32) / 2,
-            Horizontal::RightAlign => screen.width()? - width as i32,
+            Horizontal::RightAlign(x) => screen.width()? - width as i32 - *x,
             Horizontal::Absolute(x) => *x,
         };
 
         let y = match vertical {
-            Vertical::TopAlign => 0,
+            Vertical::TopAlign(y) => *y,
             Vertical::Center => (screen.height()? - height as i32) / 2,
-            Vertical::BottomAlign => screen.height()? - height as i32,
+            Vertical::BottomAlign(y) => screen.height()? - height as i32 - *y,
             Vertical::Absolute(y) => *y,
         };
 
@@ -132,8 +132,23 @@ impl Component for AutoWindow {
     }
 
     fn view(&self, ctx: &Context<Self>) -> Html {
+        let onmousemove = {
+            Callback::from(move |e: MouseEvent| {
+                if e.ctrl_key() {
+                    let (move_x, move_y) = (e.movement_x(), e.movement_y());
+                    spawn_local(async move {
+                        let win = Window::current().unwrap();
+                        let PhysicalPosition { x, y } = win.outer_position().await.unwrap();
+                        win.set_position(PhysicalPosition::new(x + move_x, y + move_y).into())
+                            .await
+                            .unwrap();
+                    });
+                }
+            })
+        };
+
         html! {
-            <div class={classes!("inline-flex")} ref={self.cont.clone()}>
+            <div class={classes!("inline-flex")} ref={self.cont.clone()} {onmousemove}>
                 { for ctx.props().children.iter() }
             </div>
         }

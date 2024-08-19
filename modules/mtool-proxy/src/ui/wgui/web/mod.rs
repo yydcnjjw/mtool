@@ -61,7 +61,7 @@ impl Component for View {
             <>
             <AutoWindow window={
                 WindowProps{
-                    horizontal: Horizontal::RightAlign,
+                    horizontal: Horizontal::RightAlign(12),
                     vertical: Vertical::Absolute(24),
                     ..Default::default()
                 }
