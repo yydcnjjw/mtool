@@ -3,7 +3,7 @@ mod plugin;
 
 use mapp::{inject::inject_once, prelude::*};
 use mtool_cmder::{Cmder, CommandBuilder};
-use mtool_main_window::wgui::native::sticky::{api::show_sub_view, window::StickyWindow};
+use mtool_main_window::wgui::native::{sticky, StickyWindow};
 use mtool_system::event::{self, Event, SelectionEvent, PLAIN, TEXT};
 use mtool_wgui::WGuiStage;
 use tracing::{debug, warn};
@@ -87,7 +87,7 @@ async fn dict_query_with_sticky(
 ) -> Result<(), anyhow::Error> {
     debug!("{:?}", query);
     let result = dict.query(query.trim()).await?;
-    show_sub_view::<ecdict::DictView, _, _>(win.clone(), "dict", result).await?;
+    sticky::show_sub_view::<ecdict::DictView, _, _>(win.clone(), "dict", result).await?;
     win.show()?;
     Ok(())
 }

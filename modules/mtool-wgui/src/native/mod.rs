@@ -82,6 +82,8 @@ where
 {
     let app_tx = injector.construct_oneshot();
 
+    builder.setup(|builder| Ok(builder.plugin(tauri_plugin_os::init())))?;
+
     builder.setup_with_app(move |app| {
         let app = app.handle();
         {

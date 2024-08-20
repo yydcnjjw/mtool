@@ -12,7 +12,7 @@ fn render(_: &RouteParams) -> Html {
     }
 }
 
-pub async fn register(router: Res<Router>) -> Result<(), anyhow::Error> {
+pub async fn init(router: Res<Router>) -> Result<(), anyhow::Error> {
     router.add("/sticky", render);
     Ok(())
 }

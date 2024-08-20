@@ -1,6 +1,6 @@
 use clipboard::{ClipboardContext, ClipboardProvider};
 use mapp::prelude::*;
-use mtool_main_window::wgui::native::{sticky::window::StickyWindow, MtoolWindow};
+use mtool_main_window::wgui::native::{StickyWindow, MtoolWindow};
 use tauri::Emitter;
 
 pub async fn query_dict_with_clipboard(window: Res<StickyWindow>) -> Result<(), anyhow::Error> {

@@ -1,11 +1,16 @@
-pub mod api;
+mod api;
 mod cmd;
-pub mod window;
+mod plugin;
+mod window;
+
+pub use api::*;
+pub(crate) use plugin::plugin_setup;
+pub use window::*;
 
 use mapp::prelude::*;
 use mtool_cmder::Cmder;
 
-pub async fn init(cmder: Res<Cmder>) -> Result<(), anyhow::Error> {
-    cmd::init(cmder).await?;
+pub(crate) async fn setup(cmder: Res<Cmder>) -> Result<(), anyhow::Error> {
+    cmd::setup(cmder).await?;
     Ok(())
 }

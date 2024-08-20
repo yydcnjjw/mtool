@@ -1,19 +1,19 @@
-mod cmd;
-mod hotkey;
+mod main;
+mod plugin;
 pub mod sticky;
-mod window;
 
 use mapp::prelude::*;
 use mtool_cmder::Cmder;
 use mtool_core::{AppStage, ConfigStore};
 use mtool_system::keybinding::Keybinding;
-use mtool_wgui::{Builder, WGuiStage};
-use tauri::generate_handler;
+use mtool_wgui::WGuiStage;
 
 use tracing::debug;
-pub use window::*;
 
 use super::generic::hotkey::{Hotkey, HotkeyMap};
+
+pub use main::MtoolWindow;
+pub use sticky::StickyWindow;
 
 pub(crate) struct Module;
 
@@ -21,9 +21,9 @@ pub(crate) struct Module;
 impl AppModule for Module {
     async fn init(&self, app: &mut AppContext) -> Result<(), anyhow::Error> {
         app.schedule()
-            .add_once_task(WGuiStage::Setup, setup_plugin)
-            .add_once_task(WGuiStage::Setup, cmd::init)
-            .add_once_task(WGuiStage::Setup, sticky::init)
+            .add_once_task(WGuiStage::Setup, plugin::setup)
+            .add_once_task(WGuiStage::Setup, main::setup)
+            .add_once_task(WGuiStage::Setup, sticky::setup)
             .add_once_task(AppStage::Init, setup_global_hotkey);
 
         Ok(())
@@ -53,26 +53,5 @@ async fn setup_global_hotkey(
         }
     }
 
-    Ok(())
-}
-
-async fn setup_plugin(
-    builder: Res<Builder>,
-    injector: Injector,
-    cmder: Res<Cmder>,
-) -> Result<(), anyhow::Error> {
-    builder.setup(|builder| {
-        Ok(builder.plugin(
-            tauri::plugin::Builder::<_, ()>::new("mtool-main-window")
-                .setup(move |app, _| {
-                    window::plugin_setup(app, injector.construct_oneshot())?;
-                    sticky::window::plugin_setup(app, injector.construct_oneshot())?;
-                    hotkey::plugin_setup(app, injector, cmder)?;
-                    Ok(())
-                })
-                .invoke_handler(generate_handler![hotkey::get_hotkeys, hotkey::exec_command])
-                .build(),
-        ))
-    })?;
     Ok(())
 }

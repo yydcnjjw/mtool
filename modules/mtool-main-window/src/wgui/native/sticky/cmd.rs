@@ -13,7 +13,7 @@ async fn hide_sticky_window(win: Res<StickyWindow>) -> Result<(), anyhow::Error>
     Ok(())
 }
 
-pub async fn init(cmder: Res<Cmder>) -> Result<(), anyhow::Error> {
+pub async fn setup(cmder: Res<Cmder>) -> Result<(), anyhow::Error> {
     cmder
         .add_command(
             show_sticky_window

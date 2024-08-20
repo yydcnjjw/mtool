@@ -1,28 +1,15 @@
-use anyhow::Context;
+use anyhow::Context as _;
 use mapp::prelude::*;
 use mtool_cmder::Cmder;
-use mtool_core::ConfigStore;
+use mtool_wgui::prelude::*;
 use tauri::{command, AppHandle, Manager, State};
-use tracing::debug;
+use tokio::sync::oneshot;
+use tracing::{debug, warn};
 
-use crate::wgui::generic::hotkey::HotkeyMap;
-
-#[command]
-pub async fn get_hotkeys(
-    window: tauri::WebviewWindow,
-    injector: State<'_, Injector>,
-) -> Result<HotkeyMap, serde_error::Error> {
-    Ok(match injector.get::<Res<ConfigStore>>().await {
-        Ok(cs) => cs
-            .get::<HotkeyMap>(&format!("wgui.{}.hotkey", window.label()))
-            .await
-            .unwrap_or_default(),
-        _ => HotkeyMap::default(),
-    })
-}
+use super::MtoolWindow;
 
 #[command]
-pub async fn exec_command(
+pub(crate) async fn exec_command(
     cmder: State<'_, Res<Cmder>>,
     injector: State<'_, Injector>,
     command: String,
@@ -43,10 +30,21 @@ pub async fn exec_command(
 
 pub(crate) fn plugin_setup<R: tauri::Runtime>(
     app: &AppHandle<R>,
-    injector: Injector,
     cmder: Res<Cmder>,
+    win_tx: oneshot::Sender<Res<MtoolWindow<R>>>,
 ) -> Result<(), anyhow::Error> {
-    app.manage(injector);
     app.manage(cmder);
+
+    let app = app.clone();
+
+    tokio::spawn(async move {
+        match MtoolWindow::<R>::new(app).await {
+            Ok(win) => {
+                win.bind(win.clone());
+                let _ = win_tx.send(Res::new(win));
+            }
+            Err(e) => warn!("{:?}", e),
+        }
+    });
     Ok(())
 }

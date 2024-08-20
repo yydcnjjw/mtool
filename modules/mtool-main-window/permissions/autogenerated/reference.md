@@ -2,7 +2,7 @@
 
 Default permissions for the plugin.
 
-- `allow-get-hotkeys`
+- `allow-window-hotkeys`
 - `allow-exec-command`
 
 ## Permission Table 
@@ -43,12 +43,12 @@ Denies the exec_command command without any pre-configured scope.
 <tr>
 <td>
 
-`mtool-main-window:allow-get-hotkeys`
+`mtool-main-window:allow-window-hotkeys`
 
 </td>
 <td>
 
-Enables the get_hotkeys command without any pre-configured scope.
+Enables the window_hotkeys command without any pre-configured scope.
 
 </td>
 </tr>
@@ -56,12 +56,12 @@ Enables the get_hotkeys command without any pre-configured scope.
 <tr>
 <td>
 
-`mtool-main-window:deny-get-hotkeys`
+`mtool-main-window:deny-window-hotkeys`
 
 </td>
 <td>
 
-Denies the get_hotkeys command without any pre-configured scope.
+Denies the window_hotkeys command without any pre-configured scope.
 
 </td>
 </tr>

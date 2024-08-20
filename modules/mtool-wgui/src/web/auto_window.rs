@@ -1,4 +1,7 @@
-use mtauri_sys::window::{PhysicalPosition, PhysicalSize, Position, Size, Window};
+use mtauri_sys::{
+    os::{self, Platform},
+    window::{PhysicalPosition, PhysicalSize, Position, Size, Window},
+};
 use tracing::debug;
 use wasm_bindgen::prelude::*;
 use web_sys::{window, HtmlDivElement, ResizeObserver, ResizeObserverEntry};
@@ -139,9 +142,23 @@ impl Component for AutoWindow {
             Callback::from(move |e: MouseEvent| {
                 // left button
                 if e.ctrl_key() && e.button() == 0 {
+                    let (move_x, move_y) = (e.movement_x(), e.movement_y());
                     spawn_local(async move {
                         let win = Window::current().unwrap();
-                        win.start_dragging().await.unwrap();
+
+                        match os::platform() {
+                            Platform::Windows => {
+                                let PhysicalPosition { x, y } = win.outer_position().await.unwrap();
+                                win.set_position(
+                                    PhysicalPosition::new(x + move_x, y + move_y).into(),
+                                )
+                                .await
+                                .unwrap();
+                            }
+                            _ => {
+                                win.start_dragging().await.unwrap();
+                            }
+                        }
                     });
                 }
             })

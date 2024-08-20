@@ -309,17 +309,17 @@
           ]
         },
         {
-          "description": "allow-get-hotkeys -> Enables the get_hotkeys command without any pre-configured scope.",
+          "description": "allow-window-hotkeys -> Enables the window_hotkeys command without any pre-configured scope.",
           "type": "string",
           "enum": [
-            "allow-get-hotkeys"
+            "allow-window-hotkeys"
           ]
         },
         {
-          "description": "deny-get-hotkeys -> Denies the get_hotkeys command without any pre-configured scope.",
+          "description": "deny-window-hotkeys -> Denies the window_hotkeys command without any pre-configured scope.",
           "type": "string",
           "enum": [
-            "deny-get-hotkeys"
+            "deny-window-hotkeys"
           ]
         },
         {

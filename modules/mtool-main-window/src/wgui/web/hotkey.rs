@@ -10,7 +10,7 @@ use yew::platform::spawn_local;
 
 use crate::wgui::generic::hotkey::{Hotkey, HotkeyMap};
 
-pub async fn register(
+pub async fn init(
     keybinding: Res<Keybinding>,
     cmder: Res<LocalCmder>,
     injector: LocalInjector,
@@ -22,6 +22,7 @@ pub async fn register(
         _when: Option<String>,
     ) -> Result<(), anyhow::Error> {
         debug!("{}", command);
+
         if let Some(cmd) = cmder.get_command_with_name(&command) {
             cmd.exec_local(&injector).await?;
         } else {
@@ -50,7 +51,7 @@ pub async fn register(
         cmder: Res<LocalCmder>,
         injector: LocalInjector,
     ) -> Result<(), anyhow::Error> {
-        match mtauri_sys::invoke::<(), HotkeyMap>("plugin:mtool-main-window|get_hotkeys", &()).await
+        match mtauri_sys::invoke::<(), HotkeyMap>("plugin:mtool-main-window|window_hotkeys", &()).await
         {
             Ok(kbs) => {
                 let km = KeyMap::<SharedAction>::new_with_vec(

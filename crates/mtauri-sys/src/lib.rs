@@ -1,6 +1,7 @@
 mod error;
 pub mod event;
 pub mod window;
+pub mod os;
 
 pub use error::IntoAnyhowError;
 

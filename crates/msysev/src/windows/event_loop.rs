@@ -17,7 +17,7 @@ use windows::{
 
 use crate::{windows::message_only_window::MessageOnlyWindow, Event};
 
-use super::hook::Hook;
+// use super::hook::Hook;
 
 pub struct PlatformEventLoop {
     exit_signal: ExitSignal,
@@ -68,7 +68,7 @@ impl PlatformEventLoop {
 
         self.exit_signal.set_current_thread();
 
-        let _ll_keyboard_hook = Hook::global_low_level_keyboard_hook()?;
+        // let _ll_keyboard_hook = Hook::global_low_level_keyboard_hook()?;
 
         let message_only_window = MessageOnlyWindow::new(s!("MTOOL_SYSTEM_EVENT_LOOP_WINDOW"))?;
 
