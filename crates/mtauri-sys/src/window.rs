@@ -49,6 +49,9 @@ mod ffi {
         pub async fn outerPosition(this: &WebviewWindow) -> Result<JsValue, JsValue>;
 
         #[wasm_bindgen(method, catch)]
+        pub async fn startDragging(this: &WebviewWindow) -> Result<(), JsValue>;
+
+        #[wasm_bindgen(method, catch)]
         pub async fn center(this: &WebviewWindow) -> Result<(), JsValue>;
 
         #[wasm_bindgen(method, catch)]
@@ -146,6 +149,10 @@ impl Window {
             serde_wasm_bindgen::from_value(self.handle.outerPosition().await.into_anyhow()?)
                 .into_anyhow()?,
         )
+    }
+
+    pub async fn start_dragging(&self) -> Result<(), anyhow::Error> {
+        self.handle.startDragging().await.into_anyhow()
     }
 
     pub async fn center(&self) -> Result<(), anyhow::Error> {

@@ -1,4 +1,5 @@
-use mtauri_sys::window::{PhysicalPosition, PhysicalSize, Window};
+use mtauri_sys::window::{PhysicalPosition, PhysicalSize, Position, Size, Window};
+use tracing::debug;
 use wasm_bindgen::prelude::*;
 use web_sys::{window, HtmlDivElement, ResizeObserver, ResizeObserverEntry};
 use yew::{platform::spawn_local, prelude::*};
@@ -66,7 +67,7 @@ impl AutoWindow {
 
         let PhysicalSize { width, height } = size;
 
-        self.set_window_size(size);
+        self.set_window_size(size.into());
 
         let screen = window().unwrap().screen()?;
         let x = match horizontal {
@@ -83,18 +84,20 @@ impl AutoWindow {
             Vertical::Absolute(y) => *y,
         };
 
-        self.set_window_position(PhysicalPosition::new(x, y));
+        self.set_window_position(PhysicalPosition::new(x, y).into());
         Ok(())
     }
 
-    fn set_window_size(&self, size: PhysicalSize<u32>) {
+    fn set_window_size(&self, size: Size) {
         let window = self.window.clone();
-        spawn_local(async move { window.set_size(size.into()).await.unwrap() });
+        debug!("set window size: {:?}", size);
+        spawn_local(async move { window.set_size(size).await.unwrap() });
     }
 
-    fn set_window_position(&self, pos: PhysicalPosition<i32>) {
+    fn set_window_position(&self, pos: Position) {
         let window = self.window.clone();
-        spawn_local(async move { window.set_position(pos.into()).await.unwrap() });
+        debug!("set window position: {:?}", pos);
+        spawn_local(async move { window.set_position(pos).await.unwrap() });
     }
 }
 
@@ -134,14 +137,11 @@ impl Component for AutoWindow {
     fn view(&self, ctx: &Context<Self>) -> Html {
         let onmousemove = {
             Callback::from(move |e: MouseEvent| {
-                if e.ctrl_key() {
-                    let (move_x, move_y) = (e.movement_x(), e.movement_y());
+                // left button
+                if e.ctrl_key() && e.button() == 0 {
                     spawn_local(async move {
                         let win = Window::current().unwrap();
-                        let PhysicalPosition { x, y } = win.outer_position().await.unwrap();
-                        win.set_position(PhysicalPosition::new(x + move_x, y + move_y).into())
-                            .await
-                            .unwrap();
+                        win.start_dragging().await.unwrap();
                     });
                 }
             })
