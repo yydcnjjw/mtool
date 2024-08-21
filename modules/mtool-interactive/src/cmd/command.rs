@@ -91,7 +91,8 @@ pub async fn init(cmder: Res<Cmder>) -> Result<(), anyhow::Error> {
                             .sorted()
                             .collect_vec(),
                     )
-                    .prompt("Input command..."),
+                    .prompt("Input command...")
+                    .hide_window(),
                 )
                 .await?;
             match command {
