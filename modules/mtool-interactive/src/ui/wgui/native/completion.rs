@@ -135,7 +135,7 @@ impl CompleteRead for Completion {
             format!("/interactive/completion/{}", id),
         )?;
 
-        self.win.show().context("show completion window")?;
+        self.win.show().await.context("show completion window")?;
 
         let result = match rx.await {
             Err(_) => {
@@ -145,7 +145,7 @@ impl CompleteRead for Completion {
         };
 
         if need_hide_window {
-            self.win.hide()?;
+            self.win.hide().await?;
         }
 
         Ok(result)

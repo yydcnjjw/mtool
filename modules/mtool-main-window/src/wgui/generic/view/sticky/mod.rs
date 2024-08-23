@@ -10,5 +10,7 @@ pub struct TemplateView {
 
 #[derive(Serialize, Deserialize, Clone)]
 pub enum Command {
-    ShowSubview(TemplateView),
+    ShowMain(TemplateView),
+    ShowSub(TemplateView),
+    LeftMouseUp,
 }

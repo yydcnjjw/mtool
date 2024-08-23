@@ -1,5 +1,5 @@
 use mtool_wgui::WGuiWindow;
-use std::{mem::size_of, sync::Arc};
+use std::{cell::RefCell, mem::size_of, sync::Arc};
 use tauri::PhysicalSize;
 use tokio::sync::oneshot;
 use windows::{
@@ -77,10 +77,13 @@ pub struct Renderer {
 
     compositor: Compositor,
     target: DesktopWindowTarget,
-    dispatcher_queue_controller: DispatcherQueueController,
     root_visual: ContainerVisual,
 
     webview_visual: WebviewVisual,
+}
+
+thread_local! {
+    static DISPATCHER_QUEUE: RefCell<Option<DispatcherQueueController>> = RefCell::new(None);
 }
 
 impl Renderer {
@@ -92,66 +95,63 @@ impl Renderer {
             post_resize_buffers_hook,
         } = builder;
 
-        let (compositor, target, dispatcher_queue_controller, root_visual) = {
-            let (tx, rx) = oneshot::channel();
-
-            let win_ = win.clone();
-            win.run_on_main_thread(move || {
-                let _ = tx.send(move || -> Result<_, anyhow::Error> {
-                    unsafe {
-                        let dispatcher_queue_controller =
-                            CreateDispatcherQueueController(DispatcherQueueOptions {
+        let (compositor, target, root_visual) = {
+            win.run_on_main_thread(move |win| unsafe {
+                DISPATCHER_QUEUE.with_borrow_mut(|v| -> Result<(), anyhow::Error> {
+                    if v.is_none() {
+                        let _ =
+                            v.insert(CreateDispatcherQueueController(DispatcherQueueOptions {
                                 dwSize: size_of::<DispatcherQueueOptions>() as u32,
                                 threadType: DQTYPE_THREAD_CURRENT,
                                 apartmentType: DQTAT_COM_ASTA,
-                            })?;
-
-                        let compositor = Compositor::new()?;
-
-                        let target = compositor
-                            .cast::<ICompositorDesktopInterop>()?
-                            .CreateDesktopWindowTarget(win_.hwnd()?, BOOL::from(false))?;
-
-                        let root_visual = {
-                            let root = compositor.CreateContainerVisual()?;
-                            root.SetRelativeSizeAdjustment(Vector2 { X: 1., Y: 1. })?;
-                            root.SetOffset(Vector3 {
-                                X: 0.,
-                                Y: 0.,
-                                Z: 0.,
-                            })?;
-                            target.SetRoot(&root)?;
-                            root
-                        };
-                        Ok((compositor, target, dispatcher_queue_controller, root_visual))
+                            })?);
                     }
-                }());
-            })?;
-            rx.await??
+                    Ok(())
+                })?;
+
+                let compositor = Compositor::new()?;
+
+                let target = compositor
+                    .cast::<ICompositorDesktopInterop>()?
+                    .CreateDesktopWindowTarget(win.hwnd()?, BOOL::from(false))?;
+
+                let root_visual = {
+                    let root = compositor.CreateContainerVisual()?;
+                    root.SetRelativeSizeAdjustment(Vector2 { X: 1., Y: 1. })?;
+                    root.SetOffset(Vector3 {
+                        X: 0.,
+                        Y: 0.,
+                        Z: 0.,
+                    })?;
+                    target.SetRoot(&root)?;
+                    root
+                };
+                Ok((compositor, target, root_visual))
+            })
+            .await?
         };
 
         let size = win.inner_size()?;
         let webview_visual = WebviewVisual::new(win.clone(), &compositor).await?;
         webview_visual.set_size(size)?;
 
-        let mut d3d12_visual = D3d12Visual::new(win.clone(), compositor.clone(), size)?;
-        d3d12_visual.set_draw_hooks(draw_hook);
-        d3d12_visual.set_resize_buffers_hooks(pre_resize_buffers_hook, post_resize_buffers_hook);
+        let mut gpu_visual = D3d12Visual::new(win.clone(), compositor.clone(), size)?;
+        gpu_visual.set_draw_hooks(draw_hook);
+        gpu_visual.set_resize_buffers_hooks(pre_resize_buffers_hook, post_resize_buffers_hook);
 
         root_visual
             .Children()?
             .InsertAtTop(webview_visual.handle())?;
         root_visual
             .Children()?
-            .InsertAtBottom(d3d12_visual.handle())?;
+            .InsertAtBottom(gpu_visual.handle())?;
 
-        d3d12_visual.run();
+        gpu_visual.run();
 
         Ok(Self {
             win,
             compositor,
             target,
-            dispatcher_queue_controller,
             root_visual,
             webview_visual,
         })

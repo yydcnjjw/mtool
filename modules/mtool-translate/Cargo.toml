@@ -41,7 +41,7 @@ mtool-core = { path = "../mtool-core" }
 mtool-system = { path = "../mtool-system" }
 mtool-cmder = { path = "../mtool-cmder" }
 mtool-interactive = { path = "../mtool-interactive" }
-mtool-ai = { path = "../mtool-ai" }
+# mtool-ai = { path = "../mtool-ai" }
 
 clap = { workspace = true }
 tokio = { workspace = true }

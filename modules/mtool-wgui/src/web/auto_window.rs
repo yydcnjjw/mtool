@@ -2,7 +2,7 @@ use mtauri_sys::{
     os::{self, Platform},
     window::{PhysicalPosition, PhysicalSize, Position, Size, Window},
 };
-use tracing::debug;
+use tracing::{debug, warn};
 use wasm_bindgen::prelude::*;
 use web_sys::{window, HtmlDivElement, ResizeObserver, ResizeObserverEntry};
 use yew::{platform::spawn_local, prelude::*};
@@ -131,41 +131,17 @@ impl Component for AutoWindow {
     fn update(&mut self, _ctx: &Context<Self>, msg: Self::Message) -> bool {
         match msg {
             Msg::Resize(size) => {
-                self.adjust_window(size).unwrap();
+                if size.width > 0 && size.height > 0 {
+                    self.adjust_window(size).unwrap();
+                }
                 false
             }
         }
     }
 
     fn view(&self, ctx: &Context<Self>) -> Html {
-        let onmousemove = {
-            Callback::from(move |e: MouseEvent| {
-                // left button
-                if e.ctrl_key() && e.button() == 0 {
-                    let (move_x, move_y) = (e.movement_x(), e.movement_y());
-                    spawn_local(async move {
-                        let win = Window::current().unwrap();
-
-                        match os::platform() {
-                            Platform::Windows => {
-                                let PhysicalPosition { x, y } = win.outer_position().await.unwrap();
-                                win.set_position(
-                                    PhysicalPosition::new(x + move_x, y + move_y).into(),
-                                )
-                                .await
-                                .unwrap();
-                            }
-                            _ => {
-                                win.start_dragging().await.unwrap();
-                            }
-                        }
-                    });
-                }
-            })
-        };
-
         html! {
-            <div class={classes!("inline-flex")} ref={self.cont.clone()} {onmousemove}>
+            <div ref={self.cont.clone()}>
                 { for ctx.props().children.iter() }
             </div>
         }
@@ -178,6 +154,8 @@ impl Component for AutoWindow {
                     let elem = entries[0].target();
 
                     let (width, height) = (elem.client_width() as u32, elem.client_height() as u32);
+
+                    warn!("{}, {}", width, height);
 
                     link.send_message(Msg::Resize(PhysicalSize::new(width, height).into()));
                 },

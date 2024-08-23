@@ -13,6 +13,8 @@ mod schedule;
 mod tracing;
 mod utils;
 
+pub use parking_lot as sync;
+
 pub mod prelude {
 
     pub use minject as inject;

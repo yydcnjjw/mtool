@@ -26,6 +26,11 @@ impl<T> Res<T> {
     pub fn new_raw(val: Arc<T>) -> Self {
         Self(val)
     }
+
+    pub fn try_unwrap(this: Self) -> Result<T, anyhow::Error> {
+        Arc::try_unwrap(this.0)
+            .map_err(|_| anyhow::anyhow!("try_unwrap {} failed", type_name::<T>()))
+    }
 }
 
 impl Res<dyn Any + Send + Sync> {

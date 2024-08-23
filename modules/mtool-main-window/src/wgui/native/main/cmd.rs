@@ -4,8 +4,7 @@ use mtool_cmder::{Cmder, CommandBuilder};
 use super::window::MtoolWindow;
 
 async fn hide_window(win: Res<MtoolWindow>) -> Result<(), anyhow::Error> {
-    win.hide()?;
-    Ok(())
+    win.hide().await
 }
 
 pub async fn setup(cmder: Res<Cmder>) -> Result<(), anyhow::Error> {

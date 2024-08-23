@@ -43,6 +43,9 @@ mod ffi {
         pub async fn setSize(this: &WebviewWindow, size: JsValue) -> Result<(), JsValue>;
 
         #[wasm_bindgen(method, catch)]
+        pub async fn outerSize(this: &WebviewWindow) -> Result<JsValue, JsValue>;
+
+        #[wasm_bindgen(method, catch)]
         pub async fn setPosition(this: &WebviewWindow, pos: JsValue) -> Result<(), JsValue>;
 
         #[wasm_bindgen(method, catch)]
@@ -87,6 +90,8 @@ mod ffi {
 
     }
 }
+
+pub trait UnlistenFn = Fn() -> Result<(), JsValue>;
 
 #[derive(Debug, Clone)]
 pub struct Window {
@@ -151,6 +156,13 @@ impl Window {
         )
     }
 
+    pub async fn outer_size(&self) -> Result<PhysicalSize<u32>, anyhow::Error> {
+        Ok(
+            serde_wasm_bindgen::from_value(self.handle.outerSize().await.into_anyhow()?)
+                .into_anyhow()?,
+        )
+    }
+
     pub async fn start_dragging(&self) -> Result<(), anyhow::Error> {
         self.handle.startDragging().await.into_anyhow()
     }
@@ -174,7 +186,7 @@ impl Window {
         &self,
         event: &str,
         mut handler: Handler,
-    ) -> Result<impl Fn() -> Result<(), JsValue>, anyhow::Error>
+    ) -> Result<impl UnlistenFn, anyhow::Error>
     where
         Handler: FnMut(Event<T>) -> Result<(), JsValue> + 'static,
         T: DeserializeOwned + 'static,

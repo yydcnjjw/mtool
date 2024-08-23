@@ -4,6 +4,5 @@ use tauri::Emitter;
 
 pub async fn text_translate(window: Res<MtoolWindow>) -> Result<(), anyhow::Error> {
     window.emit_to(window.label(), "route", "/translate")?;
-    window.show()?;
-    Ok(())
+    window.show().await
 }

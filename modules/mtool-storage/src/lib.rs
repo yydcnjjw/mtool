@@ -13,7 +13,7 @@ struct Module;
 #[async_trait]
 impl AppModule for Module {
     async fn init(&self, app: &mut AppContext) -> Result<(), anyhow::Error> {
-        app.injector().construct_once(create_db_conn);
+        app.injector().construct(create_db_conn);
 
         app.schedule()
             .insert_stage(AppStage::Startup, DBMigrationStage::Register)

@@ -41,9 +41,7 @@ where
     T: Send + Sync + 'static,
 {
     async fn provide(app: &App) -> Result<Self, anyhow::Error> {
-        app.injector()
-            .remove::<Take<T>>()
-            .context(format!("Failed to provide {}", type_name::<Self>()))
+        Provide::provide(app.injector()).await
     }
 }
 
@@ -64,9 +62,7 @@ where
     T: 'static,
 {
     async fn local_provide(app: &LocalApp) -> Result<Self, anyhow::Error> {
-        app.injector()
-            .remove::<Take<T>>()
-            .context(format!("Failed to provide {}", type_name::<Self>()))
+        LocalProvide::local_provide(app.injector()).await
     }
 }
 

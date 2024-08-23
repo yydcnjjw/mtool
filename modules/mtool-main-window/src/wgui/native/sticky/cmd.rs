@@ -4,13 +4,11 @@ use mtool_cmder::{Cmder, CommandBuilder};
 use super::window::StickyWindow;
 
 async fn show_sticky_window(win: Res<StickyWindow>) -> Result<(), anyhow::Error> {
-    win.show()?;
-    Ok(())
+    win.show().await
 }
 
 async fn hide_sticky_window(win: Res<StickyWindow>) -> Result<(), anyhow::Error> {
-    win.hide()?;
-    Ok(())
+    win.hide().await
 }
 
 pub async fn setup(cmder: Res<Cmder>) -> Result<(), anyhow::Error> {

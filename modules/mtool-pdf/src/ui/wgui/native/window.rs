@@ -107,7 +107,7 @@ impl PdfViewerWindow {
                     .transparent(true)
                     .decorations(true)
                     .shadow(false)
-                    .disable_drag_drop_handler();
+                    .drag_and_drop(false);
 
             #[cfg(windows)]
             {
@@ -116,7 +116,8 @@ impl PdfViewerWindow {
 
             builder.build()?
         };
-        let win = WGuiWindow::new_and_wait_for_ready(win, false).await?;
+
+        let win = WGuiWindow::new_and_wait_for_ready(win).await?;
 
         let pdf_viewer = Arc::new(PdfViewer::new(pdf_api, win.inner_size()?).await?);
 

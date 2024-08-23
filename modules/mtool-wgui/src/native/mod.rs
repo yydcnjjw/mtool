@@ -2,7 +2,9 @@ mod builder;
 mod global_hotkey;
 mod window;
 mod window_data_bind;
+mod component;
 
+pub use component::*;
 pub use builder::*;
 pub use window::*;
 pub use window_data_bind::*;
@@ -87,6 +89,9 @@ where
     builder.setup_with_app(move |app| {
         let app = app.handle();
         {
+            app.manage(injector);
+            let _ = app_tx.send(Res::new(app.clone()));
+
             let menu = Menu::with_items(
                 app,
                 &[&MenuItem::with_id(app, "quit", "Quit", true, None::<&str>)?],
@@ -108,8 +113,6 @@ where
                 })
                 .build(app)?;
         }
-
-        app_tx.send(Res::new(app.clone())).unwrap();
         Ok(())
     });
 

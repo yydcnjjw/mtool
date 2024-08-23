@@ -25,6 +25,7 @@ serde-wasm-bindgen = { workspace = true }
 tracing = { workspace = true }
 cfg-if = { workspace = true }
 yew = { workspace = true, features = ["csr"] }
+gloo-events = "*"
 js-sys = { workspace = true }
 wasm-bindgen = { workspace = true }
 
@@ -38,6 +39,8 @@ mtool-core = { path = "../mtool-core" }
 mtool-system = { path = "../mtool-system" }
 
 tauri = { workspace = true }
+tauri-runtime-wry = { workspace = true }
+
 
 [build-dependencies]
 tauri-plugin = { workspace = true }

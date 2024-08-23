@@ -1,18 +1,12 @@
 mod dict;
 mod ui;
 
-#[cfg(not(target_family = "wasm"))]
-mod service;
-
 use mapp::prelude::*;
 
 #[cfg(not(target_family = "wasm"))]
 pub fn module() -> ModuleGroup {
     let mut group = ModuleGroup::new("mtool-dict");
-    group
-        .add_module(ui::module())
-        .add_module(dict::Module)
-        .add_module(service::Module);
+    group.add_module(ui::module()).add_module(dict::Module);
     group
 }
 

@@ -1,6 +1,6 @@
 cfg_if::cfg_if! {
     if #[cfg(not(target_family = "wasm"))] {
-        pub mod llama;
+        // pub mod llama;
         pub mod openai;
         pub mod tencent;
         use mapp::prelude::*;
@@ -33,7 +33,7 @@ impl fmt::Display for LanguageType {
 pub enum Backend {
     Tencent,
     Openai,
-    Llama,
+    // Llama,
 }
 
 impl fmt::Display for Backend {
@@ -41,7 +41,7 @@ impl fmt::Display for Backend {
         match self {
             Backend::Tencent => write!(f, "tencent"),
             Backend::Openai => write!(f, "openai"),
-            Backend::Llama => write!(f, "llama"),
+            // Backend::Llama => write!(f, "llama"),
         }
     }
 }
@@ -66,8 +66,8 @@ impl AppModule for Module {
     async fn init(&self, #[allow(unused)] app: &mut AppContext) -> Result<(), anyhow::Error> {
         app.injector()
             .construct_once(tencent::Translator::construct)
-            .construct_once(openai::Translator::construct)
-            .construct_once(llama::Translator::construct);
+            .construct_once(openai::Translator::construct);
+            // .construct_once(llama::Translator::construct);
         Ok(())
     }
 }

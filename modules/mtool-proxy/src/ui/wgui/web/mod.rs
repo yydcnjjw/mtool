@@ -4,9 +4,7 @@ use crate::ui::wgui::generic::{Stats, TransferStats};
 use async_stream::stream;
 use mapp::{prelude::*, CreateLocalOnceTaskDescriptor};
 use mtool_main_window::wgui::generic::STICKY_WINDOW_LABEL;
-use mtool_wgui::{
-    is_window, AutoWindow, Horizontal, RouteParams, Router, Vertical, WebStage, WindowProps,
-};
+use mtool_wgui::prelude::*;
 use tracing::{debug, warn};
 use yew::{platform::time, prelude::*};
 use yew_icons::{Icon, IconId};
@@ -59,18 +57,9 @@ impl Component for View {
     fn view(&self, _ctx: &Context<Self>) -> Html {
         html! {
             <>
-            <AutoWindow window={
-                WindowProps{
-                    horizontal: Horizontal::RightAlign(12),
-                    vertical: Vertical::Absolute(24),
-                    ..Default::default()
-                }
-            }>
               <div class={classes!(
                   "flex",
                   "flex-col",
-                  "p-1",
-                  "bg-gray-600/75",
               )}>
                 {
                    for self.diff_stats.transfer.iter().map(|(k, v)| {
@@ -78,7 +67,6 @@ impl Component for View {
                    })
                 }
               </div>
-            </AutoWindow>
             </>
         }
     }
@@ -158,13 +146,7 @@ impl AppLocalModule for Module {
     }
 }
 
-fn render(_: &RouteParams) -> Html {
-    html! {
-        <View/>
-    }
-}
-
-async fn init(router: Res<Router>) -> Result<(), anyhow::Error> {
-    router.add("/proxy", render);
+async fn init(templator: Res<Templator>) -> Result<(), anyhow::Error> {
+    templator.add_template::<View>();
     Ok(())
 }

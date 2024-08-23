@@ -196,7 +196,7 @@ impl App {
             ("C-z", send(|| AppMsg::ToTarget(LanguageType::Zh))),
             ("C-j", send(|| AppMsg::ToTarget(LanguageType::Ja))),
             ("C-A-o", send(|| AppMsg::UseBackend(Backend::Openai))),
-            ("C-A-l", send(|| AppMsg::UseBackend(Backend::Llama))),
+            // ("C-A-l", send(|| AppMsg::UseBackend(Backend::Llama))),
             ("C-A-t", send(|| AppMsg::UseBackend(Backend::Tencent))),
             ("C-<Return>", send(|| AppMsg::Translate)),
         )

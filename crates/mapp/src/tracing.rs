@@ -52,6 +52,9 @@ impl Tracing {
                 .with_file(true)
                 .with_line_number(true)
                 .with_target(false)
+                .with_thread_ids(true)
+                .with_thread_names(true)
+                .pretty()
                 .with_writer(writer);
 
             #[cfg(not(target_family = "wasm"))]

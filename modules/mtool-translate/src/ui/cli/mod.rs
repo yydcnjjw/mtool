@@ -8,7 +8,8 @@ use mtool_core::{
     CmdlineStage,
 };
 
-use crate::translator::{llama, openai, tencent, LanguageType, Translator};
+use crate::translator::{// llama,
+                        openai, tencent, LanguageType, Translator};
 
 use clap::{Parser, ValueEnum};
 
@@ -16,7 +17,7 @@ use clap::{Parser, ValueEnum};
 enum Backend {
     Tencent,
     Openai,
-    Llama,
+    // Llama,
 }
 
 /// Translate module
@@ -55,7 +56,7 @@ async fn text_translate_from_cli(
     let translator: Res<dyn Translator + Send + Sync> = match backend {
         Backend::Tencent => injector.get::<Res<tencent::Translator>>().await?,
         Backend::Openai => injector.get::<Res<openai::Translator>>().await?,
-        Backend::Llama => injector.get::<Res<llama::Translator>>().await?,
+        // Backend::Llama => injector.get::<Res<llama::Translator>>().await?,
     };
 
     if interactive {

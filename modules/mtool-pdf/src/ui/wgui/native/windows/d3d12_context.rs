@@ -1,0 +1,191 @@
+use anyhow::Context;
+use tauri::PhysicalSize;
+use tracing::debug;
+use windows::{
+    core::{Interface, PCSTR, PCWSTR},
+    Win32::{
+        Foundation::HANDLE,
+        Graphics::{
+            Direct3D::D3D_FEATURE_LEVEL_11_0,
+            Direct3D12::{
+                D3D12CreateDevice, D3D12GetDebugInterface, ID3D12CommandQueue, ID3D12Debug,
+                ID3D12Debug1, ID3D12Device, ID3D12Fence, ID3D12Resource,
+                D3D12_COMMAND_LIST_TYPE_DIRECT, D3D12_COMMAND_QUEUE_DESC,
+                D3D12_COMMAND_QUEUE_FLAG_NONE, D3D12_FENCE_FLAG_NONE,
+            },
+            Dxgi::{
+                Common::{DXGI_ALPHA_MODE_PREMULTIPLIED, DXGI_FORMAT_B8G8R8A8_UNORM},
+                CreateDXGIFactory1, IDXGIAdapter1, IDXGIFactory4, IDXGISwapChain1, IDXGISwapChain3,
+                DXGI_ADAPTER_DESC1, DXGI_ADAPTER_FLAG, DXGI_ADAPTER_FLAG_SOFTWARE, DXGI_PRESENT,
+                DXGI_SWAP_CHAIN_DESC1, DXGI_SWAP_EFFECT_FLIP_DISCARD,
+                DXGI_USAGE_RENDER_TARGET_OUTPUT,
+            },
+        },
+        System::Threading::{CreateEventA, WaitForSingleObjectEx},
+    },
+};
+
+pub(super) struct D3d12Context {
+    pub(super) size: PhysicalSize<u32>,
+    pub(super) n_frames: u32,
+
+    pub(super) adapter: IDXGIAdapter1,
+    pub(super) device: ID3D12Device,
+
+    pub(super) queue: ID3D12CommandQueue,
+    pub(super) swap_chain: IDXGISwapChain1,
+
+    fench: ID3D12Fence,
+    fench_event: HANDLE,
+    fench_values: Vec<u64>,
+    frame_buffer_index: usize,
+}
+
+impl D3d12Context {
+    pub fn new(size: PhysicalSize<u32>) -> Result<Self, anyhow::Error> {
+        let PhysicalSize { width, height } = size;
+        let n_frames = 2u32;
+
+        Self::d3d12_debug_init()?;
+
+        let (adapter, device, queue, swap_chain) = unsafe {
+            let factory: IDXGIFactory4 = CreateDXGIFactory1()?;
+
+            let (device, adapter) = Self::select_device(&factory)?;
+
+            let queue = {
+                let mut desc = D3D12_COMMAND_QUEUE_DESC::default();
+                desc.Flags = D3D12_COMMAND_QUEUE_FLAG_NONE;
+                desc.Type = D3D12_COMMAND_LIST_TYPE_DIRECT;
+                device.CreateCommandQueue::<ID3D12CommandQueue>(&desc)?
+            };
+
+            let swap_chain = {
+                let mut desc = DXGI_SWAP_CHAIN_DESC1::default();
+                desc.BufferCount = 2;
+                desc.Width = width;
+                desc.Height = height;
+                desc.Format = DXGI_FORMAT_B8G8R8A8_UNORM;
+                desc.BufferUsage = DXGI_USAGE_RENDER_TARGET_OUTPUT;
+                desc.SwapEffect = DXGI_SWAP_EFFECT_FLIP_DISCARD;
+                desc.SampleDesc.Count = 1;
+                desc.AlphaMode = DXGI_ALPHA_MODE_PREMULTIPLIED;
+                factory.CreateSwapChainForComposition(&queue, &desc, None)?
+            };
+
+            (adapter, device, queue, swap_chain)
+        };
+
+        let (fench, fench_event, fench_values) = unsafe {
+            let fench_values = vec![0; n_frames as usize];
+
+            let fench = device.CreateFence::<ID3D12Fence>(0, D3D12_FENCE_FLAG_NONE)?;
+            let fench_event = CreateEventA(None, false, false, PCSTR::null())?;
+            (fench, fench_event, fench_values)
+        };
+
+        let frame_buffer_index = Self::get_back_frame_buffer_index(&swap_chain)? as usize;
+
+        Ok(Self {
+            size,
+            n_frames,
+
+            adapter,
+            device,
+            queue,
+            swap_chain,
+
+            fench,
+            fench_event,
+            fench_values,
+            frame_buffer_index,
+        })
+    }
+
+    fn get_back_frame_buffer(&mut self) -> Result<(usize, ID3D12Resource), anyhow::Error> {
+        let current_fench_value = self.fench_values[self.frame_buffer_index];
+
+        self.frame_buffer_index = Self::get_back_frame_buffer_index(&self.swap_chain)? as usize;
+
+        unsafe {
+            if self.fench.GetCompletedValue() < self.fench_values[self.frame_buffer_index] {
+                self.fench.SetEventOnCompletion(
+                    self.fench_values[self.frame_buffer_index],
+                    self.fench_event.clone(),
+                )?;
+
+                WaitForSingleObjectEx(self.fench_event, u32::max_value(), false);
+            }
+        }
+
+        self.fench_values[self.frame_buffer_index] = current_fench_value + 1;
+
+        Ok((self.frame_buffer_index, self.current_frame_buffer()?))
+    }
+
+    fn current_frame_buffer(&self) -> Result<ID3D12Resource, anyhow::Error> {
+        self.get_frame_buffer(self.frame_buffer_index)
+    }
+
+    pub(super) fn get_frame_buffer(&self, i: usize) -> Result<ID3D12Resource, anyhow::Error> {
+        Ok(unsafe { self.swap_chain.GetBuffer(i as u32)? })
+    }
+
+    fn swap_buffer(&mut self) -> Result<(), anyhow::Error> {
+        unsafe {
+            self.swap_chain.Present(1, DXGI_PRESENT(0)).ok()?;
+            self.queue
+                .Signal(&self.fench, self.fench_values[self.frame_buffer_index])?;
+        };
+        Ok(())
+    }
+
+    fn d3d12_debug_init() -> Result<(), anyhow::Error> {
+        #[cfg(debug_assertions)]
+        {
+            let mut debug: Option<ID3D12Debug> = None;
+
+            unsafe {
+                D3D12GetDebugInterface(&mut debug)?;
+                if let Some(debug) = debug {
+                    debug.EnableDebugLayer();
+                    debug
+                        .cast::<ID3D12Debug1>()?
+                        .SetEnableGPUBasedValidation(true);
+                }
+            }
+        }
+        Ok(())
+    }
+
+    unsafe fn select_device(
+        factory: &IDXGIFactory4,
+    ) -> Result<(ID3D12Device, IDXGIAdapter1), anyhow::Error> {
+        let mut device: Option<ID3D12Device> = None;
+        let mut index = 0u32;
+        while let Ok(adapter) = factory.EnumAdapters1(index) {
+            let desc = DXGI_ADAPTER_DESC1::default();
+            adapter.GetDesc1()?;
+            debug!(
+                "adapter description: {}",
+                PCWSTR::from_raw(desc.Description.as_ptr()).display()
+            );
+            if DXGI_ADAPTER_FLAG(desc.Flags as i32).contains(DXGI_ADAPTER_FLAG_SOFTWARE) {
+                index += 1;
+                continue;
+            }
+
+            D3D12CreateDevice(&adapter, D3D_FEATURE_LEVEL_11_0, &mut device)?;
+            return Ok((device.context("create D3D12 device failed")?, adapter));
+        }
+        anyhow::bail!("Unable to find the right device!")
+    }
+
+    fn get_back_frame_buffer_index(swap_chain: &IDXGISwapChain1) -> Result<u32, anyhow::Error> {
+        Ok(unsafe {
+            swap_chain
+                .cast::<IDXGISwapChain3>()?
+                .GetCurrentBackBufferIndex()
+        })
+    }
+}

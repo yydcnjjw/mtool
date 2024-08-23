@@ -48,7 +48,5 @@ pub async fn open_pdf(
     let win = PdfViewerWindow::new((*app_handle).clone(), pdf_api).await?;
 
     win.open_file(path)?;
-    win.show()?;
-
-    Ok(())
+    win.show().await
 }

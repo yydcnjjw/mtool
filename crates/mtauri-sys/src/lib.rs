@@ -1,3 +1,5 @@
+#![feature(trait_alias)]
+
 mod error;
 pub mod event;
 pub mod window;

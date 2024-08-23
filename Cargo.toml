@@ -11,7 +11,7 @@ members = [
   "crates/mkeybinding",
   "crates/msysev",
   "crates/mproxy",
-  "crates/mllama-sys",
+  # "crates/mllama-sys",
 
   "modules/mtool-core",
   "modules/mtool-system",
@@ -25,7 +25,7 @@ members = [
   "modules/mtool-storage",
   "modules/mtool-proxy",
   "modules/mtool-toast",
-  "modules/mtool-ai",
+  # "modules/mtool-ai",
   "modules/mtool-pdf",
   "mtool",
 ]
@@ -42,6 +42,7 @@ tracing-appender = "*"
 
 tokio = "*"
 tokio-stream = "*"
+tokio-util = "*"
 async-recursion = "*"
 async-trait = "*"
 futures = "*"
@@ -51,7 +52,8 @@ anyhow = "*"
 tauri = { version = "2.0.0-beta.2" }
 tauri-build = "2.0.0-beta.1"
 tauri-plugin = { version = "2.0.0-beta.1", features = ["build"] }
-tauri-utils = { version = "2.0.0-beta.1", features = ["build"] }
+tauri-utils = { version = "2.0.0-beta.1" }
+tauri-runtime-wry = { version = "2.0.0-beta.1" }
 serde = { version = "*", features = ["derive"] }
 raw-window-handle = "0.6"
 serde_with = "*"
@@ -71,6 +73,7 @@ toml = "*"
 notify-rust = { version = "*", features = ["zbus"] }
 fuzzy-matcher = "*"
 yew = { version = "*", features = ["ssr"] }
+yew-autoprops = "*" 
 yew-router = "*"
 yew_icons = "*"
 grass = { version = "*", features = ["macro", "nightly"] }
@@ -97,12 +100,13 @@ tauri-plugin = { git = "https://github.com/yydcnjjw/tauri.git", branch = "dev" }
 tauri-utils = { git = "https://github.com/yydcnjjw/tauri.git", branch = "dev" }
 wry = { git = "https://github.com/yydcnjjw/wry.git", branch = "dev" }
 
-# tauri = { path = "/home/yydcnjjw/workspace/project/tauri/core/tauri" }
-# tauri-runtime-wry = { path = "/home/yydcnjjw/workspace/project/tauri/core/tauri-runtime-wry" }
-# tauri-runtime = { path = "/home/yydcnjjw/workspace/project/tauri/core/tauri-runtime" }
-# tauri-plugin = { path = "/home/yydcnjjw/workspace/project/tauri/core/tauri-plugin" }
-# tauri-build = { path = "/home/yydcnjjw/workspace/project/tauri/core/tauri-build" }
-# tauri-utils = { path = "/home/yydcnjjw/workspace/project/tauri/core/tauri-utils" }
+# tauri = { path = "/home/yydcnjjw/workspace/project/tauri/crates/tauri" }
+# tauri-runtime-wry = { path = "/home/yydcnjjw/workspace/project/tauri/crates/tauri-runtime-wry" }
+# tauri-runtime = { path = "/home/yydcnjjw/workspace/project/tauri/crates/tauri-runtime" }
+# tauri-plugin = { path = "/home/yydcnjjw/workspace/project/tauri/crates/tauri-plugin" }
+# tauri-build = { path = "/home/yydcnjjw/workspace/project/tauri/crates/tauri-build" }
+# tauri-utils = { path = "/home/yydcnjjw/workspace/project/tauri/crates/tauri-utils" }
 # wry = { path = "/home/yydcnjjw/workspace/project/wry" }
+# tao = { path = "/home/yydcnjjw/workspace/project/tao" }
 
 # tauri-codegen = { path = "/home/yydcnjjw/workspace/project/tauri/core/tauri-codegen" }
