@@ -1,21 +1,23 @@
 use std::ops::RangeFrom;
 
-use anyhow::Context;
-use nom::{
-    combinator::map,
-    multi::length_count,
-    number::streaming::{be_u32, le_u16, le_u32},
-    sequence::tuple,
-    InputIter, InputLength, Slice,
+use mapp::{
+    anyhow::Context,
+    nom::{
+        combinator::map,
+        multi::length_count,
+        number::streaming::{be_u32, le_u16, le_u32},
+        sequence::tuple,
+        InputIter, InputLength, Slice,
+    },
+    serde::Deserialize,
 };
-
-use serde::Deserialize;
 
 use crate::nom_return;
 
 use super::common::NomResult;
 
 #[derive(Debug, Clone, Deserialize, PartialEq)]
+#[serde(crate = "mapp::serde")]
 pub struct DictMeta {
     #[serde(rename = "@GeneratedByEngineVersion")]
     generated_by_engine_version: f64,

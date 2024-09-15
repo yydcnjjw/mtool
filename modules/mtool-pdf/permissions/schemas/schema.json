@@ -295,25 +295,19 @@
       "type": "string",
       "oneOf": [
         {
-          "description": "allow-load-pdf -> Enables the load_pdf command without any pre-configured scope.",
+          "description": "Enables the load_pdf command without any pre-configured scope.",
           "type": "string",
-          "enum": [
-            "allow-load-pdf"
-          ]
+          "const": "allow-load-pdf"
         },
         {
-          "description": "deny-load-pdf -> Denies the load_pdf command without any pre-configured scope.",
+          "description": "Denies the load_pdf command without any pre-configured scope.",
           "type": "string",
-          "enum": [
-            "deny-load-pdf"
-          ]
+          "const": "deny-load-pdf"
         },
         {
-          "description": "default -> Default permissions for the plugin.",
+          "description": "Default permissions for the plugin.",
           "type": "string",
-          "enum": [
-            "default"
-          ]
+          "const": "default"
         }
       ]
     }

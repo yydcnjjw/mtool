@@ -30,4 +30,4 @@ mtool-storage = { path = "../modules/mtool-storage" }
 tauri = { workspace = true }
 
 [build-dependencies]
-tauri-build = { workspace = true, features = ["codegen"] }
+tauri-build = { version = "*", features = ["codegen"] }

@@ -1,4 +1,4 @@
-use itertools::Itertools;
+use mapp::{anyhow, itertools::Itertools};
 use scraper::Html;
 
 use super::{dict::dict_list, DictResult};

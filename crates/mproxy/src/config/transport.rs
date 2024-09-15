@@ -1,9 +1,12 @@
 use std::time::Duration;
 
-use serde::{Deserialize, Serialize};
-use serde_with::serde_as;
+use mapp::{
+    serde::{Deserialize, Serialize},
+    serde_with::serde_as,
+};
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
+#[serde(crate = "mapp::serde")]
 #[serde(tag = "transport")]
 #[serde(rename_all = "lowercase")]
 pub enum AcceptorConfig {
@@ -14,6 +17,7 @@ pub enum AcceptorConfig {
 }
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
+#[serde(crate = "mapp::serde")]
 #[serde(tag = "transport")]
 #[serde(rename_all = "lowercase")]
 pub enum ConnectorConfigInner {
@@ -24,7 +28,8 @@ pub enum ConnectorConfigInner {
 }
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
-#[serde_as]
+#[serde(crate = "mapp::serde")]
+#[serde_as(crate = "mapp::serde_with")]
 #[serde(default)]
 pub struct TransportConfig {
     #[serde_as(as = "DurationSeconds")]
@@ -44,8 +49,9 @@ impl Default for TransportConfig {
 }
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
+#[serde(crate = "mapp::serde")]
 #[serde(rename_all = "lowercase")]
-#[serde_as]
+#[serde_as(crate = "mapp::serde_with")]
 pub struct ConnectorConfig {
     #[serde(flatten)]
     pub inner: ConnectorConfigInner,
@@ -55,6 +61,7 @@ pub struct ConnectorConfig {
 }
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
+#[serde(crate = "mapp::serde")]
 #[serde(untagged)]
 pub enum Endpoint {
     Single { address: String, port: u16 },
@@ -64,13 +71,14 @@ pub enum Endpoint {
 pub mod quic {
     use std::net::SocketAddr;
 
-    use serde::{Deserialize, Serialize};
+    use mapp::serde::{Deserialize, Serialize};
 
     use crate::config::tls::TlsConfig;
 
     use super::Endpoint;
 
     #[derive(Debug, Serialize, Deserialize, Clone)]
+    #[serde(crate = "mapp::serde")]
     #[serde(rename_all = "lowercase")]
     #[serde(tag = "type")]
     pub enum CongestionType {
@@ -80,17 +88,20 @@ pub mod quic {
     }
 
     #[derive(Serialize, Deserialize, Debug, Clone)]
+    #[serde(crate = "mapp::serde")]
     pub struct TransportConfig {
         pub keep_alive_interval: Option<u64>,
         pub congestion: Option<CongestionType>,
     }
 
     #[derive(Serialize, Deserialize, Debug, Clone)]
+    #[serde(crate = "mapp::serde")]
     pub struct StatsConfig {
         pub interval: usize,
     }
 
     #[derive(Serialize, Deserialize, Debug, Clone)]
+    #[serde(crate = "mapp::serde")]
     pub struct AcceptorConfig {
         pub listen: SocketAddr,
         pub tls: TlsConfig,
@@ -102,6 +113,7 @@ pub mod quic {
     }
 
     #[derive(Serialize, Deserialize, Debug, Clone)]
+    #[serde(crate = "mapp::serde")]
     pub struct ConnectorConfig {
         pub endpoint: Endpoint,
         pub local: SocketAddr,
@@ -118,16 +130,18 @@ pub mod quic {
 pub mod tcp {
     use std::net::SocketAddr;
 
-    use serde::{Deserialize, Serialize};
+    use mapp::serde::{Deserialize, Serialize};
 
     use super::Endpoint;
 
     #[derive(Serialize, Deserialize, Debug, Clone)]
+    #[serde(crate = "mapp::serde")]
     pub struct AcceptorConfig {
         pub listen: SocketAddr,
     }
 
     #[derive(Serialize, Deserialize, Debug, Clone)]
+    #[serde(crate = "mapp::serde")]
     pub struct ConnectorConfig {
         pub endpoint: Endpoint,
     }
@@ -136,13 +150,16 @@ pub mod tcp {
 pub mod kcp {
     use std::{net::SocketAddr, time::Duration};
 
-    use serde::{Deserialize, Serialize};
-    use serde_with::serde_as;
+    use mapp::{
+        serde::{Deserialize, Serialize},
+        serde_with::serde_as,
+    };
     use tokio_kcp::{KcpConfig, KcpNoDelayConfig};
 
     use super::Endpoint;
 
     #[derive(Serialize, Deserialize)]
+    #[serde(crate = "mapp::serde")]
     #[serde(remote = "KcpNoDelayConfig")]
     pub struct KcpNoDelayConfigDef {
         /// Enable nodelay
@@ -156,8 +173,9 @@ pub mod kcp {
     }
 
     #[derive(Serialize, Deserialize)]
+    #[serde(crate = "mapp::serde")]
     #[serde(remote = "KcpConfig")]
-    #[serde_as]
+    #[serde_as(crate = "mapp::serde_with")]
     struct KcpConfigDef {
         /// Max Transmission Unit
         pub mtu: usize,
@@ -181,6 +199,7 @@ pub mod kcp {
     }
 
     #[derive(Serialize, Deserialize, Debug, Clone)]
+    #[serde(crate = "mapp::serde")]
     pub struct AcceptorConfig {
         pub listen: SocketAddr,
         #[serde(with = "KcpConfigDef", default, flatten)]
@@ -188,6 +207,7 @@ pub mod kcp {
     }
 
     #[derive(Serialize, Deserialize, Debug, Clone)]
+    #[serde(crate = "mapp::serde")]
     pub struct ConnectorConfig {
         pub endpoint: Endpoint,
         #[serde(with = "KcpConfigDef", default, flatten)]
@@ -198,19 +218,23 @@ pub mod kcp {
 pub mod tls {
     use std::time::Duration;
 
-    use serde::{Deserialize, Serialize};
-    use serde_with::serde_as;
+    use mapp::{
+        serde::{Deserialize, Serialize},
+        serde_with::serde_as,
+    };
 
     use crate::config::tls::TlsConfig;
 
     #[derive(Serialize, Deserialize, Debug, Clone)]
+    #[serde(crate = "mapp::serde")]
     pub struct AcceptorConfig {
         pub next_layer: super::AcceptorConfig,
         pub tls: TlsConfig,
     }
 
     #[derive(Serialize, Deserialize, Debug, Clone)]
-    #[serde_as]
+    #[serde(crate = "mapp::serde")]
+    #[serde_as(crate = "mapp::serde_with")]
     pub struct ConnectorConfig {
         pub next_layer: super::ConnectorConfig,
         pub tls: TlsConfig,

@@ -1,11 +1,9 @@
-use mapp::{prelude::*, CreateOnceTaskDescriptor};
+use mapp::{prelude::*, tokio::sync::mpsc, CreateOnceTaskDescriptor};
 use mkeybinding::{KeySequence, ToKeySequence};
-
 use mtool_core::{
     config::{not_startup_mode, StartupMode},
     AppStage,
 };
-use tokio::sync::mpsc;
 
 use super::{GlobalHotKeyEvent, Keybinding, SetupGlobalHotKey};
 

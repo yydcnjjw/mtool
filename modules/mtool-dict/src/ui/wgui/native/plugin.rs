@@ -1,10 +1,13 @@
 use std::any::type_name;
 
-use anyhow::Context;
-use mapp::prelude::*;
+use mapp::{
+    anyhow::{self, Context},
+    prelude::*,
+    serde_error, serde_json,
+    tracing::warn,
+};
 use mtool_wgui::Builder;
 use tauri::{command, plugin::TauriPlugin, Runtime, State};
-use tracing::warn;
 
 use crate::{
     dict::{ecdict, mdx, Backend},
@@ -59,9 +62,7 @@ where
     R: Runtime,
 {
     tauri::plugin::Builder::new("mtool-dict")
-        .setup(|_, _| {
-            Ok(())
-        })
+        .setup(|_, _| Ok(()))
         .invoke_handler(tauri::generate_handler![dict_query])
         .build()
 }

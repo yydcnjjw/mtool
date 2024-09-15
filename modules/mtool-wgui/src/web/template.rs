@@ -1,10 +1,13 @@
 use std::{any::type_name, marker::PhantomData};
 
-use anyhow::Context;
-use dashmap::DashMap;
-use mapp::prelude::*;
+use mapp::{
+    anyhow::{self, Context},
+    dashmap::DashMap,
+    prelude::*,
+    serde::{de::DeserializeOwned, Deserialize},
+    serde_json,
+};
 use send_wrapper::SendWrapper;
-use serde::{de::DeserializeOwned, Deserialize};
 use yew::prelude::*;
 
 use crate::{
@@ -76,6 +79,7 @@ impl Templator {
 }
 
 #[derive(Properties, PartialEq, Clone, Deserialize)]
+#[serde(crate = "mapp::serde")]
 pub struct Props {
     pub template_id: TemplateId,
     pub data: serde_json::Value,

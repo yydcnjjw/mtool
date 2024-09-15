@@ -7,10 +7,10 @@ use minject::{InjectOnce, LocalProvide};
 use petgraph::{graph::NodeIndex, Direction, Graph};
 use tracing::debug;
 
-use crate::{
-    FnCondLoad, IntoLocalOnceTaskDescriptor, Label, LocalApp, LocalCondLoad,
-    LocalOnceTaskDescriptor, ScheduleGraph,
+use super::{
+    FnCondLoad, IntoLocalOnceTaskDescriptor, LocalCondLoad, LocalOnceTaskDescriptor, ScheduleGraph,
 };
+use crate::{app::LocalApp, label::Label};
 
 enum Node {
     OnceTask(OnceTaskNode),

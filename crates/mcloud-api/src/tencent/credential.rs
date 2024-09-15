@@ -1,10 +1,11 @@
-use serde::{Deserialize, Serialize};
+use mapp::serde::{Deserialize, Serialize};
 
 fn default_algorithm() -> String {
     return "TC3-HMAC-SHA256".into();
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(crate = "mapp::serde")]
 pub struct Credential {
     pub secret_id: String,
     pub secret_key: String,

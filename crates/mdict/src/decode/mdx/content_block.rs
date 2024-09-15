@@ -3,14 +3,16 @@ use std::{
     ops::RangeFrom,
 };
 
-use anyhow::Context;
 use flate2::read::ZlibDecoder;
-use nom::{
-    combinator::map,
-    multi::count,
-    number::streaming::{le_u32, le_u8},
-    sequence::tuple,
-    InputIter, InputLength, Slice,
+use mapp::{
+    anyhow::Context,
+    nom::{
+        combinator::map,
+        multi::count,
+        number::streaming::{le_u32, le_u8},
+        sequence::tuple,
+        InputIter, InputLength, Slice,
+    },
 };
 
 use crate::nom_return;

@@ -3,25 +3,27 @@
 resolver = "2"
 
 members = [
-  "crates/manki-api",
   "crates/mapp",
   "crates/mcloud-api",
   "crates/mdict",
   "crates/minject",
-  "crates/mkeybinding",
   "crates/msysev",
+  "crates/mkeybinding",
+  "crates/mtauri-sys",
+  "crates/manki-api",
   "crates/mproxy",
   # "crates/mllama-sys",
 
   "modules/mtool-core",
   "modules/mtool-system",
+  "modules/mtool-wgui",
   "modules/mtool-cmder",
+  "modules/mtool-main-window",
+  "modules/mtool-interactive",
   "modules/mtool-dict",
   "modules/mtool-translate",
-  "modules/mtool-interactive",
-  "modules/mtool-wgui",
+  
   "modules/mtool-wgui/wmain",
-  "modules/mtool-main-window",
   "modules/mtool-storage",
   "modules/mtool-proxy",
   "modules/mtool-toast",
@@ -36,60 +38,21 @@ authors = ["yydcnjjw <yydcnjjw@gmail.com>"]
 edition = "2021"
 
 [workspace.dependencies]
-tracing = "*"
-tracing-subscriber = "*"
-tracing-appender = "*"
-
-tokio = "*"
-tokio-stream = "*"
-tokio-util = "*"
-async-recursion = "*"
-async-trait = "*"
-futures = "*"
-parking_lot = "*"
-thiserror = "*"
-anyhow = "*"
-tauri = { version = "2.0.0-beta.2" }
-tauri-build = "2.0.0-beta.1"
-tauri-plugin = { version = "2.0.0-beta.1", features = ["build"] }
-tauri-utils = { version = "2.0.0-beta.1" }
-tauri-runtime-wry = { version = "2.0.0-beta.1" }
-serde = { version = "*", features = ["derive"] }
-raw-window-handle = "0.6"
-serde_with = "*"
-serde_json = "*"
-serde-error = "*"
-windows = "0.58"
-itertools = "*"
-cfg-if = "*"
-reqwest = "*"
-once_cell = "*"
-send_wrapper = "*"
-regex = "*"
-nom = "*"
-dashmap = "*"
-clap = { version = "*", features = ["derive", "cargo"] }
-toml = "*"
-notify-rust = { version = "*", features = ["zbus"] }
-fuzzy-matcher = "*"
-yew = { version = "*", features = ["ssr"] }
-yew-autoprops = "*" 
+# TODO: macro reexport support
+yew = { version = "*", features = ["csr"] }
+yew-autoprops = "*"
 yew-router = "*"
 yew_icons = "*"
-grass = { version = "*", features = ["macro", "nightly"] }
-html-escape = "*"
-js-sys = "*"
-web-sys = "*"
-wasm-bindgen = { version = "*", features = ["serde-serialize"] }
-wasm-bindgen-futures = "*"
-serde-wasm-bindgen = "*"
+tauri = { version = "2.*" }
+tauri-plugin = { version = "2.*", features = ["build"] }
 ouroboros = "*"
-pin-project = "*"
-quick-xml = { version = "*", features = ["serialize"] }
+clap = { version = "*", features = ["derive", "cargo"] }
+sea-orm = "*"
+sea-orm-migration = "*"
 
-sea-orm = { version = "*", features = [ "sqlx-sqlite", "runtime-tokio-rustls", "macros" ] }
-sea-orm-migration = { version = "*", features = [ "sqlx-sqlite", "runtime-tokio-rustls" ] }
-
+# NOTE: platform custom features
+web-sys = "*"
+windows = "0.58"
 
 [patch.crates-io]
 tauri = { git = "https://github.com/yydcnjjw/tauri.git", branch = "dev" }

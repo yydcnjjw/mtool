@@ -6,7 +6,11 @@ use async_trait::async_trait;
 use minject::{inject_once, local_inject_once, InjectOnce, LocalProvide, Provide};
 use tracing::debug;
 
-use crate::{App, CondLoad, FnCondLoad, Label, LocalApp, LocalCondLoad};
+use super::{CondLoad, FnCondLoad, LocalCondLoad};
+use crate::{
+    app::{App, LocalApp},
+    label::Label,
+};
 
 #[async_trait]
 pub trait RunOnceTask {

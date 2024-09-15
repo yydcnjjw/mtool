@@ -6,7 +6,7 @@ use tauri_runtime_wry::{
     },
     EventLoopIterationContext, Message, Plugin, PluginBuilder, WebContextStore,
 };
-use tracing::debug;
+use mapp::tracing::debug;
 
 pub struct WryPlugin;
 

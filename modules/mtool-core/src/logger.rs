@@ -1,14 +1,17 @@
 use std::{env, path::PathBuf, str::FromStr, sync::Arc};
 
 use clap::{arg, ArgMatches};
-use serde::Deserialize;
-use time::{format_description::well_known::Rfc3339, UtcOffset};
-use tracing::info;
-use tracing_appender::non_blocking::WorkerGuard;
-use tracing_subscriber::{
-    fmt::{self, time::OffsetTime},
-    EnvFilter,
+use mapp::{
+    anyhow,
+    serde::Deserialize,
+    tracing::info,
+    tracing_appender::{self, non_blocking::WorkerGuard},
+    tracing_subscriber::{
+        fmt::{self, time::OffsetTime},
+        EnvFilter,
+    },
 };
+use time::{format_description::well_known::Rfc3339, UtcOffset};
 
 use mapp::{define_label, prelude::*};
 
@@ -27,6 +30,7 @@ struct Logger {
 }
 
 #[derive(Debug, Deserialize, Clone)]
+#[serde(crate = "mapp::serde")]
 struct Config {
     path: Option<PathBuf>,
     name: Option<String>,

@@ -1,12 +1,11 @@
 mod cmdline;
 pub mod config;
 pub mod logger;
-mod test;
 
 pub use cmdline::*;
 pub use config::ConfigStore;
 
-use mapp::{define_label, prelude::*, ScheduleGraph};
+use mapp::{anyhow, define_label, prelude::*};
 
 pub fn module() -> ModuleGroup {
     let mut group = ModuleGroup::new("core_group");
@@ -15,8 +14,7 @@ pub fn module() -> ModuleGroup {
         .add_module(CoreModule::default())
         .add_module(cmdline::Module::default())
         .add_module(config::Module::default())
-        .add_module(logger::Module::default())
-        .add_module(test::Module::default());
+        .add_module(logger::Module::default());
 
     group
 }

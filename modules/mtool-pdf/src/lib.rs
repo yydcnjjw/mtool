@@ -1,6 +1,6 @@
 #![feature(arbitrary_self_types, iterator_try_collect, async_closure)]
 
-cfg_if::cfg_if! {
+mapp::cfg_if::cfg_if! {
     if #[cfg(not(target_family = "wasm"))] {
         mod pdf;
         mod storage;

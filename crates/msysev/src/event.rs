@@ -1,4 +1,4 @@
-pub use mime::*;
+use mime::Mime;
 
 use crate::keyboard::*;
 

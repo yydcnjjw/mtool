@@ -1,5 +1,5 @@
 use anyhow::Context;
-use mapp::provider::Res;
+use mapp::prelude::*;
 use mllama_sys::{Chat, ChatConfig, LLamaContext, LLamaContextParam};
 use mtool_core::ConfigStore;
 use serde::Deserialize;

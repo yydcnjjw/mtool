@@ -1,6 +1,5 @@
-use mapp::{define_label, prelude::*};
+use mapp::{anyhow, define_label, prelude::*, sync::Mutex};
 use mtool_core::ConfigStore;
-use parking_lot::Mutex;
 use sea_orm_migration::{MigrationTrait, MigratorTrait};
 
 use crate::db_conn::create_db_conn_inner;

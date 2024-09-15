@@ -1,4 +1,4 @@
-use tokio::io::{AsyncRead, AsyncWrite};
+use mapp::tokio::io::{AsyncRead, AsyncWrite};
 
 pub trait AsyncIO: AsyncRead + AsyncWrite {}
 

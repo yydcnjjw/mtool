@@ -1,13 +1,17 @@
 use std::{path::PathBuf, sync::Mutex};
 
-use anyhow::Context;
-use mapp::provider::Res;
+use mapp::{
+    anyhow::{self, Context},
+    prelude::*,
+    serde::Deserialize,
+    tokio::fs,
+    toml,
+};
 use mproxy::{router::GeositeFile, stats::Stats, App, AppConfig};
 use mtool_core::ConfigStore;
-use serde::Deserialize;
-use tokio::fs;
 
 #[derive(Debug, Clone, Deserialize)]
+#[serde(crate = "mapp::serde")]
 struct Config {
     path: PathBuf,
     proxy_id: String,

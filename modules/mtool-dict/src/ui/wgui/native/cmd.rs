@@ -1,5 +1,5 @@
 use clipboard::{ClipboardContext, ClipboardProvider};
-use mapp::prelude::*;
+use mapp::{anyhow, prelude::*};
 use mtool_cmder::{Cmder, CommandBuilder};
 use mtool_main_window::wgui::native::{MtoolWindow, StickyWindow};
 use tauri::Emitter;

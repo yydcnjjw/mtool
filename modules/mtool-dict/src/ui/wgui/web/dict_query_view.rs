@@ -1,7 +1,8 @@
 use std::any::type_name;
 
+use mapp::{anyhow, serde::Serialize, serde_json};
+use mtauri_sys::prelude::*;
 use mtool_wgui::{component::error::error_view, generate_keymap, *};
-use serde::Serialize;
 use web_sys::HtmlInputElement;
 use yew::prelude::*;
 use yew_icons::{Icon, IconId};
@@ -155,6 +156,7 @@ impl View {
 
     fn query_dict(&mut self, ctx: &Context<Self>, query: String) {
         #[derive(Debug, Serialize)]
+        #[serde(crate = "mapp::serde")]
         struct Args {
             query: String,
             backend: Backend,
@@ -176,7 +178,7 @@ impl View {
             backend: self.backend.clone(),
         };
         ctx.link().send_future(async move {
-            Msg::ShowDict(mtauri_sys::invoke("plugin:mtool-dict|dict_query", &args).await)
+            Msg::ShowDict(invoke("plugin:mtool-dict|dict_query", &args).await)
         })
     }
 

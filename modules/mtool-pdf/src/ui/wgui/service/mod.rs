@@ -2,7 +2,7 @@ mod error;
 mod pdf_document;
 mod pdf_loader;
 
-use mapp::prelude::*;
+use mapp::{anyhow, prelude::*};
 use mtool_core::ConfigStore;
 use mtool_wgui::{Builder, WGuiStage};
 

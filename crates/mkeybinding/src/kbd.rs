@@ -5,19 +5,20 @@ use std::{
     str::FromStr,
 };
 
-use anyhow::{anyhow, Context};
-use msysev::*;
+use msysev::prelude::*;
 
-use nom::{
-    branch::alt,
-    bytes::complete::{tag, tag_no_case, take_while},
-    character::{complete::anychar, is_alphanumeric},
-    combinator::{map, map_res},
-    multi::separated_list1,
-    sequence::delimited,
+use mapp::{
+    anyhow::{self, anyhow, Context},
+    nom::{
+        self,
+        branch::alt,
+        bytes::complete::{tag, tag_no_case, take_while},
+        character::{complete::anychar, is_alphanumeric},
+        combinator::{map, map_res},
+        multi::separated_list1,
+        sequence::delimited,
+    },
 };
-
-use lazy_static::lazy_static;
 
 trait ParseKbd: Sized {
     fn parse_kbd(s: &str) -> Result<Self, anyhow::Error>;
@@ -138,20 +139,20 @@ pub struct KeyCombine {
     pub mods: ModifierState,
 }
 
-lazy_static! {
-    static ref IGNORE_MODS: ModifierState = ModifierState::NUMLOCK | ModifierState::CAPSLOCK;
-}
+const IGNORE_MODS: ModifierState = ModifierState::from_bits_truncate(
+    ModifierState::NUMLOCK.bits() | ModifierState::CAPSLOCK.bits(),
+);
 
 impl Hash for KeyCombine {
     fn hash<H: std::hash::Hasher>(&self, state: &mut H) {
         self.key.hash(state);
-        (self.mods | *IGNORE_MODS).hash(state);
+        (self.mods | IGNORE_MODS).hash(state);
     }
 }
 
 impl PartialEq for KeyCombine {
     fn eq(&self, other: &Self) -> bool {
-        self.key == other.key && self.mods | *IGNORE_MODS == other.mods | *IGNORE_MODS
+        self.key == other.key && self.mods | IGNORE_MODS == other.mods | IGNORE_MODS
     }
 }
 

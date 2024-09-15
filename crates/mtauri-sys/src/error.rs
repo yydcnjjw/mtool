@@ -1,5 +1,7 @@
 use std::fmt;
 
+use mapp::anyhow;
+
 pub trait IntoAnyhowError<O> {
     fn into_anyhow(self) -> Result<O, anyhow::Error>;
 }

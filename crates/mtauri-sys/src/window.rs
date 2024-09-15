@@ -1,13 +1,19 @@
-use serde::{de::DeserializeOwned, Serialize};
-use serde_wasm_bindgen::from_value;
-use wasm_bindgen::{prelude::Closure, JsValue};
+use mapp::{
+    anyhow,
+    dpi::{PhysicalPosition, PhysicalSize, Position, Size},
+    js_sys,
+    serde::{de::DeserializeOwned, Serialize},
+    serde_wasm_bindgen::{self, from_value},
+    wasm_bindgen::{prelude::Closure, JsValue},
+};
 
-use crate::{event::Event, invoke, IntoAnyhowError};
-
-pub use dpi::*;
+use crate::{event::Event, tauri::invoke, IntoAnyhowError};
 
 mod ffi {
-    use wasm_bindgen::prelude::*;
+    use mapp::{
+        wasm_bindgen::{self, prelude::*},
+        wasm_bindgen_futures,
+    };
 
     #[wasm_bindgen(js_namespace = ["__TAURI__", "window"])]
     extern "C" {
@@ -117,6 +123,7 @@ impl Window {
 
     pub async fn set_size(&self, size: Size) -> Result<(), anyhow::Error> {
         #[derive(Serialize)]
+        #[serde(crate = "mapp::serde")]
         struct Args {
             label: String,
             value: Size,
@@ -134,6 +141,7 @@ impl Window {
 
     pub async fn set_position(&self, pos: Position) -> Result<(), anyhow::Error> {
         #[derive(Serialize)]
+        #[serde(crate = "mapp::serde")]
         struct Args {
             label: String,
             value: Position,

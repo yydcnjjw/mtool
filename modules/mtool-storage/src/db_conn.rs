@@ -1,4 +1,4 @@
-use mapp::provider::Res;
+use mapp::{anyhow, prelude::*};
 use mtool_core::ConfigStore;
 use sea_orm::{Database, DatabaseConnection};
 

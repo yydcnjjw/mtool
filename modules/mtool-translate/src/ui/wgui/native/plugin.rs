@@ -1,10 +1,15 @@
-use mapp::prelude::*;
+use mapp::{anyhow, prelude::*, serde_error, tracing::warn};
 use mtool_wgui::Builder;
 use tauri::{command, plugin::TauriPlugin, Runtime, State};
-use tracing::warn;
 
-use crate::translator::{// llama, 
-                        openai, tencent, Backend, LanguageType, Translator};
+use crate::translator::{
+    // llama,
+    openai,
+    tencent,
+    Backend,
+    LanguageType,
+    Translator,
+};
 
 async fn text_translate_inner(
     input: String,

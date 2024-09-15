@@ -2,13 +2,11 @@ mod main;
 mod plugin;
 pub mod sticky;
 
-use mapp::prelude::*;
+use mapp::{anyhow, prelude::*, tracing::debug};
 use mtool_cmder::Cmder;
 use mtool_core::{AppStage, ConfigStore};
 use mtool_system::keybinding::Keybinding;
 use mtool_wgui::WGuiStage;
-
-use tracing::debug;
 
 use super::generic::hotkey::{Hotkey, HotkeyMap};
 

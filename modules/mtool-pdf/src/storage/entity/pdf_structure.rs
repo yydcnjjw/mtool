@@ -1,9 +1,13 @@
+use mapp::{
+    serde::{Deserialize, Serialize},
+    serde_json,
+};
 use mcloud_api::adobe;
 use sea_orm::FromJsonQueryResult;
-use serde::{Deserialize, Serialize};
 use std::ops::{Deref, DerefMut};
 
 #[derive(Clone, Debug, PartialEq, Serialize, Deserialize, FromJsonQueryResult)]
+#[serde(crate = "mapp::serde")]
 pub struct PdfStructure {
     #[serde(flatten)]
     inner: adobe::PdfStructure,

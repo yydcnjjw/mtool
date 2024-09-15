@@ -1,8 +1,9 @@
-use serde::{Deserialize, Serialize};
+use mapp::serde::{Deserialize, Serialize};
 
 use crate::tencent::api::HttpRequest;
 
 #[derive(Serialize, Deserialize, Debug)]
+#[serde(crate = "mapp::serde")]
 #[serde(rename_all = "lowercase")]
 #[allow(dead_code)]
 pub enum LanguageType {
@@ -13,6 +14,7 @@ pub enum LanguageType {
 }
 
 #[derive(Serialize, Debug)]
+#[serde(crate = "mapp::serde")]
 #[serde(rename_all = "PascalCase")]
 pub struct TextTranslateRequest {
     source_text: String,
@@ -53,6 +55,7 @@ impl HttpRequest for TextTranslateRequest {
 }
 
 #[derive(Deserialize, Debug)]
+#[serde(crate = "mapp::serde")]
 #[serde(rename_all = "PascalCase")]
 pub struct TextTranslateResponse {
     pub target_text: String,

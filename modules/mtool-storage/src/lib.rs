@@ -1,10 +1,12 @@
 mod db_conn;
 mod migration;
 
+pub use sea_orm_migration;
+
 use db_conn::create_db_conn;
 pub use migration::*;
 
-use mapp::prelude::*;
+use mapp::{anyhow, prelude::*};
 use mtool_core::{AppStage, CmdlineStage};
 
 #[derive(Default)]

@@ -1,7 +1,8 @@
-use serde::{Deserialize, Serialize};
+use mapp::serde::{Deserialize, Serialize};
 use std::{collections::BTreeMap, ops};
 
 #[derive(Debug, Clone, Default, Deserialize, Serialize)]
+#[serde(crate = "mapp::serde")]
 pub struct TransferStats {
     pub tx: usize,
     pub rx: usize,
@@ -20,6 +21,7 @@ impl ops::SubAssign for TransferStats {
 }
 
 #[derive(Debug, Clone, Default, Deserialize, Serialize)]
+#[serde(crate = "mapp::serde")]
 pub struct Stats {
     pub transfer: BTreeMap<String, TransferStats>,
 }

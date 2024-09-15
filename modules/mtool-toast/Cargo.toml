@@ -13,7 +13,3 @@ mtool-cmder = { path = "../mtool-cmder" }
 mtool-interactive = { path = "../mtool-interactive" }
 
 clap = { workspace = true }
-tracing = { workspace = true }
-tokio = { workspace = true }
-anyhow = { workspace = true }
-notify-rust = { workspace = true }

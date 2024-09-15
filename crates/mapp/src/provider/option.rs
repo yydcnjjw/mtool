@@ -1,7 +1,7 @@
 use async_trait::async_trait;
 use minject::{LocalProvide, Provide};
 
-use crate::{App, LocalApp};
+use crate::app::{App, LocalApp};
 
 use super::{Injector, LocalInjector};
 

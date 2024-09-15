@@ -1,6 +1,6 @@
 mod geosite_item;
 
-cfg_if::cfg_if! {
+mapp::cfg_if::cfg_if! {
     if #[cfg(not(target_family = "wasm"))] {
         mod cmd;
         mod service;
@@ -8,12 +8,11 @@ cfg_if::cfg_if! {
 
         use clap::{arg, ArgMatches};
         use mtool_core::{config::StartupMode, AppStage, Cmdline, CmdlineStage, ConfigStore};
-        use tracing::warn;
 
     }
 }
 
-use mapp::prelude::*;
+use mapp::{anyhow, prelude::*, tokio, tracing::warn};
 
 pub struct Module;
 

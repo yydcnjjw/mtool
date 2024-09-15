@@ -2,7 +2,7 @@ mod cmd;
 mod plugin;
 mod selection_monitor;
 
-use mapp::prelude::*;
+use mapp::{anyhow, prelude::*};
 use mtool_wgui::WGuiStage;
 use selection_monitor::SelectionMonitor;
 
@@ -19,4 +19,3 @@ impl AppModule for Module {
         Ok(())
     }
 }
-

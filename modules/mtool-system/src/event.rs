@@ -1,9 +1,17 @@
-use mapp::{prelude::*, sync::Mutex};
-pub use msysev::*;
-use serde::Deserialize;
-use tokio::sync::broadcast::{self, Receiver, Sender};
-use tracing::warn;
+use mapp::{
+    anyhow,
+    prelude::*,
+    serde::Deserialize,
+    sync::Mutex,
+    tokio::{
+        self,
+        sync::broadcast::{self, Receiver, Sender},
+    },
+    tracing::warn,
+};
+pub use msysev::prelude::*;
 
+use msysev::{ControlFlow, EventLoop, ExitSignal};
 use mtool_core::ConfigStore;
 
 pub struct Module;
@@ -21,6 +29,7 @@ fn default_channel_size() -> usize {
 }
 
 #[derive(Debug, Clone, Deserialize)]
+#[serde(crate = "mapp::serde")]
 struct Config {
     #[serde(default = "default_channel_size")]
     channel_size: usize,

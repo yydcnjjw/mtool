@@ -1,5 +1,6 @@
 use std::{ops::Deref, rc::Rc};
 
+use mapp::anyhow;
 use pdfium_render::prelude as pdfium;
 use skia_safe as sk;
 

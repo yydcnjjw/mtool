@@ -6,7 +6,7 @@ Default permissions for the plugin.
 - `allow-complete-exit`
 - `allow-completion-meta`
 
-## Permission Table 
+## Permission Table
 
 <table>
 <tr>

@@ -1,12 +1,14 @@
-use std::future::Future;
-use std::io;
-use std::pin::Pin;
-use std::sync::atomic::AtomicU64;
-use std::sync::Arc;
-use std::task::{Context, Poll};
-
-use futures::ready;
-use tokio::io::{AsyncRead, AsyncWrite};
+use mapp::{
+    futures::ready,
+    tokio::io::{AsyncRead, AsyncWrite},
+};
+use std::{
+    future::Future,
+    io,
+    pin::Pin,
+    sync::{atomic::AtomicU64, Arc},
+    task::{Context, Poll},
+};
 
 use super::CopyBuffer;
 

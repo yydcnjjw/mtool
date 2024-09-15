@@ -1,4 +1,4 @@
-use mapp::prelude::*;
+use mapp::{prelude::*, serde_error};
 use tauri::{
     command,
     plugin::{Builder, TauriPlugin},

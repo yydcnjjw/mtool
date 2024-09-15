@@ -4,7 +4,7 @@ pub use completion::Completion;
 
 use mtool_wgui::{Builder, WGuiStage};
 
-use mapp::prelude::*;
+use mapp::{anyhow, prelude::*};
 
 pub struct Module;
 

@@ -4,7 +4,7 @@ use anyhow::Context;
 use async_trait::async_trait;
 use tracing::{instrument, trace};
 
-use crate::{app::AppContext, LocalAppContext};
+use crate::app::{AppContext, LocalAppContext};
 
 #[async_trait]
 pub trait Module: Send + Sync {

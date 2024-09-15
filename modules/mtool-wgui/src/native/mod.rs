@@ -1,15 +1,20 @@
 mod builder;
+mod component;
 mod global_hotkey;
 mod window;
 mod window_data_bind;
-mod component;
 
-pub use component::*;
 pub use builder::*;
+pub use component::*;
 pub use window::*;
 pub use window_data_bind::*;
 
-use mapp::{define_label, prelude::*};
+use mapp::{
+    anyhow, define_label,
+    prelude::*,
+    tokio::{self, sync::Mutex},
+    tracing::{debug, info, trace, warn},
+};
 use mtool_core::{
     config::{is_startup_mode, StartupMode},
     AppStage, CmdlineStage,
@@ -19,8 +24,6 @@ use tauri::{
     tray::TrayIconBuilder,
     Manager,
 };
-use tokio::sync::Mutex;
-use tracing::{debug, info, trace, warn};
 
 define_label! {
     pub enum WGuiStage {

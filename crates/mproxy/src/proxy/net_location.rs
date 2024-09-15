@@ -4,7 +4,7 @@ use std::{
     str::FromStr,
 };
 
-use anyhow::Context;
+use mapp::anyhow::{self, Context};
 use socksv5::{v4::SocksV4Host, v5::SocksV5Host};
 
 #[derive(Debug, Clone, Eq, PartialEq, Hash)]

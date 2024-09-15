@@ -1,13 +1,18 @@
 use std::{collections::HashMap, ffi::c_void, sync::Arc};
 
-use anyhow::Context;
-use itertools::Itertools;
-use mapp::provider::Res;
+use mapp::{
+    anyhow::{self, Context},
+    itertools::Itertools,
+    prelude::*,
+    tokio::{
+        self,
+        sync::{mpsc, oneshot, watch},
+    },
+    tracing::{trace, warn},
+};
 use pdfium_render::prelude::*;
 use skia_safe as sk;
 use tauri::{PhysicalPosition, PhysicalSize, WindowEvent};
-use tokio::sync::{mpsc, oneshot, watch};
-use tracing::{trace, warn};
 
 use super::{
     pdf_document::PdfDocument,

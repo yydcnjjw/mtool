@@ -3,7 +3,7 @@
 pub mod event;
 pub mod keybinding;
 
-use mapp::ModuleGroup;
+use mapp::prelude::*;
 
 pub fn module() -> ModuleGroup {
     let mut group = ModuleGroup::new("system_group");

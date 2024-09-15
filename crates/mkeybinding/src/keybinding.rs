@@ -1,10 +1,11 @@
-use std::{future::Future, sync::Arc};
-
 use crate::{KeyCombine, KeyDispatcher};
-use anyhow::Context;
-use async_trait::async_trait;
-use msysev::{Event, KeyAction};
-use tokio::sync::{broadcast::Receiver, RwLock};
+use mapp::{
+    anyhow::Context,
+    async_trait::async_trait,
+    tokio::sync::{broadcast::Receiver, RwLock},
+};
+use msysev::prelude::*;
+use std::{future::Future, sync::Arc};
 
 #[async_trait]
 pub trait Action {

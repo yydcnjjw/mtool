@@ -1,5 +1,6 @@
 use std::{ops::Deref, sync::Arc};
 
+use mapp::anyhow;
 use mtool_wgui::WGuiWindow;
 use tauri::{AppHandle, WebviewUrl, WebviewWindowBuilder, Wry};
 

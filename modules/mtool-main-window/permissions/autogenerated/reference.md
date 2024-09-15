@@ -5,7 +5,7 @@ Default permissions for the plugin.
 - `allow-window-hotkeys`
 - `allow-exec-command`
 
-## Permission Table 
+## Permission Table
 
 <table>
 <tr>

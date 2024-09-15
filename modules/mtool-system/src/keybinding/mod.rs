@@ -12,14 +12,17 @@ mod dbus_backend;
 use std::{collections::HashMap, future::Future, sync::Arc};
 
 use mapp::{
-    define_label,
-    prelude::{inject::*, *},
+    anyhow, define_label,
+    prelude::*,
+    tokio::{
+        self,
+        sync::{mpsc, Mutex, RwLock},
+    },
+    tracing::{debug, warn},
 };
-use mkeybinding::KeySequence;
-use tokio::sync::{mpsc, Mutex, RwLock};
 
 use action::{FnAction, SharedAction};
-use tracing::{debug, warn};
+use mkeybinding::KeySequence;
 
 #[derive(Default)]
 pub struct Module {}

@@ -7,31 +7,16 @@ links = "mtool-interactive"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-mapp = { path = "../../crates/mapp" }
+mapp = { path = "../../crates/mapp", features = ["web"] }
 mtauri-sys = { path = "../../crates/mtauri-sys" }
 mtool-wgui = { path = "../mtool-wgui" }
 mtool-main-window = { path = "../mtool-main-window" }
 mtool-cmder = { path = "../mtool-cmder" }
 
-tokio = { workspace = true }
-anyhow = { workspace = true }
-futures = { workspace = true }
-itertools = { workspace = true }
-tracing = { workspace = true }
-serde = { workspace = true }
-serde-error = { workspace = true }
-serde_json = { workspace = true }
-serde-wasm-bindgen = { workspace = true }
 yew = { workspace = true }
-cfg-if = { workspace = true }
-fuzzy-matcher = { workspace = true }
 yew-router = { workspace = true }
-grass = { workspace = true }
-js-sys = { workspace = true }
-wasm-bindgen = { workspace = true }
-wasm-bindgen-futures = { workspace = true }
 
-gloo-utils = "0.1"
+fuzzy-matcher = "*"
 shellwords = "*"
 
 [dependencies.web-sys]
@@ -46,7 +31,6 @@ mtool-core = { path = "../mtool-core" }
 mtool-system = { path = "../mtool-system" }
 
 tauri = { workspace = true }
-clap = { workspace = true }
 
 [build-dependencies]
 tauri-plugin = { workspace = true }

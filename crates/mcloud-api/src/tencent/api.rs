@@ -1,16 +1,20 @@
-use anyhow::Context;
 use chrono::{DateTime, Utc};
 use digest::Digest;
 use hmac::{Hmac, Mac};
+use mapp::{
+    anyhow::Context,
+    reqwest,
+    serde::{de::DeserializeOwned, Deserialize, Serialize},
+    serde_json,
+};
 use reqwest::header::{CONTENT_TYPE, HOST};
-use serde::de::DeserializeOwned;
-use serde::{Deserialize, Serialize};
 use sha2::Sha256;
 
 use super::credential::Credential;
 use super::{Error, Result};
 
 #[derive(Deserialize, Debug)]
+#[serde(crate = "mapp::serde")]
 #[serde(rename_all = "PascalCase")]
 pub struct ApiError {
     pub code: String,
@@ -18,6 +22,7 @@ pub struct ApiError {
 }
 
 #[derive(Deserialize, Debug)]
+#[serde(crate = "mapp::serde")]
 #[serde(rename_all = "PascalCase")]
 pub struct ErrorResponse {
     pub error: ApiError,
@@ -25,6 +30,7 @@ pub struct ErrorResponse {
 }
 
 #[derive(Deserialize, Debug)]
+#[serde(crate = "mapp::serde")]
 #[serde(untagged)]
 #[serde(rename_all = "PascalCase")]
 pub enum ResponseType<T> {
@@ -33,6 +39,7 @@ pub enum ResponseType<T> {
 }
 
 #[derive(Deserialize, Debug)]
+#[serde(crate = "mapp::serde")]
 #[serde(rename_all = "PascalCase")]
 pub struct HttpResponse<T> {
     pub response: ResponseType<T>,

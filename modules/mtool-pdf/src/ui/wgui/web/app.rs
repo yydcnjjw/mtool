@@ -1,10 +1,8 @@
 use std::rc::Rc;
 
-use mtauri_sys::window::{PhysicalSize, Window};
+use mapp::{anyhow, dpi::PhysicalSize, serde::Serialize, tracing::warn, wasm_bindgen::prelude::*};
+use mtauri_sys::prelude::{Event as TauriEvent, *};
 use mtool_wgui::{component::error::render_result_view, generate_keymap, Keybinding};
-use serde::Serialize;
-use tracing::warn;
-use wasm_bindgen::prelude::*;
 use web_sys::HtmlDivElement;
 use yew::{platform::spawn_local, prelude::*};
 
@@ -154,13 +152,10 @@ impl App {
         ctx.link().send_future(async move {
             let unlisten = match Window::current()
                 .unwrap()
-                .listen(
-                    "pdf_load",
-                    move |e: mtauri_sys::event::Event<WPdfLoadEvent>| {
-                        link.send_message(AppMsg::PdfLoadEvent(e.payload));
-                        Ok(())
-                    },
-                )
+                .listen("pdf_load", move |e: TauriEvent<WPdfLoadEvent>| {
+                    link.send_message(AppMsg::PdfLoadEvent(e.payload));
+                    Ok(())
+                })
                 .await
             {
                 Ok(v) => Some(Box::new(v) as Box<dyn Fn() -> Result<(), JsValue>>),
@@ -184,10 +179,11 @@ impl App {
 
     async fn load_pdf(path: &str) -> Result<(), anyhow::Error> {
         #[derive(Serialize)]
+        #[serde(crate = "mapp::serde")]
         struct Args {
             file: PdfFile,
         }
-        mtauri_sys::invoke(
+        invoke(
             "plugin:mtool-pdf|load_pdf",
             &Args {
                 file: PdfFile {

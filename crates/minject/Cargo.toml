@@ -9,13 +9,12 @@ edition.workspace = true
 [dependencies]
 minject-macro = { path = "./macro" }
 
-thiserror = { workspace = true }
-anyhow = { workspace = true }
-tokio = { workspace = true }
-async-trait = { workspace = true }
-tracing = { workspace = true }
-dashmap = { workspace = true }
-
+thiserror = "*"
+anyhow = "*"
+tokio = "*"
+async-trait = "*"
+tracing = "*"
+dashmap = "*"
 
 [dev-dependencies]
 

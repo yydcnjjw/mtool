@@ -1,14 +1,16 @@
 use std::str::FromStr;
 
-use anyhow::Context;
-use dashmap::DashMap;
-use mapp::prelude::*;
+use mapp::{
+    anyhow::{self, Context},
+    dashmap::DashMap,
+    prelude::*,
+    tokio::{self, sync::{mpsc, oneshot}},
+    tracing::{trace, warn},
+};
 use mkeybinding::KeySequence;
-use msysev::*;
+use msysev::prelude::*;
 use tauri::{plugin, AppHandle};
 use tauri_plugin_global_shortcut::{self, GlobalShortcutExt, Shortcut};
-use tokio::sync::{mpsc, oneshot};
-use tracing::{trace, warn};
 
 use mtool_system::keybinding::{GlobalHotKeyEvent, Keybinding, SetupGlobalHotKey};
 

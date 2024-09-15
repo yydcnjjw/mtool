@@ -1,10 +1,14 @@
-use serde::{de::DeserializeOwned, Deserialize};
-use serde_wasm_bindgen::from_value;
-use wasm_bindgen::{prelude::Closure, JsValue};
+use mapp::{
+    anyhow, js_sys,
+    serde::{de::DeserializeOwned, Deserialize},
+    serde_wasm_bindgen::from_value,
+    wasm_bindgen::{prelude::Closure, JsValue},
+};
 
-use crate::IntoAnyhowError;
+use crate::error::IntoAnyhowError;
 
 #[derive(Debug, Clone, PartialEq, Deserialize)]
+#[serde(crate = "mapp::serde")]
 #[serde(rename_all = "camelCase")]
 pub struct Event<T> {
     /// Event name
@@ -18,7 +22,10 @@ pub struct Event<T> {
 }
 
 mod ffi {
-    use wasm_bindgen::prelude::*;
+    use mapp::{
+        wasm_bindgen::{self, prelude::*},
+        wasm_bindgen_futures,
+    };
     #[wasm_bindgen(js_namespace = ["__TAURI__", "event"])]
     extern "C" {
         #[wasm_bindgen(catch)]

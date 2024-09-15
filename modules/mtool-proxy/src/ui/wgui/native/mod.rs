@@ -5,7 +5,7 @@ use mtool_cmder::{Cmder, CommandBuilder};
 use mtool_core::AppStage;
 use mtool_wgui::{Builder, WGuiStage};
 
-use mapp::{prelude::*, CreateOnceTaskDescriptor};
+use mapp::{anyhow, prelude::*, CreateOnceTaskDescriptor};
 
 use crate::service::{is_runnable, ProxyService};
 

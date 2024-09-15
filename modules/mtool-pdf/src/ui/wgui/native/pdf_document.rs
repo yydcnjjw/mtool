@@ -6,6 +6,7 @@ use std::{
     sync::Arc,
 };
 
+use mapp::anyhow;
 use mcloud_api::adobe;
 use pdfium_render::prelude::{PdfPageIndex, PdfiumLibraryBindings};
 

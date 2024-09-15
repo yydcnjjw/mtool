@@ -1,7 +1,7 @@
 use std::{mem, sync::Mutex};
 
 use clap::{command, Command};
-use mapp::{define_label, prelude::*};
+use mapp::{anyhow, define_label, prelude::*};
 
 use crate::AppStage;
 

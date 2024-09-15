@@ -1,7 +1,8 @@
-use serde::{Deserialize, Serialize};
+use mapp::serde::{Deserialize, Serialize};
 use yew::prelude::*;
 
 #[derive(Debug, Clone, Properties, PartialEq, Serialize, Deserialize)]
+#[serde(crate = "mapp::serde")]
 pub struct ProgressBarProps {
     pub progress: usize,
 }

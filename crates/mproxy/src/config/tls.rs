@@ -1,11 +1,14 @@
-use anyhow::Context;
-use itertools::Itertools;
+use mapp::{
+    anyhow::{self, Context},
+    itertools::Itertools,
+    serde::{Deserialize, Serialize},
+};
 use rustls::server::WebPkiClientVerifier;
 use rustls_pki_types::{CertificateDer, PrivateKeyDer};
-use serde::{Deserialize, Serialize};
 use std::{fs::File, io::BufReader, path::PathBuf, sync::Arc};
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
+#[serde(crate = "mapp::serde")]
 pub struct TlsConfig {
     pub ca_cert: PathBuf,
     pub key: Option<PathBuf>,

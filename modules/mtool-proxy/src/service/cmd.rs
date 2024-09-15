@@ -1,11 +1,13 @@
 use std::future::Future;
 
-use anyhow::Context;
-use mapp::prelude::*;
-
+use mapp::{
+    anyhow::{self, Context},
+    notify_rust::{Notification, Timeout},
+    prelude::*,
+    thiserror,
+};
 use mtool_cmder::{Cmder, CommandBuilder};
 use mtool_interactive::{Completion, CompletionArgs};
-use notify_rust::{Notification, Timeout};
 
 use super::{geosite_item::GeositeItem, ProxyService};
 

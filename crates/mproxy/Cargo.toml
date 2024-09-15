@@ -22,33 +22,12 @@ prometheus = ["dep:prometheus"]
 tracing-opentelemetry = ["dep:tracing-opentelemetry"]
 
 [dependencies]
-serde = { workspace = true }
-serde_with = { workspace = true }
-itertools = { workspace = true }
-thiserror = { workspace = true }
-anyhow = { workspace = true }
-cfg-if = { workspace = true }
-async-trait = { workspace = true }
-pin-project = { workspace = true }
+mapp = { path = "../mapp" }
 
-pin-project-lite = "*"
 protobuf = "*"
 weak-table = "*"
 
-[target.'cfg(target_family = "wasm")'.dependencies]
-tokio = { workspace = true, features = ["sync"] }
-
 [target.'cfg(not(target_family = "wasm"))'.dependencies]
-tokio = { workspace = true, features = ["full"] }
-tokio-stream = { workspace = true }
-async-recursion = { workspace = true }
-futures = { workspace = true }
-tracing = { workspace = true }
-tracing-subscriber = { workspace = true, features = ["env-filter"] }
-clap = { workspace = true }
-toml = { workspace = true }
-dashmap = { workspace = true }
-
 opentelemetry = { version = "0.18", features = ["rt-tokio"], optional = true }
 opentelemetry-jaeger = { version = "0.17", features = ["rt-tokio"], optional = true }
 tracing-opentelemetry = { version = "0.18", features = ["metrics"], optional = true }
@@ -69,7 +48,6 @@ rustls = { version = "*", default-features = false, features = ["ring", "logging
 rustls-pemfile = "*"
 rustls-pki-types = "*"
 tokio-rustls = { version = "*", default-features = false, features = ["ring", "logging", "tls12"] }
-tokio-util = { version = "*", features = ["compat"] }
 tokio_kcp = "*"
 
 [target.'cfg(target_family = "unix")'.dependencies]

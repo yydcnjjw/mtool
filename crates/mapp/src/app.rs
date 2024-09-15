@@ -5,8 +5,8 @@ use tracing::{debug, error};
 use crate::{
     module::{LocalModule, LocalModuleGroup, Module, ModuleGroup},
     provider::{Injector, LocalInjector, Res},
-    tracing::Tracing,
-    LocalSchedule, Schedule,
+    schedule::{LocalSchedule, Schedule},
+    trace::Tracing,
 };
 
 pub struct AppBuilder {

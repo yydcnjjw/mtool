@@ -4,7 +4,7 @@ use async_trait::async_trait;
 use futures::Future;
 use minject::{inject_once, local_inject_once, InjectOnce, LocalProvide, Provide};
 
-use crate::{App, LocalApp};
+use crate::app::{App, LocalApp};
 
 #[async_trait]
 pub trait CondLoad {

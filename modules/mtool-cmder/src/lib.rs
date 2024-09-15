@@ -1,3 +1,4 @@
+#[cfg(not(target_family = "wasm"))]
 mod cmd;
 mod cmder;
 mod command;
@@ -8,7 +9,7 @@ pub use cmder::*;
 pub use command::*;
 pub use command_args::*;
 
-use mapp::prelude::*;
+use mapp::{anyhow, prelude::*};
 
 #[derive(Default)]
 pub struct Module;

@@ -5,8 +5,10 @@ use std::{
     sync::atomic::{AtomicU16, Ordering},
 };
 
-use anyhow::Context;
-use tracing::warn;
+use mapp::{
+    anyhow::{self, Context},
+    tracing::warn,
+};
 
 use crate::{config::transport::Endpoint, net::transport::Connect, proxy::Address};
 

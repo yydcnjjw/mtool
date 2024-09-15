@@ -1,9 +1,8 @@
 use std::{ops::Deref, sync::Arc};
 
-use mapp::prelude::*;
+use mapp::{anyhow, prelude::*, tracing::warn};
 use mtool_wgui::prelude::*;
 use tauri::{AppHandle, WebviewUrl, WebviewWindowBuilder, WindowEvent, Wry};
-use tracing::{debug, warn};
 
 use crate::wgui::generic::STICKY_WINDOW_LABEL;
 

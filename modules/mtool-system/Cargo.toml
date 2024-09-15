@@ -12,24 +12,5 @@ msysev = { path = "../../crates/msysev", features = ["event-loop"] } # for event
 mkeybinding = { path = "../../crates/mkeybinding" } # for keybinding module
 mtool-core = { path = "../mtool-core" }
 
-tokio = { workspace = true }
-tauri = { workspace = true }
-anyhow = { workspace = true }
-thiserror = { workspace = true }
-tracing = { workspace = true }
-clap = { workspace = true }
-serde = { workspace = true }
-
-[target.'cfg(target_os = "windows")'.dependencies]
-[target.'cfg(target_os = "windows")'.dependencies.windows]
-workspace = true
-features = [
-  "Win32_Foundation",
-  "Win32_UI_Input_KeyboardAndMouse",
-  "Win32_UI_WindowsAndMessaging",
-  "Win32_System_DataExchange",
-  "Win32_System_LibraryLoader",
-]
-
 [target.'cfg(target_os = "linux")'.dependencies]
 zbus = { version = "4", default-features = false, features = ["tokio"] }

@@ -2,9 +2,8 @@ mod cmd;
 pub mod hotkey;
 mod view;
 
-use mapp::prelude::*;
+use mapp::{anyhow, prelude::*};
 use mtool_wgui::prelude::*;
-// use yew::prelude::*;
 
 pub(crate) struct Module;
 

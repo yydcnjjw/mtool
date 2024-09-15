@@ -1,6 +1,6 @@
 pub mod command;
 
-use mapp::{prelude::*, CreateLocalOnceTaskDescriptor};
+use mapp::{anyhow, prelude::*, CreateLocalOnceTaskDescriptor};
 use mtool_main_window::wgui::generic::MTOOL_WINDOW_LABEL;
 use mtool_wgui::{is_window, WebStage};
 

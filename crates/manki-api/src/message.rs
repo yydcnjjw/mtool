@@ -1,12 +1,13 @@
 use std::any::Any;
 
-use serde::{Deserialize, Serialize};
+use mapp::serde::{Deserialize, Serialize};
 
 fn is_unit(t: &(dyn Any + Send)) -> bool {
     t.is::<()>()
 }
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
+#[serde(crate = "mapp::serde")]
 pub struct Request<Params>
 where
     Params: Send + 'static,
@@ -47,6 +48,7 @@ where
 }
 
 #[derive(Serialize, Deserialize, Debug)]
+#[serde(crate = "mapp::serde")]
 pub struct Response<Result>
 where
     Result: Send + 'static,

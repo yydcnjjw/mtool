@@ -1,4 +1,4 @@
-use mapp::prelude::{inject::*, *};
+use mapp::{anyhow, prelude::*};
 use std::{future::Future, marker::PhantomData, sync::Arc};
 
 #[async_trait]

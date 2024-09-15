@@ -1,13 +1,13 @@
 mod api;
 mod cmd;
 mod window;
-mod wry_plugin;
+// mod wry_plugin;
 
 pub use api::*;
 pub use window::*;
-pub use wry_plugin::*;
+// pub use wry_plugin::*;
 
-use mapp::prelude::*;
+use mapp::{anyhow, prelude::*};
 use mtool_cmder::Cmder;
 
 pub(crate) async fn setup<R>(cmder: Res<Cmder>, injector: Injector) -> Result<(), anyhow::Error>

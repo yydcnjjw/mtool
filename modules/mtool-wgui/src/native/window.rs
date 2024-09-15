@@ -1,18 +1,18 @@
-use std::{
-    ops::Deref,
-    sync::{
-        atomic::{AtomicBool, Ordering},
-        Arc,
-    },
-};
+use std::{ops::Deref, sync::Arc};
 
 use mapp::sync::RwLock;
+use mapp::{
+    anyhow,
+    tokio::{
+        self,
+        sync::{mpsc, oneshot},
+    },
+    tracing::{debug, warn},
+};
 use raw_window_handle::{
     DisplayHandle, HandleError, HasDisplayHandle, HasWindowHandle, WindowHandle,
 };
 use tauri::{Listener, Manager, PhysicalPosition, WebviewWindow, WindowEvent, Wry};
-use tokio::sync::{mpsc, oneshot};
-use tracing::{debug, warn};
 use windows::Win32::{
     Foundation::*,
     UI::{Shell::*, WindowsAndMessaging::*},
@@ -43,9 +43,7 @@ impl<R: tauri::Runtime> WGuiWindow<R> {
         Ok(this)
     }
 
-    pub async fn new(
-        window: tauri::WebviewWindow<R>,
-    ) -> Result<Arc<Self>, anyhow::Error> {
+    pub async fn new(window: tauri::WebviewWindow<R>) -> Result<Arc<Self>, anyhow::Error> {
         let this = Arc::new(Self {
             inner: window.clone(),
             pos: Arc::new(RwLock::new(None)),

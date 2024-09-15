@@ -2,10 +2,13 @@ pub mod direct;
 pub mod http;
 pub mod socks;
 
-use core::fmt;
+use std::fmt;
 
-use futures::Stream;
-use tracing::instrument;
+use mapp::{
+    anyhow,
+    futures::Stream,
+    tracing::{self, instrument},
+};
 
 use crate::{
     config::{egress::ClientConfig, ingress::ServerConfig},

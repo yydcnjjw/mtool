@@ -10,9 +10,5 @@ edition.workspace = true
 mapp = { path = "../../crates/mapp" }
 mtool-core = { path = "../mtool-core" }
 
-tracing = { workspace = true }
-tokio = { workspace = true }
-anyhow = { workspace = true }
-parking_lot = { workspace = true }
 sea-orm = { workspace = true }
 sea-orm-migration = { workspace = true }

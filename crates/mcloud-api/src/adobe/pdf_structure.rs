@@ -1,6 +1,7 @@
-use serde::{Deserialize, Serialize};
+use mapp::serde::{Deserialize, Serialize};
 
 #[derive(Default, Debug, Clone, PartialEq, Serialize, Deserialize)]
+#[serde(crate = "mapp::serde")]
 pub struct PdfStructure {
     pub version: Version,
     pub extended_metadata: ExtendedMetadata,
@@ -9,6 +10,7 @@ pub struct PdfStructure {
 }
 
 #[derive(Default, Debug, Clone, PartialEq, Serialize, Deserialize)]
+#[serde(crate = "mapp::serde")]
 pub struct Version {
     pub json_export: String,
     pub page_segmentation: String,
@@ -18,6 +20,7 @@ pub struct Version {
 }
 
 #[derive(Default, Debug, Clone, PartialEq, Serialize, Deserialize)]
+#[serde(crate = "mapp::serde")]
 pub struct ExtendedMetadata {
     #[serde(rename = "ID_instance")]
     pub id_instance: String,
@@ -38,6 +41,7 @@ pub struct ExtendedMetadata {
 }
 
 #[derive(Default, Debug, Clone, PartialEq, Serialize, Deserialize)]
+#[serde(crate = "mapp::serde")]
 pub struct Element {
     #[serde(rename = "Bounds")]
     pub bounds: Option<[f64; 4]>,
@@ -66,6 +70,7 @@ pub struct Element {
 }
 
 #[derive(Default, Debug, Clone, PartialEq, Serialize, Deserialize)]
+#[serde(crate = "mapp::serde")]
 pub struct Font {
     pub alt_family_name: String,
     pub embedded: bool,
@@ -80,6 +85,7 @@ pub struct Font {
 }
 
 #[derive(Default, Debug, Clone, PartialEq, Serialize, Deserialize)]
+#[serde(crate = "mapp::serde")]
 pub struct Attributes {
     #[serde(rename = "LineHeight")]
     pub line_height: Option<f64>,
@@ -122,6 +128,7 @@ pub struct Attributes {
 }
 
 #[derive(Default, Debug, Clone, PartialEq, Serialize, Deserialize)]
+#[serde(crate = "mapp::serde")]
 pub struct Page {
     pub boxes: Boxes,
     pub height: f32,
@@ -132,6 +139,7 @@ pub struct Page {
 }
 
 #[derive(Default, Debug, Clone, PartialEq, Serialize, Deserialize)]
+#[serde(crate = "mapp::serde")]
 pub struct Boxes {
     #[serde(rename = "CropBox")]
     pub crop_box: Vec<f32>,

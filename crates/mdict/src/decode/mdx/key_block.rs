@@ -1,13 +1,15 @@
-use anyhow::Context;
 use byteorder::{LittleEndian, WriteBytesExt};
 use flate2::read::ZlibDecoder;
-use nom::{
-    combinator::{cond, map, map_res},
-    error::ParseError,
-    multi::{count, length_count},
-    number::streaming::{be_u16, be_u64, be_u8, le_u16, le_u32, le_u8},
-    sequence::tuple,
-    IResult, InputIter, InputLength, Parser, Slice,
+use mapp::{
+    anyhow::Context,
+    nom::{
+        combinator::{cond, map, map_res},
+        error::ParseError,
+        multi::{count, length_count},
+        number::streaming::{be_u16, be_u64, be_u8, le_u16, le_u32, le_u8},
+        sequence::tuple,
+        IResult, InputIter, InputLength, Parser, Slice,
+    },
 };
 use ripemd128::{Digest, Ripemd128};
 use std::{

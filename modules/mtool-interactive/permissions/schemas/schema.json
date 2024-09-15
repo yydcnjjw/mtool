@@ -295,53 +295,39 @@
       "type": "string",
       "oneOf": [
         {
-          "description": "allow-complete -> Enables the complete command without any pre-configured scope.",
+          "description": "Enables the complete command without any pre-configured scope.",
           "type": "string",
-          "enum": [
-            "allow-complete"
-          ]
+          "const": "allow-complete"
         },
         {
-          "description": "deny-complete -> Denies the complete command without any pre-configured scope.",
+          "description": "Denies the complete command without any pre-configured scope.",
           "type": "string",
-          "enum": [
-            "deny-complete"
-          ]
+          "const": "deny-complete"
         },
         {
-          "description": "allow-complete-exit -> Enables the complete_exit command without any pre-configured scope.",
+          "description": "Enables the complete_exit command without any pre-configured scope.",
           "type": "string",
-          "enum": [
-            "allow-complete-exit"
-          ]
+          "const": "allow-complete-exit"
         },
         {
-          "description": "deny-complete-exit -> Denies the complete_exit command without any pre-configured scope.",
+          "description": "Denies the complete_exit command without any pre-configured scope.",
           "type": "string",
-          "enum": [
-            "deny-complete-exit"
-          ]
+          "const": "deny-complete-exit"
         },
         {
-          "description": "allow-completion-meta -> Enables the completion_meta command without any pre-configured scope.",
+          "description": "Enables the completion_meta command without any pre-configured scope.",
           "type": "string",
-          "enum": [
-            "allow-completion-meta"
-          ]
+          "const": "allow-completion-meta"
         },
         {
-          "description": "deny-completion-meta -> Denies the completion_meta command without any pre-configured scope.",
+          "description": "Denies the completion_meta command without any pre-configured scope.",
           "type": "string",
-          "enum": [
-            "deny-completion-meta"
-          ]
+          "const": "deny-completion-meta"
         },
         {
-          "description": "default -> Default permissions for the plugin.",
+          "description": "Default permissions for the plugin.",
           "type": "string",
-          "enum": [
-            "default"
-          ]
+          "const": "default"
         }
       ]
     }

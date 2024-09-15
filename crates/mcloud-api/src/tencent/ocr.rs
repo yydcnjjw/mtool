@@ -1,8 +1,9 @@
-use serde::{Deserialize, Serialize};
+use mapp::serde::{Deserialize, Serialize};
 
 use super::api::HttpRequest;
 
 #[derive(Serialize, Debug)]
+#[serde(crate = "mapp::serde")]
 #[allow(dead_code)]
 pub enum OCRImage {
     #[serde(rename = "ImageBase64")]
@@ -12,6 +13,7 @@ pub enum OCRImage {
 }
 
 #[derive(Serialize, Debug)]
+#[serde(crate = "mapp::serde")]
 #[serde(rename_all = "lowercase")]
 #[allow(dead_code)]
 pub enum OCRLanguageType {
@@ -39,6 +41,7 @@ pub enum OCRLanguageType {
 }
 
 #[derive(Serialize, Debug)]
+#[serde(crate = "mapp::serde")]
 #[serde(rename_all = "PascalCase")]
 pub struct GeneralBasicOCRRequest {
     #[serde(flatten)]
@@ -84,6 +87,7 @@ impl GeneralBasicOCRRequest {
 }
 
 #[derive(Deserialize, Debug)]
+#[serde(crate = "mapp::serde")]
 #[serde(rename_all = "PascalCase")]
 pub struct Coord {
     pub x: i32,
@@ -91,6 +95,7 @@ pub struct Coord {
 }
 
 #[derive(Deserialize, Debug)]
+#[serde(crate = "mapp::serde")]
 #[serde(rename_all = "PascalCase")]
 pub struct ItemCoord {
     #[serde(flatten)]
@@ -98,7 +103,9 @@ pub struct ItemCoord {
     pub width: i32,
     pub height: i32,
 }
+
 #[derive(Deserialize, Debug)]
+#[serde(crate = "mapp::serde")]
 #[serde(rename_all = "PascalCase")]
 pub struct DetectedWords {
     pub confidence: i32,
@@ -106,12 +113,14 @@ pub struct DetectedWords {
 }
 
 #[derive(Deserialize, Debug)]
+#[serde(crate = "mapp::serde")]
 #[serde(rename_all = "PascalCase")]
 pub struct DetectedWordCoordPoint {
     pub word_coordinate: (Coord, Coord, Coord, Coord),
 }
 
 #[derive(Deserialize, Debug)]
+#[serde(crate = "mapp::serde")]
 #[serde(rename_all = "PascalCase")]
 pub struct TextDetection {
     pub detected_text: String,
@@ -124,6 +133,7 @@ pub struct TextDetection {
 }
 
 #[derive(Deserialize, Debug)]
+#[serde(crate = "mapp::serde")]
 #[serde(rename_all = "PascalCase")]
 pub struct GeneralBasicOCRResponse {
     pub text_detections: Vec<TextDetection>,

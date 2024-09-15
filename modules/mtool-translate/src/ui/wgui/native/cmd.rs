@@ -1,4 +1,4 @@
-use mapp::prelude::*;
+use mapp::{anyhow, prelude::*};
 use mtool_main_window::wgui::native::MtoolWindow;
 use tauri::Emitter;
 

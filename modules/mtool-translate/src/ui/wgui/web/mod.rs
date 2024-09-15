@@ -1,10 +1,10 @@
-use mapp::{prelude::*, CreateLocalOnceTaskDescriptor};
+use mapp::{anyhow, prelude::*, serde::Serialize, CreateLocalOnceTaskDescriptor};
+use mtauri_sys::prelude::*;
 use mtool_main_window::wgui::generic::MTOOL_WINDOW_LABEL;
 use mtool_wgui::{
     component::error::error_view, generate_keymap, is_window, AutoWindow, Horizontal, Keybinding,
     RouteParams, Router, Vertical, WebStage, WindowProps,
 };
-use serde::Serialize;
 use web_sys::{HtmlElement, HtmlTextAreaElement};
 use yew::prelude::*;
 use yew_icons::{Icon, IconId};
@@ -150,6 +150,7 @@ impl Component for App {
 impl App {
     fn translate(&mut self, ctx: &Context<Self>) {
         #[derive(Debug, Serialize)]
+        #[serde(crate = "mapp::serde")]
         struct TranslateArgs {
             input: String,
             source: LanguageType,
@@ -164,9 +165,7 @@ impl App {
             backend: self.backend.clone(),
         };
         ctx.link().send_future(async move {
-            AppMsg::ShowTranslate(
-                mtauri_sys::invoke("plugin:mtool-translate|text_translate", &args).await,
-            )
+            AppMsg::ShowTranslate(invoke("plugin:mtool-translate|text_translate", &args).await)
         })
     }
 

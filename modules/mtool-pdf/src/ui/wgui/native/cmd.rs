@@ -1,9 +1,8 @@
 use std::path::{Path, PathBuf};
 
-use mapp::prelude::*;
+use mapp::{anyhow, prelude::*, tokio::fs};
 use mtool_interactive::{Completion, CompletionArgs};
 use tauri::AppHandle;
-use tokio::fs;
 
 use crate::pdf::PdfApi;
 

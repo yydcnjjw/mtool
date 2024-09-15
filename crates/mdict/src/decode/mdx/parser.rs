@@ -1,7 +1,7 @@
 use std::ops::RangeFrom;
 
 use multimap::MultiMap;
-use nom::{sequence::tuple, AsBytes, InputIter, InputLength, Slice};
+use mapp::nom::{sequence::tuple, AsBytes, InputIter, InputLength, Slice};
 
 use super::{
     common::{mdx_number, mdx_string, NomResult},

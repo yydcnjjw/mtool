@@ -1,9 +1,13 @@
-use mapp::{inject::inject_once, prelude::*, sync::Mutex};
+use mapp::{
+    anyhow,
+    prelude::*,
+    sync::Mutex,
+    tokio::{self, select},
+    tokio_util::sync::CancellationToken,
+    tracing::{debug, warn},
+};
 use mtool_main_window::wgui::native::{sticky, StickyWindow};
 use mtool_system::event::{self, *};
-use tokio::select;
-use tokio_util::sync::CancellationToken;
-use tracing::{debug, warn};
 
 use crate::dict::ecdict;
 
@@ -101,6 +105,6 @@ async fn dict_query_with_sticky(
 ) -> Result<(), anyhow::Error> {
     debug!("{:?}", query);
     let result = dict.query(query.trim()).await?;
-    sticky::show_main::<ecdict::DictView, _, _>(win.clone(), "dict", result).await?;
+    sticky::show_main::<ecdict::DictView, _, _>(&win.base(), result).await?;
     win.show().await
 }

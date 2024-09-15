@@ -1,6 +1,7 @@
 use std::io::{stdin, stdout, Write};
 
-use mapp::{prelude::*, CreateOnceTaskDescriptor};
+use clap::{Parser, ValueEnum};
+use mapp::{anyhow, prelude::*, tokio, CreateOnceTaskDescriptor};
 
 use mtool_cmder::{Cmder, CommandArgs, CommandBuilder};
 use mtool_core::{
@@ -8,10 +9,13 @@ use mtool_core::{
     CmdlineStage,
 };
 
-use crate::translator::{// llama,
-                        openai, tencent, LanguageType, Translator};
-
-use clap::{Parser, ValueEnum};
+use crate::translator::{
+    // llama,
+    openai,
+    tencent,
+    LanguageType,
+    Translator,
+};
 
 #[derive(ValueEnum, Debug, Clone)]
 enum Backend {

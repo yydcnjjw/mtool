@@ -1,16 +1,19 @@
-use anyhow::Context;
-use itertools::Itertools;
-use mapp::prelude::*;
+use mapp::{
+    anyhow::{self, Context},
+    itertools::Itertools,
+    prelude::*,
+    serde::Deserialize,
+};
 use mcloud_api::openai::{
     chat::{ChatMessage, ChatRequest, ChatResponse},
     Client,
 };
 use mtool_core::ConfigStore;
-use serde::Deserialize;
 
 use crate::translator::{self, LanguageType};
 
 #[derive(Debug, Clone, Deserialize)]
+#[serde(crate = "mapp::serde")]
 struct Config {
     base_url: String,
     key: String,

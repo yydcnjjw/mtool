@@ -4,7 +4,10 @@ mod sense;
 mod synonym;
 mod thesaures;
 
-use reqwest::header::USER_AGENT;
+use mapp::{
+    anyhow,
+    reqwest::{self, header::USER_AGENT},
+};
 
 const DEFAULT_USER_AGENT: &'static str = "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_13_6) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/60.0.3112.78 Safari/537.36";
 

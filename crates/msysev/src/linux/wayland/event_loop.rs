@@ -1,8 +1,8 @@
+use mapp::{anyhow, tokio::sync::mpsc};
 use std::sync::{
     atomic::{AtomicBool, Ordering},
     Arc,
 };
-use tokio::sync::mpsc;
 use wayland_client::{protocol::wl_registry::WlRegistry, Connection, EventQueue};
 
 use crate::Event;

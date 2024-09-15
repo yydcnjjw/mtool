@@ -1,7 +1,8 @@
-use serde::{Deserialize, Serialize};
+use mapp::serde::{Deserialize, Serialize};
 use std::fmt;
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(crate = "mapp::serde")]
 pub enum Backend {
     Mdx,
     ECDict,

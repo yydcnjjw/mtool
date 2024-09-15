@@ -1,21 +1,24 @@
 use std::path::{Path, PathBuf};
 
-use anyhow::Context;
-use futures::{
-    future::{join_all, try_join_all},
-    StreamExt,
+use mapp::{
+    anyhow::{self, Context},
+    futures::{
+        future::{join_all, try_join_all},
+        StreamExt,
+    },
+    prelude::*,
+    serde::Deserialize,
+    tokio::{fs, sync::Mutex},
+    tokio_stream::wrappers::ReadDirStream,
 };
-use mapp::provider::Res;
 use mdict::decode::mdx;
 use mtool_core::ConfigStore;
 use ouroboros::self_referencing;
-use serde::Deserialize;
-use tokio::{fs, sync::Mutex};
-use tokio_stream::wrappers::ReadDirStream;
 
 use super::QueryResult;
 
 #[derive(Debug, Deserialize, Clone)]
+#[serde(crate = "mapp::serde")]
 struct Config {
     path: String,
 }

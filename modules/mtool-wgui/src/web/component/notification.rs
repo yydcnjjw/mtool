@@ -1,13 +1,14 @@
 use super::ProgressBar;
-use mtauri_sys::{
-    event::Event,
-    window::{UnlistenFn, Window},
+use mapp::{
+    anyhow,
+    serde::{Deserialize, Serialize},
 };
-use serde::{Deserialize, Serialize};
+use mtauri_sys::prelude::{Event as TauriEvent, *};
 use std::ops::Deref;
 use yew::{prelude::*, suspense::use_future};
 
 #[derive(Debug, Clone, Serialize, Deserialize, Properties, PartialEq)]
+#[serde(crate = "mapp::serde")]
 pub struct ProgressNotificationProps {
     pub id: String,
     pub message: String,
@@ -24,7 +25,7 @@ where
     Window::current()?
         .listen(
             "update_progress_notification",
-            move |ev: Event<ProgressNotificationProps>| {
+            move |ev: TauriEvent<ProgressNotificationProps>| {
                 if ev.payload.id == id {
                     update(ev.payload);
                 }
@@ -42,11 +43,12 @@ pub fn progress_notification(props: &ProgressNotificationProps) -> HtmlResult {
     {
         let progress = progress.clone();
         let message = message.clone();
-        let unlisten =
-            use_future(move || listen_progress_notification(props.id.clone(), move |props| {
+        let unlisten = use_future(move || {
+            listen_progress_notification(props.id.clone(), move |props| {
                 progress.set(props.progress);
                 message.set(props.message);
-            }))?;
+            })
+        })?;
         use_effect_with((), move |_| {
             move || {
                 let _ = match unlisten.deref() {

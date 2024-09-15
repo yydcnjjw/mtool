@@ -2,10 +2,15 @@ use std::time::Duration;
 
 use crate::ui::wgui::generic::{Stats, TransferStats};
 use async_stream::stream;
-use mapp::{prelude::*, CreateLocalOnceTaskDescriptor};
+use mapp::{
+    anyhow,
+    prelude::*,
+    tracing::{debug, warn},
+    CreateLocalOnceTaskDescriptor,
+};
+use mtauri_sys::prelude::invoke;
 use mtool_main_window::wgui::generic::STICKY_WINDOW_LABEL;
 use mtool_wgui::prelude::*;
-use tracing::{debug, warn};
 use yew::{platform::time, prelude::*};
 use yew_icons::{Icon, IconId};
 
@@ -32,7 +37,7 @@ impl Component for View {
         ctx.link().send_stream(stream! {
             loop {
                 time::sleep(Duration::from_secs(1)).await;
-                match mtauri_sys::invoke::<(), Stats>("plugin:mtool-proxy|stats", &()).await {
+                match invoke::<(), Stats>("plugin:mtool-proxy|stats", &()).await {
                     Ok(stats) => yield Msg::UpdateStats(stats),
                     Err(e) => {
                         warn!("{:?}", e);

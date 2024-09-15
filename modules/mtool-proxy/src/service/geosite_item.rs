@@ -2,10 +2,11 @@ use std::ops::Deref;
 
 use mproxy::protos::geosite;
 use mtool_interactive::CompleteItem;
-use serde::{Deserialize, Serialize};
+use mapp::serde::{Deserialize, Serialize};
 use yew::prelude::*;
 
 #[derive(Properties, PartialEq, Clone, Serialize, Deserialize)]
+#[serde(crate = "mapp::serde")]
 pub struct GeositeItem {
     data: geosite::Domain,
 }

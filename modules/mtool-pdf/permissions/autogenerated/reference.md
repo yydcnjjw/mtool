@@ -4,7 +4,7 @@ Default permissions for the plugin.
 
 - `allow-load-pdf`
 
-## Permission Table 
+## Permission Table
 
 <table>
 <tr>

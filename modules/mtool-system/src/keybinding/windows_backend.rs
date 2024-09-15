@@ -9,7 +9,7 @@ use std::{
 use anyhow::Context;
 use mapp::prelude::*;
 use mkeybinding::KeySequence;
-use msysev::keydef::KeyModifier;
+use msysev::prelude::*;
 use tokio::sync::{oneshot, OnceCell, RwLock};
 use tracing::{debug, warn, error};
 use windows::{

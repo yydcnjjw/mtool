@@ -1,9 +1,10 @@
 use std::{fmt::Display, ops::Deref};
 
-use serde::{Deserialize, Deserializer, Serialize};
+use mapp::serde::{Deserialize, Deserializer, Serialize};
 use yew::prelude::*;
 
 #[derive(Properties, Clone, PartialEq, Serialize)]
+#[serde(crate = "mapp::serde")]
 pub struct Props<T>
 where
     T: PartialEq + Serialize,

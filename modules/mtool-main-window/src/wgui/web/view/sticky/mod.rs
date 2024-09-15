@@ -2,7 +2,7 @@ mod view;
 
 use view::View;
 
-use mapp::prelude::*;
+use mapp::{anyhow, prelude::*};
 use mtool_wgui::prelude::*;
 use yew::prelude::*;
 

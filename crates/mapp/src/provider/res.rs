@@ -10,7 +10,10 @@ use anyhow::Context;
 use async_trait::async_trait;
 use minject::{LocalProvide, Provide};
 
-use crate::{provider::Injector, App, LocalApp};
+use crate::{
+    app::{App, LocalApp},
+    provider::Injector,
+};
 
 use super::LocalInjector;
 

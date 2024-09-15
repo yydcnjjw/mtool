@@ -1,10 +1,13 @@
 use std::collections::HashMap;
 
-use itertools::Itertools;
-use serde::{Deserialize, Serialize};
+use mapp::{
+    itertools::Itertools,
+    serde::{Deserialize, Serialize},
+};
 use yew::prelude::*;
 
 #[derive(Properties, PartialEq, Serialize, Deserialize)]
+#[serde(crate = "mapp::serde")]
 pub struct QueryResult {
     pub word: String,
     pub phonetic: Option<String>,
