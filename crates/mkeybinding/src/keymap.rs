@@ -2,10 +2,8 @@ use std::{collections::HashMap, fmt::Debug};
 
 use crate::kbd::{KeyCombine, KeySequence, ToKeySequence};
 
-use mapp::{
-    anyhow::{self, Context},
-    thiserror::{self, Error},
-};
+use mapp::anyhow::{self, Context};
+use thiserror::Error;
 
 #[derive(Debug, Error)]
 pub enum Error {

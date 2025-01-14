@@ -6,7 +6,7 @@ use mapp::{
         self,
         sync::{mpsc, Mutex, RwLock},
     },
-    tracing::{self, debug_span, error, info, instrument, warn, Instrument},
+    tracing::{error, info, warn},
 };
 use quinn::{
     congestion::{BbrConfig, CubicConfig, NewRenoConfig},
@@ -111,7 +111,6 @@ impl Acceptor {
         rx.recv().await.context("Failed to accpet")
     }
 
-    #[instrument(skip_all)]
     pub async fn run(
         tx: mpsc::UnboundedSender<BiStream>,
         endpoint: quinn::Endpoint,
@@ -120,36 +119,33 @@ impl Acceptor {
         while let Some(conn) = endpoint.accept().await {
             let tx = tx.clone();
             let stats = stats.clone();
-            tokio::spawn(
-                async move {
-                    let connection = match conn.await {
-                        Ok(conn) => conn,
-                        Err(e) => {
-                            error!("Failed to establish the connection: {:?}", e);
-                            return;
+            tokio::spawn(async move {
+                let connection = match conn.await {
+                    Ok(conn) => conn,
+                    Err(e) => {
+                        error!("Failed to establish the connection: {:?}", e);
+                        return;
+                    }
+                };
+
+                let conn = Arc::new(connection);
+
+                record_stats(stats, conn.clone());
+
+                loop {
+                    match BiStream::accept(&conn).await {
+                        Ok(s) => {
+                            if let Err(e) = tx.send(s) {
+                                warn!("{:?}", e);
+                            }
                         }
-                    };
-
-                    let conn = Arc::new(connection);
-
-                    record_stats(stats, conn.clone());
-
-                    loop {
-                        match BiStream::accept(&conn).await {
-                            Ok(s) => {
-                                if let Err(e) = tx.send(s) {
-                                    warn!("{:?}", e);
-                                }
-                            }
-                            Err(e) => {
-                                error!("{:?}", e);
-                                return;
-                            }
+                        Err(e) => {
+                            error!("{:?}", e);
+                            return;
                         }
                     }
                 }
-                .instrument(debug_span!("connection")),
-            );
+            });
         }
     }
 }
@@ -168,7 +164,6 @@ impl Connector {
         })
     }
 
-    #[instrument(skip_all, fields(transport = "quic"))]
     pub async fn connect(&self) -> Result<BiStream, anyhow::Error> {
         self.inner.connect().await
     }

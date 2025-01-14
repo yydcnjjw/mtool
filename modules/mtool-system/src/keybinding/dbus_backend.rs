@@ -43,7 +43,7 @@ impl GlobalHotKeyMgr {
         let (tx, rx) = mpsc::unbounded_channel();
 
         let hotkey_mgr = Self::new(tx);
-        injector.insert(Take::new(hotkey_mgr.clone()));
+        injector.insert(Res::new(hotkey_mgr.clone()));
 
         let keybinding = Res::new(Keybinding::new(Res::new(hotkey_mgr), rx));
         tokio::spawn(keybinding.clone().handle_event_loop(injector));
@@ -55,11 +55,17 @@ impl GlobalHotKeyMgr {
         Self { sender }
     }
 
-    async fn run(this: TakeOpt<GlobalHotKeyMgr>, injector: Injector) -> Result<(), anyhow::Error> {
+    async fn run(
+        this: TakeOpt<Res<GlobalHotKeyMgr>>,
+        injector: Injector,
+    ) -> Result<(), anyhow::Error> {
         if let Some(this) = this.unwrap() {
             let conn = zbus::connection::Builder::session()?
                 .name("org.yydcnjjw.mtool.GlobalHotKey")?
-                .serve_at("/org/yydcnjjw/mtool/GlobalHotKey", this.take()?)?
+                .serve_at(
+                    "/org/yydcnjjw/mtool/GlobalHotKey",
+                    Res::try_unwrap(this.take()?)?,
+                )?
                 .build()
                 .await?;
             injector.insert(conn);

@@ -1,0 +1,21 @@
+[package]
+name = "mtool-assistant"
+version.workspace = true
+authors.workspace = true
+edition.workspace = true
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+mapp = { path = "../../crates/mapp" }
+
+mtool-core = { path = "../mtool-core" }
+mtool-dioxus = { path = "../mtool-dioxus" }
+mtool-cmdpal = { path = "../mtool-cmdpal" }
+
+dioxus = { workspace = true }
+dioxus-desktop = { workspace = true }
+bevy = { workspace = true, features = ["bevy_dev_tools"] }
+bevy-inspector-egui = "*"
+open = "*"
+smooth-bevy-cameras = "*"

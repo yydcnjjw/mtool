@@ -12,5 +12,7 @@ msysev = { path = "../../crates/msysev", features = ["event-loop"] } # for event
 mkeybinding = { path = "../../crates/mkeybinding" } # for keybinding module
 mtool-core = { path = "../mtool-core" }
 
+sysinfo = "*"
+
 [target.'cfg(target_os = "linux")'.dependencies]
 zbus = { version = "4", default-features = false, features = ["tokio"] }

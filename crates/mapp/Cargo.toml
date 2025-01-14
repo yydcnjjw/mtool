@@ -37,9 +37,10 @@ tracing-appender = "*"
 once_cell = "*"
 itertools = "*"
 regex = "*"
-nom = "*"
+nom = "7"
 pin-project = "*"
 pin-project-lite = "*"
+send_wrapper = "*"
 dpi = { version = "*", features = ["serde"] }
 toml = "*"
 wasm-bindgen = { version = "*", optional = true }
@@ -50,12 +51,14 @@ petgraph = "0.6"
 ringbuf = "0.3"
 rand = "0.8"
 time = { version = "0.3.20", features = ["formatting"] }
+keyboard-types = "0.7"
+scopeguard = "*"
 
 [target.'cfg(not(target_family = "wasm"))'.dependencies]
 tokio = { version = "*", features = ["full"] }
 tracing-subscriber = { version = "*", features = ["env-filter", "time", "local-time"] }
 reqwest = { version = "*", features = ["blocking", "json", "stream", "rustls-tls"] }
-tokio-stream = { version = "*", features = ["fs"] }
+tokio-stream = { version = "*", features = ["full"] }
 notify-rust = "*"
 
 [target.'cfg(target_family = "wasm")'.dependencies]

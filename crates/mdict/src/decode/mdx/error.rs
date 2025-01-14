@@ -1,8 +1,11 @@
 use mapp::{
     anyhow,
-    nom::{self, error::{ErrorKind, FromExternalError, ParseError}},
-    thiserror::{self, Error},
+    nom::{
+        self,
+        error::{ErrorKind, FromExternalError, ParseError},
+    },
 };
+use thiserror::Error;
 
 #[derive(Error, Debug)]
 pub enum Error {

@@ -5,7 +5,6 @@ use mapp::{
         self,
         io::{AsyncRead, AsyncWrite},
     },
-    tracing::{info_span, Instrument},
 };
 use std::{fmt, marker::Unpin, sync::Arc};
 
@@ -63,7 +62,6 @@ impl TcpForwarder {
         tokio::pin!(copy_bi);
 
         copy_bi
-            .instrument(info_span!("bidirectional_transmission"))
             .map(|v| {
                 Ok(match v {
                     Ok(v) => v,

@@ -8,29 +8,15 @@ links = "mtool-interactive"
 
 [dependencies]
 mapp = { path = "../../crates/mapp", features = ["web"] }
-mtauri-sys = { path = "../../crates/mtauri-sys" }
-mtool-wgui = { path = "../mtool-wgui" }
-mtool-main-window = { path = "../mtool-main-window" }
-mtool-cmder = { path = "../mtool-cmder" }
 
-yew = { workspace = true }
-yew-router = { workspace = true }
+mtool-core = { path = "../mtool-core" }
+mtool-system = { path = "../mtool-system" }
+mtool-dioxus = { path = "../mtool-dioxus" }
+
+# mtool-cmder = { path = "../mtool-cmder" }
+dioxus = { workspace = true }
 
 fuzzy-matcher = "*"
 shellwords = "*"
 
-[dependencies.web-sys]
-workspace = true
-features = [
-  "ScrollIntoViewOptions",
-  "ScrollLogicalPosition"
-]
-
-[target.'cfg(not(target_family = "wasm"))'.dependencies]
-mtool-core = { path = "../mtool-core" }
-mtool-system = { path = "../mtool-system" }
-
-tauri = { workspace = true }
-
-[build-dependencies]
-tauri-plugin = { workspace = true }
+applications = "*"

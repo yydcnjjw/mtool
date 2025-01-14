@@ -7,7 +7,6 @@ use mapp::{
         self,
         io::{AsyncRead, AsyncWrite},
     },
-    tracing::{info_span, Instrument},
 };
 
 use crate::{
@@ -64,7 +63,6 @@ impl UdpForwarder {
         tokio::pin!(copy_bi);
 
         copy_bi
-            .instrument(info_span!("bidirectional_transmission"))
             .map(|v| {
                 Ok(match v {
                     Ok(v) => v,

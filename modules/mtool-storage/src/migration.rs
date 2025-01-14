@@ -2,7 +2,7 @@ use mapp::{anyhow, define_label, prelude::*, sync::Mutex};
 use mtool_core::ConfigStore;
 use sea_orm_migration::{MigrationTrait, MigratorTrait};
 
-use crate::db_conn::create_db_conn_inner;
+use crate::create_dbconn_inner;
 
 static MIGRATIONS: Mutex<Vec<Box<dyn MigrationTrait>>> = Mutex::new(Vec::new());
 
@@ -29,8 +29,8 @@ define_label!(
     }
 );
 
-pub async fn migrate(cs: Res<ConfigStore>) -> Result<(), anyhow::Error> {
-    let db = create_db_conn_inner(cs).await?;
+pub(crate) async fn migrate(cs: Res<ConfigStore>) -> Result<(), anyhow::Error> {
+    let db = create_dbconn_inner(cs).await?;
     Migrator::up(&db, None).await?;
     Ok(())
 }

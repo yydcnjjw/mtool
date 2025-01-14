@@ -8,55 +8,30 @@ edition.workspace = true
 
 [features]
 default = []
-telemetry = [
-  "opentelemetry",
-  "opentelemetry-jaeger",
-  "tracing-opentelemetry",
-  "opentelemetry-prometheus",
-  "prometheus"
-]
-opentelemetry = ["dep:opentelemetry"]
-opentelemetry-jaeger = ["dep:opentelemetry-jaeger"]
-opentelemetry-prometheus = ["dep:opentelemetry-prometheus"]
-prometheus = ["dep:prometheus"]
-tracing-opentelemetry = ["dep:tracing-opentelemetry"]
 
 [dependencies]
 mapp = { path = "../mapp" }
 
 protobuf = "*"
 weak-table = "*"
-
-[target.'cfg(not(target_family = "wasm"))'.dependencies]
-opentelemetry = { version = "0.18", features = ["rt-tokio"], optional = true }
-opentelemetry-jaeger = { version = "0.17", features = ["rt-tokio"], optional = true }
-tracing-opentelemetry = { version = "0.18", features = ["metrics"], optional = true }
-opentelemetry-prometheus = { version = "0.11", optional = true }
-prometheus = { version = "0.13", optional = true }
-libc = "*"
-quinn = { git = "https://github.com/quinn-rs/quinn", branch = "main" }
-hyper = { version = "1.0.0-rc.4", features = ["full"] }
-hyper-util = { version = "0.1", features = ["tokio"] }
-http-body-util = "0.1.0-rc.2"
+quinn = { version = "*" }
+hyper = { version = "*", features = ["full"] }
+hyper-util = { version = "*", features = ["tokio"] }
+http-body-util = "*"
 socksv5 = "*"
 strum = { version = "*", features = ["derive"] }
 enum_dispatch = "*"
 domain_matcher = { git = "https://github.com/Qv2ray/DomainMatcher" }
 warp = "*"
 rustls = { version = "*", default-features = false, features = ["ring", "logging", "std", "tls12"] }
-
 rustls-pemfile = "*"
 rustls-pki-types = "*"
 tokio-rustls = { version = "*", default-features = false, features = ["ring", "logging", "tls12"] }
 tokio_kcp = "*"
 
-[target.'cfg(target_family = "unix")'.dependencies]
-nix = "*"
-neli = { git = "https://github.com/jbaublitz/neli" }
-
 [build-dependencies]
-protobuf-codegen = "3"
+protobuf-codegen = "*"
 protobuf = "*"
 
 [dev-dependencies]
-tracing-test = "0.2"
+tracing-test = "*"

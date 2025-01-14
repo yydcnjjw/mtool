@@ -8,12 +8,12 @@ use crate::app::{App, LocalApp};
 
 #[async_trait]
 pub trait CondLoad {
-    async fn load_with_cond(self, app: &App) -> Result<bool, anyhow::Error>;
+    async fn load_with_cond(self: Box<Self>, app: &App) -> Result<bool, anyhow::Error>;
 }
 
 #[async_trait(?Send)]
 pub trait LocalCondLoad {
-    async fn local_load_with_cond(self, app: &LocalApp) -> Result<bool, anyhow::Error>;
+    async fn local_load_with_cond(self: Box<Self>, app: &LocalApp) -> Result<bool, anyhow::Error>;
 }
 
 pub struct FnCondLoad<Func, Args> {
@@ -37,8 +37,8 @@ where
     Args: Provide<App> + Send + Sync,
     Output: Future<Output = Result<bool, anyhow::Error>> + Send,
 {
-    async fn load_with_cond(self, app: &App) -> Result<bool, anyhow::Error> {
-        inject_once(app, self.f).await?.await
+    async fn load_with_cond(self: Box<Self>, app: &App) -> Result<bool, anyhow::Error> {
+        inject_once(app, self.f).await?
     }
 }
 
@@ -49,7 +49,7 @@ where
     Args: LocalProvide<LocalApp>,
     Output: Future<Output = Result<bool, anyhow::Error>>,
 {
-    async fn local_load_with_cond(self, app: &LocalApp) -> Result<bool, anyhow::Error> {
-        local_inject_once(app, self.f).await?.await
+    async fn local_load_with_cond(self: Box<Self>, app: &LocalApp) -> Result<bool, anyhow::Error> {
+        local_inject_once(app, self.f).await?
     }
 }

@@ -6,7 +6,7 @@ use mapp::{
         net::{TcpListener, TcpStream},
         sync::RwLock,
     },
-    tracing::{self, info, instrument},
+    tracing::info,
 };
 
 use crate::{
@@ -47,7 +47,6 @@ impl Connector {
         })
     }
 
-    #[instrument(skip_all, fields(transport = "tcp"))]
     pub async fn connect(&self) -> Result<TcpStream, anyhow::Error> {
         self.inner.connect().await
     }

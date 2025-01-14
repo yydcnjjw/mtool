@@ -13,11 +13,11 @@ use mapp::{
     anyhow::{self, bail, Context as _},
     futures::Future,
     tokio::{
-        self,
+        self, spawn,
         sync::{mpsc, oneshot},
     },
     tokio_stream::wrappers::UnboundedReceiverStream,
-    tracing::{self, debug, debug_span, error, instrument, warn, Instrument},
+    tracing::{debug, error, warn},
 };
 
 use crate::{
@@ -30,16 +30,14 @@ use crate::{
     stats::{TransferMonitor, TransferStats},
 };
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct Server {
-    acceptor: Arc<transport::Acceptor>,
+    config: ServerConfig,
 }
 
 impl Server {
     pub async fn new(config: ServerConfig) -> Result<Self, anyhow::Error> {
-        Ok(Self {
-            acceptor: Arc::new(transport::Acceptor::new(config.acceptor).await?),
-        })
+        Ok(Self { config })
     }
 
     async fn serve_inner(
@@ -55,7 +53,6 @@ impl Server {
         Ok(())
     }
 
-    #[instrument(skip_all)]
     async fn serve(tx: mpsc::UnboundedSender<ProxyRequest>, stream: BoxedAsyncIO) {
         if let Err(e) = Self::serve_inner(tx, stream).await {
             warn!("{:?}", e);
@@ -65,30 +62,37 @@ impl Server {
     pub async fn incoming(&self) -> Result<UnboundedReceiverStream<ProxyRequest>, anyhow::Error> {
         let (tx, rx) = mpsc::unbounded_channel();
 
-        tokio::spawn(Self::run(self.acceptor.clone(), tx));
+        Self::spawn_accept_loop(self.clone(), tx).await?;
 
         Ok(UnboundedReceiverStream::new(rx))
     }
 
-    async fn run(acceptor: Arc<transport::Acceptor>, tx: mpsc::UnboundedSender<ProxyRequest>) {
-        loop {
-            match acceptor.accept().await {
-                Ok(stream) => {
-                    let tx = tx.clone();
-                    let acceptor = acceptor.clone();
-                    tokio::spawn(async move {
-                        match acceptor.handshake(stream).await {
-                            Ok(io) => Self::serve(tx, io).await,
-                            Err(e) => warn!("{:?}", e),
-                        }
-                    });
-                }
-                Err(e) => {
-                    warn!("tcp accept error: {:?}", e);
-                    break;
-                }
-            };
-        }
+    async fn spawn_accept_loop(
+        Self { config }: Self,
+        tx: mpsc::UnboundedSender<ProxyRequest>,
+    ) -> Result<(), anyhow::Error> {
+        let acceptor = Arc::new(transport::Acceptor::new(config.acceptor).await?);
+        spawn(async move {
+            loop {
+                match acceptor.accept().await {
+                    Ok(stream) => {
+                        let tx = tx.clone();
+                        let acceptor = acceptor.clone();
+                        tokio::spawn(async move {
+                            match acceptor.handshake(stream).await {
+                                Ok(io) => Self::serve(tx, io).await,
+                                Err(e) => warn!("{:?}", e),
+                            }
+                        });
+                    }
+                    Err(e) => {
+                        warn!("tcp accept error: {:?}", e);
+                        break;
+                    }
+                };
+            }
+        });
+        Ok(())
     }
 }
 
@@ -128,24 +132,21 @@ impl ServerService {
     ) -> Result<Response<BoxBody<Bytes, hyper::Error>>, anyhow::Error> {
         let remote = host_addr(req.uri()).context("socket address is incorrect at CONNECT")?;
 
-        tokio::task::spawn(
-            async move {
-                match hyper::upgrade::on(req).await {
-                    Ok(upgraded) => {
-                        if let Err(e) = self.tx.send(ProxyRequest {
-                            remote,
-                            conn: ProxyConn::ForwardTcp(TcpForwarder {
-                                stream: Box::new(TokioIo::new(upgraded)),
-                            }),
-                        }) {
-                            warn!("{:?}", e);
-                        }
+        tokio::task::spawn(async move {
+            match hyper::upgrade::on(req).await {
+                Ok(upgraded) => {
+                    if let Err(e) = self.tx.send(ProxyRequest {
+                        remote,
+                        conn: ProxyConn::ForwardTcp(TcpForwarder {
+                            stream: Box::new(TokioIo::new(upgraded)),
+                        }),
+                    }) {
+                        warn!("{:?}", e);
                     }
-                    Err(e) => error!("upgrade error: {:?}", e),
                 }
+                Err(e) => error!("upgrade error: {:?}", e),
             }
-            .instrument(debug_span!("CONNECT")),
-        );
+        });
 
         Ok(Response::new(empty()))
     }
@@ -163,12 +164,6 @@ impl ServerService {
                 .is_some()
     }
 
-    #[instrument(
-        name = "handle_request",
-        skip_all,
-        fields(http.method = req.method().to_string(),
-               http.uri = req.uri().to_string())
-    )]
     async fn handle_request(
         self,
         req: Request<hyper::body::Incoming>,

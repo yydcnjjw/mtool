@@ -1,5 +1,6 @@
-use mapp::{anyhow, thiserror};
+use mapp::anyhow;
 use pdfium_render::prelude::PdfiumError;
+use thiserror::Error;
 
 #[derive(thiserror::Error, Debug)]
 pub enum Error {

@@ -1,8 +1,7 @@
 use std::{
     any::{type_name, Any},
     fmt,
-    marker::Unsize,
-    ops::{CoerceUnsized, Deref},
+    ops::Deref,
     sync::Arc,
 };
 
@@ -18,8 +17,6 @@ use crate::{
 use super::LocalInjector;
 
 pub struct Res<T: ?Sized>(Arc<T>);
-
-impl<T: ?Sized + Unsize<U>, U: ?Sized> CoerceUnsized<Res<U>> for Res<T> {}
 
 impl<T> Res<T> {
     pub fn new(val: T) -> Self {

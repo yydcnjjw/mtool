@@ -26,6 +26,19 @@ repeat!(9, enum_params, impl_inject_for_fn, Arg);
 pub trait InjectOnce<Args> {
     type Output;
     fn inject_once(self, args: Args) -> Self::Output;
+    fn inject_once_boxed(self: Box<Self>, args: Args) -> Self::Output;
+}
+
+impl<Args, Output> InjectOnce<Args> for Box<dyn InjectOnce<Args, Output = Output>> {
+    type Output = Output;
+
+    fn inject_once(self, args: Args) -> Self::Output {
+        InjectOnce::inject_once_boxed(self, args)
+    }
+
+    fn inject_once_boxed(self: Box<Self>, args: Args) -> Self::Output {
+        InjectOnce::inject_once_boxed(*self, args)
+    }
 }
 
 macro_rules! impl_inject_once_for_fn_once {
@@ -38,6 +51,11 @@ macro_rules! impl_inject_once_for_fn_once {
 
             #[allow(non_snake_case)]
             fn inject_once(self, ($($arg,)*): ($($arg,)*)) -> Self::Output {
+                (self)($($arg,)*)
+            }
+
+            #[allow(non_snake_case)]
+            fn inject_once_boxed(self: Box<Self>, ($($arg,)*): ($($arg,)*)) -> Self::Output {
                 (self)($($arg,)*)
             }
         }

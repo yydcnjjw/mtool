@@ -1,5 +1,3 @@
-#![feature(let_chains)]
-
 #[cfg(target_os = "windows")]
 mod windows;
 

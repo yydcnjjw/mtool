@@ -1,12 +1,12 @@
-#![feature(unsize)]
-#![feature(coerce_unsized)]
-#![feature(unsized_fn_params)]
+// #![feature(unsize)]
+// #![feature(coerce_unsized)]
+// #![feature(unsized_fn_params)]
 
 mod app;
 mod error;
 mod label;
 mod module;
-mod provider;
+pub mod provider;
 mod schedule;
 mod trace;
 mod utils;
@@ -47,16 +47,19 @@ pub use serde;
 pub use serde_error;
 pub use serde_json;
 pub use serde_with;
-pub use thiserror;
 pub use tokio;
 pub use futures;
 pub use tokio_stream;
 pub use tokio_util;
 pub use tracing;
 pub use pin_project_lite;
+pub use send_wrapper;
 pub use tracing_subscriber;
 pub use tracing_appender;
 pub use toml;
+pub use keyboard_types;
+pub use rand;
+pub use scopeguard;
 
 cfg_if::cfg_if! {
     if #[cfg(not(target_family = "wasm"))] {

@@ -9,3 +9,5 @@ edition.workspace = true
 [dependencies]
 msysev = { path = "../msysev" }
 mapp = { path = "../mapp" }
+
+thiserror = { workspace = true }

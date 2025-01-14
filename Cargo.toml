@@ -9,26 +9,31 @@ members = [
   "crates/minject",
   "crates/msysev",
   "crates/mkeybinding",
-  "crates/mtauri-sys",
+  # "crates/mtauri-sys",
   "crates/manki-api",
   "crates/mproxy",
   # "crates/mllama-sys",
 
   "modules/mtool-core",
   "modules/mtool-system",
-  "modules/mtool-wgui",
-  "modules/mtool-cmder",
-  "modules/mtool-main-window",
-  "modules/mtool-interactive",
-  "modules/mtool-dict",
-  "modules/mtool-translate",
-  
-  "modules/mtool-wgui/wmain",
   "modules/mtool-storage",
-  "modules/mtool-proxy",
-  "modules/mtool-toast",
+  "modules/mtool-dioxus",
+  "modules/mtool-cmdpal",
+  "modules/mtool-apps",
+  "modules/mtool-assistant",
+  "modules/mtool-proxy",  
+  # "modules/mtool-pdf",
+  # "modules/mtool-wgui",
+  # "modules/mtool-cmder",
+  # "modules/mtool-main-window",
+  # "modules/mtool-interactive",
+  # "modules/mtool-dict",
+  # "modules/mtool-translate",
+  
+  # "modules/mtool-wgui/wmain",
+  # "modules/mtool-proxy",
+  # "modules/mtool-toast",
   # "modules/mtool-ai",
-  "modules/mtool-pdf",
   "mtool",
 ]
 
@@ -38,38 +43,43 @@ authors = ["yydcnjjw <yydcnjjw@gmail.com>"]
 edition = "2021"
 
 [workspace.dependencies]
-# TODO: macro reexport support
-yew = { version = "*", features = ["csr"] }
-yew-autoprops = "*"
-yew-router = "*"
-yew_icons = "*"
-tauri = { version = "2.*" }
-tauri-plugin = { version = "2.*", features = ["build"] }
+# TODO: macro re-export support
+dioxus = { version = "*" }
+dioxus-desktop = { version = "*", default-features = false }
+bevy = { version = "0.16.1" }
+# bevy = { path = "/home/yydcnjjw/workspace/project/bevy" }
+# yew = { version = "*", features = ["csr"] }
+# yew-autoprops = "*"
+# yew-router = "*"
+# yew_icons = "*"
+# tauri = { version = "2.*" }
+# tauri-plugin = { version = "2.*", features = ["build"] }
 ouroboros = "*"
 clap = { version = "*", features = ["derive", "cargo"] }
 sea-orm = "*"
 sea-orm-migration = "*"
+thiserror = "*"
 
 # NOTE: platform custom features
 web-sys = "*"
 windows = "0.58"
 
-[patch.crates-io]
-tauri = { git = "https://github.com/yydcnjjw/tauri.git", branch = "dev" }
-tauri-runtime = { git = "https://github.com/yydcnjjw/tauri.git", branch = "dev" }
-tauri-runtime-wry = { git = "https://github.com/yydcnjjw/tauri.git", branch = "dev" }
-tauri-build = { git = "https://github.com/yydcnjjw/tauri.git", branch = "dev" }
-tauri-plugin = { git = "https://github.com/yydcnjjw/tauri.git", branch = "dev" }
-tauri-utils = { git = "https://github.com/yydcnjjw/tauri.git", branch = "dev" }
-wry = { git = "https://github.com/yydcnjjw/wry.git", branch = "dev" }
 
-# tauri = { path = "/home/yydcnjjw/workspace/project/tauri/crates/tauri" }
-# tauri-runtime-wry = { path = "/home/yydcnjjw/workspace/project/tauri/crates/tauri-runtime-wry" }
-# tauri-runtime = { path = "/home/yydcnjjw/workspace/project/tauri/crates/tauri-runtime" }
-# tauri-plugin = { path = "/home/yydcnjjw/workspace/project/tauri/crates/tauri-plugin" }
-# tauri-build = { path = "/home/yydcnjjw/workspace/project/tauri/crates/tauri-build" }
-# tauri-utils = { path = "/home/yydcnjjw/workspace/project/tauri/crates/tauri-utils" }
-# wry = { path = "/home/yydcnjjw/workspace/project/wry" }
-# tao = { path = "/home/yydcnjjw/workspace/project/tao" }
+# Enable a small amount of optimization in the dev profile.
+[profile.dev]
+opt-level = 1
 
-# tauri-codegen = { path = "/home/yydcnjjw/workspace/project/tauri/core/tauri-codegen" }
+# Enable a large amount of optimization in the dev profile for dependencies.
+[profile.dev.package."*"]
+opt-level = 3
+
+[profile.wasm-dev]
+inherits = "dev"
+opt-level = 1
+
+[profile.server-dev]
+inherits = "dev"
+
+[profile.android-dev]
+inherits = "dev"
+

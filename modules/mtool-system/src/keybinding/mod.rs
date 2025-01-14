@@ -46,7 +46,7 @@ pub fn module() -> ModuleGroup {
 pub struct Keybinding {
     kbs: RwLock<HashMap<KeySequence, SharedAction>>,
     rx: Mutex<mpsc::UnboundedReceiver<GlobalHotKeyEvent>>,
-    hotkey_mgr: Res<dyn SetupGlobalHotKey + Send + Sync>,
+    hotkey_mgr: Box<dyn SetupGlobalHotKey + Send + Sync>,
 }
 
 impl Keybinding {
@@ -57,7 +57,7 @@ impl Keybinding {
         Self {
             kbs: RwLock::new(HashMap::new()),
             rx: Mutex::new(rx),
-            hotkey_mgr,
+            hotkey_mgr: Box::new(Res::try_unwrap(hotkey_mgr).unwrap()),
         }
     }
 }
@@ -87,10 +87,10 @@ impl Keybinding {
         self.hotkey_mgr.unregister(&ks).await
     }
 
-    pub async fn handle_event_loop(self: Res<Keybinding>, injector: Injector) {
-        while let Some(ev) = { self.rx.lock().await.recv().await } {
+    pub async fn handle_event_loop(self_: Res<Keybinding>, injector: Injector) {
+        while let Some(ev) = { self_.rx.lock().await.recv().await } {
             debug!("handle action {}", ev.0.to_string());
-            if let Some(action) = { self.kbs.read().await.get(&ev.0).cloned() } {
+            if let Some(action) = { self_.kbs.read().await.get(&ev.0).cloned() } {
                 let injector = injector.clone();
                 tokio::spawn(async move {
                     if let Err(e) = action.do_action(&injector).await {

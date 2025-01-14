@@ -3,7 +3,7 @@ use mapp::{
     futures::{future::try_join_all, FutureExt},
     tokio::{self, sync::mpsc},
     tokio_stream::StreamExt,
-    tracing::{info, info_span, warn, Instrument},
+    tracing::{info, warn},
 };
 use std::{sync::Arc, time::Instant};
 
@@ -97,38 +97,25 @@ impl App {
                         .context(format!("Egress {} isn't exist", dest))?
                         .clone();
 
-                    let remote = req.remote.clone();
+                    tokio::spawn(async move {
+                        info!("start processing proxy request");
 
-                    let span = {
-                        let dest = dest.clone();
-                        info_span!(
-                            "handle_proxy_request",
-                            remote = remote.to_string(),
-                            source,
-                            dest,
-                        )
-                    };
-                    tokio::spawn(
-                        async move {
-                            info!("start processing proxy request");
-                            let now = Instant::now();
-                            match egress.send(req).await {
-                                Ok(ProxyResponse {
-                                    upload_bytes,
-                                    download_bytes,
-                                }) => {
-                                    info!(
-                                        spent_time = format!("{}ms", now.elapsed().as_millis()),
-                                        upload_bytes, download_bytes, "proxy request finished"
-                                    );
-                                }
-                                Err(e) => {
-                                    warn!("proxy request error: {:?}", e);
-                                }
+                        let now = Instant::now();
+                        match egress.send(req).await {
+                            Ok(ProxyResponse {
+                                upload_bytes,
+                                download_bytes,
+                            }) => {
+                                info!(
+                                    spent_time = format!("{}ms", now.elapsed().as_millis()),
+                                    upload_bytes, download_bytes, "proxy request finished"
+                                );
+                            }
+                            Err(e) => {
+                                warn!("proxy request error: {:?}", e);
                             }
                         }
-                        .instrument(span),
-                    );
+                    });
                 }
                 Err(e) => warn!("routing failed: {}", e),
             }

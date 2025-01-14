@@ -3,7 +3,7 @@ use std::net::SocketAddr;
 use mapp::{
     anyhow,
     tokio::sync::{Mutex, RwLock},
-    tracing::{self, debug, info, instrument},
+    tracing::{self, debug, info},
 };
 use tokio_kcp::{KcpConfig, KcpListener, KcpStream};
 
@@ -48,7 +48,6 @@ impl Connector {
         })
     }
 
-    #[instrument(skip_all, fields(transport = "kcp"))]
     pub async fn connect(&self) -> Result<KcpStream, anyhow::Error> {
         self.inner.connect().await
     }

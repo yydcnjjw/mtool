@@ -29,7 +29,7 @@ where
     C: Send + Sync,
 {
     async fn do_action(&self, c: &C) -> Result<(), anyhow::Error> {
-        inject(c, &self.f).await?.await
+        inject(c, &self.f).await?
     }
 }
 

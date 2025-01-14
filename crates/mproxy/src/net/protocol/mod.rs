@@ -7,7 +7,6 @@ use std::fmt;
 use mapp::{
     anyhow,
     futures::Stream,
-    tracing::{self, instrument},
 };
 
 use crate::{
@@ -29,7 +28,6 @@ impl Server {
         })
     }
 
-    #[instrument(skip_all)]
     pub async fn incoming(
         &self,
     ) -> Result<Box<dyn Stream<Item = ProxyRequest> + Unpin + Send>, anyhow::Error> {
@@ -63,7 +61,6 @@ impl Client {
         })
     }
 
-    #[instrument(skip_all)]
     pub async fn send(&self, req: ProxyRequest) -> Result<ProxyResponse, anyhow::Error> {
         match &self {
             Client::Http(c) => c.send(req).await,

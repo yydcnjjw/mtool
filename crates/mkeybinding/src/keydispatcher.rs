@@ -9,9 +9,9 @@ use crate::{
 };
 
 pub struct KeyDispatcher<Value> {
-    km_vec: Vec<(String, KeyMap<Value>)>,
-    keyseq: KeySequence,
-    tx: broadcast::Sender<Value>,
+    km_stack: Vec<(String, KeyMap<Value>)>,
+    cur_keyseq: KeySequence,
+    tx: broadcast::Sender<(KeySequence, Value)>,
 }
 
 impl<Value> KeyDispatcher<Value>
@@ -22,8 +22,8 @@ where
         let (tx, _) = broadcast::channel(32);
 
         Self {
-            km_vec: Vec::new(),
-            keyseq: KeySequence::new(),
+            km_stack: Vec::new(),
+            cur_keyseq: KeySequence::new(),
             tx,
         }
     }
@@ -32,27 +32,27 @@ where
         if self.contains_keymap(id) {
             return false;
         }
-        self.km_vec.push((id.to_string(), km));
+        self.km_stack.push((id.to_string(), km));
         true
     }
 
     pub fn pop_keymap(&mut self) -> Option<(String, KeyMap<Value>)> {
-        self.km_vec.pop()
+        self.km_stack.pop()
     }
 
     pub fn remove_keymap(&mut self, id: &str) -> Option<(String, KeyMap<Value>)> {
-        self.km_vec
+        self.km_stack
             .iter()
             .position(|v| v.0 == id)
-            .map(|i| self.km_vec.remove(i))
+            .map(|i| self.km_stack.remove(i))
     }
 
     pub fn contains_keymap(&self, id: &str) -> bool {
-        self.km_vec.iter().position(|v| v.0 == id).is_some()
+        self.km_stack.iter().position(|v| v.0 == id).is_some()
     }
 
     pub fn get_keymap_mut(&mut self, id: &str) -> Option<&mut KeyMap<Value>> {
-        self.km_vec
+        self.km_stack
             .iter_mut()
             .find_map(|v| (v.0 == id).then_some(&mut v.1))
     }
@@ -60,27 +60,27 @@ where
     pub fn dispatch(&mut self, key: KeyCombine) -> bool {
         trace!("receive key: {}", key);
 
-        self.keyseq.push(key);
+        self.cur_keyseq.push(key);
 
-        for (id, km) in self.km_vec.iter().rev() {
-            if let Ok(v) = km.lookup(&self.keyseq) {
-                trace!("dispatch {} {}", id, self.keyseq.to_string());
+        for (id, km) in self.km_stack.iter().rev() {
+            if let Ok(v) = km.lookup(&self.cur_keyseq) {
+                trace!("dispatch {} {}", id, self.cur_keyseq.to_string());
 
-                if let Err(e) = self.tx.send(v.clone()) {
+                if let Err(e) = self.tx.send((self.cur_keyseq.clone(), v.clone())) {
                     warn!("{}", e);
                 }
 
-                self.keyseq.clear();
+                self.cur_keyseq.clear();
                 return true;
             }
         }
 
-        self.keyseq.clear();
+        self.cur_keyseq.clear();
 
         return false;
     }
 
-    pub fn subscribe(&self) -> broadcast::Receiver<Value> {
+    pub fn subscribe(&self) -> broadcast::Receiver<(KeySequence, Value)> {
         self.tx.subscribe()
     }
 }

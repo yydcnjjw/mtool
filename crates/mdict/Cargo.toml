@@ -9,6 +9,8 @@ edition.workspace = true
 [dependencies]
 mapp = { path = "../mapp" }
 
+thiserror = { workspace = true }
+
 quick-xml = { version = "*", features = ["serialize"] }
 flate2 = "1.0"
 minilzo-rs = "*"

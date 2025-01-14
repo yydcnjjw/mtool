@@ -12,3 +12,4 @@ mtool-core = { path = "../mtool-core" }
 
 sea-orm = { workspace = true }
 sea-orm-migration = { workspace = true }
+kv = "*"

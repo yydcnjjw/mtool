@@ -54,8 +54,9 @@ where
     T: Send + Sync + 'static,
 {
     async fn provide(c: &Injector) -> Result<Self, anyhow::Error> {
-        c.remove::<Take<T>>()
+        c.remove::<T>()
             .context(format!("Failed to provide {}", type_name::<Self>()))
+            .map(|v| Take::new(v))
     }
 }
 
@@ -75,8 +76,9 @@ where
     T: 'static,
 {
     async fn local_provide(c: &LocalInjector) -> Result<Self, anyhow::Error> {
-        c.remove::<Take<T>>()
+        c.remove::<T>()
             .context(format!("Failed to provide {}", type_name::<Self>()))
+            .map(|v| Take::new(v))
     }
 }
 
@@ -94,7 +96,7 @@ where
     T: Send + Sync + 'static,
 {
     async fn provide(app: &App) -> Result<Self, anyhow::Error> {
-        Ok(TakeOpt(app.injector().remove::<Take<T>>()))
+        Ok(TakeOpt(app.injector().remove::<T>().map(|v| Take::new(v))))
     }
 }
 
@@ -104,7 +106,7 @@ where
     T: Send + Sync + 'static,
 {
     async fn provide(c: &Injector) -> Result<Self, anyhow::Error> {
-        Ok(TakeOpt(c.remove::<Take<T>>()))
+        Ok(TakeOpt(c.remove::<T>().map(|v| Take::new(v))))
     }
 }
 
@@ -114,7 +116,7 @@ where
     T: 'static,
 {
     async fn local_provide(app: &LocalApp) -> Result<Self, anyhow::Error> {
-        Ok(TakeOpt(app.injector().remove::<Take<T>>()))
+        Ok(TakeOpt(app.injector().remove::<T>().map(|v| Take::new(v))))
     }
 }
 
@@ -124,6 +126,6 @@ where
     T: 'static,
 {
     async fn local_provide(c: &LocalInjector) -> Result<Self, anyhow::Error> {
-        Ok(TakeOpt(c.remove::<Take<T>>()))
+        Ok(TakeOpt(c.remove::<T>().map(|v| Take::new(v))))
     }
 }

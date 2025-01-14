@@ -57,7 +57,7 @@ impl Config {
 impl AppModule for Module {
     fn early_init(&self, app: &mut AppContext) -> Result<(), anyhow::Error> {
         app.injector()
-            .insert(Take::new(OffsetTime::local_rfc_3339().unwrap_or(
+            .insert(Res::new(OffsetTime::local_rfc_3339().unwrap_or(
                 OffsetTime::new(UtcOffset::from_hms(8, 0, 0)?, Rfc3339),
             )));
 
@@ -66,7 +66,7 @@ impl AppModule for Module {
 
     async fn init(&self, app: &mut AppContext) -> Result<(), anyhow::Error> {
         app.schedule()
-            .insert_stage(CmdlineStage::Init, LoggerStage::Init)
+            .insert_stage(CmdlineStage::Parse, LoggerStage::Init)
             .add_once_task(CmdlineStage::Setup, setup_cmdline)
             .add_once_task(LoggerStage::Init, init);
         Ok(())
@@ -74,14 +74,23 @@ impl AppModule for Module {
 }
 
 async fn setup_cmdline(cmdline: Res<Cmdline>) -> Result<(), anyhow::Error> {
-    cmdline.setup(|cmdline| Ok(cmdline.arg(arg!(--stdout "log output to stdout"))))
+    cmdline.setup(|cmdline| {
+        Ok(
+            cmdline.arg(arg!(--stdout "log output to stdout").default_value(
+                #[cfg(debug_assertions)]
+                "true",
+                #[cfg(not(debug_assertions))]
+                "false",
+            )),
+        )
+    })
 }
 
 async fn init(
     injector: Injector,
     cs: Res<ConfigStore>,
     tracing: Res<Tracing>,
-    time: Take<OffsetTime<Rfc3339>>,
+    time: Take<Res<OffsetTime<Rfc3339>>>,
     args: Res<ArgMatches>,
 ) -> Result<(), anyhow::Error> {
     if args.get_flag("stdout") {
@@ -102,7 +111,7 @@ async fn init(
     tracing.set_layer(
         fmt::layer()
             .with_ansi(false)
-            .with_timer(time.take()?)
+            .with_timer(Res::try_unwrap(time.take()?)?)
             .with_writer(writer)
             .with_thread_ids(true)
             .with_thread_names(true),

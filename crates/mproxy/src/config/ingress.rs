@@ -23,7 +23,7 @@ pub mod http {
 
     use crate::config::transport::AcceptorConfig;
 
-    #[derive(Debug, Serialize, Deserialize)]
+    #[derive(Debug, Clone, Serialize, Deserialize)]
     #[serde(crate = "mapp::serde")]
     pub struct ServerConfig {
         #[serde(flatten)]
@@ -35,7 +35,7 @@ pub mod socks {
     use mapp::serde::{Deserialize, Serialize};
 
     use crate::config::transport::AcceptorConfig;
-    #[derive(Debug, Serialize, Deserialize)]
+    #[derive(Debug, Clone, Serialize, Deserialize)]
     #[serde(crate = "mapp::serde")]
     #[serde(tag = "type")]
     #[serde(rename_all = "lowercase")]
@@ -43,14 +43,14 @@ pub mod socks {
         Simple { user: String, password: String },
     }
 
-    #[derive(Debug, Serialize, Deserialize)]
+    #[derive(Debug, Clone, Serialize, Deserialize)]
     #[serde(crate = "mapp::serde")]
     pub struct Socks5Config {
         pub allow_udp: Option<bool>,
         pub auth: Option<AuthType>,
     }
 
-    #[derive(Debug, Serialize, Deserialize)]
+    #[derive(Debug, Clone, Serialize, Deserialize)]
     #[serde(crate = "mapp::serde")]
     pub struct ServerConfig {
         #[serde(flatten)]

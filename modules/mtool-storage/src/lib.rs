@@ -1,32 +1,16 @@
-mod db_conn;
+mod dbconn;
+mod kvstore;
 mod migration;
+mod module;
 
-pub use sea_orm_migration;
+pub use module::module;
 
-use db_conn::create_db_conn;
+pub mod prelude {
+    pub use crate::migration::*;
+}
+
+pub(crate) use dbconn::*;
+pub(crate) use kvstore::*;
 pub use migration::*;
-
-use mapp::{anyhow, prelude::*};
-use mtool_core::{AppStage, CmdlineStage};
-
-#[derive(Default)]
-struct Module;
-
-#[async_trait]
-impl AppModule for Module {
-    async fn init(&self, app: &mut AppContext) -> Result<(), anyhow::Error> {
-        app.injector().construct(create_db_conn);
-
-        app.schedule()
-            .insert_stage(AppStage::Startup, DBMigrationStage::Register)
-            .insert_stage(CmdlineStage::AfterInit, DBMigrationStage::Migrate)
-            .add_once_task(DBMigrationStage::Migrate, migrate);
-        Ok(())
-    }
-}
-
-pub fn module() -> ModuleGroup {
-    let mut group = ModuleGroup::new("mtool-storage");
-    group.add_module(Module);
-    group
-}
+pub use sea_orm_migration;
+pub use kv;

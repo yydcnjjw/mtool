@@ -1,37 +1,32 @@
-use std::sync::Arc;
-
 use mapp::{
     anyhow,
     tokio::{self, sync::mpsc},
     tokio_stream::wrappers::UnboundedReceiverStream,
     tokio_util::compat::{Compat, TokioAsyncReadCompatExt},
-    tracing::{self, instrument, warn},
+    tracing::warn,
 };
 use socksv5::{
     v4::SocksV4Command,
     v5::{SocksV5AuthMethod, SocksV5Command, SocksV5RequestStatus},
     SocksVersion,
 };
+use std::sync::Arc;
 
 use crate::{
-    config::ingress::socks::{ServerConfig, Socks5Config},
+    config::ingress::socks::ServerConfig,
     io::BoxedAsyncIO,
     net::transport,
     proxy::{Address, NetLocation, ProxyConn, ProxyRequest, TcpForwarder},
 };
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct Server {
-    acceptor: Arc<transport::Acceptor>,
-    config: Arc<Socks5Config>,
+    config: ServerConfig,
 }
 
 impl Server {
     pub async fn new(config: ServerConfig) -> Result<Self, anyhow::Error> {
-        Ok(Self {
-            acceptor: Arc::new(transport::Acceptor::new(config.acceptor).await?),
-            config: Arc::new(config.socks5),
-        })
+        Ok(Self { config })
     }
 
     async fn serve_socksv5(
@@ -115,7 +110,6 @@ impl Server {
     async fn serve_inner(
         tx: mpsc::UnboundedSender<ProxyRequest>,
         stream: BoxedAsyncIO,
-        _config: Arc<Socks5Config>,
     ) -> Result<(), anyhow::Error> {
         let mut stream = stream.compat();
 
@@ -125,13 +119,8 @@ impl Server {
         }
     }
 
-    #[instrument(skip_all)]
-    async fn serve(
-        tx: mpsc::UnboundedSender<ProxyRequest>,
-        stream: BoxedAsyncIO,
-        config: Arc<Socks5Config>,
-    ) {
-        if let Err(e) = Self::serve_inner(tx, stream, config).await {
+    async fn serve(tx: mpsc::UnboundedSender<ProxyRequest>, stream: BoxedAsyncIO) {
+        if let Err(e) = Self::serve_inner(tx, stream).await {
             warn!("{:?}", e);
         }
     }
@@ -139,24 +128,27 @@ impl Server {
     pub async fn incoming(&self) -> Result<UnboundedReceiverStream<ProxyRequest>, anyhow::Error> {
         let (tx, rx) = mpsc::unbounded_channel();
 
-        tokio::spawn(Self::run(self.acceptor.clone(), tx, self.config.clone()));
+        Self::spawn_accept_loop(self.clone(), tx).await?;
 
         Ok(UnboundedReceiverStream::new(rx))
     }
 
-    async fn run(
-        acceptor: Arc<transport::Acceptor>,
+    async fn spawn_accept_loop(
+        Self { config }: Self,
         tx: mpsc::UnboundedSender<ProxyRequest>,
-        config: Arc<Socks5Config>,
-    ) {
+    ) -> Result<(), anyhow::Error> {
+        let acceptor = Arc::new(transport::Acceptor::new(config.acceptor).await?);
+
         loop {
             match acceptor.accept().await {
-                Ok(stream) => tokio::spawn(Self::serve(tx.clone(), stream, config.clone())),
+                Ok(stream) => tokio::spawn(Self::serve(tx.clone(), stream)),
                 Err(e) => {
                     warn!("{:?}", e);
                     break;
                 }
             };
         }
+
+        Ok(())
     }
 }

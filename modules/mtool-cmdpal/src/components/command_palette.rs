@@ -1,0 +1,231 @@
+use dioxus::prelude::*;
+use mapp::{
+    anyhow,
+    dpi::{PhysicalPosition, PhysicalSize},
+    itertools::Itertools,
+    prelude::*,
+    tracing::{info, warn},
+};
+use mtool_dioxus::{
+    desktop::{use_global_shortcut, window},
+    free_icons::{icons::go_icons::GoSearch, Icon},
+    generate_keymap, local_action,
+    prelude::*,
+};
+
+use crate::{
+    components::{CommandInput, CommandList},
+    CommandPalette, CommandResult,
+};
+
+#[component]
+pub fn CommandPaletteView() -> Element {
+    init_window();
+
+    let onmousedown = move |e: Event<MouseData>| {
+        if e.modifiers().shift() {
+            let _ = window().drag_window();
+        }
+    };
+
+    let mut command_input = use_context_provider(|| Signal::new(CommandInput::new()));
+
+    let oninput = move |text: String| {
+        command_input.set(CommandInput::from(text));
+    };
+
+    let mut view = use_signal::<ViewFn>(|| default_view);
+
+    let command_result = use_context_provider(|| Signal::new(CommandResult::DoNothing));
+
+    init_keybinding(command_result);
+
+    use_effect(move || {
+        match &*command_result.read() {
+            CommandResult::ShowView(v) => {
+                view.set(*v);
+            }
+            CommandResult::ShowHome => {
+                command_input.set(CommandInput::new());
+                view.set(default_view);
+            }
+            CommandResult::Dismiss => {
+                command_input.set(CommandInput::new());
+                view.set(default_view);
+                spawn(async move {
+                    hide_window().await.unwrap();
+                });
+            }
+            CommandResult::Hide => {
+                spawn(async move {
+                    hide_window().await.unwrap();
+                });
+            }
+            CommandResult::DoNothing => {}
+        };
+    });
+
+    rsx! {
+        div {
+            class: "flex flex-col h-screen",
+            onmousedown,
+            onfocusout: move |_| {
+                window().set_visible(false);
+            },
+            SearchBar {
+                value: command_input().value,
+                oninput,
+            }
+            div {
+                class: "divider m-0 h-0 MB-[8]"
+            }
+            DynamicView { view }
+        }
+    }
+}
+
+fn default_view() -> Element {
+    rsx! {
+        DefaultView {  }
+    }
+}
+
+#[component]
+fn DefaultView() -> Element {
+    let cmdpal: Res<CommandPalette> = use_context();
+
+    let mut items = use_signal(Vec::new);
+
+    use_hook(|| {
+        spawn(async move {
+            let mut rx = cmdpal.subscribe_commands_changed();
+            items.set(
+                rx.borrow()
+                    .iter()
+                    .map(|(_, items)| items.clone())
+                    .flatten()
+                    .collect_vec(),
+            );
+
+            while let Ok(_) = rx.changed().await {
+                items.set(
+                    rx.borrow()
+                        .iter()
+                        .inspect(|(source, items)| {
+                            info!("source: {}, count: {}", source, items.len());
+                        })
+                        .map(|(_, items)| items.clone())
+                        .flatten()
+                        .collect_vec(),
+                );
+            }
+        });
+    });
+
+    rsx! {
+        CommandList {
+            items
+        }
+    }
+}
+
+type ViewFn = fn() -> Element;
+
+#[component]
+fn DynamicView(view: ReadOnlySignal<ViewFn>) -> Element {
+    view.read()()
+}
+
+#[component]
+fn SearchBar(
+    #[props(default)] value: String,
+    #[props(default)] oninput: EventHandler<String>,
+) -> Element {
+    rsx! {
+        div {
+            class: "shrink-0 flex flex-row items-center h-[64] ml-[12] mr-[12]",
+            Icon {
+                class: "shrink-0 m-[16]",
+                width: 20,
+                height: 20,
+                icon: GoSearch
+            }
+            input {
+                value,
+                oninput: move |e| {
+                    oninput.call(e.data().value())
+                },
+                class: "w-full text-base outline-none",
+                r#type: "text",
+                placeholder: "Type here to search ...",
+                autofocus: true,
+            }
+        }
+    }
+}
+
+async fn hide_window() -> Result<(), anyhow::Error> {
+    window().set_visible(false);
+    Ok(())
+}
+
+fn init_keybinding(mut command_result: Signal<CommandResult>) {
+    let keybinding = use_context::<Keybinding>();
+
+    if let Err(e) = use_global_shortcut("alt+Space", || {
+        let win = window();
+        win.set_visible(true);
+        win.focus_window();
+    }) {
+        warn!("{:?}", e);
+    }
+
+    let dismiss = use_callback(move |_| {
+        command_result.set(CommandResult::Dismiss);
+        Ok(())
+    });
+
+    let show_home = use_callback(move |_| {
+        command_result.set(CommandResult::ShowHome);
+        Ok(())
+    });
+
+    use_hook_with_cleanup(
+        || {
+            let km = generate_keymap!(
+                ("C-g", local_action!(dismiss)),
+                ("<Escape>", local_action!(show_home)),
+            )
+            .unwrap();
+            keybinding.push_keymap("cmdpal", km);
+            keybinding
+        },
+        move |keybinding| {
+            keybinding.remove_keymap("cmdpal");
+        },
+    );
+}
+
+fn init_window() {
+    use_hook(move || {
+        let window = window();
+        let window_size = PhysicalSize::new(800, 600);
+        let _ = window.request_inner_size(window_size);
+
+        if let Some(monitor) = window.current_monitor() {
+            let monitor_size = monitor.size();
+            let x = (monitor_size.width - window_size.width) / 2;
+            let y = (monitor_size.height - window_size.height) / 2;
+            window.set_outer_position(PhysicalPosition::new(x, y));
+        }
+
+        #[cfg(windows)]
+        {
+            use mtool_dioxus::desktop::winit::platform::windows::{
+                CornerPreference, WindowExtWindows,
+            };
+            window.set_undecorated_shadow(true);
+            window.set_corner_preference(CornerPreference::Round);
+        }
+    })
+}

@@ -3,7 +3,7 @@ use mapp::{
     anyhow::{self, Context},
     dashmap::DashMap,
     itertools::Itertools,
-    tracing::{self, instrument, warn},
+    tracing::warn,
 };
 use protobuf::Message;
 use std::{fs::File, path::PathBuf, str::FromStr, sync::Arc};
@@ -197,7 +197,6 @@ impl Router {
         })
     }
 
-    #[instrument(skip(self))]
     pub fn route(&self, src: &String, address: &Address) -> Result<String, anyhow::Error> {
         Ok(self
             .rules
