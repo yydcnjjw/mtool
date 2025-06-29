@@ -112,11 +112,6 @@ impl OrgCapture {
     }
 }
 
-// fn get_clipboard_copy() -> Result<String, Box<(dyn Error + Send + Sync + 'static)>> {
-//     let mut ctx = ClipboardContext::new()?;
-//     ctx.get_contents()
-// }
-
 pub async fn capture_inbox() -> Result<CommandResult, anyhow::Error> {
     OrgCapture::inbox().with_title("").open()?;
     Ok(CommandResult::Dismiss)

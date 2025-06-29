@@ -14,8 +14,8 @@ use crate::{
 };
 
 pub fn module() -> ModuleGroup {
-    let mut group = ModuleGroup::new("mtool-dioxus");
-    // group.add_module(Module);
+    let mut group = ModuleGroup::new("mtool-assistant");
+    group.add_module(Module);
     group
 }
 
@@ -52,7 +52,7 @@ async fn open_window(ctx: AppRes<BevyState>) -> Result<(), anyhow::Error> {
 }
 
 async fn init(ctx: AppRes<BevyState>, cmdpal: AppRes<CommandPalette>) -> Result<(), anyhow::Error> {
-    open_window(ctx).await?;
+    // open_window(ctx).await?;
 
     cmdpal
         .add_top_level_command(CommandItem::from(
