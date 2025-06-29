@@ -4,7 +4,7 @@ pub mod mdx;
 
 pub use backend::*;
 
-use mapp::prelude::*;
+use mapp::{anyhow, prelude::*};
 
 pub struct Module;
 
@@ -21,7 +21,7 @@ impl AppModule for Module {
 #[async_trait(?Send)]
 impl AppLocalModule for Module {
     async fn local_init(&self, ctx: &mut LocalAppContext) -> Result<(), anyhow::Error> {
-        use mapp::provider::Res;
+        use mapp::prelude::*;
         use mtool_wgui::{Templator, WebStage};
 
         async fn setup_template(templator: Res<Templator>) -> Result<(), anyhow::Error> {

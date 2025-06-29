@@ -13,15 +13,7 @@ mtauri-sys = { path = "../../crates/mtauri-sys" }
 mtool-wgui = { path = "../mtool-wgui" }
 mtool-main-window = { path = "../mtool-main-window" }
 
-serde = { workspace = true }
-serde-wasm-bindgen = { workspace = true }
-futures = { workspace = true }
-anyhow = { workspace = true }
-itertools = { workspace = true }
-clap = { workspace = true }
-cfg-if = { workspace = true }
 yew = { workspace = true }
-tracing = { workspace = true }
 
 [dependencies.web-sys]
 workspace = true
@@ -41,15 +33,10 @@ mtool-core = { path = "../mtool-core" }
 mtool-system = { path = "../mtool-system" }
 mtool-cmder = { path = "../mtool-cmder" }
 mtool-interactive = { path = "../mtool-interactive" }
-mtool-ai = { path = "../mtool-ai" }
+# mtool-ai = { path = "../mtool-ai" }
 
-clap = { workspace = true }
-tokio = { workspace = true }
 tauri = { workspace = true }
-serde-error = { workspace = true }
-
-[target.'cfg(target_family = "wasm")'.dependencies]
-tokio = { workspace = true, features = ["sync", "rt"] }
+clap = { workspace = true }
 
 [build-dependencies]
 tauri-plugin = { workspace = true }

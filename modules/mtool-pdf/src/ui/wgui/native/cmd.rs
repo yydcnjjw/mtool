@@ -1,9 +1,8 @@
 use std::path::{Path, PathBuf};
 
-use mapp::prelude::*;
+use mapp::{anyhow, prelude::*, tokio::fs};
 use mtool_interactive::{Completion, CompletionArgs};
 use tauri::AppHandle;
-use tokio::fs;
 
 use crate::pdf::PdfApi;
 
@@ -48,7 +47,5 @@ pub async fn open_pdf(
     let win = PdfViewerWindow::new((*app_handle).clone(), pdf_api).await?;
 
     win.open_file(path)?;
-    win.show()?;
-
-    Ok(())
+    win.show().await
 }

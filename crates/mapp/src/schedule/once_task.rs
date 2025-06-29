@@ -6,16 +6,20 @@ use async_trait::async_trait;
 use minject::{inject_once, local_inject_once, InjectOnce, LocalProvide, Provide};
 use tracing::debug;
 
-use crate::{App, CondLoad, FnCondLoad, Label, LocalApp, LocalCondLoad};
+use super::{CondLoad, FnCondLoad, LocalCondLoad};
+use crate::{
+    app::{App, LocalApp},
+    label::Label,
+};
 
 #[async_trait]
 pub trait RunOnceTask {
-    async fn run_once(self, app: &App) -> Result<(), anyhow::Error>;
+    async fn run_once(self: Box<Self>, app: &App) -> Result<(), anyhow::Error>;
 }
 
 #[async_trait(?Send)]
 pub trait LocalRunOnceTask {
-    async fn local_run_once(self, app: &LocalApp) -> Result<(), anyhow::Error>;
+    async fn local_run_once(self: Box<Self>, app: &LocalApp) -> Result<(), anyhow::Error>;
 }
 
 pub trait IntoOnceTask<Args> {
@@ -49,8 +53,8 @@ where
     Args: Provide<App> + Send + Sync,
     Output: Future<Output = Result<(), anyhow::Error>> + Send,
 {
-    async fn run_once(self, app: &App) -> Result<(), anyhow::Error> {
-        inject_once(app, self.f).await?.await
+    async fn run_once(self: Box<Self>, app: &App) -> Result<(), anyhow::Error> {
+        inject_once(app, self.f).await?
     }
 }
 
@@ -61,8 +65,8 @@ where
     Args: LocalProvide<LocalApp>,
     Output: Future<Output = Result<(), anyhow::Error>>,
 {
-    async fn local_run_once(self, app: &LocalApp) -> Result<(), anyhow::Error> {
-        local_inject_once(app, self.f).await?.await
+    async fn local_run_once(self: Box<Self>, app: &LocalApp) -> Result<(), anyhow::Error> {
+        local_inject_once(app, self.f).await?
     }
 }
 

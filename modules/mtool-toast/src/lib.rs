@@ -1,6 +1,6 @@
 mod toast;
 
-use mapp::{prelude::*, CreateOnceTaskDescriptor};
+use mapp::{anyhow, prelude::*, CreateOnceTaskDescriptor};
 use mtool_cmder::{Cmder, CommandBuilder};
 use mtool_core::{
     config::{is_startup_mode, StartupMode},

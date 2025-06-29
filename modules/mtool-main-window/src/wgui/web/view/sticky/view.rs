@@ -1,10 +1,11 @@
-use std::collections::HashMap;
-
-use mtauri_sys::window::{Window, PhysicalSize};
-use mtool_wgui::prelude::*;
-use tracing::warn;
-use wasm_bindgen::JsValue;
-use yew::prelude::*;
+use mapp::{
+    dpi::PhysicalSize,
+    tracing::{debug, warn},
+    wasm_bindgen::JsValue,
+};
+use mtool_wgui::mtauri_sys::prelude::{Event as TauriEvent, *};
+use web_sys;
+use yew::{platform::spawn_local, prelude::*};
 
 use crate::wgui::generic::view::sticky;
 
@@ -13,12 +14,22 @@ pub struct Props {}
 
 pub struct View {
     command_unlisten: Option<CommandListener>,
-    subview: HashMap<String, sticky::TemplateView>,
+    view_stack: Vec<sticky::TemplateView>,
+
+    hide_window_size: Option<PhysicalSize<u32>>,
+
+    is_dragging: bool,
+    is_hide: bool,
 }
 
 pub enum Msg {
     RegisterCommandListener(CommandListener),
     ExecCommand(sticky::Command),
+    LeftMouseUp,
+    MouseDown(MouseEvent),
+    Hide,
+    Show,
+    UpdateView(bool),
 }
 
 impl View {
@@ -27,13 +38,10 @@ impl View {
         ctx.link().send_future(async move {
             let unlisten = match Window::current()
                 .unwrap()
-                .listen(
-                    "sticky:command",
-                    move |e: mtauri_sys::event::Event<sticky::Command>| {
-                        link.send_message(Msg::ExecCommand(e.payload));
-                        Ok(())
-                    },
-                )
+                .listen("sticky:command", move |e: TauriEvent<sticky::Command>| {
+                    link.send_message(Msg::ExecCommand(e.payload));
+                    Ok(())
+                })
                 .await
             {
                 Ok(v) => Some(Box::new(v) as Box<dyn Fn() -> Result<(), JsValue>>),
@@ -57,68 +65,111 @@ impl Component for View {
         Self::listen_command(ctx);
         Self {
             command_unlisten: None,
-            subview: Default::default(),
+            view_stack: Default::default(),
+
+            hide_window_size: None,
+            is_dragging: false,
+            is_hide: false,
         }
     }
 
-    fn update(&mut self, _ctx: &Context<Self>, msg: Self::Message) -> bool {
+    fn update(&mut self, ctx: &Context<Self>, msg: Self::Message) -> bool {
         match msg {
             Msg::RegisterCommandListener(unlisten) => {
                 self.command_unlisten = Some(unlisten);
                 false
             }
             Msg::ExecCommand(cmd) => match cmd {
-                sticky::Command::ShowSubview(view) => {
-                    self.subview.insert(view.id.clone(), view);
+                sticky::Command::ShowMain(view) => {
+                    if let Some(it) = self.view_stack.iter_mut().find(|it| it.id == view.id) {
+                        *it = view;
+                    } else {
+                        self.view_stack.push(view);
+                    }
                     true
                 }
+                sticky::Command::LeftMouseUp => {
+                    ctx.link().send_message(Msg::LeftMouseUp);
+                    false
+                }
             },
+            Msg::Hide => {
+                self.is_hide = true;
+                let win = web_sys::window().unwrap();
+                let width = win.outer_width().unwrap().as_f64().unwrap();
+                let height = win.outer_height().unwrap().as_f64().unwrap();
+
+                self.hide_window_size = Some(PhysicalSize::new(width as u32, height as u32));
+
+                ctx.link().send_future(async move {
+                    let win = Window::current().unwrap();
+
+                    win.set_size(PhysicalSize::new(width as u32, 5).into())
+                        .await
+                        .unwrap();
+
+                    debug!("{:?}", PhysicalSize::new(width as u32, 5));
+                    Msg::UpdateView(true)
+                });
+
+                false
+            }
+            Msg::Show => {
+                self.is_hide = false;
+                let size = self.hide_window_size;
+
+                ctx.link().send_future(async move {
+                    if let Some(size) = size {
+                        debug!("show {:?}", size);
+                        Window::current()
+                            .unwrap()
+                            .set_size(size.into())
+                            .await
+                            .unwrap();
+                    }
+                    Msg::UpdateView(true)
+                });
+
+                false
+            }
+            Msg::LeftMouseUp => {
+                debug!("mouse up");
+                if self.is_dragging {
+                    debug!("dragging");
+                    self.is_dragging = false;
+                    ctx.link().send_future(async move {
+                        let win = Window::current().unwrap();
+                        let pos = win.outer_position().await.unwrap();
+                        debug!("{:?}", pos);
+                        if pos.y <= 0 {
+                            Msg::Hide
+                        } else {
+                            Msg::UpdateView(false)
+                        }
+                    });
+                }
+                false
+            }
+            Msg::MouseDown(e) => {
+                // left button
+                if e.ctrl_key() && e.buttons() == 1 {
+                    self.is_dragging = true;
+                    spawn_local(async move {
+                        let win = Window::current().unwrap();
+                        win.start_dragging().await.unwrap();
+                    });
+                }
+                false
+            }
+            Msg::UpdateView(v) => v,
         }
     }
 
     fn view(&self, _ctx: &Context<Self>) -> Html {
-        html! {
-            <AutoWindow window={
-                WindowProps{
-                    horizontal: Horizontal::RightAlign(12),
-                    vertical: Vertical::Absolute(24),
-                    initial_size: PhysicalSize::new(350, 350),
-                    resizable: true,
-                    ..Default::default()
-                }
-            }>
-              <div class={classes!(
-                  "w-screen",
-                  "h-screen",
-                  "flex",
-                  "flex-col",
-                  "items-center",
-                  "justify-center",
-                )}>
-                <div class={classes!(
-                    "flex",
-                    "flex-col",
-                    "p-1",
-                    "w-full",
-                    "h-full",
-                    "rounded-md",
-                    "shadow-md",
-                    "text-white",
-                    "bg-gray-600/75",
-                  )}>
-                  {
-                    self.subview.iter().map(|(_, view)| html! {
-                      <div class={classes!("")}>
-                        <TemplateView
-                          template_id={ view.template_id.clone() }
-                          data={ view.template_data.clone() }/>
-                      </div>
-                    }).collect::<Html>()
-                  }
-                </div>
-              </div>
-            </AutoWindow>
-        }
+        // let onmouseenter = ctx.link().callback(|_| Msg::Show);
+        // let onmousedown = ctx.link().callback(move |e: MouseEvent| Msg::MouseDown(e));
+
+        html! {}
     }
 }
 
@@ -133,3 +184,10 @@ impl Drop for CommandListener {
         }
     }
 }
+
+// use yew::prelude::*;
+
+// #[function_component]
+// pub fn view() -> yew::Html {
+
+// }

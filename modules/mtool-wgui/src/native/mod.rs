@@ -1,13 +1,20 @@
 mod builder;
+mod component;
 mod global_hotkey;
 mod window;
 mod window_data_bind;
 
 pub use builder::*;
+pub use component::*;
 pub use window::*;
 pub use window_data_bind::*;
 
-use mapp::{define_label, prelude::*};
+use mapp::{
+    anyhow, define_label,
+    prelude::*,
+    tokio::{self, sync::Mutex},
+    tracing::{debug, info, trace, warn},
+};
 use mtool_core::{
     config::{is_startup_mode, StartupMode},
     AppStage, CmdlineStage,
@@ -17,8 +24,6 @@ use tauri::{
     tray::TrayIconBuilder,
     Manager,
 };
-use tokio::sync::Mutex;
-use tracing::{debug, info, trace, warn};
 
 define_label! {
     pub enum WGuiStage {
@@ -87,6 +92,9 @@ where
     builder.setup_with_app(move |app| {
         let app = app.handle();
         {
+            app.manage(injector);
+            let _ = app_tx.send(Res::new(app.clone()));
+
             let menu = Menu::with_items(
                 app,
                 &[&MenuItem::with_id(app, "quit", "Quit", true, None::<&str>)?],
@@ -108,8 +116,6 @@ where
                 })
                 .build(app)?;
         }
-
-        app_tx.send(Res::new(app.clone())).unwrap();
         Ok(())
     });
 

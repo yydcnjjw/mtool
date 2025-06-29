@@ -1,12 +1,12 @@
-use mapp::prelude::*;
+use mapp::{anyhow, prelude::*, serde_error};
 use mtool_cmder::Cmder;
 use mtool_core::ConfigStore;
 use mtool_wgui::Builder;
-use tauri::{command, generate_handler, Manager, State};
+use tauri::{command, generate_handler, State};
 
 use crate::wgui::generic::hotkey::HotkeyMap;
 
-use super::{main, sticky};
+use super::main;
 
 #[command]
 pub async fn window_hotkeys(
@@ -27,20 +27,21 @@ pub(crate) async fn setup(
     injector: Injector,
     cmder: Res<Cmder>,
 ) -> Result<(), anyhow::Error> {
-    builder.setup(|builder| {
-        Ok(builder.plugin(
-            tauri::plugin::Builder::<_, ()>::new("mtool-main-window")
-                .setup(move |app, _| {
-                    app.manage(injector.clone());
-
-                    main::plugin_setup(app, cmder, injector.construct_oneshot())?;
-                    sticky::plugin_setup(app, injector.construct_oneshot())?;
-
-                    Ok(())
-                })
-                .invoke_handler(generate_handler![window_hotkeys, main::exec_command])
-                .build(),
-        ))
-    })?;
+    builder
+        // .setup_with_app(|app|{
+        //     app.wry_plugin(sticky::WryPluginBuilder::new());
+        //     Ok(())
+        // })
+        .setup(|builder| {
+            Ok(builder.plugin(
+                tauri::plugin::Builder::<_, ()>::new("mtool-main-window")
+                    .setup(move |app, _| {
+                        main::plugin_setup(app, cmder, injector.construct_oneshot())?;
+                        Ok(())
+                    })
+                    .invoke_handler(generate_handler![window_hotkeys, main::exec_command])
+                    .build(),
+            ))
+        })?;
     Ok(())
 }

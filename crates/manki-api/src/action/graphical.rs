@@ -1,6 +1,6 @@
 use std::collections::HashMap;
 
-use serde::{Deserialize, Serialize};
+use mapp::serde::{self, Deserialize, Serialize};
 use serde_repr::{Deserialize_repr, Serialize_repr};
 
 use crate::{
@@ -23,6 +23,7 @@ pub async fn gui_show_answer() -> InvokeResultNoneParams<bool> {
 }
 
 #[derive(Serialize_repr, Deserialize_repr, Debug)]
+#[serde(crate = "mapp::serde")]
 #[repr(u8)]
 pub enum Ease {
     Again = 1,
@@ -32,6 +33,7 @@ pub enum Ease {
 }
 
 #[derive(Serialize, Debug)]
+#[serde(crate = "mapp::serde")]
 pub struct GuiAnswerCardParams {
     pub ease: Ease,
 }
@@ -45,12 +47,14 @@ pub async fn gui_answer_card(ease: Ease) -> InvokeResult<bool, GuiAnswerCardPara
 }
 
 #[derive(Deserialize, Debug)]
+#[serde(crate = "mapp::serde")]
 pub struct GuiCurrentCardField {
     pub value: String,
     pub order: isize,
 }
 
 #[derive(Deserialize, Debug)]
+#[serde(crate = "mapp::serde")]
 #[serde(rename_all = "camelCase")]
 pub struct GuiCurrentCard {
     pub answer: String,

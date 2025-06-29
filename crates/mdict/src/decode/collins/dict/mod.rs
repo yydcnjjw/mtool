@@ -2,7 +2,10 @@ mod dict;
 mod output;
 mod parser;
 
-use reqwest::header::USER_AGENT;
+use mapp::{
+    anyhow,
+    reqwest::{self, header::USER_AGENT},
+};
 
 pub use self::dict::DictResult;
 

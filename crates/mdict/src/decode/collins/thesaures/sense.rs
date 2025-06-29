@@ -1,4 +1,4 @@
-use itertools::Itertools;
+use mapp::itertools::Itertools;
 use scraper::ElementRef;
 
 use crate::{decode::ToDisplay, static_selector};

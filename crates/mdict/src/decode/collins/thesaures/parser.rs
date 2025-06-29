@@ -1,4 +1,4 @@
-use itertools::Itertools;
+use mapp::{anyhow, itertools::Itertools};
 use scraper::Html;
 
 use super::{thesaures::thesaures_list, ThesauresResult};

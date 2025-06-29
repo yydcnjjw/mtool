@@ -1,14 +1,17 @@
 use std::{any::type_name, sync::Arc};
 
-use anyhow::Context as _;
-use mapp::prelude::*;
+use mapp::{
+    anyhow::{self, Context as _},
+    prelude::*,
+    serde_error, serde_json,
+    tokio::sync::{oneshot, Mutex},
+};
 use mtool_main_window::wgui::native::MtoolWindow;
 use tauri::{
     command,
     plugin::{Builder, TauriPlugin},
     AppHandle, Emitter, Manager, Runtime, State,
 };
-use tokio::sync::{oneshot, Mutex};
 
 use crate::{
     completion::{Complete, CompleteItem, CompleteRead, CompletionArgs, CompletionMeta},
@@ -135,7 +138,7 @@ impl CompleteRead for Completion {
             format!("/interactive/completion/{}", id),
         )?;
 
-        self.win.show().context("show completion window")?;
+        self.win.show().await.context("show completion window")?;
 
         let result = match rx.await {
             Err(_) => {
@@ -145,7 +148,7 @@ impl CompleteRead for Completion {
         };
 
         if need_hide_window {
-            self.win.hide()?;
+            self.win.hide().await?;
         }
 
         Ok(result)

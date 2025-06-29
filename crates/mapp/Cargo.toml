@@ -6,34 +6,68 @@ edition.workspace = true
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
+[features]
+default = []
+
+web = [
+"dep:wasm-bindgen",
+"dep:serde-wasm-bindgen",
+"dep:wasm-bindgen-futures",
+"dep:js-sys",
+]
+
 [dependencies]
 minject = { path = "../minject" }
 
-thiserror = { workspace = true }
-anyhow = { workspace = true }
-cfg-if = { workspace = true }
-async-trait = { workspace = true }
-futures = { workspace = true }
-async-recursion = { workspace = true }
-parking_lot = { workspace = true }
-tracing = { workspace = true }
-dashmap = { workspace = true }
-tracing-appender = { workspace = true }
-
+cfg-if = "*"
+async-trait = "*"
+futures = "*"
+parking_lot = "*"
+thiserror = "*"
+anyhow = "*"
+serde = { version = "*", features = ["derive"] }
+serde_json = "*"
+serde_with = "*"
+serde-error = "*"
+tracing = "*"
+tokio-util = { version = "*", features = ["compat"] }
+async-recursion = "*"
+dashmap = "*"
+tracing-appender = "*"
+once_cell = "*"
+itertools = "*"
+regex = "*"
+nom = "7"
+pin-project = "*"
+pin-project-lite = "*"
+send_wrapper = "*"
+dpi = { version = "*", features = ["serde"] }
+toml = "*"
+wasm-bindgen = { version = "*", optional = true }
+js-sys = { version = "*", optional = true }
+serde-wasm-bindgen = { version = "*", optional = true }
+wasm-bindgen-futures = { version = "*", optional = true }
 petgraph = "0.6"
 ringbuf = "0.3"
 rand = "0.8"
 time = { version = "0.3.20", features = ["formatting"] }
+keyboard-types = "0.7"
+scopeguard = "*"
 
 [target.'cfg(not(target_family = "wasm"))'.dependencies]
-tokio = { workspace = true, features = ["full"] }
-tracing-subscriber = { workspace = true, features = ["env-filter", "time", "local-time"] }
+tokio = { version = "*", features = ["full"] }
+tracing-subscriber = { version = "*", features = ["env-filter", "time", "local-time"] }
+reqwest = { version = "*", features = ["blocking", "json", "stream", "rustls-tls"] }
+tokio-stream = { version = "*", features = ["full"] }
+notify-rust = "*"
 
 [target.'cfg(target_family = "wasm")'.dependencies]
-tokio = { workspace = true, features = ["sync", "rt"] }
-getrandom = { version = "0.2", features = ["js"] }
-tracing-subscriber = { workspace = true, features = ["env-filter"] }
+tokio = { version = "*", features = ["sync", "rt"] }
+tracing-subscriber = { version = "*", features = ["env-filter"] }
 tracing-web = "0.1"
+getrandom = { version = "0.2", features = ["js"] }
+tokio-stream = "*"
 
 [dev-dependencies]
-tokio = { workspace = true }
+tokio = { version = "*" }
+tauri-build = "*"

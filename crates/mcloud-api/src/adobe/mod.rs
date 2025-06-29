@@ -1,16 +1,19 @@
 mod pdf_structure;
 
-pub use pdf_structure::*;
-use tracing::debug;
-
+use mapp::{
+    anyhow::{self, Context},
+    reqwest::{
+        self,
+        header::{HeaderMap, HeaderValue, CONTENT_TYPE},
+        Body,
+    },
+    serde::{Deserialize, Serialize},
+    tokio,
+    tracing::debug,
+};
 use std::{collections::HashMap, fmt::Debug, time::Duration};
 
-use anyhow::Context;
-use reqwest::{
-    header::{HeaderMap, HeaderValue, CONTENT_TYPE},
-    Body,
-};
-use serde::{Deserialize, Serialize};
+pub use pdf_structure::*;
 
 type AssetId = String;
 
@@ -77,6 +80,7 @@ impl Client {
         key: &str,
     ) -> Result<String, anyhow::Error> {
         #[derive(Debug, Deserialize)]
+        #[serde(crate = "mapp::serde")]
         #[allow(unused)]
         struct Response {
             access_token: String,
@@ -100,12 +104,14 @@ impl Client {
 
     pub async fn get_asset_id(&self, media_type: &str) -> Result<(AssetId, String), anyhow::Error> {
         #[derive(Debug, Serialize)]
+        #[serde(crate = "mapp::serde")]
         struct Request {
             #[serde(rename = "mediaType")]
             media_type: String,
         }
 
         #[derive(Debug, Deserialize)]
+        #[serde(crate = "mapp::serde")]
         pub struct Response {
             #[serde(rename = "assetID")]
             asset_id: String,
@@ -154,6 +160,7 @@ impl Client {
 
     pub async fn get_download_asset(&self, asset_id: &AssetId) -> Result<String, anyhow::Error> {
         #[derive(Debug, Deserialize)]
+        #[serde(crate = "mapp::serde")]
         #[allow(unused)]
         pub struct Response {
             #[serde(rename = "downloadUri")]
@@ -175,6 +182,7 @@ impl Client {
 
     pub async fn extract_pdf(&self, asset_id: AssetId) -> Result<PdfStructure, anyhow::Error> {
         #[derive(Debug, Serialize)]
+        #[serde(crate = "mapp::serde")]
         struct Request {
             #[serde(rename = "assetID")]
             asset_id: String,
@@ -215,6 +223,7 @@ impl Client {
 
         let content = loop {
             #[derive(Debug, Deserialize)]
+            #[serde(crate = "mapp::serde")]
             #[allow(unused)]
             struct AssetMetadata {
                 size: usize,
@@ -222,6 +231,7 @@ impl Client {
             }
 
             #[derive(Debug, Deserialize)]
+            #[serde(crate = "mapp::serde")]
             #[allow(unused)]
             struct Asset {
                 metadata: AssetMetadata,
@@ -232,6 +242,7 @@ impl Client {
             }
 
             #[derive(Debug, Deserialize)]
+            #[serde(crate = "mapp::serde")]
             #[allow(unused)]
             struct Response {
                 status: String,

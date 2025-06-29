@@ -1,9 +1,8 @@
 use std::{collections::HashMap, fmt::Debug};
 
-use anyhow::Context;
-
 use crate::kbd::{KeyCombine, KeySequence, ToKeySequence};
 
+use mapp::anyhow::{self, Context};
 use thiserror::Error;
 
 #[derive(Debug, Error)]

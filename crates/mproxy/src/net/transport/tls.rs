@@ -1,9 +1,11 @@
 use std::{sync::Arc, time::Duration};
 
+use mapp::{
+    anyhow,
+    tokio::time::timeout,
+};
 use rustls_pki_types::ServerName;
-use tokio::time::timeout;
 use tokio_rustls::{client, server, TlsAcceptor, TlsConnector};
-use tracing::instrument;
 
 use crate::{
     config::transport::tls::{AcceptorConfig, ConnectorConfig},
@@ -83,7 +85,6 @@ impl Connector {
         })
     }
 
-    #[instrument(skip_all, fields(transport = "tls"))]
     pub async fn connect(&self) -> Result<client::TlsStream<BoxedAsyncIO>, anyhow::Error> {
         Ok(timeout(
             self.handshake_timeout.clone(),

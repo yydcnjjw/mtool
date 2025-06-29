@@ -1,4 +1,4 @@
-use mapp::provider::Res;
+use mapp::prelude::*;
 use yew::prelude::*;
 use yew_router::prelude::*;
 

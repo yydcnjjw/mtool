@@ -7,16 +7,18 @@ use std::{
     },
 };
 
-use anyhow::Context;
 use base64::prelude::*;
-use mapp::provider::Res;
+use mapp::{
+    anyhow::{self, Context},
+    prelude::*,
+    serde_json, tokio,
+    tracing::warn,
+};
 use mtool_wgui::{WGuiWindow, WindowDataBind};
-
 use tauri::{
     plugin::{Builder, TauriPlugin},
     Emitter, Listener, WebviewUrl, WebviewWindowBuilder, Wry,
 };
-use tracing::warn;
 
 use crate::{
     pdf::PdfApi,
@@ -107,7 +109,7 @@ impl PdfViewerWindow {
                     .transparent(true)
                     .decorations(true)
                     .shadow(false)
-                    .disable_drag_drop_handler();
+                    .drag_and_drop(false);
 
             #[cfg(windows)]
             {
@@ -116,7 +118,8 @@ impl PdfViewerWindow {
 
             builder.build()?
         };
-        let win = WGuiWindow::new_and_wait_for_ready(win, false).await?;
+
+        let win = WGuiWindow::new_and_wait_for_ready(win).await?;
 
         let pdf_viewer = Arc::new(PdfViewer::new(pdf_api, win.inner_size()?).await?);
 

@@ -1,9 +1,13 @@
 use std::{fmt, marker::Unpin, sync::Arc};
 
-use anyhow::Context;
-use futures::FutureExt;
-use tokio::io::{AsyncRead, AsyncWrite};
-use tracing::{info_span, Instrument};
+use mapp::{
+    anyhow::{self, Context},
+    futures::FutureExt,
+    tokio::{
+        self,
+        io::{AsyncRead, AsyncWrite},
+    },
+};
 
 use crate::{
     io::{BoxedAsyncIO, CopyBidirectional},
@@ -59,7 +63,6 @@ impl UdpForwarder {
         tokio::pin!(copy_bi);
 
         copy_bi
-            .instrument(info_span!("bidirectional_transmission"))
             .map(|v| {
                 Ok(match v {
                     Ok(v) => v,

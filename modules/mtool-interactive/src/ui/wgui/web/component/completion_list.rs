@@ -1,8 +1,13 @@
-use gloo_utils::document;
-use mtool_wgui::{generate_keymap, KeyMap, Keybinding, SharedAction, TemplateView};
-use serde::{Deserialize, Serialize};
-use tracing::{debug, warn};
-use wasm_bindgen::JsCast;
+use mapp::{
+    anyhow,
+    serde::{Deserialize, Serialize},
+    tracing::{debug, warn},
+    wasm_bindgen::JsCast,
+};
+use mtauri_sys::prelude::*;
+use mtool_wgui::{
+    generate_keymap, gloo_utils::document, KeyMap, Keybinding, SharedAction, TemplateView,
+};
 use web_sys::{HtmlElement, ScrollIntoViewOptions, ScrollLogicalPosition};
 use yew::{platform::spawn_local, prelude::*};
 
@@ -151,6 +156,7 @@ impl Component for CompletionList {
 }
 
 #[derive(Debug, Serialize, Deserialize)]
+#[serde(crate = "mapp::serde")]
 pub struct CompletionExitArgs {
     pub v: CompletionExit,
 }
@@ -160,6 +166,7 @@ impl CompletionList {
 
     fn fetch_complete(ctx: &Context<Self>) {
         #[derive(Debug, Serialize, Deserialize)]
+        #[serde(crate = "mapp::serde")]
         pub struct CompletionArgs {
             pub completed: String,
         }
@@ -170,7 +177,7 @@ impl CompletionList {
 
         ctx.link().send_future(async move {
             Msg::FetchCompleteRead(
-                match mtauri_sys::invoke(
+                match invoke(
                     "plugin:mtool-interactive|complete",
                     &CompletionArgs { completed: input },
                 )
@@ -244,7 +251,7 @@ impl CompletionList {
     fn complete_exit(&self) {
         let item = self.items[self.focused_item_index].to_owned();
         spawn_local(async move {
-            if let Err(e) = mtauri_sys::invoke::<CompletionExitArgs, ()>(
+            if let Err(e) = invoke::<CompletionExitArgs, ()>(
                 "plugin:mtool-interactive|complete_exit",
                 &CompletionExitArgs {
                     v: CompletionExit::Id(item.id),

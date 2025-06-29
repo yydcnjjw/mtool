@@ -1,11 +1,11 @@
 mod cmd;
-mod window;
 mod plugin;
+mod window;
 
-pub use window::*;
 pub(crate) use plugin::*;
+pub use window::*;
 
-use mapp::prelude::*;
+use mapp::{anyhow, prelude::*};
 use mtool_cmder::Cmder;
 
 pub async fn setup(cmder: Res<Cmder>) -> Result<(), anyhow::Error> {

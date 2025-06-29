@@ -1,0 +1,37 @@
+[package]
+name = "mtool-apps"
+version.workspace = true
+authors.workspace = true
+edition.workspace = true
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+mapp = { path = "../../crates/mapp", features = ["web"] }
+
+mtool-core = { path = "../mtool-core" }
+mtool-system = { path = "../mtool-system" }
+mtool-storage = { path = "../mtool-storage" }
+mtool-dioxus = { path = "../mtool-dioxus" }
+mtool-cmdpal = { path = "../mtool-cmdpal" }
+
+dioxus = { workspace = true }
+
+base64 = "*"
+open = "*"
+parselnk = "*"
+walkdir = "*"
+windows-icons = "*"
+image = "*"
+pinyin = "*"
+notify = "*"
+
+[target.'cfg(target_os = "windows")'.dependencies.windows]
+workspace = true
+features = [
+  "Win32_Foundation",
+  "Win32_UI_WindowsAndMessaging",
+  "Win32_System_ProcessStatus",
+  "Win32_System_StationsAndDesktops",
+  "Win32_System_Threading",
+  "Win32_Storage_FileSystem"
+]

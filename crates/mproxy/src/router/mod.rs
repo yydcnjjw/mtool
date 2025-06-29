@@ -1,11 +1,12 @@
-use std::{fs::File, path::PathBuf, str::FromStr, sync::Arc};
-
-use anyhow::Context;
-use dashmap::DashMap;
 use domain_matcher::{mph::MphMatcher, DomainMatcher, MatchType};
-use itertools::Itertools;
+use mapp::{
+    anyhow::{self, Context},
+    dashmap::DashMap,
+    itertools::Itertools,
+    tracing::warn,
+};
 use protobuf::Message;
-use tracing::{instrument, warn};
+use std::{fs::File, path::PathBuf, str::FromStr, sync::Arc};
 
 use crate::{
     config::{
@@ -196,7 +197,6 @@ impl Router {
         })
     }
 
-    #[instrument(skip(self))]
     pub fn route(&self, src: &String, address: &Address) -> Result<String, anyhow::Error> {
         Ok(self
             .rules

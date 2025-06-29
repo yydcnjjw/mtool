@@ -1,12 +1,17 @@
-use std::future::Future;
-use std::io;
-use std::pin::Pin;
-use std::sync::atomic::{AtomicU64, Ordering};
-use std::sync::Arc;
-use std::task::{Context, Poll};
-
-use futures::ready;
-use tokio::io::{AsyncRead, AsyncWrite, ReadBuf};
+use std::{
+    future::Future,
+    io,
+    pin::Pin,
+    sync::{
+        atomic::{AtomicU64, Ordering},
+        Arc,
+    },
+    task::{Context, Poll},
+};
+use mapp::{
+    futures::ready,
+    tokio::io::{AsyncRead, AsyncWrite, ReadBuf},
+};
 
 #[derive(Debug)]
 pub struct CopyBuffer {

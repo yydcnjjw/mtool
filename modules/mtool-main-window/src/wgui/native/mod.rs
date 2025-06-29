@@ -2,13 +2,11 @@ mod main;
 mod plugin;
 pub mod sticky;
 
-use mapp::prelude::*;
+use mapp::{anyhow, prelude::*, tracing::debug};
 use mtool_cmder::Cmder;
 use mtool_core::{AppStage, ConfigStore};
 use mtool_system::keybinding::Keybinding;
 use mtool_wgui::WGuiStage;
-
-use tracing::debug;
 
 use super::generic::hotkey::{Hotkey, HotkeyMap};
 
@@ -23,7 +21,7 @@ impl AppModule for Module {
         app.schedule()
             .add_once_task(WGuiStage::Setup, plugin::setup)
             .add_once_task(WGuiStage::Setup, main::setup)
-            .add_once_task(WGuiStage::Setup, sticky::setup)
+            .add_once_task(WGuiStage::Setup, sticky::setup::<tauri::Wry>)
             .add_once_task(AppStage::Init, setup_global_hotkey);
 
         Ok(())

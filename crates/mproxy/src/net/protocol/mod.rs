@@ -2,10 +2,12 @@ pub mod direct;
 pub mod http;
 pub mod socks;
 
-use core::fmt;
+use std::fmt;
 
-use futures::Stream;
-use tracing::instrument;
+use mapp::{
+    anyhow,
+    futures::Stream,
+};
 
 use crate::{
     config::{egress::ClientConfig, ingress::ServerConfig},
@@ -26,7 +28,6 @@ impl Server {
         })
     }
 
-    #[instrument(skip_all)]
     pub async fn incoming(
         &self,
     ) -> Result<Box<dyn Stream<Item = ProxyRequest> + Unpin + Send>, anyhow::Error> {
@@ -60,7 +61,6 @@ impl Client {
         })
     }
 
-    #[instrument(skip_all)]
     pub async fn send(&self, req: ProxyRequest) -> Result<ProxyResponse, anyhow::Error> {
         match &self {
             Client::Http(c) => c.send(req).await,

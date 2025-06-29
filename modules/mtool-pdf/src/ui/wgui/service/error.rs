@@ -1,7 +1,8 @@
+use mapp::anyhow;
 use pdfium_render::prelude::PdfiumError;
 use thiserror::Error;
 
-#[derive(Error, Debug)]
+#[derive(thiserror::Error, Debug)]
 pub enum Error {
     #[error(transparent)]
     Pdf(#[from] PdfiumError),

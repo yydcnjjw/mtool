@@ -1,12 +1,16 @@
-use mapp::prelude::*;
+use mapp::{
+    anyhow, cfg_if,
+    prelude::*,
+    serde::{Deserialize, Serialize},
+};
 use mtool_cmder::SharedCommandPtr;
 use mtool_wgui::Templator;
-use serde::{Deserialize, Serialize};
 use yew::prelude::*;
 
 use crate::*;
 
 #[derive(Properties, PartialEq, Eq, Clone, Serialize, Deserialize)]
+#[serde(crate = "mapp::serde")]
 pub struct CommandItem {
     name: String,
     descrption: String,
@@ -70,10 +74,8 @@ cfg_if::cfg_if! {
 
 #[cfg(not(target_family = "wasm"))]
 pub async fn init(cmder: Res<Cmder>) -> Result<(), anyhow::Error> {
-    use anyhow::Context;
-    use itertools::Itertools;
+    use mapp::{anyhow::Context, itertools::Itertools, tracing::debug};
     use mtool_cmder::{CommandArgs, CommandBuilder};
-    use tracing::debug;
 
     pub async fn exec_command(
         c: Res<Completion>,

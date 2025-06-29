@@ -1,16 +1,20 @@
 mod api;
 mod cmd;
-mod plugin;
 mod window;
+// mod wry_plugin;
 
 pub use api::*;
-pub(crate) use plugin::plugin_setup;
 pub use window::*;
+// pub use wry_plugin::*;
 
-use mapp::prelude::*;
+use mapp::{anyhow, prelude::*};
 use mtool_cmder::Cmder;
 
-pub(crate) async fn setup(cmder: Res<Cmder>) -> Result<(), anyhow::Error> {
+pub(crate) async fn setup<R>(cmder: Res<Cmder>, injector: Injector) -> Result<(), anyhow::Error>
+where
+    R: tauri::Runtime,
+{
     cmd::setup(cmder).await?;
+    injector.construct_once(StickyWindow::<R>::construct);
     Ok(())
 }

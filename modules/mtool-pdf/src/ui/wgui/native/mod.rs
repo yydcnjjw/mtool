@@ -4,7 +4,7 @@ mod pdf_page;
 mod pdf_viewer;
 mod window;
 
-cfg_if::cfg_if! {
+mapp::cfg_if::cfg_if! {
     if #[cfg(windows)] {
         mod windows;
         use windows::*;
@@ -15,7 +15,7 @@ cfg_if::cfg_if! {
 }
 
 use cmd::open_pdf;
-use mapp::prelude::*;
+use mapp::{anyhow, prelude::*};
 use mtool_cmder::{Cmder, CommandBuilder};
 use mtool_wgui::{Builder, WGuiStage};
 pub use window::PdfViewerWindow;

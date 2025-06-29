@@ -1,6 +1,5 @@
 use clap::ArgMatches;
-use itertools::Itertools;
-use mapp::prelude::*;
+use mapp::{anyhow, itertools::Itertools, prelude::*};
 use tabled::{settings::Style, Table, Tabled};
 
 use crate::{Cmder, CommandArgs};

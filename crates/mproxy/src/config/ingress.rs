@@ -1,6 +1,7 @@
-use serde::{Deserialize, Serialize};
+use mapp::serde::{Deserialize, Serialize};
 
 #[derive(Debug, Serialize, Deserialize)]
+#[serde(crate = "mapp::serde")]
 pub struct IngressConfig {
     pub id: String,
 
@@ -9,6 +10,7 @@ pub struct IngressConfig {
 }
 
 #[derive(Debug, Serialize, Deserialize)]
+#[serde(crate = "mapp::serde")]
 #[serde(tag = "type")]
 #[serde(rename_all = "lowercase")]
 pub enum ServerConfig {
@@ -17,11 +19,12 @@ pub enum ServerConfig {
 }
 
 pub mod http {
-    use serde::{Deserialize, Serialize};
+    use mapp::serde::{Deserialize, Serialize};
 
     use crate::config::transport::AcceptorConfig;
 
-    #[derive(Debug, Serialize, Deserialize)]
+    #[derive(Debug, Clone, Serialize, Deserialize)]
+    #[serde(crate = "mapp::serde")]
     pub struct ServerConfig {
         #[serde(flatten)]
         pub acceptor: AcceptorConfig,
@@ -29,23 +32,26 @@ pub mod http {
 }
 
 pub mod socks {
-    use serde::{Deserialize, Serialize};
+    use mapp::serde::{Deserialize, Serialize};
 
     use crate::config::transport::AcceptorConfig;
-    #[derive(Debug, Serialize, Deserialize)]
+    #[derive(Debug, Clone, Serialize, Deserialize)]
+    #[serde(crate = "mapp::serde")]
     #[serde(tag = "type")]
     #[serde(rename_all = "lowercase")]
     pub enum AuthType {
         Simple { user: String, password: String },
     }
 
-    #[derive(Debug, Serialize, Deserialize)]
+    #[derive(Debug, Clone, Serialize, Deserialize)]
+    #[serde(crate = "mapp::serde")]
     pub struct Socks5Config {
         pub allow_udp: Option<bool>,
         pub auth: Option<AuthType>,
     }
 
-    #[derive(Debug, Serialize, Deserialize)]
+    #[derive(Debug, Clone, Serialize, Deserialize)]
+    #[serde(crate = "mapp::serde")]
     pub struct ServerConfig {
         #[serde(flatten)]
         pub acceptor: AcceptorConfig,

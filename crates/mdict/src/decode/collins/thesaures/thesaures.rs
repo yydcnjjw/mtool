@@ -1,3 +1,4 @@
+use mapp::anyhow;
 use scraper::Html;
 
 use crate::static_selector;

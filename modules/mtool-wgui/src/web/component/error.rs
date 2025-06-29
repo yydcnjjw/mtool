@@ -1,3 +1,4 @@
+use mapp::anyhow;
 use yew::prelude::*;
 
 pub fn error_view(e: &anyhow::Error) -> Html {

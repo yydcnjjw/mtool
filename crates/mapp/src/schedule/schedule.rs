@@ -9,9 +9,8 @@ use petgraph::{graph::NodeIndex, Direction, Graph};
 use tokio::sync::Mutex;
 use tracing::debug;
 
-use crate::{
-    App, CondLoad, FnCondLoad, IntoOnceTaskDescriptor, Label, OnceTaskDescriptor, ScheduleGraph,
-};
+use super::{CondLoad, FnCondLoad, IntoOnceTaskDescriptor, OnceTaskDescriptor, ScheduleGraph};
+use crate::{app::App, label::Label};
 
 enum Node {
     OnceTask(OnceTaskNode),

@@ -1,34 +1,39 @@
-#![feature(arbitrary_self_types, iterator_try_collect, async_closure)]
+// #![feature(arbitrary_self_types, iterator_try_collect, async_closure)]
 
-cfg_if::cfg_if! {
-    if #[cfg(not(target_family = "wasm"))] {
-        mod pdf;
-        mod storage;
-    }
-}
+// mapp::cfg_if::cfg_if! {
+//     if #[cfg(not(target_family = "wasm"))] {
+//         mod pdf;
+//         mod storage;
+//     }
+// }
 
-mod ui;
+// mod ui;
 
-mod config;
-pub use config::*;
+// mod config;
+// pub use config::*;
 
-use mapp::prelude::*;
+// use mapp::prelude::*;
 
-#[cfg(not(target_family = "wasm"))]
-pub fn module() -> ModuleGroup {
-    let mut group = ModuleGroup::new("mtool-pdf");
+// #[cfg(not(target_family = "wasm"))]
+// pub fn module() -> ModuleGroup {
+//     let mut group = ModuleGroup::new("mtool-pdf");
 
-    group.add_module(ui::module());
-    group.add_module(storage::module());
-    group.add_module(pdf::Module);
+//     group.add_module(ui::module());
+//     group.add_module(storage::module());
+//     group.add_module(pdf::Module);
 
-    group
-}
+//     group
+// }
 
-pub fn web_module() -> LocalModuleGroup {
-    let mut group = LocalModuleGroup::new("mtool-pdf");
+// pub fn web_module() -> LocalModuleGroup {
+//     let mut group = LocalModuleGroup::new("mtool-pdf");
 
-    group.add_module(ui::web_module());
+//     group.add_module(ui::web_module());
 
-    group
-}
+//     group
+// }
+
+mod module;
+pub(crate) mod view;
+
+pub use module::module;

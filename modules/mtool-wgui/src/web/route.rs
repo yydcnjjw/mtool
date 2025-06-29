@@ -1,7 +1,5 @@
+use mapp::tracing::debug;
 use std::{cell::RefCell, collections::HashMap, fmt, rc::Rc};
-
-use tracing::debug;
-
 use yew::prelude::*;
 use yew_router::Routable;
 

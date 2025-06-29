@@ -4,7 +4,7 @@ mod event;
 mod route;
 
 use app::App;
-use mapp::{prelude::*, CreateLocalOnceTaskDescriptor};
+use mapp::{anyhow, prelude::*, CreateLocalOnceTaskDescriptor};
 use mtool_main_window::wgui::generic::MTOOL_WINDOW_LABEL;
 use mtool_wgui::prelude::*;
 use yew::prelude::*;

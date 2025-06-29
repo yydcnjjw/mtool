@@ -1,16 +1,19 @@
-cfg_if::cfg_if! {
+mapp::cfg_if::cfg_if! {
     if #[cfg(not(target_family = "wasm"))] {
-        pub mod llama;
+        // pub mod llama;
         pub mod openai;
         pub mod tencent;
-        use mapp::prelude::*;
+
     }
 }
 
-use serde::{Deserialize, Serialize};
+use mapp::{
+    anyhow, prelude::*, serde::{Deserialize, Serialize}
+};
 use std::fmt;
 
 #[derive(PartialEq, Debug, Clone, Serialize, Deserialize)]
+#[serde(crate = "mapp::serde")]
 pub enum LanguageType {
     Auto,
     En,
@@ -30,10 +33,11 @@ impl fmt::Display for LanguageType {
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(crate = "mapp::serde")]
 pub enum Backend {
     Tencent,
     Openai,
-    Llama,
+    // Llama,
 }
 
 impl fmt::Display for Backend {
@@ -41,7 +45,7 @@ impl fmt::Display for Backend {
         match self {
             Backend::Tencent => write!(f, "tencent"),
             Backend::Openai => write!(f, "openai"),
-            Backend::Llama => write!(f, "llama"),
+            // Backend::Llama => write!(f, "llama"),
         }
     }
 }
@@ -66,8 +70,8 @@ impl AppModule for Module {
     async fn init(&self, #[allow(unused)] app: &mut AppContext) -> Result<(), anyhow::Error> {
         app.injector()
             .construct_once(tencent::Translator::construct)
-            .construct_once(openai::Translator::construct)
-            .construct_once(llama::Translator::construct);
+            .construct_once(openai::Translator::construct);
+        // .construct_once(llama::Translator::construct);
         Ok(())
     }
 }

@@ -1,19 +1,198 @@
-use std::{
-    ops::Deref,
-    sync::{Arc, RwLock},
-};
+use std::{ops::Deref, sync::Arc};
 
+use mapp::sync::RwLock;
+use mapp::{
+    anyhow,
+    tokio::{
+        self,
+        sync::{mpsc, oneshot},
+    },
+    tracing::{debug, warn},
+};
 use raw_window_handle::{
     DisplayHandle, HandleError, HasDisplayHandle, HasWindowHandle, WindowHandle,
 };
-use tauri::{Listener, Manager, PhysicalPosition, WindowEvent, Wry};
-use tokio::sync::{mpsc, oneshot};
-use tracing::{debug, warn};
+use tauri::{Listener, Manager, PhysicalPosition, WebviewWindow, WindowEvent, Wry};
+use windows::Win32::{
+    Foundation::*,
+    UI::{Shell::*, WindowsAndMessaging::*},
+};
 
 pub struct WGuiWindow<R: tauri::Runtime = Wry> {
     inner: tauri::WebviewWindow<R>,
-    pos: RwLock<Option<PhysicalPosition<i32>>>,
-    hide_on_unfocus: bool,
+    pos: Arc<RwLock<Option<PhysicalPosition<i32>>>>,
+
+    ignore_menu_event: bool,
+}
+
+impl<R: tauri::Runtime> WGuiWindow<R> {
+    pub async fn new_and_wait_for_ready(
+        window: tauri::WebviewWindow<R>,
+    ) -> Result<Arc<Self>, anyhow::Error> {
+        let this = Arc::new(Self {
+            inner: window.clone(),
+            pos: Arc::new(RwLock::new(None)),
+
+            ignore_menu_event: true,
+        });
+
+        Self::listen_window_event(this.clone()).await?;
+
+        Self::wait_for_ready(this.clone()).await?;
+
+        Ok(this)
+    }
+
+    pub async fn new(window: tauri::WebviewWindow<R>) -> Result<Arc<Self>, anyhow::Error> {
+        let this = Arc::new(Self {
+            inner: window.clone(),
+            pos: Arc::new(RwLock::new(None)),
+
+            ignore_menu_event: true,
+        });
+
+        Self::listen_window_event(this.clone()).await?;
+
+        Ok(this)
+    }
+
+    pub async fn wait_for_ready(self: Arc<Self>) -> Result<(), anyhow::Error> {
+        let (tx, rx) = oneshot::channel();
+        let label = self.label().to_owned();
+        self.once("window:ready", move |_| {
+            let _ = tx.send(());
+            debug!("{} window:ready", label);
+        });
+        Ok(rx.await?)
+    }
+
+    fn save_position(&self) -> Result<(), anyhow::Error> {
+        let mut pos = self.pos.write();
+        *pos = Some(self.inner.outer_position()?);
+        debug!("save position: {:?}", &pos);
+        Ok(())
+    }
+
+    fn restore_position(&self) -> Result<(), anyhow::Error> {
+        let pos = self.pos.read();
+        if let Some(pos) = pos.as_ref() {
+            self.inner.set_position(pos.clone())?;
+            debug!("restore position: {:?}", &pos);
+        }
+        Ok(())
+    }
+
+    unsafe extern "system" fn main_proc(
+        hwnd: HWND,
+        msg: u32,
+        wparam: WPARAM,
+        lparam: LPARAM,
+        _uidsubclass: usize,
+        _dwrefdata: usize,
+    ) -> LRESULT {
+        if msg == WM_SYSCOMMAND && wparam.0 == SC_KEYMENU as usize {
+            return LRESULT(0);
+        }
+        DefSubclassProc(hwnd, msg, wparam, lparam)
+    }
+
+    async fn listen_window_event(self: Arc<Self>) -> Result<(), anyhow::Error> {
+        if self.ignore_menu_event {
+            let win = self.clone();
+            self.run_on_main_thread(move |_| unsafe {
+                if !SetWindowSubclass(win.hwnd().unwrap(), Some(Self::main_proc), 8082, 0).as_bool()
+                {
+                    panic!("SetWindowSubclass failed");
+                }
+                Ok(())
+            })
+            .await?;
+        }
+
+        let (tx, mut rx) = mpsc::unbounded_channel();
+
+        self.inner.on_window_event(move |e| {
+            let _ = tx.send(e.clone());
+        });
+
+        tokio::spawn(async move {
+            while let Some(e) = rx.recv().await {
+                if let Err(e) = self.handle_window_event(e).await {
+                    warn!("{:?}", e);
+                }
+            }
+        });
+
+        Ok(())
+    }
+
+    async fn handle_window_event(&self, e: WindowEvent) -> Result<(), anyhow::Error> {
+        match e {
+            _ => {}
+        }
+        Ok(())
+    }
+
+    pub async fn run_on_main_thread<
+        O,
+        F: FnOnce(WGuiWindow<R>) -> Result<O, anyhow::Error> + Send + 'static,
+    >(
+        &self,
+        f: F,
+    ) -> Result<O, anyhow::Error>
+    where
+        O: Send + 'static,
+    {
+        let win = self.clone();
+        let (tx, rx) = oneshot::channel();
+        self.inner.run_on_main_thread(move || {
+            let _ = tx.send(f(win));
+        })?;
+
+        rx.await
+            .map_err(|_| anyhow::anyhow!("wait for result on main thread failed"))?
+    }
+
+    pub async fn show(&self) -> Result<(), anyhow::Error> {
+        self.run_on_main_thread(move |win| {
+            let base = win.base();
+            if !base.is_visible()? {
+                base.show()?;
+                base.set_focus()?;
+                win.restore_position()?;
+            }
+            Ok(())
+        })
+        .await?;
+        Ok(())
+    }
+
+    pub async fn hide(&self) -> Result<(), anyhow::Error> {
+        self.run_on_main_thread(move |win| {
+            let base = win.base();
+            if base.is_visible()? {
+                win.save_position()?;
+                base.hide()?;
+            }
+            Ok(())
+        })
+        .await?;
+        Ok(())
+    }
+
+    pub fn base(&self) -> WebviewWindow<R> {
+        self.inner.clone()
+    }
+}
+
+impl<R: tauri::Runtime> Clone for WGuiWindow<R> {
+    fn clone(&self) -> Self {
+        Self {
+            inner: self.inner.clone(),
+            pos: self.pos.clone(),
+            ignore_menu_event: self.ignore_menu_event.clone(),
+        }
+    }
 }
 
 impl<R: tauri::Runtime> HasDisplayHandle for WGuiWindow<R> {
@@ -39,110 +218,5 @@ impl<R: tauri::Runtime> Deref for WGuiWindow<R> {
 
     fn deref(&self) -> &Self::Target {
         &self.inner
-    }
-}
-
-impl<R: tauri::Runtime> WGuiWindow<R> {
-    pub async fn new_and_wait_for_ready(
-        window: tauri::WebviewWindow<R>,
-        hide_on_unfocus: bool,
-    ) -> Result<Arc<Self>, anyhow::Error> {
-        let this = Arc::new(Self {
-            inner: window.clone(),
-            pos: RwLock::new(None),
-            hide_on_unfocus,
-        });
-
-        Self::listen_window_event(this.clone());
-
-        Self::wait_for_ready(this.clone()).await?;
-
-        Ok(this)
-    }
-
-    pub fn new(
-        window: tauri::WebviewWindow<R>,
-        hide_on_unfocus: bool,
-    ) -> Result<Arc<Self>, anyhow::Error> {
-        let this = Arc::new(Self {
-            inner: window.clone(),
-            pos: RwLock::new(None),
-            hide_on_unfocus,
-        });
-
-        Self::listen_window_event(this.clone());
-
-        Ok(this)
-    }
-
-    pub async fn wait_for_ready(self: Arc<Self>) -> Result<(), anyhow::Error> {
-        let (tx, rx) = oneshot::channel();
-        let label = self.label().to_owned();
-        self.once("window:ready", move |_| {
-            let _ = tx.send(());
-            debug!("{} window:ready", label);
-        });
-        Ok(rx.await?)
-    }
-
-    fn save_position(&self) -> Result<(), anyhow::Error> {
-        let mut pos = self.pos.write().unwrap();
-        *pos = Some(self.inner.outer_position()?);
-        debug!("save position: {:?}", &pos);
-        Ok(())
-    }
-
-    fn restore_position(&self) -> Result<(), anyhow::Error> {
-        let pos = self.pos.read().unwrap();
-        if let Some(pos) = pos.as_ref() {
-            self.inner.set_position(pos.clone())?;
-            debug!("restore position: {:?}", &pos);
-        }
-        Ok(())
-    }
-
-    fn listen_window_event(self: Arc<Self>) {
-        let (tx, mut rx) = mpsc::unbounded_channel();
-
-        self.inner.on_window_event(move |e| {
-            let _ = tx.send(e.clone());
-        });
-
-        tokio::spawn(async move {
-            while let Some(e) = rx.recv().await {
-                if let Err(e) = self.handle_window_event(e) {
-                    warn!("{:?}", e);
-                }
-            }
-        });
-    }
-
-    fn handle_window_event(&self, e: WindowEvent) -> Result<(), anyhow::Error> {
-        match e {
-            WindowEvent::Focused(focused) => {
-                if !focused && self.hide_on_unfocus {
-                    self.hide()?;
-                }
-            }
-            _ => {}
-        }
-        Ok(())
-    }
-
-    pub fn show(&self) -> Result<(), anyhow::Error> {
-        if !self.inner.is_visible()? {
-            self.inner.show()?;
-            self.inner.set_focus()?;
-            self.restore_position()?;
-        }
-        Ok(())
-    }
-
-    pub fn hide(&self) -> Result<(), anyhow::Error> {
-        if self.inner.is_visible()? {
-            self.save_position()?;
-            self.inner.hide()?;
-        }
-        Ok(())
     }
 }

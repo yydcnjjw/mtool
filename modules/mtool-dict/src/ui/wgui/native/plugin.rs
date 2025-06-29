@@ -1,10 +1,13 @@
 use std::any::type_name;
 
-use anyhow::Context;
-use mapp::prelude::*;
+use mapp::{
+    anyhow::{self, Context},
+    prelude::*,
+    serde_error, serde_json,
+    tracing::warn,
+};
 use mtool_wgui::Builder;
-use tauri::{command, plugin::TauriPlugin, Manager, Runtime, State};
-use tracing::warn;
+use tauri::{command, plugin::TauriPlugin, Runtime, State};
 
 use crate::{
     dict::{ecdict, mdx, Backend},
@@ -54,20 +57,17 @@ async fn dict_query_inner(
     })
 }
 
-fn init<R>(injector: Injector) -> TauriPlugin<R>
+fn init<R>() -> TauriPlugin<R>
 where
     R: Runtime,
 {
     tauri::plugin::Builder::new("mtool-dict")
-        .setup(|app, _| {
-            app.manage(injector);
-            Ok(())
-        })
+        .setup(|_, _| Ok(()))
         .invoke_handler(tauri::generate_handler![dict_query])
         .build()
 }
 
-pub async fn setup(builder: Res<Builder>, injector: Injector) -> Result<(), anyhow::Error> {
-    builder.setup(|builder| Ok(builder.plugin(init(injector))))?;
+pub async fn setup(builder: Res<Builder>) -> Result<(), anyhow::Error> {
+    builder.setup(|builder| Ok(builder.plugin(init())))?;
     Ok(())
 }

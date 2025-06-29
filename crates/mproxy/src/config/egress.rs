@@ -1,6 +1,7 @@
-use serde::{Deserialize, Serialize};
+use mapp::serde::{Deserialize, Serialize};
 
 #[derive(Debug, Serialize, Deserialize)]
+#[serde(crate = "mapp::serde")]
 pub struct EgressConfig {
     pub id: String,
     #[serde(flatten)]
@@ -8,6 +9,7 @@ pub struct EgressConfig {
 }
 
 #[derive(Debug, Serialize, Deserialize)]
+#[serde(crate = "mapp::serde")]
 #[serde(tag = "type")]
 #[serde(rename_all = "lowercase")]
 pub enum ClientConfig {
@@ -16,11 +18,12 @@ pub enum ClientConfig {
 }
 
 pub mod http {
-    use serde::{Deserialize, Serialize};
+    use mapp::serde::{Deserialize, Serialize};
 
     use crate::config::transport::ConnectorConfig;
 
     #[derive(Debug, Serialize, Deserialize)]
+    #[serde(crate = "mapp::serde")]
     pub struct ClientConfig {
         #[serde(flatten)]
         pub connector: ConnectorConfig,
@@ -28,8 +31,9 @@ pub mod http {
 }
 
 pub mod direct {
-    use serde::{Deserialize, Serialize};
+    use mapp::serde::{Deserialize, Serialize};
 
     #[derive(Debug, Serialize, Deserialize)]
+    #[serde(crate = "mapp::serde")]
     pub struct ClientConfig {}
 }

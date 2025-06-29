@@ -1,13 +1,19 @@
-use serde::{de::DeserializeOwned, Serialize};
-use serde_wasm_bindgen::from_value;
-use wasm_bindgen::{prelude::Closure, JsValue};
+use mapp::{
+    anyhow,
+    dpi::{PhysicalPosition, PhysicalSize, Position, Size},
+    js_sys,
+    serde::{de::DeserializeOwned, Serialize},
+    serde_wasm_bindgen::{self, from_value},
+    wasm_bindgen::{prelude::Closure, JsValue},
+};
 
-use crate::{event::Event, invoke, IntoAnyhowError};
-
-pub use dpi::*;
+use crate::{event::Event, tauri::invoke, IntoAnyhowError};
 
 mod ffi {
-    use wasm_bindgen::prelude::*;
+    use mapp::{
+        wasm_bindgen::{self, prelude::*},
+        wasm_bindgen_futures,
+    };
 
     #[wasm_bindgen(js_namespace = ["__TAURI__", "window"])]
     extern "C" {
@@ -41,6 +47,9 @@ mod ffi {
 
         #[wasm_bindgen(method, catch)]
         pub async fn setSize(this: &WebviewWindow, size: JsValue) -> Result<(), JsValue>;
+
+        #[wasm_bindgen(method, catch)]
+        pub async fn outerSize(this: &WebviewWindow) -> Result<JsValue, JsValue>;
 
         #[wasm_bindgen(method, catch)]
         pub async fn setPosition(this: &WebviewWindow, pos: JsValue) -> Result<(), JsValue>;
@@ -88,6 +97,8 @@ mod ffi {
     }
 }
 
+pub trait UnlistenFn = Fn() -> Result<(), JsValue>;
+
 #[derive(Debug, Clone)]
 pub struct Window {
     handle: ffi::WebviewWindow,
@@ -112,6 +123,7 @@ impl Window {
 
     pub async fn set_size(&self, size: Size) -> Result<(), anyhow::Error> {
         #[derive(Serialize)]
+        #[serde(crate = "mapp::serde")]
         struct Args {
             label: String,
             value: Size,
@@ -129,6 +141,7 @@ impl Window {
 
     pub async fn set_position(&self, pos: Position) -> Result<(), anyhow::Error> {
         #[derive(Serialize)]
+        #[serde(crate = "mapp::serde")]
         struct Args {
             label: String,
             value: Position,
@@ -147,6 +160,13 @@ impl Window {
     pub async fn outer_position(&self) -> Result<PhysicalPosition<i32>, anyhow::Error> {
         Ok(
             serde_wasm_bindgen::from_value(self.handle.outerPosition().await.into_anyhow()?)
+                .into_anyhow()?,
+        )
+    }
+
+    pub async fn outer_size(&self) -> Result<PhysicalSize<u32>, anyhow::Error> {
+        Ok(
+            serde_wasm_bindgen::from_value(self.handle.outerSize().await.into_anyhow()?)
                 .into_anyhow()?,
         )
     }
@@ -174,7 +194,7 @@ impl Window {
         &self,
         event: &str,
         mut handler: Handler,
-    ) -> Result<impl Fn() -> Result<(), JsValue>, anyhow::Error>
+    ) -> Result<impl UnlistenFn, anyhow::Error>
     where
         Handler: FnMut(Event<T>) -> Result<(), JsValue> + 'static,
         T: DeserializeOwned + 'static,

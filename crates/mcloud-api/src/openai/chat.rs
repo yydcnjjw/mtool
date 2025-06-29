@@ -1,10 +1,11 @@
 use std::collections::HashMap;
 
-use serde::{Deserialize, Serialize};
+use mapp::{reqwest, serde::{Deserialize, Serialize}};
 
 use super::RequestMeta;
 
 #[derive(Debug, Serialize, Deserialize, Default)]
+#[serde(crate = "mapp::serde")]
 pub struct ChatMessage {
     pub role: String,
 
@@ -15,6 +16,7 @@ pub struct ChatMessage {
 }
 
 #[derive(Debug, Serialize)]
+#[serde(crate = "mapp::serde")]
 pub struct ChatRequest {
     pub model: String,
 
@@ -71,6 +73,7 @@ impl Default for ChatRequest {
 }
 
 #[derive(Debug, Deserialize)]
+#[serde(crate = "mapp::serde")]
 pub struct ChatResponse {
     pub id: String,
     pub object: String,
@@ -80,6 +83,7 @@ pub struct ChatResponse {
 }
 
 #[derive(Debug, Deserialize)]
+#[serde(crate = "mapp::serde")]
 pub struct ChatChoice {
     pub index: usize,
     pub message: ChatMessage,
@@ -87,6 +91,7 @@ pub struct ChatChoice {
 }
 
 #[derive(Debug, Deserialize)]
+#[serde(crate = "mapp::serde")]
 pub struct ChatUsage {
     pub prompt_tokens: usize,
     pub completion_tokens: usize,

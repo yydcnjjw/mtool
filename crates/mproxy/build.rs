@@ -11,7 +11,10 @@ fn main() {
 
     impl CustomizeCallback for GenSerde {
         fn message(&self, _message: &MessageDescriptor) -> Customize {
-            Customize::default().before("#[derive(::serde::Serialize, ::serde::Deserialize)]")
+            Customize::default().before(r#"
+#[derive(::mapp::serde::Serialize, ::mapp::serde::Deserialize)]
+#[serde(crate = "mapp::serde")]
+"#)
         }
 
         fn field(&self, field: &FieldDescriptor) -> Customize {
@@ -25,7 +28,10 @@ fn main() {
         }
 
         fn oneof(&self, _oneof: &protobuf::reflect::OneofDescriptor) -> Customize {
-            Customize::default().before("#[derive(::serde::Serialize, ::serde::Deserialize)]")
+            Customize::default().before(r#"
+#[derive(::mapp::serde::Serialize, ::mapp::serde::Deserialize)]
+#[serde(crate = "mapp::serde")]
+"#)
         }
 
         fn special_field(&self, _message: &MessageDescriptor, _field: &str) -> Customize {

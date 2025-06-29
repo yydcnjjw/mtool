@@ -1,7 +1,7 @@
 mod cmd;
 mod plugin;
 
-use mapp::prelude::*;
+use mapp::{anyhow, prelude::*};
 use mtool_cmder::{Cmder, CommandBuilder};
 use mtool_wgui::WGuiStage;
 

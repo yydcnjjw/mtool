@@ -1,10 +1,13 @@
 use std::collections::HashMap;
 
-use itertools::Itertools;
-use serde::{Deserialize, Serialize};
+use mapp::{
+    itertools::Itertools,
+    serde::{Deserialize, Serialize},
+};
 use yew::prelude::*;
 
 #[derive(Properties, PartialEq, Serialize, Deserialize)]
+#[serde(crate = "mapp::serde")]
 pub struct QueryResult {
     pub word: String,
     pub phonetic: Option<String>,
@@ -24,6 +27,7 @@ pub struct QueryResult {
 #[function_component]
 pub fn DictView(props: &QueryResult) -> Html {
     let QueryResult {
+        word,
         phonetic,
         translation,
         collins,
@@ -70,6 +74,9 @@ pub fn DictView(props: &QueryResult) -> Html {
 
     html! {
         <div>
+          <div>
+            <span class={classes!("text-xl")}>{ format!("{word}") }</span>
+          </div>
           <div>
             if let Some(phonetic) = phonetic {
               <span>{ format!("[{phonetic}]") }</span>

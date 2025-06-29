@@ -1,13 +1,23 @@
-use anyhow::Context;
+use std::{
+    sync::{
+        atomic::{AtomicU64, Ordering},
+        Arc,
+    },
+    time::Duration,
+};
+
+use mapp::{
+    anyhow::{self, Context},
+    tokio::{
+        self,
+        sync::{oneshot, watch},
+        task::LocalSet,
+    },
+    tracing::{debug, trace, warn},
+};
 use mtool_wgui::WGuiWindow;
 use skia_safe as sk;
-use std::sync::Arc;
 use tauri::{PhysicalSize, WindowEvent};
-use tokio::{
-    sync::{oneshot, watch},
-    task::LocalSet,
-};
-use tracing::{debug, warn};
 use windows::{
     core::{Interface, PCSTR, PCWSTR},
     Foundation::Numerics::Vector2,
@@ -310,16 +320,15 @@ impl D3d12Visual {
 
         {
             let visual = self.visual.clone();
-            let (tx, rx) = oneshot::channel();
-            self.win.run_on_main_thread(move || {
-                if let Err(e) = tx.send(visual.SetSize(Vector2 {
-                    X: width as f32,
-                    Y: height as f32,
-                })) {
-                    warn!("{:?}", e);
-                }
-            })?;
-            rx.await??;
+            self.win
+                .run_on_main_thread(move |_| {
+                    visual.SetSize(Vector2 {
+                        X: width as f32,
+                        Y: height as f32,
+                    })?;
+                    Ok(())
+                })
+                .await?;
         }
 
         self.d3d_context.size = size;
@@ -351,9 +360,25 @@ impl D3d12Visual {
             rx
         };
 
+        let rendered_frames = Arc::new(AtomicU64::new(0));
+
+        {
+            let rendered_frames = rendered_frames.clone();
+            tokio::task::spawn(async move {
+                let mut interval = tokio::time::interval(Duration::from_secs(1));
+                loop {
+                    let frames = rendered_frames.load(Ordering::Relaxed);
+                    interval.tick().await;
+                    trace!("fps: {}", rendered_frames.load(Ordering::Relaxed) - frames);
+                }
+            });
+        }
+
         let _ = std::thread::Builder::new()
             .name("d3d12 renderer".to_string())
             .spawn(move || {
+                debug!("create d3d12 render loop");
+
                 let rt = tokio::runtime::Builder::new_current_thread()
                     .enable_all()
                     .build()
@@ -361,7 +386,7 @@ impl D3d12Visual {
 
                 let local = LocalSet::new();
                 local.spawn_local(async move {
-                    if let Err(e) = self.render_loop(on_window_resize).await {
+                    if let Err(e) = self.render_loop(on_window_resize, rendered_frames).await {
                         warn!("{:?}", e);
                     }
                 });
@@ -372,6 +397,7 @@ impl D3d12Visual {
     async fn render_loop(
         mut self,
         mut on_window_resize: watch::Receiver<PhysicalSize<u32>>,
+        rendered_frames: Arc<AtomicU64>,
     ) -> Result<(), anyhow::Error> {
         loop {
             if let Some(size) = {
@@ -403,6 +429,8 @@ impl D3d12Visual {
             self.canvas_context.flush_and_submit(&mut surface);
 
             self.d3d_context.swap_buffer()?;
+
+            rendered_frames.fetch_add(1, Ordering::Relaxed);
         }
     }
 

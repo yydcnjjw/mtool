@@ -9,16 +9,7 @@ edition.workspace = true
 [dependencies]
 mapp = { path = "../../crates/mapp" }
 
-tokio = { workspace = true }
-futures = { workspace = true }
-anyhow = { workspace = true }
-thiserror = { workspace = true }
-serde = { workspace = true }
 clap = { workspace = true }
-tracing = { workspace = true }
-tracing-subscriber = { workspace = true, features = ["time", "local-time"] }
-tracing-appender = { workspace = true }
 
-toml = "*"
 dirs = "*"
 time = { version = "0.3.20", features = ["formatting"] }

@@ -1,8 +1,9 @@
 use std::path::PathBuf;
 
-use serde::{Deserialize, Serialize};
+use mapp::serde::{Deserialize, Serialize};
 
 #[derive(Debug, Serialize, Deserialize)]
+#[serde(crate = "mapp::serde")]
 pub struct RoutingConfig {
     pub resource: Vec<PathBuf>,
     pub rule: Vec<RuleConfig>,
@@ -10,6 +11,7 @@ pub struct RoutingConfig {
 }
 
 #[derive(Debug, Serialize, Deserialize)]
+#[serde(crate = "mapp::serde")]
 pub struct RuleConfig {
     pub id: String,
     pub target: Vec<String>,

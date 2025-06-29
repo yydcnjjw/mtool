@@ -1,9 +1,10 @@
+use mapp::serde::{Deserialize, Serialize};
 use sea_orm::entity::prelude::*;
-use serde::{Deserialize, Serialize};
 
 use super::PdfStructure;
 
 #[derive(EnumIter, DeriveActiveEnum, Clone, Debug, PartialEq, Deserialize, Serialize)]
+#[serde(crate = "mapp::serde")]
 #[sea_orm(rs_type = "i32", db_type = "Integer")]
 pub enum State {
     GetAssetId = 0,
@@ -13,6 +14,7 @@ pub enum State {
 }
 
 #[derive(DeriveEntityModel, Clone, Debug, PartialEq, Deserialize, Serialize)]
+#[serde(crate = "mapp::serde")]
 #[sea_orm(table_name = "mtool_pdf_adobe")]
 pub struct Model {
     #[sea_orm(primary_key, auto_increment = false)]

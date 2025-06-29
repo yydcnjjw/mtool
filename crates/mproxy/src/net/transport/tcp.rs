@@ -1,10 +1,13 @@
 use std::net::SocketAddr;
 
-use tokio::{
-    net::{TcpListener, TcpStream},
-    sync::RwLock,
+use mapp::{
+    anyhow,
+    tokio::{
+        net::{TcpListener, TcpStream},
+        sync::RwLock,
+    },
+    tracing::info,
 };
-use tracing::{info, instrument};
 
 use crate::{
     config::transport::tcp::{AcceptorConfig, ConnectorConfig},
@@ -44,7 +47,6 @@ impl Connector {
         })
     }
 
-    #[instrument(skip_all, fields(transport = "tcp"))]
     pub async fn connect(&self) -> Result<TcpStream, anyhow::Error> {
         self.inner.connect().await
     }

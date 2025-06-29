@@ -1,0 +1,135 @@
+[patch.crates-io]
+# dioxus = { path = "/home/yydcnjjw/workspace/project/dioxus/packages/dioxus" }
+# dioxus-desktop = { path = "/home/yydcnjjw/workspace/project/dioxus/packages/desktop", default-features = false }
+
+dioxus = { git = "https://github.com/yydcnjjw/dioxus.git", branch = "winit" }
+dioxus-desktop = { git = "https://github.com/yydcnjjw/dioxus.git", branch = "winit", default-features = false }
+
+bevy = { git = "https://github.com/yydcnjjw/bevy.git", branch = "dioxus" }
+bevy_a11y = { git = "https://github.com/yydcnjjw/bevy.git", branch = "dioxus" }
+bevy_animation = { git = "https://github.com/yydcnjjw/bevy.git", branch = "dioxus" }
+bevy_app = { git = "https://github.com/yydcnjjw/bevy.git", branch = "dioxus" }
+bevy_asset = { git = "https://github.com/yydcnjjw/bevy.git", branch = "dioxus" }
+bevy_audio = { git = "https://github.com/yydcnjjw/bevy.git", branch = "dioxus" }
+bevy_color = { git = "https://github.com/yydcnjjw/bevy.git", branch = "dioxus" }
+bevy_derive = { git = "https://github.com/yydcnjjw/bevy.git", branch = "dioxus" }
+bevy_diagnostic = { git = "https://github.com/yydcnjjw/bevy.git", branch = "dioxus" }
+bevy_dylib = { git = "https://github.com/yydcnjjw/bevy.git", branch = "dioxus" }
+bevy_ecs = { git = "https://github.com/yydcnjjw/bevy.git", branch = "dioxus" }
+bevy_gilrs = { git = "https://github.com/yydcnjjw/bevy.git", branch = "dioxus" }
+bevy_gizmos = { git = "https://github.com/yydcnjjw/bevy.git", branch = "dioxus" }
+bevy_gltf = { git = "https://github.com/yydcnjjw/bevy.git", branch = "dioxus" }
+bevy_image = { git = "https://github.com/yydcnjjw/bevy.git", branch = "dioxus" }
+bevy_input = { git = "https://github.com/yydcnjjw/bevy.git", branch = "dioxus" }
+bevy_internal = { git = "https://github.com/yydcnjjw/bevy.git", branch = "dioxus" }
+bevy_log = { git = "https://github.com/yydcnjjw/bevy.git", branch = "dioxus" }
+bevy_math = { git = "https://github.com/yydcnjjw/bevy.git", branch = "dioxus" }
+bevy_mesh = { git = "https://github.com/yydcnjjw/bevy.git", branch = "dioxus" }
+bevy_mikktspace = { git = "https://github.com/yydcnjjw/bevy.git", branch = "dioxus" }
+bevy_pbr = { git = "https://github.com/yydcnjjw/bevy.git", branch = "dioxus" }
+bevy_picking = { git = "https://github.com/yydcnjjw/bevy.git", branch = "dioxus" }
+bevy_platform = { git = "https://github.com/yydcnjjw/bevy.git", branch = "dioxus" }
+bevy_ptr = { git = "https://github.com/yydcnjjw/bevy.git", branch = "dioxus" }
+bevy_reflect = { git = "https://github.com/yydcnjjw/bevy.git", branch = "dioxus" }
+bevy_remote = { git = "https://github.com/yydcnjjw/bevy.git", branch = "dioxus" }
+bevy_render = { git = "https://github.com/yydcnjjw/bevy.git", branch = "dioxus" }
+bevy_scene = { git = "https://github.com/yydcnjjw/bevy.git", branch = "dioxus" }
+bevy_sprite = { git = "https://github.com/yydcnjjw/bevy.git", branch = "dioxus" }
+bevy_state = { git = "https://github.com/yydcnjjw/bevy.git", branch = "dioxus" }
+bevy_tasks = { git = "https://github.com/yydcnjjw/bevy.git", branch = "dioxus" }
+bevy_text = { git = "https://github.com/yydcnjjw/bevy.git", branch = "dioxus" }
+bevy_time = { git = "https://github.com/yydcnjjw/bevy.git", branch = "dioxus" }
+bevy_transform  ={ git = "https://github.com/yydcnjjw/bevy.git", branch = "dioxus" }
+bevy_ui = { git = "https://github.com/yydcnjjw/bevy.git", branch = "dioxus" }
+bevy_utils = { git = "https://github.com/yydcnjjw/bevy.git", branch = "dioxus" }
+bevy_window = { git = "https://github.com/yydcnjjw/bevy.git", branch = "dioxus" }
+bevy_winit = { git = "https://github.com/yydcnjjw/bevy.git", branch = "dioxus" }
+bevy_macro_utils = { git = "https://github.com/yydcnjjw/bevy.git", branch = "dioxus" }
+bevy_input_focus = { git = "https://github.com/yydcnjjw/bevy.git", branch = "dioxus" }
+bevy_encase_derive = { git = "https://github.com/yydcnjjw/bevy.git", branch = "dioxus" }
+bevy_dev_tools = { git = "https://github.com/yydcnjjw/bevy.git", branch = "dioxus" }
+bevy_core_pipeline = { git = "https://github.com/yydcnjjw/bevy.git", branch = "dioxus" }
+
+
+# bevy = { path = "/home/yydcnjjw/workspace/project/bevy" }
+# bevy_a11y = { path = "/home/yydcnjjw/workspace/project/bevy/crates/bevy_a11y" }
+# bevy_animation = { path = "/home/yydcnjjw/workspace/project/bevy/crates/bevy_animation" }
+# bevy_app = { path = "/home/yydcnjjw/workspace/project/bevy/crates/bevy_app" }
+# bevy_asset = { path = "/home/yydcnjjw/workspace/project/bevy/crates/bevy_asset" }
+# bevy_audio = { path = "/home/yydcnjjw/workspace/project/bevy/crates/bevy_audio" }
+# bevy_color = { path = "/home/yydcnjjw/workspace/project/bevy/crates/bevy_color" }
+# bevy_core_pipeline = { path = "/home/yydcnjjw/workspace/project/bevy/crates/bevy_core_pipeline" }
+# bevy_derive = { path = "/home/yydcnjjw/workspace/project/bevy/crates/bevy_derive" }
+# bevy_dev_tools = { path = "/home/yydcnjjw/workspace/project/bevy/crates/bevy_dev_tools" }
+# bevy_diagnostic = { path = "/home/yydcnjjw/workspace/project/bevy/crates/bevy_diagnostic" }
+# bevy_dylib = { path = "/home/yydcnjjw/workspace/project/bevy/crates/bevy_dylib" }
+# bevy_ecs = { path = "/home/yydcnjjw/workspace/project/bevy/crates/bevy_ecs" }
+# bevy_encase_derive = { path = "/home/yydcnjjw/workspace/project/bevy/crates/bevy_encase_derive" }
+# bevy_gilrs = { path = "/home/yydcnjjw/workspace/project/bevy/crates/bevy_gilrs" }
+# bevy_gizmos = { path = "/home/yydcnjjw/workspace/project/bevy/crates/bevy_gizmos" }
+# bevy_gltf = { path = "/home/yydcnjjw/workspace/project/bevy/crates/bevy_gltf" }
+# bevy_image = { path = "/home/yydcnjjw/workspace/project/bevy/crates/bevy_image" }
+# bevy_input = { path = "/home/yydcnjjw/workspace/project/bevy/crates/bevy_input" }
+# bevy_input_focus = { path = "/home/yydcnjjw/workspace/project/bevy/crates/bevy_input_focus" }
+# bevy_internal = { path = "/home/yydcnjjw/workspace/project/bevy/crates/bevy_internal" }
+# bevy_log = { path = "/home/yydcnjjw/workspace/project/bevy/crates/bevy_log" }
+# bevy_macro_utils = { path = "/home/yydcnjjw/workspace/project/bevy/crates/bevy_macro_utils" }
+# bevy_math = { path = "/home/yydcnjjw/workspace/project/bevy/crates/bevy_math" }
+# bevy_mesh = { path = "/home/yydcnjjw/workspace/project/bevy/crates/bevy_mesh" }
+# bevy_mikktspace = { path = "/home/yydcnjjw/workspace/project/bevy/crates/bevy_mikktspace" }
+# bevy_pbr = { path = "/home/yydcnjjw/workspace/project/bevy/crates/bevy_pbr" }
+# bevy_picking = { path = "/home/yydcnjjw/workspace/project/bevy/crates/bevy_picking" }
+# bevy_platform = { path = "/home/yydcnjjw/workspace/project/bevy/crates/bevy_platform" }
+# bevy_ptr = { path = "/home/yydcnjjw/workspace/project/bevy/crates/bevy_ptr" }
+# bevy_reflect = { path = "/home/yydcnjjw/workspace/project/bevy/crates/bevy_reflect" }
+# bevy_remote = { path = "/home/yydcnjjw/workspace/project/bevy/crates/bevy_remote" }
+# bevy_render = { path = "/home/yydcnjjw/workspace/project/bevy/crates/bevy_render" }
+# bevy_scene = { path = "/home/yydcnjjw/workspace/project/bevy/crates/bevy_scene" }
+# bevy_sprite = { path = "/home/yydcnjjw/workspace/project/bevy/crates/bevy_sprite" }
+# bevy_state = { path = "/home/yydcnjjw/workspace/project/bevy/crates/bevy_state" }
+# bevy_tasks = { path = "/home/yydcnjjw/workspace/project/bevy/crates/bevy_tasks" }
+# bevy_text = { path = "/home/yydcnjjw/workspace/project/bevy/crates/bevy_text" }
+# bevy_time = { path = "/home/yydcnjjw/workspace/project/bevy/crates/bevy_time" }
+# bevy_transform  = { path = "/home/yydcnjjw/workspace/project/bevy/crates/bevy_transform" }
+# bevy_ui = { path = "/home/yydcnjjw/workspace/project/bevy/crates/bevy_ui" }
+# bevy_utils = { path = "/home/yydcnjjw/workspace/project/bevy/crates/bevy_utils" }
+# bevy_window = { path = "/home/yydcnjjw/workspace/project/bevy/crates/bevy_window" }
+# bevy_winit = { path = "/home/yydcnjjw/workspace/project/bevy/crates/bevy_winit" }
+
+# wgpu = { path = "/home/yydcnjjw/workspace/project/wgpu/wgpu" }
+# wgpu-core = { path = "/home/yydcnjjw/workspace/project/wgpu/wgpu-core" }
+# wgpu-types = { path = "/home/yydcnjjw/workspace/project/wgpu/wgpu-types" }
+# wgpu-hal = { path = "/home/yydcnjjw/workspace/project/wgpu/wgpu-hal" }
+# naga = { path = "/home/yydcnjjw/workspace/project/wgpu/naga" }
+
+
+# [patch.crates-io]
+# dioxus = { path = "/home/yydcnjjw/workspace/project/dioxus/packages/dioxus" }
+# dioxus-desktop = { path = "/home/yydcnjjw/workspace/project/dioxus/packages/desktop", default-features = false }
+
+# dioxus = { git = "https://github.com/yydcnjjw/dioxus.git", branch = "winit" }
+# dioxus-desktop = { git = "https://github.com/yydcnjjw/dioxus.git", branch = "winit", default-features = false }
+
+# bevy = { git = "https://github.com/yydcnjjw/bevy.git", branch = "dioxus" }
+# bevy = { path = "/home/yydcnjjw/workspace/project/bevy" }
+
+# tauri = { git = "https://github.com/yydcnjjw/tauri.git", branch = "dev" }
+# tauri-runtime = { git = "https://github.com/yydcnjjw/tauri.git", branch = "dev" }
+# tauri-runtime-wry = { git = "https://github.com/yydcnjjw/tauri.git", branch = "dev" }
+# tauri-build = { git = "https://github.com/yydcnjjw/tauri.git", branch = "dev" }
+# tauri-plugin = { git = "https://github.com/yydcnjjw/tauri.git", branch = "dev" }
+# tauri-utils = { git = "https://github.com/yydcnjjw/tauri.git", branch = "dev" }
+# wry = { git = "https://github.com/yydcnjjw/wry.git", branch = "dev" }
+
+# tauri = { path = "/home/yydcnjjw/workspace/project/tauri/crates/tauri" }
+# tauri-runtime-wry = { path = "/home/yydcnjjw/workspace/project/tauri/crates/tauri-runtime-wry" }
+# tauri-runtime = { path = "/home/yydcnjjw/workspace/project/tauri/crates/tauri-runtime" }
+# tauri-plugin = { path = "/home/yydcnjjw/workspace/project/tauri/crates/tauri-plugin" }
+# tauri-build = { path = "/home/yydcnjjw/workspace/project/tauri/crates/tauri-build" }
+# tauri-utils = { path = "/home/yydcnjjw/workspace/project/tauri/crates/tauri-utils" }
+# wry = { path = "/home/yydcnjjw/workspace/project/wry" }
+# tao = { path = "/home/yydcnjjw/workspace/project/tao" }
+
+# tauri-codegen = { path = "/home/yydcnjjw/workspace/project/tauri/core/tauri-codegen" }
+
+# dioxus-desktop = { git = "https://github.com/DioxusLabs/dioxus.git", branch = "main" }

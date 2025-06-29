@@ -1,7 +1,7 @@
 use std::{mem, sync::Mutex};
 
 use clap::{command, Command};
-use mapp::{define_label, prelude::*};
+use mapp::{anyhow, define_label, prelude::*};
 
 use crate::AppStage;
 
@@ -11,8 +11,8 @@ pub struct Module {}
 define_label!(
     pub enum CmdlineStage {
         Setup,
-        Init,
-        AfterInit,
+        Parse,
+        AfterParse,
     }
 );
 
@@ -26,11 +26,11 @@ impl AppModule for Module {
                 AppStage::Startup,
                 vec![
                     CmdlineStage::Setup,
-                    CmdlineStage::Init,
-                    CmdlineStage::AfterInit,
+                    CmdlineStage::Parse,
+                    CmdlineStage::AfterParse,
                 ],
             )
-            .add_once_task(CmdlineStage::Init, parse_cmdline);
+            .add_once_task(CmdlineStage::Parse, parse_cmdline);
         Ok(())
     }
 }

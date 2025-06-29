@@ -1,6 +1,6 @@
 use std::{future::Future, marker::PhantomData};
 
-use mapp::prelude::{inject::*, *};
+use mapp::{anyhow, prelude::*};
 
 use crate::{Command, CommandBuilder, CommandExecutor, LocalCommandExecutor};
 

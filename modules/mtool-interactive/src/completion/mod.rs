@@ -4,7 +4,7 @@ mod complete_item;
 pub use complete::*;
 pub use complete_item::*;
 
-use mapp::prelude::*;
+use mapp::{anyhow, cfg_if, prelude::*};
 use mtool_wgui::Templator;
 use std::fmt;
 

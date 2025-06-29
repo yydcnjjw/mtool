@@ -1,7 +1,9 @@
-use mtauri_sys::window::Window;
-use serde::Serialize;
-use tracing::{debug, warn};
-use wasm_bindgen::JsValue;
+use mapp::{
+    serde::Serialize,
+    tracing::{debug, warn},
+    wasm_bindgen::JsValue,
+};
+use mtauri_sys::prelude::{Event as TauriEvent, Window};
 use yew::{platform::spawn_local, prelude::*};
 use yew_router::{prelude::*, switch::SwitchProps};
 
@@ -41,7 +43,7 @@ where
             debug!("starting listen route");
             let unlisten = match Window::current()
                 .unwrap()
-                .listen("route", move |e: mtauri_sys::event::Event<String>| {
+                .listen("route", move |e: TauriEvent<String>| {
                     debug!("try route to {}", &e.payload);
                     if let Some(nav) = link.navigator() {
                         if let Some(r) = R::recognize(&e.payload) {

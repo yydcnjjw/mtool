@@ -3,3 +3,8 @@
 
 /.log/
 /.bugs/
+
+/node_modules/
+/yarn.lock
+
+/assets/

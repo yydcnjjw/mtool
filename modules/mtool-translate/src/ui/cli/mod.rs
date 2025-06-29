@@ -1,6 +1,7 @@
 use std::io::{stdin, stdout, Write};
 
-use mapp::{prelude::*, CreateOnceTaskDescriptor};
+use clap::{Parser, ValueEnum};
+use mapp::{anyhow, prelude::*, tokio, CreateOnceTaskDescriptor};
 
 use mtool_cmder::{Cmder, CommandArgs, CommandBuilder};
 use mtool_core::{
@@ -8,15 +9,19 @@ use mtool_core::{
     CmdlineStage,
 };
 
-use crate::translator::{llama, openai, tencent, LanguageType, Translator};
-
-use clap::{Parser, ValueEnum};
+use crate::translator::{
+    // llama,
+    openai,
+    tencent,
+    LanguageType,
+    Translator,
+};
 
 #[derive(ValueEnum, Debug, Clone)]
 enum Backend {
     Tencent,
     Openai,
-    Llama,
+    // Llama,
 }
 
 /// Translate module
@@ -55,7 +60,7 @@ async fn text_translate_from_cli(
     let translator: Res<dyn Translator + Send + Sync> = match backend {
         Backend::Tencent => injector.get::<Res<tencent::Translator>>().await?,
         Backend::Openai => injector.get::<Res<openai::Translator>>().await?,
-        Backend::Llama => injector.get::<Res<llama::Translator>>().await?,
+        // Backend::Llama => injector.get::<Res<llama::Translator>>().await?,
     };
 
     if interactive {

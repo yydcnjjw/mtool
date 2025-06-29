@@ -1,17 +1,18 @@
 use std::sync::RwLock;
 
-use anyhow::Context;
-
-use mapp::{prelude::*, CreateOnceTaskDescriptor};
+use mapp::{
+    anyhow::{self, Context},
+    prelude::*,
+    tokio::sync::{broadcast::Receiver, mpsc},
+    tracing::warn,
+    CreateOnceTaskDescriptor,
+};
 use mkeybinding::{KeyCombine, KeyDispatcher, KeyMap, KeySequence};
-use msysev::*;
-
+use msysev::prelude::*;
 use mtool_core::{
     config::{not_startup_mode, StartupMode},
     AppStage,
 };
-use tokio::sync::{broadcast::Receiver, mpsc};
-use tracing::warn;
 
 use crate::event;
 

@@ -1,9 +1,8 @@
-use std::ops::Deref;
-
-use mapp::{define_label, prelude::*};
-use parking_lot::Mutex;
-use sea_orm::DatabaseConnection;
+use mapp::{anyhow, define_label, prelude::*, sync::Mutex};
+use mtool_core::ConfigStore;
 use sea_orm_migration::{MigrationTrait, MigratorTrait};
+
+use crate::create_dbconn_inner;
 
 static MIGRATIONS: Mutex<Vec<Box<dyn MigrationTrait>>> = Mutex::new(Vec::new());
 
@@ -30,7 +29,8 @@ define_label!(
     }
 );
 
-pub async fn migrate(db: Res<DatabaseConnection>) -> Result<(), anyhow::Error> {
-    Migrator::up(db.deref(), None).await?;
+pub(crate) async fn migrate(cs: Res<ConfigStore>) -> Result<(), anyhow::Error> {
+    let db = create_dbconn_inner(cs).await?;
+    Migrator::up(&db, None).await?;
     Ok(())
 }

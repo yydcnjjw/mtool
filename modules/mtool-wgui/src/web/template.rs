@@ -1,13 +1,19 @@
 use std::{any::type_name, marker::PhantomData};
 
-use anyhow::Context;
-use dashmap::DashMap;
-use mapp::prelude::*;
+use mapp::{
+    anyhow::{self, Context},
+    dashmap::DashMap,
+    prelude::*,
+    serde::{de::DeserializeOwned, Deserialize},
+    serde_json,
+};
 use send_wrapper::SendWrapper;
-use serde::{de::DeserializeOwned, Deserialize};
 use yew::prelude::*;
 
-use crate::{WebAppContext, WebStage};
+use crate::{
+    component::{ProgressBar, ProgressNotification},
+    WebAppContext, WebStage,
+};
 
 pub type TemplateId = String;
 pub type TemplateData = serde_json::Value;
@@ -73,6 +79,7 @@ impl Templator {
 }
 
 #[derive(Properties, PartialEq, Clone, Deserialize)]
+#[serde(crate = "mapp::serde")]
 pub struct Props {
     pub template_id: TemplateId,
     pub data: serde_json::Value,
@@ -83,7 +90,11 @@ pub fn TemplateView(props: &Props) -> Html {
     let context = use_context::<WebAppContext>().expect("no context found");
 
     match context.templator.render(&props.template_id, &props.data) {
-        Ok(view) => view,
+        Ok(view) => html! {
+            <Suspense>
+              { view }
+            </Suspense>
+        },
         Err(e) => html! {
             { format!("{:?}", e) }
         },
@@ -104,6 +115,8 @@ impl AppLocalModule for Module {
 
         async fn setup_template(templator: Res<Templator>) -> Result<(), anyhow::Error> {
             templator.add_template::<EmptyView>();
+            templator.add_template::<ProgressBar>();
+            templator.add_template::<ProgressNotification>();
             Ok(())
         }
         ctx.schedule().add_once_task(WebStage::Init, setup_template);

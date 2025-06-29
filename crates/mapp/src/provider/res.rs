@@ -1,8 +1,7 @@
 use std::{
     any::{type_name, Any},
     fmt,
-    marker::Unsize,
-    ops::{CoerceUnsized, Deref},
+    ops::Deref,
     sync::Arc,
 };
 
@@ -10,13 +9,14 @@ use anyhow::Context;
 use async_trait::async_trait;
 use minject::{LocalProvide, Provide};
 
-use crate::{provider::Injector, App, LocalApp};
+use crate::{
+    app::{App, LocalApp},
+    provider::Injector,
+};
 
 use super::LocalInjector;
 
 pub struct Res<T: ?Sized>(Arc<T>);
-
-impl<T: ?Sized + Unsize<U>, U: ?Sized> CoerceUnsized<Res<U>> for Res<T> {}
 
 impl<T> Res<T> {
     pub fn new(val: T) -> Self {
@@ -25,6 +25,11 @@ impl<T> Res<T> {
 
     pub fn new_raw(val: Arc<T>) -> Self {
         Self(val)
+    }
+
+    pub fn try_unwrap(this: Self) -> Result<T, anyhow::Error> {
+        Arc::try_unwrap(this.0)
+            .map_err(|_| anyhow::anyhow!("try_unwrap {} failed", type_name::<T>()))
     }
 }
 

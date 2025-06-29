@@ -1,9 +1,12 @@
 use std::{cell::RefCell, future::Future, rc::Rc};
 
-use js_sys::Function;
-use mapp::prelude::*;
-use msysev::*;
-use wasm_bindgen::{closure::Closure, JsCast};
+use mapp::{
+    anyhow,
+    js_sys::Function,
+    prelude::*,
+    wasm_bindgen::{closure::Closure, JsCast},
+};
+use msysev::prelude::*;
 use web_sys::{window, KeyboardEvent};
 use yew::platform::spawn_local;
 

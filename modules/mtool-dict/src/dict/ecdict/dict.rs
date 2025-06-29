@@ -1,13 +1,17 @@
+use std::path::Path;
+
+use mapp::{
+    anyhow::{self, Context},
+    prelude::*,
+    serde::Deserialize,
+};
+use mtool_core::ConfigStore;
+use sea_orm::*;
+
 use super::{
     entities::{dict, prelude::Dict as ECDict},
     view,
 };
-use anyhow::Context;
-use mapp::provider::Res;
-use mtool_core::ConfigStore;
-use sea_orm::*;
-use serde::Deserialize;
-use std::path::Path;
 
 impl From<dict::Model> for view::QueryResult {
     fn from(word: dict::Model) -> Self {
@@ -97,6 +101,7 @@ impl From<dict::Model> for view::QueryResult {
 }
 
 #[derive(Debug, Deserialize, Clone)]
+#[serde(crate = "mapp::serde")]
 struct Config {
     path: String,
 }

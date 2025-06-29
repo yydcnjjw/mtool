@@ -1,5 +1,6 @@
+use mapp::{anyhow, tracing::warn};
+use mtauri_sys::prelude::*;
 use mtool_wgui::{generate_keymap, AutoWindow, Horizontal, Keybinding, Vertical, WindowProps};
-use tracing::warn;
 use web_sys::{HtmlElement, HtmlInputElement};
 use yew::{platform::spawn_local, prelude::*};
 
@@ -116,7 +117,7 @@ impl Component for Completion {
                 self.clear_input();
 
                 spawn_local(async move {
-                    if let Err(e) = mtauri_sys::invoke::<CompletionExitArgs, ()>(
+                    if let Err(e) = invoke::<CompletionExitArgs, ()>(
                         "plugin:mtool-interactive|complete_exit",
                         &CompletionExitArgs {
                             v: CompletionExit::Completed(completed),
@@ -215,7 +216,7 @@ impl Completion {
     fn fetch_completion_meta(ctx: &Context<Self>) {
         ctx.link().send_future(async move {
             Msg::CompletionMeta(
-                mtauri_sys::invoke("plugin:mtool-interactive|completion_meta", &())
+                invoke("plugin:mtool-interactive|completion_meta", &())
                     .await
                     .unwrap(),
             )

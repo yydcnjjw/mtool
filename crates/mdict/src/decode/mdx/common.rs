@@ -1,6 +1,7 @@
 use std::ops::RangeFrom;
 
-use nom::{
+use mapp::nom::{
+    self,
     bytes::streaming::tag,
     combinator::map,
     error::ParseError,
@@ -18,7 +19,7 @@ macro_rules! nom_return {
     ($in_:tt, $output_t:ty, $x:expr) => {
         match || -> crate::decode::mdx::Result<$output_t> { Ok($x) }() {
             Ok(v) => Ok(($in_, v)),
-            Err(e) => Err(nom::Err::Failure(e)),
+            Err(e) => Err(mapp::nom::Err::Failure(e)),
         }
     };
 }

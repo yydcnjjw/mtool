@@ -1,8 +1,10 @@
-use anyhow::Context;
 use clap::Parser;
-use mapp::provider::Take;
+use mapp::{
+    anyhow::{self, Context},
+    notify_rust::{Notification, Timeout},
+    prelude::*,
+};
 use mtool_cmder::CommandArgs;
-use notify_rust::{Notification, Timeout};
 
 /// Toast module
 #[derive(Parser, Debug)]

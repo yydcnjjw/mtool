@@ -8,25 +8,15 @@ links = "mtool-main-window"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-mapp = { path = "../../crates/mapp" }
+mapp = { path = "../../crates/mapp", features = ["web"] }
 mtauri-sys = { path = "../../crates/mtauri-sys" }
 mkeybinding = { path = "../../crates/mkeybinding" }
 
 mtool-cmder = { path = "../mtool-cmder" }
 mtool-wgui = { path = "../mtool-wgui" }
 
-tokio = { workspace = true }
-futures = { workspace = true }
-anyhow = { workspace = true }
-serde = { workspace = true }
-serde-error = { workspace = true }
-serde_json = { workspace = true }
-serde-wasm-bindgen = { workspace = true }
-tracing = { workspace = true }
-cfg-if = { workspace = true }
-yew = { workspace = true, features = ["csr"] }
-js-sys = { workspace = true }
-wasm-bindgen = { workspace = true }
+yew = { workspace = true }
+yew-autoprops = { workspace = true }
 
 [dependencies.web-sys]
 workspace = true

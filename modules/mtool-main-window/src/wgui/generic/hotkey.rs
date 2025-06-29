@@ -1,8 +1,9 @@
 use std::ops::Deref;
 
-use serde::{Deserialize, Serialize};
+use mapp::serde::{Deserialize, Serialize};
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(crate = "mapp::serde")]
 pub struct Hotkey {
     pub command: String,
     pub kbd: String,
@@ -10,6 +11,7 @@ pub struct Hotkey {
 }
 
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
+#[serde(crate = "mapp::serde")]
 pub struct HotkeyMap(pub Vec<Hotkey>);
 
 impl Deref for HotkeyMap {

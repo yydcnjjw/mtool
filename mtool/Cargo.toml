@@ -7,27 +7,35 @@ edition.workspace = true
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [features]
-# default = [ "custom-protocol" ]
-custom-protocol = [ "mtool-wgui/custom-protocol" ]
-devtools = [ "mtool-wgui/devtools" ]
+default = [ "desktop" ]
+
+desktop = []
+dynamic_linking = [ "mtool-dioxus/dynamic_linking" ]
 
 [dependencies]
 mapp = { path = "../crates/mapp" }
 mtool-core = { path = "../modules/mtool-core" }
 mtool-system = { path = "../modules/mtool-system" }
-mtool-wgui = { path = "../modules/mtool-wgui" }
-mtool-main-window = { path = "../modules/mtool-main-window" }
-mtool-cmder = { path = "../modules/mtool-cmder" }
-mtool-translate = { path = "../modules/mtool-translate" }
-mtool-dict = { path = "../modules/mtool-dict" }
-mtool-interactive = { path = "../modules/mtool-interactive" }
-mtool-proxy = { path = "../modules/mtool-proxy" }
-mtool-toast = { path = "../modules/mtool-toast" }
-mtool-ai = { path = "../modules/mtool-ai" }
-mtool-pdf = { path = "../modules/mtool-pdf" }
 mtool-storage = { path = "../modules/mtool-storage" }
+mtool-dioxus = { path = "../modules/mtool-dioxus" }
+mtool-cmdpal = { path = "../modules/mtool-cmdpal" }
+mtool-apps = { path = "../modules/mtool-apps" }
+# mtool-pdf = { path = "../modules/mtool-pdf" }
+mtool-assistant = { path = "../modules/mtool-assistant" }
+mtool-proxy = { path = "../modules/mtool-proxy" }
+# mtool-wgui = { path = "../modules/mtool-wgui" }
+# mtool-main-window = { path = "../modules/mtool-main-window" }
+# mtool-cmder = { path = "../modules/mtool-cmder" }
+# mtool-translate = { path = "../modules/mtool-translate" }
+# mtool-dict = { path = "../modules/mtool-dict" }
+# mtool-interactive = { path = "../modules/mtool-interactive" }
+# mtool-proxy = { path = "../modules/mtool-proxy" }
+# mtool-toast = { path = "../modules/mtool-toast" }
+# mtool-ai = { path = "../modules/mtool-ai" }
 
-tauri = { workspace = true }
+# mtool-storage = { path = "../modules/mtool-storage" }
+
+# tauri = { workspace = true }
 
 [build-dependencies]
-tauri-build = { workspace = true, features = ["codegen"] }
+# tauri-build = { version = "*", features = ["codegen"] }

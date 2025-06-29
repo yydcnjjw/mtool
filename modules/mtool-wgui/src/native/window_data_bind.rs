@@ -3,7 +3,7 @@ use std::{
     sync::Arc,
 };
 
-use dashmap::DashMap;
+use mapp::dashmap::DashMap;
 use tauri::{Manager, State, WindowEvent};
 
 type BoxedAny = Box<dyn Any + Send + Sync>;

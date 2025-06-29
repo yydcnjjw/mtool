@@ -1,7 +1,10 @@
 use std::ops;
 
-use tokio::sync::mpsc;
-use tracing::warn;
+use mapp::{
+    anyhow,
+    tokio::{self, sync::mpsc},
+    tracing::warn,
+};
 
 #[cfg(target_os = "windows")]
 use crate::windows::event_loop::PlatformEventLoop;
@@ -9,7 +12,7 @@ use crate::windows::event_loop::PlatformEventLoop;
 #[cfg(target_os = "linux")]
 use crate::linux::event_loop::PlatformEventLoop;
 
-use crate::Event;
+use crate::event::Event;
 
 pub type ControlFlow = ops::ControlFlow<()>;
 

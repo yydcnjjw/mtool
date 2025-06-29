@@ -13,7 +13,7 @@ use minject::{LocalProvide, Provide};
 use tokio::sync::{oneshot, Mutex};
 use tracing::trace;
 
-use crate::{App, LocalApp};
+use crate::app::{App, LocalApp};
 
 use super::{
     constructor::{Construct, IntoConstructor},

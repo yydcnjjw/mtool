@@ -3,7 +3,7 @@ use std::{
     sync::{Arc, Mutex},
 };
 
-use mapp::provider::Res;
+use mapp::{anyhow, prelude::*};
 use tauri::{App, Wry};
 
 type GuiBuilder<R> = tauri::Builder<R>;

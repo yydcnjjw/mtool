@@ -1,18 +1,21 @@
-use serde::{Deserialize, Serialize};
+use mapp::serde::{Deserialize, Serialize};
 
 #[derive(Serialize, Deserialize, Hash, Clone, Debug, PartialEq)]
+#[serde(crate = "mapp::serde")]
 pub struct PdfFile {
     pub path: String,
     pub password: Option<String>,
 }
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
+#[serde(crate = "mapp::serde")]
 pub struct PageInfo {
     pub width: u32,
     pub height: u32,
 }
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
+#[serde(crate = "mapp::serde")]
 pub struct PdfDocumentInfo {
     pub pages: Vec<PageInfo>,
 }
@@ -28,18 +31,21 @@ impl PdfDocumentInfo {
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(crate = "mapp::serde")]
 pub struct ScaleEvent {
     pub scale: f32,
     pub mouse_point: (i32, i32),
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(crate = "mapp::serde")]
 pub struct ScrollEvent {
     pub left: i32,
     pub top: i32,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(crate = "mapp::serde")]
 pub struct Position<T> {
     pub x: T,
     pub y: T,
@@ -52,6 +58,7 @@ impl<T> Position<T> {
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(crate = "mapp::serde")]
 pub struct WMouseEvent {
     pub alt_key: bool,
     pub ctrl_key: bool,
@@ -87,6 +94,7 @@ impl From<web_sys::MouseEvent> for WMouseEvent {
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(crate = "mapp::serde")]
 pub enum MouseEvent {
     Up(WMouseEvent),
     Down(WMouseEvent),
@@ -94,6 +102,7 @@ pub enum MouseEvent {
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(crate = "mapp::serde")]
 pub enum WPdfEvent {
     Scale(ScaleEvent),
     Scroll(ScrollEvent),
@@ -104,6 +113,7 @@ pub enum WPdfEvent {
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(crate = "mapp::serde")]
 pub enum WPdfLoadEvent {
     DocLoading,
     DocLoaded(PdfDocumentInfo),

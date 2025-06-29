@@ -1,11 +1,14 @@
 use std::{cell::RefCell, rc::Rc};
 
-use mapp::prelude::*;
+use mapp::{
+    anyhow,
+    prelude::*,
+    serde::Serialize,
+    tracing::{debug, warn},
+};
 use mkeybinding::KeyMap;
 use mtool_cmder::LocalCmder;
-use mtool_wgui::{Keybinding, SharedAction};
-use serde::Serialize;
-use tracing::{debug, warn};
+use mtool_wgui::{mtauri_sys::prelude::*, Keybinding, SharedAction};
 use yew::platform::spawn_local;
 
 use crate::wgui::generic::hotkey::{Hotkey, HotkeyMap};
@@ -27,16 +30,15 @@ pub async fn init(
             cmd.exec_local(&injector).await?;
         } else {
             #[derive(Serialize)]
+            #[serde(crate = "mapp::serde")]
             struct Args {
                 command: String,
             }
 
             spawn_local(async move {
-                if let Err(e) = mtauri_sys::invoke::<_, ()>(
-                    "plugin:mtool-main-window|exec_command",
-                    &Args { command },
-                )
-                .await
+                if let Err(e) =
+                    invoke::<_, ()>("plugin:mtool-main-window|exec_command", &Args { command })
+                        .await
                 {
                     warn!("{:}", e);
                 }
@@ -51,8 +53,7 @@ pub async fn init(
         cmder: Res<LocalCmder>,
         injector: LocalInjector,
     ) -> Result<(), anyhow::Error> {
-        match mtauri_sys::invoke::<(), HotkeyMap>("plugin:mtool-main-window|window_hotkeys", &()).await
-        {
+        match invoke::<(), HotkeyMap>("plugin:mtool-main-window|window_hotkeys", &()).await {
             Ok(kbs) => {
                 let km = KeyMap::<SharedAction>::new_with_vec(
                     kbs.0

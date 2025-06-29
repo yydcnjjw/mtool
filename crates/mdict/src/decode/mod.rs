@@ -7,8 +7,8 @@ use scraper::ElementRef;
 #[macro_export]
 macro_rules! static_selector {
     ($s:expr) => {{
-        static SELECTOR: ::once_cell::sync::OnceCell<::scraper::Selector> =
-            ::once_cell::sync::OnceCell::new();
+        static SELECTOR: mapp::once_cell::sync::OnceCell<::scraper::Selector> =
+            mapp::once_cell::sync::OnceCell::new();
         SELECTOR.get_or_init(|| ::scraper::Selector::parse($s).unwrap())
     }};
 }

@@ -1,0 +1,24 @@
+[package]
+name = "mtool-cmdpal"
+version.workspace = true
+authors.workspace = true
+edition.workspace = true
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+mapp = { path = "../../crates/mapp", features = ["web"] }
+
+mtool-core = { path = "../mtool-core" }
+mtool-system = { path = "../mtool-system" }
+mtool-storage = { path = "../mtool-storage" }
+mtool-dioxus = { path = "../mtool-dioxus" }
+
+# mtool-cmder = { path = "../mtool-cmder" }
+dioxus = { workspace = true }
+
+fuzzy-matcher = "*"
+shellwords = "*"
+applications = "*"
+base64 = "*"
+open = "5"

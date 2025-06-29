@@ -1,16 +1,8 @@
-#![feature(arbitrary_self_types)]
-
 pub mod event;
 pub mod keybinding;
+mod module;
+mod system_info;
 
-use mapp::ModuleGroup;
-
-pub fn module() -> ModuleGroup {
-    let mut group = ModuleGroup::new("system_group");
-
-    group
-        .add_module(event::Module)
-        .add_module(keybinding::module());
-
-    group
-}
+pub use module::module;
+pub use sysinfo;
+pub use system_info::*;

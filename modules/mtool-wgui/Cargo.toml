@@ -15,30 +15,21 @@ custom-protocol = [ "tauri/custom-protocol" ]
 devtools = [ "tauri/devtools" ]
 
 [dependencies]
-mapp = { path = "../../crates/mapp" }
+mapp = { path = "../../crates/mapp", features = ["web"] }
 mtauri-sys = { path = "../../crates/mtauri-sys" }
 mkeybinding = { path = "../../crates/mkeybinding" }
 msysev = { path = "../../crates/msysev" }
 
-tokio = { workspace = true }
-futures = { workspace = true }
-anyhow = { workspace = true }
-serde = { workspace = true }
-serde-error = { workspace = true }
-serde_json = { workspace = true }
-serde-wasm-bindgen = { workspace = true }
-tracing = { workspace = true }
-dashmap = {  workspace = true }
-once_cell = { workspace = true }
-cfg-if = { workspace = true }
-send_wrapper = { workspace = true }
-yew = { workspace = true, features = ["csr"] }
+send_wrapper = "*"
+yew = { workspace = true }
+yew-autoprops = { workspace = true }
 yew-router = { workspace = true }
-js-sys = { workspace = true }
-wasm-bindgen = { workspace = true }
-html-escape = { workspace = true }
-
+html-escape = "*"
+js-sys = "*"
 route-recognizer = "*"
+gloo-utils = "*"
+gloo-events = "*"
+grass = "*"
 
 [dependencies.web-sys]
 workspace = true
@@ -47,20 +38,28 @@ features = [
   "ResizeObserver",
   "ResizeObserverEntry",
   "HtmlDivElement",
-  "Screen",
+  "Screen"
 ]
+
 
 [target.'cfg(not(target_family = "wasm"))'.dependencies]
 mtool-core = { path = "../mtool-core" }
 mtool-system = { path = "../mtool-system" }
 
 tauri = { workspace = true, features = ["tray-icon"] }
-raw-window-handle = { workspace = true }
+tauri-plugin = { workspace = true }
+tauri-utils = { version = "2.*" }
+tauri-runtime-wry = { version = "2.*" }
+raw-window-handle = "0.6"
 raw-window-handle5 = { version = "0.5", package = "raw-window-handle" }
+
+[target.'cfg(target_os = "windows")'.dependencies.windows]
+workspace = true
+features = [
+  "Win32_Foundation",
+  "Win32_UI_WindowsAndMessaging",
+]
 
 [target.'cfg(not(any(target_os = "android", target_os = "ios", target_family = "wasm")))'.dependencies]
 tauri-plugin-global-shortcut = { git = "https://github.com/tauri-apps/plugins-workspace", branch = "v2" }
 tauri-plugin-os = { git = "https://github.com/tauri-apps/plugins-workspace", branch = "v2" }
-
-[build-dependencies]
-tauri-plugin = { workspace = true }

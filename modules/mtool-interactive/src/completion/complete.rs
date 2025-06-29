@@ -1,9 +1,12 @@
-use fuzzy_matcher::{skim::SkimMatcherV2, FuzzyMatcher};
-use itertools::Itertools;
-use serde::{Deserialize, Serialize};
 use std::future::Future;
 
-use mapp::prelude::*;
+use fuzzy_matcher::{skim::SkimMatcherV2, FuzzyMatcher};
+use mapp::{
+    anyhow,
+    itertools::Itertools,
+    prelude::*,
+    serde::{Deserialize, Serialize},
+};
 
 use super::complete_item::CompleteItem;
 
@@ -35,6 +38,7 @@ where
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, Default, PartialEq)]
+#[serde(crate = "mapp::serde")]
 pub struct CompletionMeta {
     pub id: String,
     pub prompt: String,

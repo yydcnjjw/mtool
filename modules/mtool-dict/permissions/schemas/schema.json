@@ -295,25 +295,19 @@
       "type": "string",
       "oneOf": [
         {
-          "description": "allow-dict-query -> Enables the dict_query command without any pre-configured scope.",
+          "description": "Enables the dict_query command without any pre-configured scope.",
           "type": "string",
-          "enum": [
-            "allow-dict-query"
-          ]
+          "const": "allow-dict-query"
         },
         {
-          "description": "deny-dict-query -> Denies the dict_query command without any pre-configured scope.",
+          "description": "Denies the dict_query command without any pre-configured scope.",
           "type": "string",
-          "enum": [
-            "deny-dict-query"
-          ]
+          "const": "deny-dict-query"
         },
         {
-          "description": "default -> Default permissions for the plugin.",
+          "description": "Default permissions for the plugin.",
           "type": "string",
-          "enum": [
-            "default"
-          ]
+          "const": "default"
         }
       ]
     }

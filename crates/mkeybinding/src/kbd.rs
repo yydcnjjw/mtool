@@ -5,106 +5,106 @@ use std::{
     str::FromStr,
 };
 
-use anyhow::{anyhow, Context};
-use msysev::*;
-
-use nom::{
-    branch::alt,
-    bytes::complete::{tag, tag_no_case, take_while},
-    character::{complete::anychar, is_alphanumeric},
-    combinator::{map, map_res},
-    multi::separated_list1,
-    sequence::delimited,
+use mapp::{
+    anyhow::{self, anyhow, Context},
+    keyboard_types::{Code, Modifiers},
+    nom::{
+        self,
+        branch::alt,
+        bytes::complete::{tag, tag_no_case, take_while},
+        character::{complete::anychar, is_alphanumeric},
+        combinator::{map, map_res},
+        multi::separated_list1,
+        sequence::delimited,
+    },
 };
-
-use lazy_static::lazy_static;
 
 trait ParseKbd: Sized {
     fn parse_kbd(s: &str) -> Result<Self, anyhow::Error>;
 }
 
-impl ParseKbd for KeyCode {
+impl ParseKbd for Code {
     fn parse_kbd(s: &str) -> Result<Self, anyhow::Error> {
-        let r: nom::IResult<&str, KeyCode> = alt((
+        let r: nom::IResult<&str, Code> = alt((
             map_res(
                 delimited(
                     tag_no_case("<f"),
                     nom::character::streaming::digit1,
                     tag(">"),
                 ),
-                |d| -> Result<KeyCode, anyhow::Error> {
+                |d| -> Result<Code, anyhow::Error> {
                     let n = u8::from_str(d).context("Parse fn")?;
                     Ok(match n {
-                        1 => KeyCode::F1,
-                        2 => KeyCode::F2,
-                        3 => KeyCode::F3,
-                        4 => KeyCode::F4,
-                        5 => KeyCode::F5,
-                        6 => KeyCode::F6,
-                        7 => KeyCode::F7,
-                        8 => KeyCode::F8,
-                        9 => KeyCode::F9,
-                        10 => KeyCode::F10,
-                        11 => KeyCode::F11,
-                        12 => KeyCode::F12,
+                        1 => Code::F1,
+                        2 => Code::F2,
+                        3 => Code::F3,
+                        4 => Code::F4,
+                        5 => Code::F5,
+                        6 => Code::F6,
+                        7 => Code::F7,
+                        8 => Code::F8,
+                        9 => Code::F9,
+                        10 => Code::F10,
+                        11 => Code::F11,
+                        12 => Code::F12,
                         _ => Err(anyhow!("fn < 12: {}", n))?,
                     })
                 },
             ),
-            map(tag_no_case("<Backspace>"), |_| KeyCode::Backspace),
-            map(tag_no_case("<Return>"), |_| KeyCode::Enter),
-            map(tag_no_case("<Spacebar>"), |_| KeyCode::Space),
-            map(tag_no_case("<Escape>"), |_| KeyCode::Escape),
+            map(tag_no_case("<Backspace>"), |_| Code::Backspace),
+            map(tag_no_case("<Return>"), |_| Code::Enter),
+            map(tag_no_case("<Spacebar>"), |_| Code::Space),
+            map(tag_no_case("<Escape>"), |_| Code::Escape),
             // TODO: more special keycode
-            map_res(anychar, |c| -> Result<KeyCode, anyhow::Error> {
+            map_res(anychar, |c| -> Result<Code, anyhow::Error> {
                 Ok(match c {
-                    '`' => KeyCode::Backquote,
-                    '1' => KeyCode::Digit1,
-                    '2' => KeyCode::Digit2,
-                    '3' => KeyCode::Digit3,
-                    '4' => KeyCode::Digit4,
-                    '5' => KeyCode::Digit5,
-                    '6' => KeyCode::Digit6,
-                    '7' => KeyCode::Digit7,
-                    '8' => KeyCode::Digit8,
-                    '9' => KeyCode::Digit9,
-                    '0' => KeyCode::Digit0,
-                    '-' => KeyCode::Minus,
-                    '=' => KeyCode::Equal,
-                    'q' => KeyCode::KeyQ,
-                    'w' => KeyCode::KeyW,
-                    'e' => KeyCode::KeyE,
-                    'r' => KeyCode::KeyR,
-                    't' => KeyCode::KeyT,
-                    'y' => KeyCode::KeyY,
-                    'u' => KeyCode::KeyU,
-                    'i' => KeyCode::KeyI,
-                    'o' => KeyCode::KeyO,
-                    'p' => KeyCode::KeyP,
-                    '[' => KeyCode::BracketLeft,
-                    ']' => KeyCode::BracketRight,
-                    '\\' => KeyCode::Backslash,
-                    'a' => KeyCode::KeyA,
-                    's' => KeyCode::KeyS,
-                    'd' => KeyCode::KeyD,
-                    'f' => KeyCode::KeyF,
-                    'g' => KeyCode::KeyG,
-                    'h' => KeyCode::KeyH,
-                    'j' => KeyCode::KeyJ,
-                    'k' => KeyCode::KeyK,
-                    'l' => KeyCode::KeyL,
-                    ';' => KeyCode::Semicolon,
-                    '\'' => KeyCode::Quote,
-                    'z' => KeyCode::KeyZ,
-                    'x' => KeyCode::KeyX,
-                    'c' => KeyCode::KeyC,
-                    'v' => KeyCode::KeyV,
-                    'b' => KeyCode::KeyB,
-                    'n' => KeyCode::KeyN,
-                    'm' => KeyCode::KeyM,
-                    ',' => KeyCode::Comma,
-                    '.' => KeyCode::Period,
-                    '/' => KeyCode::Slash,
+                    '`' => Code::Backquote,
+                    '1' => Code::Digit1,
+                    '2' => Code::Digit2,
+                    '3' => Code::Digit3,
+                    '4' => Code::Digit4,
+                    '5' => Code::Digit5,
+                    '6' => Code::Digit6,
+                    '7' => Code::Digit7,
+                    '8' => Code::Digit8,
+                    '9' => Code::Digit9,
+                    '0' => Code::Digit0,
+                    '-' => Code::Minus,
+                    '=' => Code::Equal,
+                    'q' => Code::KeyQ,
+                    'w' => Code::KeyW,
+                    'e' => Code::KeyE,
+                    'r' => Code::KeyR,
+                    't' => Code::KeyT,
+                    'y' => Code::KeyY,
+                    'u' => Code::KeyU,
+                    'i' => Code::KeyI,
+                    'o' => Code::KeyO,
+                    'p' => Code::KeyP,
+                    '[' => Code::BracketLeft,
+                    ']' => Code::BracketRight,
+                    '\\' => Code::Backslash,
+                    'a' => Code::KeyA,
+                    's' => Code::KeyS,
+                    'd' => Code::KeyD,
+                    'f' => Code::KeyF,
+                    'g' => Code::KeyG,
+                    'h' => Code::KeyH,
+                    'j' => Code::KeyJ,
+                    'k' => Code::KeyK,
+                    'l' => Code::KeyL,
+                    ';' => Code::Semicolon,
+                    '\'' => Code::Quote,
+                    'z' => Code::KeyZ,
+                    'x' => Code::KeyX,
+                    'c' => Code::KeyC,
+                    'v' => Code::KeyV,
+                    'b' => Code::KeyB,
+                    'n' => Code::KeyN,
+                    'm' => Code::KeyM,
+                    ',' => Code::Comma,
+                    '.' => Code::Period,
+                    '/' => Code::Slash,
                     _ => Err(anyhow!("Unknown char: {}", c))?,
                 })
             }),
@@ -120,13 +120,13 @@ impl ParseKbd for KeyCode {
     }
 }
 
-impl ParseKbd for ModifierState {
+impl ParseKbd for Modifiers {
     fn parse_kbd(s: &str) -> Result<Self, anyhow::Error> {
         match s {
-            "S" => Ok(ModifierState::SHIFT),
-            "C" => Ok(ModifierState::CONTROL),
-            "M" => Ok(ModifierState::SUPER),
-            "A" => Ok(ModifierState::ALT),
+            "S" => Ok(Modifiers::SHIFT),
+            "C" => Ok(Modifiers::CONTROL),
+            "M" => Ok(Modifiers::SUPER),
+            "A" => Ok(Modifiers::ALT),
             _ => Err(anyhow!("Unknown ModifierState: {}", s)),
         }
     }
@@ -134,24 +134,23 @@ impl ParseKbd for ModifierState {
 
 #[derive(Debug, Clone, Eq)]
 pub struct KeyCombine {
-    pub key: KeyCode,
-    pub mods: ModifierState,
+    pub code: Code,
+    pub mods: Modifiers,
 }
 
-lazy_static! {
-    static ref IGNORE_MODS: ModifierState = ModifierState::NUMLOCK | ModifierState::CAPSLOCK;
-}
+const IGNORE_MODS: Modifiers =
+    Modifiers::from_bits_truncate(Modifiers::NUM_LOCK.bits() | Modifiers::CAPS_LOCK.bits());
 
 impl Hash for KeyCombine {
     fn hash<H: std::hash::Hasher>(&self, state: &mut H) {
-        self.key.hash(state);
-        (self.mods | *IGNORE_MODS).hash(state);
+        self.code.hash(state);
+        (self.mods | IGNORE_MODS).hash(state);
     }
 }
 
 impl PartialEq for KeyCombine {
     fn eq(&self, other: &Self) -> bool {
-        self.key == other.key && self.mods | *IGNORE_MODS == other.mods | *IGNORE_MODS
+        self.code == other.code && self.mods | IGNORE_MODS == other.mods | IGNORE_MODS
     }
 }
 
@@ -159,31 +158,36 @@ impl fmt::Display for KeyCombine {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         let mods = self.mods;
 
-        if mods.contains(ModifierState::SHIFT) {
+        if mods.contains(Modifiers::SHIFT) {
             write!(f, "S-")?;
         }
 
-        if mods.contains(ModifierState::CONTROL) {
+        if mods.contains(Modifiers::CONTROL) {
             write!(f, "C-")?;
         }
 
-        if mods.contains(ModifierState::SUPER) {
+        if mods.contains(Modifiers::SUPER) {
             write!(f, "M-")?;
         }
 
-        if mods.contains(ModifierState::ALT) {
+        if mods.contains(Modifiers::ALT) {
             write!(f, "A-")?;
         }
 
-        if mods.contains(ModifierState::CAPSLOCK) {
+        if mods.contains(Modifiers::CAPS_LOCK) {
             write!(f, "CapsLock-")?;
         }
 
-        if mods.contains(ModifierState::NUMLOCK) {
+        if mods.contains(Modifiers::NUM_LOCK) {
             write!(f, "NumLock-")?;
         }
 
-        write!(f, "{}", format!("{:?}", self.key).to_lowercase())
+        let code = self.code.to_string();
+        if code.starts_with("Key") {
+            write!(f, "{}", code.trim_start_matches("Key").to_lowercase())
+        } else {
+            write!(f, "<{}>", code)
+        }
     }
 }
 
@@ -221,12 +225,12 @@ impl KeySequence {
             assert!(kc.len() >= 1);
 
             let (last, rest) = kc.split_last().unwrap();
-            let key = KeyCode::parse_kbd(last)?;
+            let key = Code::parse_kbd(last)?;
 
             let kms = rest
                 .iter()
-                .try_fold(ModifierState::NONE, |kms: ModifierState, s| {
-                    let km = ModifierState::parse_kbd(s);
+                .try_fold(Modifiers::empty(), |kms: Modifiers, s| {
+                    let km = Modifiers::parse_kbd(s);
 
                     if let Err(e) = km {
                         return ControlFlow::Break(e);
@@ -243,7 +247,10 @@ impl KeySequence {
 
             match kms {
                 ControlFlow::Continue(kms) => {
-                    kcseq.push(KeyCombine { key, mods: kms });
+                    kcseq.push(KeyCombine {
+                        code: key,
+                        mods: kms,
+                    });
                 }
                 ControlFlow::Break(e) => return Err(e),
             }

@@ -1,11 +1,11 @@
 use std::ops::RangeFrom;
 
-use anyhow::Context;
-use itertools::Itertools;
+use mapp::{
+    anyhow::{self, Context},
+    itertools::Itertools,
+    nom::{multi::count, number::complete::le_u8, InputIter, InputLength, Slice},
+};
 use multimap::MultiMap;
-use nom::multi::count;
-use nom::number::complete::le_u8;
-use nom::{InputIter, InputLength, Slice};
 
 use super::parser::KeyIndex;
 use super::{common::Resource, Result};

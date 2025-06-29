@@ -1,6 +1,6 @@
 use std::hash::Hash;
 
-use mapp::prelude::*;
+use mapp::{anyhow, prelude::*};
 
 pub struct Command<Executor> {
     label: Label,

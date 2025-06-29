@@ -1,21 +1,24 @@
 use std::{ops::Deref, sync::Arc};
 
-use anyhow::Context;
-use mapp::prelude::*;
+use mapp::{
+    anyhow::{self, Context},
+    prelude::*,
+    serde_error,
+    tokio::{
+        self, fs,
+        sync::{mpsc, OnceCell},
+        task::JoinSet,
+    },
+    tracing::{debug, warn},
+};
 use mcloud_api::adobe::{self, PdfStructure};
-use mtool_wgui::WindowDataBind;
 use sea_orm::*;
+use mtool_wgui::WindowDataBind;
 use tauri::{
     command,
     plugin::{Builder, TauriPlugin},
     Manager, State, Wry,
 };
-use tokio::{
-    fs,
-    sync::{mpsc, OnceCell},
-    task::JoinSet,
-};
-use tracing::debug;
 
 use crate::{
     pdf::PdfApi,
@@ -55,7 +58,7 @@ impl PdfLoaderInner {
         let file = fs::read(path).await?;
         let md5sum = md5::compute(&file).to_vec();
 
-        let adobe = match entity::adobe::Entity::find_by_id(md5sum.clone())
+        let mut adobe = match entity::adobe::Entity::find_by_id(md5sum.clone())
             .one(self.db.deref())
             .await?
         {
@@ -85,6 +88,10 @@ impl PdfLoaderInner {
         let (asset_id, upload_uri) = if adobe.state == entity::adobe::State::GetAssetId {
             let (asset_id, upload_uri) = cli.get_asset_id(&adobe.media_type).await?;
 
+            adobe.asset_id = Some(asset_id.clone());
+            adobe.upload_uri = Some(upload_uri.clone());
+            adobe.state = entity::adobe::State::Upload;
+
             entity::adobe::Entity::update(entity::adobe::ActiveModel {
                 id: Set(adobe.id.clone()),
                 asset_id: Set(Some(asset_id.clone())),
@@ -103,6 +110,8 @@ impl PdfLoaderInner {
         if adobe.state == entity::adobe::State::Upload {
             cli.upload_asset(&adobe.media_type, &upload_uri, file)
                 .await?;
+
+            adobe.state = entity::adobe::State::ExtractPdf;
 
             entity::adobe::Entity::update(entity::adobe::ActiveModel {
                 id: Set(adobe.id.clone()),
@@ -139,7 +148,7 @@ pub struct PdfLoader {
 
 pub struct PdfLoadWorker {
     _file: PdfFile,
-    _set: JoinSet<Result<(), anyhow::Error>>,
+    _set: JoinSet<()>,
     rx: Option<mpsc::Receiver<PdfLoadEvent>>,
 }
 
@@ -168,24 +177,29 @@ impl PdfLoader {
             let file = file.clone();
             let tx = tx.clone();
             let api = self.pdf_api.get();
-
             set.spawn(async move {
-                let _ = tx.send(PdfLoadEvent::DocLoading).await;
-                let doc = {
-                    let file = file.clone();
+                if let Err(e) = async move || -> Result<(), anyhow::Error> {
+                    let _ = tx.send(PdfLoadEvent::DocLoading).await;
+                    let doc = {
+                        let file = file.clone();
 
-                    tokio::task::spawn_blocking(move || {
-                        api.load_pdf_from_file(
-                            &file.path,
-                            file.password.clone().map(|p| p.leak() as &'static str),
-                        )
-                    })
-                    .await??
-                };
+                        tokio::task::spawn_blocking(move || {
+                            api.load_pdf_from_file(
+                                &file.path,
+                                file.password.clone().map(|p| p.leak() as &'static str),
+                            )
+                        })
+                        .await??
+                    };
 
-                let doc = PdfDocument::new(doc).await?;
-                let _ = tx.send(PdfLoadEvent::DocLoaded(doc)).await;
-                Ok::<(), anyhow::Error>(())
+                    let doc = PdfDocument::new(doc).await?;
+                    let _ = tx.send(PdfLoadEvent::DocLoaded(doc)).await;
+                    Ok::<(), anyhow::Error>(())
+                }()
+                .await
+                {
+                    warn!("{:?}", e);
+                }
             });
         };
 
@@ -194,10 +208,16 @@ impl PdfLoader {
             let file = file.clone();
             let tx = tx.clone();
             set.spawn(async move {
-                let _ = tx.send(PdfLoadEvent::DocStructureLoading).await;
-                let structure = this.load_adobe_structure(&file.path).await?;
-                let _ = tx.send(PdfLoadEvent::DocStructureLoaded(structure)).await;
-                Ok::<(), anyhow::Error>(())
+                if let Err(e) = async move || -> Result<(), anyhow::Error> {
+                    let _ = tx.send(PdfLoadEvent::DocStructureLoading).await;
+                    let structure = this.load_adobe_structure(&file.path).await?;
+                    let _ = tx.send(PdfLoadEvent::DocStructureLoaded(structure)).await;
+                    Ok::<(), anyhow::Error>(())
+                }()
+                .await
+                {
+                    warn!("{:?}", e);
+                }
             });
         }
 

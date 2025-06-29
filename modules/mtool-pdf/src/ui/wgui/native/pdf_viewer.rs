@@ -1,13 +1,18 @@
 use std::{collections::HashMap, ffi::c_void, sync::Arc};
 
-use anyhow::Context;
-use itertools::Itertools;
-use mapp::provider::Res;
+use mapp::{
+    anyhow::{self, Context},
+    itertools::Itertools,
+    prelude::*,
+    tokio::{
+        self,
+        sync::{mpsc, oneshot, watch},
+    },
+    tracing::{trace, warn},
+};
 use pdfium_render::prelude::*;
 use skia_safe as sk;
 use tauri::{PhysicalPosition, PhysicalSize, WindowEvent};
-use tokio::sync::{mpsc, oneshot, watch};
-use tracing::{debug, trace, warn};
 
 use super::{
     pdf_document::PdfDocument,
@@ -487,7 +492,7 @@ impl PdfViewerInner {
     }
 
     fn handle_mouse_event(&mut self, page_index: u16, e: MouseEvent) -> bool {
-        debug!("{}: {:?}", page_index, e);
+        // debug!("{}: {:?}", page_index, e);
         match e {
             MouseEvent::Up(_) => {
                 self.mouse_state.pressed = None;

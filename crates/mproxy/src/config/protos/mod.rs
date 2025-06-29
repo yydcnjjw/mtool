@@ -1,10 +1,10 @@
 use std::fmt::Formatter;
 use std::marker::PhantomData;
 
+use mapp::serde;
+use mapp::serde::{Deserializer, Serializer};
 use protobuf::EnumFull;
 use protobuf::EnumOrUnknown;
-use serde::Deserializer;
-use serde::Serializer;
 
 include!(concat!(env!("OUT_DIR"), "/protos/mod.rs"));
 

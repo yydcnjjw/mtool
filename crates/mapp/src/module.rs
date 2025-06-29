@@ -2,9 +2,9 @@ use std::any::type_name;
 
 use anyhow::Context;
 use async_trait::async_trait;
-use tracing::{instrument, trace};
+use tracing::trace;
 
-use crate::{app::AppContext, LocalAppContext};
+use crate::app::{AppContext, LocalAppContext};
 
 #[async_trait]
 pub trait Module: Send + Sync {
@@ -44,7 +44,6 @@ impl ModuleGroup {
 
 #[async_trait]
 impl Module for ModuleGroup {
-    #[instrument(name = "module_group", skip_all, fields(name = self.name()))]
     fn early_init(&self, ctx: &mut AppContext) -> Result<(), anyhow::Error> {
         trace!(target: "module", "group early_init");
 
@@ -61,7 +60,6 @@ impl Module for ModuleGroup {
         Ok(())
     }
 
-    #[instrument(name = "module_group", skip_all, fields(name = self.name()))]
     async fn init(&self, ctx: &mut AppContext) -> Result<(), anyhow::Error> {
         trace!(target: "module", "group init");
 
@@ -121,7 +119,6 @@ impl LocalModuleGroup {
 
 #[async_trait(?Send)]
 impl LocalModule for LocalModuleGroup {
-    #[instrument(name = "local_module_group", skip_all, fields(name = self.name()))]
     fn local_early_init(&self, ctx: &mut LocalAppContext) -> Result<(), anyhow::Error> {
         trace!(target: "local_module", "group early_init");
 
@@ -138,7 +135,6 @@ impl LocalModule for LocalModuleGroup {
         Ok(())
     }
 
-    #[instrument(name = "local_module_group", skip_all, fields(name = self.name()))]
     async fn local_init(&self, ctx: &mut LocalAppContext) -> Result<(), anyhow::Error> {
         trace!(target: "local_module", "group init");
 

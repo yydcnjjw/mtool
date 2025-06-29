@@ -1,16 +1,19 @@
-use anyhow::Context;
-use mapp::prelude::*;
+use mapp::{
+    anyhow::{self, Context},
+    prelude::*,
+    serde::Deserialize,
+};
 use mcloud_api::tencent::{
     api,
     credential::Credential,
     translate::text::{self, TextTranslateRequest, TextTranslateResponse},
 };
 use mtool_core::ConfigStore;
-use serde::Deserialize;
 
 use crate::translator::{self, LanguageType};
 
 #[derive(Debug, Clone, Deserialize)]
+#[serde(crate = "mapp::serde")]
 struct Config {
     #[serde(flatten)]
     credential: Credential,

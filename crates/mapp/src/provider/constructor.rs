@@ -20,7 +20,7 @@ pub trait IntoConstructor<Args, Output, C> {
 
 #[async_trait]
 pub trait ConstructOnce<C> {
-    async fn construct_once(self, c: &C) -> Result<BoxedAny, anyhow::Error>;
+    async fn construct_once(self: Box<Self>, c: &C) -> Result<BoxedAny, anyhow::Error>;
 }
 
 pub trait IntoOnceConstructor<Args, Output, C> {
@@ -40,7 +40,7 @@ pub trait IntoLocalConstructor<Args, Output, C> {
 
 #[async_trait(?Send)]
 pub trait LocalConstructOnce<C> {
-    async fn local_construct_once(self, c: &C) -> Result<LocalBoxedAny, anyhow::Error>;
+    async fn local_construct_once(self: Box<Self>, c: &C) -> Result<LocalBoxedAny, anyhow::Error>;
 }
 
 pub trait IntoLocalOnceConstructor<Args, Output, C> {
@@ -72,10 +72,7 @@ where
     C: Send + Sync,
 {
     async fn construct(&self, c: &C) -> Result<BoxedAny, anyhow::Error> {
-        inject(c, &self.f)
-            .await?
-            .await
-            .map(|v| Box::new(v) as BoxedAny)
+        inject(c, &self.f).await?.map(|v| Box::new(v) as BoxedAny)
     }
 }
 
@@ -103,10 +100,9 @@ where
     Output: Send + Sync + 'static,
     C: Send + Sync,
 {
-    async fn construct_once(self, c: &C) -> Result<BoxedAny, anyhow::Error> {
+    async fn construct_once(self: Box<Self>, c: &C) -> Result<BoxedAny, anyhow::Error> {
         inject_once(c, self.f)
             .await?
-            .await
             .map(|v| Box::new(v) as BoxedAny)
     }
 }
@@ -137,7 +133,6 @@ where
     async fn local_construct(&self, c: &C) -> Result<LocalBoxedAny, anyhow::Error> {
         inject(c, &self.f)
             .await?
-            .await
             .map(|v| Box::new(v) as LocalBoxedAny)
     }
 }
@@ -164,10 +159,9 @@ where
     Args: LocalProvide<C>,
     Output: 'static,
 {
-    async fn local_construct_once(self, c: &C) -> Result<LocalBoxedAny, anyhow::Error> {
+    async fn local_construct_once(self: Box<Self>, c: &C) -> Result<LocalBoxedAny, anyhow::Error> {
         local_inject_once(c, self.f)
             .await?
-            .await
             .map(|v| Box::new(v) as LocalBoxedAny)
     }
 }

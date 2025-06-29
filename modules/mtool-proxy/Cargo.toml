@@ -3,55 +3,18 @@ name = "mtool-proxy"
 version.workspace = true
 authors.workspace = true
 edition.workspace = true
-links = "mtool-proxy"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
 mapp = { path = "../../crates/mapp" }
 mproxy = { path = "../../crates/mproxy" }
-mtauri-sys = { path = "../../crates/mtauri-sys" }
-mtool-wgui = { path = "../mtool-wgui" }
-mtool-main-window = { path = "../mtool-main-window" }
-mtool-interactive = { path = "../mtool-interactive" }
 
-tokio = { workspace = true }
-anyhow = { workspace = true }
-thiserror = { workspace = true }
-tracing = { workspace = true }
-serde = { workspace = true }
-serde-error = { workspace = true }
-yew = { workspace = true }
-yew-router = { workspace = true }
-grass = { workspace = true }
-js-sys = { workspace = true }
-wasm-bindgen = { workspace = true }
-wasm-bindgen-futures = { workspace = true }
-serde-wasm-bindgen = { workspace = true }
-cfg-if = { workspace = true }
-
-gloo-utils = "*"
-async-stream = "*"
-
-[dependencies.web-sys]
-workspace = true
-
-[dependencies.yew_icons]
-workspace = true
-features = [
-  "OcticonsDownload16",
-  "OcticonsUpload16"
-]
-
-[target.'cfg(not(target_family = "wasm"))'.dependencies]
 mtool-core = { path = "../mtool-core" }
-mtool-system = { path = "../mtool-system" }
-mtool-cmder = { path = "../mtool-cmder" }
+mtool-storage = { path = "../mtool-storage" }
+mtool-dioxus = { path = "../mtool-dioxus" }
+mtool-cmdpal = { path = "../mtool-cmdpal" }
 
-clap = { workspace = true }
-tauri = { workspace = true }
-toml = { workspace = true }
-notify-rust = { workspace = true }
+dioxus = { workspace = true }
 
-[build-dependencies]
-tauri-plugin = { workspace = true }
+copypasta = "*"
