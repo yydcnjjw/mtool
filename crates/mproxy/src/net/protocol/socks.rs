@@ -74,6 +74,7 @@ impl Server {
                 anyhow::bail!("{:?} is not supported", request)
             }
         };
+
         tx.send(request)
             .map_err(|e| anyhow::anyhow!("send error: {:?}", e.0))
     }
@@ -139,15 +140,17 @@ impl Server {
     ) -> Result<(), anyhow::Error> {
         let acceptor = Arc::new(transport::Acceptor::new(config.acceptor).await?);
 
-        loop {
-            match acceptor.accept().await {
-                Ok(stream) => tokio::spawn(Self::serve(tx.clone(), stream)),
-                Err(e) => {
-                    warn!("{:?}", e);
-                    break;
-                }
-            };
-        }
+        tokio::spawn(async move {
+            loop {
+                match acceptor.accept().await {
+                    Ok(stream) => tokio::spawn(Self::serve(tx.clone(), stream)),
+                    Err(e) => {
+                        warn!("{:?}", e);
+                        break;
+                    }
+                };
+            }
+        });
 
         Ok(())
     }

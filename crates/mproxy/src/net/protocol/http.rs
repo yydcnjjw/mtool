@@ -1,5 +1,3 @@
-use std::{pin::Pin, str::FromStr, sync::Arc};
-
 use http_body_util::{combinators::BoxBody, BodyExt, Empty, Full};
 use hyper::{
     body::{self, Bytes},
@@ -13,12 +11,13 @@ use mapp::{
     anyhow::{self, bail, Context as _},
     futures::Future,
     tokio::{
-        self, spawn,
+        self,
         sync::{mpsc, oneshot},
     },
     tokio_stream::wrappers::UnboundedReceiverStream,
     tracing::{debug, error, warn},
 };
+use std::{pin::Pin, str::FromStr, sync::Arc};
 
 use crate::{
     config::{egress::http::ClientConfig, ingress::http::ServerConfig},
@@ -72,7 +71,7 @@ impl Server {
         tx: mpsc::UnboundedSender<ProxyRequest>,
     ) -> Result<(), anyhow::Error> {
         let acceptor = Arc::new(transport::Acceptor::new(config.acceptor).await?);
-        spawn(async move {
+        tokio::spawn(async move {
             loop {
                 match acceptor.accept().await {
                     Ok(stream) => {
