@@ -1,3 +1,5 @@
+use std::rc::Rc;
+
 use dioxus::prelude::*;
 use mapp::{
     anyhow,
@@ -7,7 +9,10 @@ use mapp::{
     tracing::{info, warn},
 };
 use mtool_dioxus::{
-    desktop::{use_global_shortcut, window},
+    desktop::{
+        self, use_global_shortcut, use_wry_event_handler, window,
+        winit::event::Event as WinitEvent, WindowEvent,
+    },
     free_icons::{icons::go_icons::GoSearch, Icon},
     generate_keymap, local_action,
     prelude::*,
@@ -68,9 +73,13 @@ pub fn CommandPaletteView() -> Element {
     rsx! {
         div {
             class: "flex flex-col h-screen",
+            tabindex: -1,
             onmousedown,
-            onfocusout: move |_| {
-                window().set_visible(false);
+            onmouseleave: |_| {
+                let win = window();
+                if !win.has_focus() {
+                    window().set_visible(false);
+                }
             },
             SearchBar {
                 value: command_input().value,
@@ -141,6 +150,28 @@ fn SearchBar(
     #[props(default)] value: String,
     #[props(default)] oninput: EventHandler<String>,
 ) -> Element {
+    let keybinding = use_context::<Keybinding>();
+    let mut input_node: Signal<Option<Rc<MountedData>>> = use_signal(|| None);
+    let search = use_callback(move |_| {
+        if let Some(node) = input_node() {
+            spawn(async move {
+                _ = node.set_focus(true).await;
+            });
+        }
+        Ok(())
+    });
+
+    use_hook_with_cleanup(
+        || {
+            let km = generate_keymap!(("C-s", local_action!(search)),).unwrap();
+            keybinding.push_keymap("cmdpal.search_bar", km);
+            keybinding
+        },
+        move |keybinding| {
+            keybinding.remove_keymap("cmdpal");
+        },
+    );
+
     rsx! {
         div {
             class: "shrink-0 flex flex-row items-center h-[64] ml-[12] mr-[12]",
@@ -151,6 +182,7 @@ fn SearchBar(
                 icon: GoSearch
             }
             input {
+                onmounted: move |e| { input_node.set(Some(e.data())) },
                 value,
                 oninput: move |e| {
                     oninput.call(e.data().value())
