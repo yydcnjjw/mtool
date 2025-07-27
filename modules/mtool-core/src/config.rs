@@ -1,11 +1,10 @@
 use std::path::{Path, PathBuf};
 
-use clap::{arg, value_parser, ArgMatches};
 use mapp::{
-    anyhow::{self, Context},
-    futures::{future::BoxFuture, FutureExt},
+    anyhow::{self, anyhow, Context},
     prelude::*,
-    tokio::{fs, sync::RwLock},
+    sync::RwLock,
+    tokio::fs,
     toml::{self, macros::Deserialize},
 };
 
@@ -13,16 +12,71 @@ use crate::CmdlineStage;
 
 use super::Cmdline;
 
-#[derive(Default)]
-pub struct Module {}
+pub struct Module;
 
 #[async_trait]
 impl AppModule for Module {
     async fn init(&self, app: &mut AppContext) -> Result<(), anyhow::Error> {
-        app.injector().construct_once(ConfigStore::new);
+        #[cfg(any(target_os = "windows", target_os = "linux"))]
+        {
+            use clap::{arg, value_parser, ArgMatches};
 
-        app.schedule()
-            .add_once_task(CmdlineStage::Setup, setup_cmdline);
+            async fn setup_cmdline(cmdline: Res<Cmdline>) -> Result<(), anyhow::Error> {
+                let config_dir = dirs::home_dir()
+                    .map(|p| p.join(".mtool"))
+                    .context("Failed to get config_dir")?;
+
+                cmdline.setup(move |cmdline| {
+                    Ok(cmdline
+                        .arg(
+                            arg!(-c --config <FILE> "configuration directory")
+                                .value_parser(value_parser!(PathBuf))
+                                .default_value_os(config_dir.into_os_string()),
+                        )
+                        .arg(
+                            arg!(--mode <MODE> "startup mode")
+                                .value_parser(["cli", "wgui", "tui"])
+                                .default_value("cli"),
+                        ))
+                })?;
+
+                Ok(())
+            }
+
+            app.schedule()
+                .add_once_task(CmdlineStage::Setup, setup_cmdline);
+
+            async fn config_store(
+                args: Res<ArgMatches>,
+            ) -> Result<Res<ConfigStore>, anyhow::Error> {
+                let config_dir = args
+                    .get_one::<PathBuf>("config")
+                    .ok_or(anyhow!("missing config"))?;
+
+                Ok(Res::new(ConfigStore {
+                    inner: RwLock::new(ConfigInner::new(config_dir).await?),
+                }))
+            }
+            app.injector().construct_once(config_store);
+        }
+
+        #[cfg(target_os = "android")]
+        {
+            use mapp::android_activity::AndroidApp;
+            async fn config_store(
+                android_app: Res<AndroidApp>,
+            ) -> Result<Res<ConfigStore>, anyhow::Error> {
+                let config_dir = android_app
+                    .external_data_path()
+                    .context("missing external data path")?
+                    .join("config");
+
+                Ok(Res::new(ConfigStore {
+                    inner: RwLock::new(ConfigInner::new(config_dir).await?),
+                }))
+            }
+            app.injector().construct_once(config_store);
+        }
 
         Ok(())
     }
@@ -52,6 +106,21 @@ impl ConfigInner {
         Ok(Self { root_path, table })
     }
 
+    fn get_optional<T>(&self, keys: &str) -> Option<T>
+    where
+        T: for<'de> Deserialize<'de>,
+    {
+        let mut value: &toml::Value = &self.table;
+
+        for key in keys.split(".") {
+            if let Some(child) = value.get(key) {
+                value = child;
+            }
+        }
+
+        value.clone().try_into().ok()
+    }
+
     fn get<T>(&self, keys: &str) -> Result<T, anyhow::Error>
     where
         T: for<'de> Deserialize<'de>,
@@ -75,97 +144,26 @@ impl ConfigInner {
     }
 }
 
-#[derive(PartialEq, Clone, Copy)]
-pub enum StartupMode {
-    WGui,
-    Tui,
-    Cli,
-}
-
-impl From<&str> for StartupMode {
-    fn from(value: &str) -> Self {
-        match value.to_lowercase().as_str() {
-            "wgui" => StartupMode::WGui,
-            "tui" => StartupMode::Tui,
-            "cli" => StartupMode::Cli,
-            _ => unreachable!(),
-        }
-    }
-}
-
 pub struct ConfigStore {
     inner: RwLock<ConfigInner>,
-    mode: StartupMode,
 }
 
 impl ConfigStore {
-    async fn new(args: Res<ArgMatches>) -> Result<Res<Self>, anyhow::Error> {
-        let config_dir = args.get_one::<PathBuf>("config").unwrap();
-
-        Ok(Res::new(Self {
-            inner: RwLock::new(ConfigInner::new(config_dir).await?),
-            mode: StartupMode::from(args.get_one::<String>("mode").unwrap().as_str()),
-        }))
-    }
-
     pub async fn root_path(&self) -> PathBuf {
-        self.inner.read().await.root_path().to_owned()
+        self.inner.read().root_path().to_owned()
     }
 
     pub async fn get<T>(&self, key: &str) -> Result<T, anyhow::Error>
     where
         T: for<'de> Deserialize<'de>,
     {
-        self.inner.read().await.get(key)
+        self.inner.read().get(key)
     }
 
-    pub fn startup_mode(&self) -> StartupMode {
-        self.mode
+    pub fn get_optional<T>(&self, key: &str) -> Option<T>
+    where
+        T: for<'de> Deserialize<'de>,
+    {
+        self.inner.read().get_optional(key)
     }
-}
-
-static mut DEFAULT_CONFIG_DIR: Option<&'static PathBuf> = None;
-
-fn init_default_config_dir() -> Result<(), anyhow::Error> {
-    let cfg_dir = dirs::home_dir()
-        .map(|p| p.join(".mtool"))
-        .context("Failed to get default_config_dir")?;
-
-    unsafe {
-        DEFAULT_CONFIG_DIR = Some(Box::leak(Box::new(cfg_dir)));
-    }
-    Ok(())
-}
-
-async fn setup_cmdline(cmdline: Res<Cmdline>) -> Result<(), anyhow::Error> {
-    init_default_config_dir()?;
-
-    cmdline.setup(|cmdline| {
-        Ok(cmdline
-            .arg(
-                arg!(-c --config <FILE> "configuration directory")
-                    .value_parser(value_parser!(PathBuf))
-                    .default_value(unsafe { DEFAULT_CONFIG_DIR.unwrap().as_os_str() }),
-            )
-            // .arg(arg!(--daemon "daemon mode")))
-            .arg(
-                arg!(--mode <MODE> "startup mode")
-                    .value_parser(["cli", "wgui", "tui"])
-                    .default_value("cli"),
-            ))
-    })?;
-
-    Ok(())
-}
-
-pub fn is_startup_mode(
-    mode: StartupMode,
-) -> impl Fn(Res<ConfigStore>) -> BoxFuture<'static, Result<bool, anyhow::Error>> + Clone {
-    move |config: Res<ConfigStore>| async move { Ok(config.startup_mode() == mode) }.boxed()
-}
-
-pub fn not_startup_mode(
-    mode: StartupMode,
-) -> impl Fn(Res<ConfigStore>) -> BoxFuture<'static, Result<bool, anyhow::Error>> + Clone {
-    move |config: Res<ConfigStore>| async move { Ok(config.startup_mode() != mode) }.boxed()
 }

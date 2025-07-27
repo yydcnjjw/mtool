@@ -1,6 +1,6 @@
 use mapp::{
     tokio::sync::broadcast,
-    tracing::{trace, warn},
+    tracing::{debug, warn},
 };
 
 use crate::{
@@ -58,13 +58,13 @@ where
     }
 
     pub fn dispatch(&mut self, key: KeyCombine) -> bool {
-        trace!("receive key: {}", key);
+        debug!("receive key: {}", key);
 
         self.cur_keyseq.push(key);
 
         for (id, km) in self.km_stack.iter().rev() {
             if let Ok(v) = km.lookup(&self.cur_keyseq) {
-                trace!("dispatch {} {}", id, self.cur_keyseq.to_string());
+                debug!("dispatch {} {}", id, self.cur_keyseq.to_string());
 
                 if let Err(e) = self.tx.send((self.cur_keyseq.clone(), v.clone())) {
                     warn!("{}", e);

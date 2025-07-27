@@ -7,7 +7,8 @@ edition.workspace = true
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [features]
-dynamic_linking = [ "bevy/dynamic_linking" ]
+dynamic_linking = [ # "bevy/dynamic_linking"
+]
 
 [dependencies]
 mapp = { path = "../../crates/mapp", features = ["web"] }
@@ -18,19 +19,14 @@ mtool-system = { path = "../mtool-system" }
 mtool-storage = { path = "../mtool-storage" }
 
 dioxus = { workspace = true, features = ["router"] }
-dioxus-free-icons = { version = "*", features = ["octicons"] }
+dioxus-free-icons = { version = "0.10.0-alpha.1", features = ["octicons"] }
 blake3 = { version = "1.5", features = ["pure"] } # use pure for fix compile error
 route-recognizer = "*"
 infer = "*"
 urlencoding = "*"
 
-[dependencies.bevy]
-workspace = true
+# [dependencies.bevy]
+# workspace = true
 
 [dependencies.dioxus-desktop]
 workspace = true
-features = [
-  "exception",
-  "transparent",
-  "devtools"
-]

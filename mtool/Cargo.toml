@@ -9,7 +9,10 @@ edition.workspace = true
 [features]
 default = [ "desktop" ]
 
+mobile = []
+
 desktop = []
+
 dynamic_linking = [ "mtool-dioxus/dynamic_linking" ]
 
 [dependencies]
@@ -19,9 +22,8 @@ mtool-system = { path = "../modules/mtool-system" }
 mtool-storage = { path = "../modules/mtool-storage" }
 mtool-dioxus = { path = "../modules/mtool-dioxus" }
 mtool-cmdpal = { path = "../modules/mtool-cmdpal" }
-mtool-apps = { path = "../modules/mtool-apps" }
 # mtool-pdf = { path = "../modules/mtool-pdf" }
-mtool-assistant = { path = "../modules/mtool-assistant" }
+# mtool-assistant = { path = "../modules/mtool-assistant" }
 mtool-proxy = { path = "../modules/mtool-proxy" }
 # mtool-wgui = { path = "../modules/mtool-wgui" }
 # mtool-main-window = { path = "../modules/mtool-main-window" }
@@ -36,6 +38,9 @@ mtool-proxy = { path = "../modules/mtool-proxy" }
 # mtool-storage = { path = "../modules/mtool-storage" }
 
 # tauri = { workspace = true }
+
+[target.'cfg(any(target_os = "linux", target_os = "windows"))'.dependencies]
+mtool-apps = { path = "../modules/mtool-apps" }
 
 [build-dependencies]
 # tauri-build = { version = "*", features = ["codegen"] }

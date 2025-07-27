@@ -18,12 +18,14 @@ dioxus = { workspace = true }
 
 base64 = "*"
 open = "*"
-parselnk = "*"
 walkdir = "*"
-windows-icons = "*"
 image = "*"
 pinyin = "*"
 notify = "*"
+
+[target.'cfg(target_os = "windows")'.dependencies]
+windows-icons = "*"
+parselnk = "*"
 
 [target.'cfg(target_os = "windows")'.dependencies.windows]
 workspace = true

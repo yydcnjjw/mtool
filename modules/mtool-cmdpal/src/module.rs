@@ -33,3 +33,12 @@ async fn dioxus_setup(
     router.route("cmdpal");
     Ok(())
 }
+
+#[component]
+pub fn Test() -> Element {
+    rsx! {
+        div {
+            "Hello World!"
+        }
+    }
+}

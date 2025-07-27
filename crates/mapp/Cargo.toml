@@ -68,6 +68,10 @@ tracing-web = "0.1"
 getrandom = { version = "0.2", features = ["js"] }
 tokio-stream = "*"
 
+[target.'cfg(any(target_os = "android"))'.dependencies]
+android-activity = "*"
+android_log-sys = "*"
+
 [dev-dependencies]
 tokio = { version = "*" }
 tauri-build = "*"

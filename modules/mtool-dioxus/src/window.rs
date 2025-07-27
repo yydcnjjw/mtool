@@ -1,10 +1,10 @@
-use bevy::log::warn;
 use dioxus::prelude::*;
 use dioxus_desktop::{winit::window::Window, WindowAttributes};
 use mapp::{
     anyhow,
     once_cell::sync::OnceCell,
     tokio::{self, sync::mpsc},
+    tracing::warn,
 };
 use std::sync::Arc;
 

@@ -1,13 +1,14 @@
 use mapp::{anyhow, prelude::*};
 
-use crate::{create_system_info, event, keybinding};
+use crate::{// create_system_info,
+            event, keybinding};
 
 pub struct Module;
 
 #[async_trait]
 impl AppModule for Module {
     async fn init(&self, app: &mut AppContext) -> Result<(), anyhow::Error> {
-        app.injector().construct_once(create_system_info);
+        // app.injector().construct_once(create_system_info);
         Ok(())
     }
 }

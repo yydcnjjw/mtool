@@ -16,5 +16,5 @@ mtool-dioxus = { path = "../mtool-dioxus" }
 mtool-cmdpal = { path = "../mtool-cmdpal" }
 
 dioxus = { workspace = true }
-
+clap = { workspace = true }
 copypasta = "*"

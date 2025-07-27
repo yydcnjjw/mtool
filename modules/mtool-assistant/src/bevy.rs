@@ -8,7 +8,7 @@ use bevy::{
     window::WindowRef,
 };
 use bevy_inspector_egui::{
-    bevy_egui::{EguiContext, EguiContextPass, EguiMultipassSchedule, EguiPlugin},
+    bevy_egui::{EguiContext, EguiMultipassSchedule, EguiPlugin},
     bevy_inspector, egui,
     quick::WorldInspectorPlugin,
     DefaultInspectorConfigPlugin,

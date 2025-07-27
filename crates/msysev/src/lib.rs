@@ -1,8 +1,12 @@
-#[cfg(target_os = "windows")]
-mod windows;
-
-#[cfg(target_os = "linux")]
-mod linux;
+cfg_if::cfg_if! {
+    if #[cfg(target_os = "windows")] {
+        mod windows;
+    } else if #[cfg(target_os = "linux")] {
+        mod linux;
+    } else {
+        mod dummy;
+    }
+}
 
 mod event;
 
@@ -21,3 +25,4 @@ pub mod prelude {
 
 #[cfg(feature = "event-loop")]
 pub use event_loop::{ControlFlow, EventLoop, ExitSignal};
+use mapp::cfg_if;

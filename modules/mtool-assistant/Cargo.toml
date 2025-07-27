@@ -19,3 +19,6 @@ bevy = { workspace = true, features = ["bevy_dev_tools"] }
 bevy-inspector-egui = "*"
 open = "*"
 smooth-bevy-cameras = "*"
+
+# rodio = "*"
+

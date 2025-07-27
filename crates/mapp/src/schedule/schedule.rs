@@ -1,13 +1,14 @@
-use std::{collections::HashMap, mem};
+use std::{collections::HashMap, mem, ops::DerefMut};
 
 use anyhow::Context;
 use async_recursion::async_recursion;
 use futures::Future;
 use minject::{InjectOnce, Provide};
+use once_cell::sync::OnceCell;
 use parking_lot::RwLock;
 use petgraph::{graph::NodeIndex, Direction, Graph};
 use tokio::sync::Mutex;
-use tracing::debug;
+use tracing::{debug, warn};
 
 use super::{CondLoad, FnCondLoad, IntoOnceTaskDescriptor, OnceTaskDescriptor, ScheduleGraph};
 use crate::{app::App, label::Label};
@@ -72,15 +73,14 @@ impl ScheduleInner {
         let graph = SchedGraph::new();
         let node_index = HashMap::new();
 
-        let mut self_ = Self { graph, node_index };
+        let mut this = Self { graph, node_index };
 
         let root = ScheduleGraph::Root.into();
-        let stage = self_.graph.add_node(root);
-        self_
-            .node_index
+        let stage = this.graph.add_node(root);
+        this.node_index
             .insert(root, Node::Stage(StageNode::new(stage)));
 
-        self_
+        this
     }
 }
 
@@ -193,7 +193,7 @@ impl ScheduleInner {
         })
     }
 
-    pub async fn run(self, app: &App) -> Result<(), anyhow::Error> {
+    pub async fn run(mut self, app: &App) -> Result<(), anyhow::Error> {
         let root_stage = self.get_stage(ScheduleGraph::Root).unwrap();
         let neighbors = self
             .graph
@@ -262,12 +262,14 @@ impl ScheduleInner {
 
 pub struct Schedule {
     inner: RwLock<ScheduleInner>,
+    main_thread_loop: OnceCell<Box<dyn FnOnce() -> Result<(), anyhow::Error> + Send>>,
 }
 
 impl Schedule {
     pub fn new() -> Self {
         Self {
             inner: RwLock::new(ScheduleInner::new()),
+            main_thread_loop: OnceCell::new(),
         }
     }
 
@@ -357,7 +359,27 @@ impl Schedule {
         self
     }
 
-    pub async fn run(self, app: &App) -> Result<(), anyhow::Error> {
-        ScheduleInner::run(mem::take(&mut self.inner.write()), app).await
+    pub fn setup_main_thread_loop<F>(&self, f: F) -> &Self
+    where
+        F: FnOnce() -> Result<(), anyhow::Error> + Send + 'static,
+    {
+        _ = self.main_thread_loop.set(Box::new(f));
+        self
+    }
+
+    pub(crate) async fn run(mut self, app: &App) -> Result<(), anyhow::Error> {
+        let tasks_schedule = mem::take(self.inner.write().deref_mut());
+        let app = app.clone();
+        let tasks_loop = tokio::spawn(async move {
+            if let Err(e) = ScheduleInner::run(tasks_schedule, &app).await {
+                warn!("{:?}", e);
+            }
+        });
+
+        if let Some(thread_loop) = self.main_thread_loop.take() {
+            tokio::task::block_in_place(move || thread_loop())?;
+        }
+
+        Ok(tasks_loop.await?)
     }
 }

@@ -57,6 +57,8 @@ impl AppBuilder {
             #[cfg(not(target_family = "wasm"))]
             let mut rt = tokio::runtime::Builder::new_multi_thread();
 
+            rt.worker_threads(4);
+
             let run = || async move {
                 modules.init(&mut ctx).await?;
 
@@ -65,9 +67,9 @@ impl AppBuilder {
                 let mut app = App::new();
                 app.injector = ctx.injector;
 
+                debug!("App running!");
                 sche.run(&app).await?;
 
-                debug!("App running!");
                 Ok::<(), anyhow::Error>(())
             };
 
