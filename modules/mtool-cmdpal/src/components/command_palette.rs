@@ -1,6 +1,6 @@
 use std::rc::Rc;
 
-use dioxus::prelude::*;
+use dioxus::{core::use_hook_with_cleanup, prelude::*};
 use mapp::{
     anyhow,
     dpi::{PhysicalPosition, PhysicalSize},
@@ -9,10 +9,7 @@ use mapp::{
     tracing::{info, warn},
 };
 use mtool_dioxus::{
-    desktop::{
-        self, use_global_shortcut, use_wry_event_handler, window,
-        winit::event::Event as WinitEvent, WindowEvent,
-    },
+    desktop::{use_global_shortcut, window, HotKeyState},
     free_icons::{icons::go_icons::GoSearch, Icon},
     generate_keymap, local_action,
     prelude::*,
@@ -25,6 +22,7 @@ use crate::{
 
 #[component]
 pub fn CommandPaletteView() -> Element {
+    #[cfg(any(target_os = "windows", target_os = "linux"))]
     init_window();
 
     let onmousedown = move |e: Event<MouseData>| {
@@ -204,10 +202,12 @@ async fn hide_window() -> Result<(), anyhow::Error> {
 fn init_keybinding(mut command_result: Signal<CommandResult>) {
     let keybinding = use_context::<Keybinding>();
 
-    if let Err(e) = use_global_shortcut("alt+Space", || {
-        let win = window();
-        win.set_visible(true);
-        win.focus_window();
+    if let Err(e) = use_global_shortcut("alt+Space", |state| {
+        if state == HotKeyState::Pressed {
+            let win = window();
+            win.set_visible(true);
+            win.focus_window();
+        }
     }) {
         warn!("{:?}", e);
     }

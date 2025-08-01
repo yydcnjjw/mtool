@@ -44,8 +44,8 @@ edition = "2021"
 
 [workspace.dependencies]
 # TODO: macro re-export support
-dioxus = { version = "*" }
-dioxus-desktop = { version = "*", default-features = false }
+dioxus = { version = "0.7.0-alpha.3" }
+dioxus-desktop = { version = "0.7.0-alpha.3" }
 bevy = { version = "0.16.1" }
 # bevy = { path = "/home/yydcnjjw/workspace/project/bevy" }
 # yew = { version = "*", features = ["csr"] }
@@ -55,7 +55,7 @@ bevy = { version = "0.16.1" }
 # tauri = { version = "2.*" }
 # tauri-plugin = { version = "2.*", features = ["build"] }
 ouroboros = "*"
-clap = { version = "*", features = ["derive", "cargo"] }
+clap = { version = "*", features = ["derive", "cargo", "string"] }
 sea-orm = "*"
 sea-orm-migration = "*"
 thiserror = "*"
@@ -82,4 +82,3 @@ inherits = "dev"
 
 [profile.android-dev]
 inherits = "dev"
-

@@ -1,6 +1,8 @@
-use bevy::log::warn;
 use dioxus::prelude::*;
-use mapp::{sync::RwLock, tracing::debug};
+use mapp::{
+    sync::RwLock,
+    tracing::{debug, warn},
+};
 use std::{collections::HashMap, sync::Arc};
 
 pub type RouteParams = HashMap<String, String>;
@@ -67,7 +69,6 @@ macro_rules! add_route {
         })
     };
 }
-
 
 impl Router {
     pub fn new() -> Self {

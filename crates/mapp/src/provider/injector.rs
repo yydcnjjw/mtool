@@ -18,7 +18,7 @@ use crate::app::{App, LocalApp};
 use super::{
     constructor::{Construct, IntoConstructor},
     BoxedAny, ConstructOnce, IntoLocalConstructor, IntoLocalOnceConstructor, IntoOnceConstructor,
-    LocalBoxedAny, LocalConstruct, LocalConstructOnce, Res,
+    LocalBoxedAny, LocalConstruct, LocalConstructOnce, Res, Take,
 };
 
 type BoxedConstruct = Box<dyn Construct<Injector> + Send + Sync>;
@@ -132,7 +132,6 @@ impl InjectorInner {
                 .await
                 .map_err(|e| anyhow::anyhow!("get {} failed: {}", type_name::<Output>(), e))?)
         });
-
         tx
     }
 

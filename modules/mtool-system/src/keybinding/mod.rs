@@ -1,9 +1,9 @@
 mod action;
 
-#[cfg(not(windows))]
+#[cfg(target_os = "linux")]
 mod sysev_backend;
 
-#[cfg(not(windows))]
+#[cfg(target_os = "linux")]
 mod dbus_backend;
 
 // #[cfg(windows)]
@@ -34,7 +34,7 @@ pub fn module() -> ModuleGroup {
     // #[cfg(not(windows))]
     // group.add_module(sysev_backend::Module);
 
-    #[cfg(not(windows))]
+    #[cfg(target_os = "linux")]
     group.add_module(dbus_backend::Module);
 
     // #[cfg(windows)]

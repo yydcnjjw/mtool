@@ -1,9 +1,63 @@
 [patch.crates-io]
-# dioxus = { path = "/home/yydcnjjw/workspace/project/dioxus/packages/dioxus" }
-# dioxus-desktop = { path = "/home/yydcnjjw/workspace/project/dioxus/packages/desktop", default-features = false }
+dioxus = { path = "/home/yydcnjjw/workspace/project/dioxus/packages/dioxus" }
+dioxus-desktop = { path = "/home/yydcnjjw/workspace/project/dioxus/packages/desktop" }
+wry = { path = "/home/yydcnjjw/workspace/project/wry" }
 
-dioxus = { git = "https://github.com/yydcnjjw/dioxus.git", branch = "winit" }
-dioxus-desktop = { git = "https://github.com/yydcnjjw/dioxus.git", branch = "winit", default-features = false }
+# dioxus-cli-config = { git = "https://github.com/yydcnjjw/dioxus.git", branch = "winit-bak" }
+# dioxus-config-macro = { git = "https://github.com/yydcnjjw/dioxus.git", branch = "winit-bak" }
+# dioxus-config-macros = { git = "https://github.com/yydcnjjw/dioxus.git", branch = "winit-bak" }
+# dioxus-core-types = { git = "https://github.com/yydcnjjw/dioxus.git", branch = "winit-bak" }
+# generational-box = { git = "https://github.com/yydcnjjw/dioxus.git", branch = "winit-bak" }
+# subsecond-types = { git = "https://github.com/yydcnjjw/dioxus.git", branch = "winit-bak" }
+# subsecond = { git = "https://github.com/yydcnjjw/dioxus.git", branch = "winit-bak" }
+# dioxus-core = { git = "https://github.com/yydcnjjw/dioxus.git", branch = "winit-bak" }
+# dioxus-rsx = { git = "https://github.com/yydcnjjw/dioxus.git", branch = "winit-bak" }
+# dioxus-core-macro = { git = "https://github.com/yydcnjjw/dioxus.git", branch = "winit-bak" }
+# dioxus-asset-resolver = { git = "https://github.com/yydcnjjw/dioxus.git", branch = "winit-bak" }
+# dioxus-devtools-types = { git = "https://github.com/yydcnjjw/dioxus.git", branch = "winit-bak" }
+# dioxus-signals = { git = "https://github.com/yydcnjjw/dioxus.git", branch = "winit-bak" }
+# dioxus-devtools = { git = "https://github.com/yydcnjjw/dioxus.git", branch = "winit-bak" }
+# dioxus-hooks = { git = "https://github.com/yydcnjjw/dioxus.git", branch = "winit-bak" }
+# dioxus-html-internal-macro = { git = "https://github.com/yydcnjjw/dioxus.git", branch = "winit-bak" }
+# lazy-js-bundle = { git = "https://github.com/yydcnjjw/dioxus.git", branch = "winit-bak" }
+# dioxus-html = { git = "https://github.com/yydcnjjw/dioxus.git", branch = "winit-bak" }
+# dioxus-document = { git = "https://github.com/yydcnjjw/dioxus.git", branch = "winit-bak" }
+# dioxus-history = { git = "https://github.com/yydcnjjw/dioxus.git", branch = "winit-bak" }
+# dioxus-interpreter-js = { git = "https://github.com/yydcnjjw/dioxus.git", branch = "winit-bak" }
+# dioxus-desktop = { git = "https://github.com/yydcnjjw/dioxus.git", branch = "winit-bak" }
+# dioxus-fullstack-protocol = { git = "https://github.com/yydcnjjw/dioxus.git", branch = "winit-bak" }
+# dioxus-fullstack-hooks = { git = "https://github.com/yydcnjjw/dioxus.git", branch = "winit-bak" }
+# dioxus-router-macro = { git = "https://github.com/yydcnjjw/dioxus.git", branch = "winit-bak" }
+# dioxus-router = { git = "https://github.com/yydcnjjw/dioxus.git", branch = "winit-bak" }
+# dioxus-web = { git = "https://github.com/yydcnjjw/dioxus.git", branch = "winit-bak" }
+# dioxus_server_macro = { git = "https://github.com/yydcnjjw/dioxus.git", branch = "winit-bak" }
+# dioxus-fullstack = { git = "https://github.com/yydcnjjw/dioxus.git", branch = "winit-bak" }
+# dioxus-logger = { git = "https://github.com/yydcnjjw/dioxus.git", branch = "winit-bak" }
+# const-serialize-macro = { git = "https://github.com/yydcnjjw/dioxus.git", branch = "winit-bak" }
+# const-serialize = { git = "https://github.com/yydcnjjw/dioxus.git", branch = "winit-bak" }
+# manganis-core = { git = "https://github.com/yydcnjjw/dioxus.git", branch = "winit-bak" }
+# manganis-macro = { git = "https://github.com/yydcnjjw/dioxus.git", branch = "winit-bak" }
+# manganis = { git = "https://github.com/yydcnjjw/dioxus.git", branch = "winit-bak" }
+# dioxus = { git = "https://github.com/yydcnjjw/dioxus.git", branch = "winit-bak" }
+
+# depinfo
+# dioxus-autofmt
+# dioxus-check
+# dioxus-cli
+# dioxus-cli-opt
+# dioxus-dx-wire
+# dioxus-isrg
+# dioxus-liveview
+# dioxus-native
+# dioxus-native-dom
+# dioxus-rsx-hotreload
+# dioxus-rsx-rosetta
+# dioxus-server
+# dioxus-ssr
+# wasm-split-cli
+# wasm-split-macro
+# wasm-splitter
+# wasm-used
 
 bevy = { git = "https://github.com/yydcnjjw/bevy.git", branch = "dioxus" }
 bevy_a11y = { git = "https://github.com/yydcnjjw/bevy.git", branch = "dioxus" }
@@ -31,7 +85,7 @@ bevy_picking = { git = "https://github.com/yydcnjjw/bevy.git", branch = "dioxus"
 bevy_platform = { git = "https://github.com/yydcnjjw/bevy.git", branch = "dioxus" }
 bevy_ptr = { git = "https://github.com/yydcnjjw/bevy.git", branch = "dioxus" }
 bevy_reflect = { git = "https://github.com/yydcnjjw/bevy.git", branch = "dioxus" }
-bevy_remote = { git = "https://github.com/yydcnjjw/bevy.git", branch = "dioxus" }
+# bevy_remote = { git = "https://github.com/yydcnjjw/bevy.git", branch = "dioxus" }
 bevy_render = { git = "https://github.com/yydcnjjw/bevy.git", branch = "dioxus" }
 bevy_scene = { git = "https://github.com/yydcnjjw/bevy.git", branch = "dioxus" }
 bevy_sprite = { git = "https://github.com/yydcnjjw/bevy.git", branch = "dioxus" }
@@ -101,35 +155,3 @@ bevy_core_pipeline = { git = "https://github.com/yydcnjjw/bevy.git", branch = "d
 # wgpu-types = { path = "/home/yydcnjjw/workspace/project/wgpu/wgpu-types" }
 # wgpu-hal = { path = "/home/yydcnjjw/workspace/project/wgpu/wgpu-hal" }
 # naga = { path = "/home/yydcnjjw/workspace/project/wgpu/naga" }
-
-
-# [patch.crates-io]
-# dioxus = { path = "/home/yydcnjjw/workspace/project/dioxus/packages/dioxus" }
-# dioxus-desktop = { path = "/home/yydcnjjw/workspace/project/dioxus/packages/desktop", default-features = false }
-
-# dioxus = { git = "https://github.com/yydcnjjw/dioxus.git", branch = "winit" }
-# dioxus-desktop = { git = "https://github.com/yydcnjjw/dioxus.git", branch = "winit", default-features = false }
-
-# bevy = { git = "https://github.com/yydcnjjw/bevy.git", branch = "dioxus" }
-# bevy = { path = "/home/yydcnjjw/workspace/project/bevy" }
-
-# tauri = { git = "https://github.com/yydcnjjw/tauri.git", branch = "dev" }
-# tauri-runtime = { git = "https://github.com/yydcnjjw/tauri.git", branch = "dev" }
-# tauri-runtime-wry = { git = "https://github.com/yydcnjjw/tauri.git", branch = "dev" }
-# tauri-build = { git = "https://github.com/yydcnjjw/tauri.git", branch = "dev" }
-# tauri-plugin = { git = "https://github.com/yydcnjjw/tauri.git", branch = "dev" }
-# tauri-utils = { git = "https://github.com/yydcnjjw/tauri.git", branch = "dev" }
-# wry = { git = "https://github.com/yydcnjjw/wry.git", branch = "dev" }
-
-# tauri = { path = "/home/yydcnjjw/workspace/project/tauri/crates/tauri" }
-# tauri-runtime-wry = { path = "/home/yydcnjjw/workspace/project/tauri/crates/tauri-runtime-wry" }
-# tauri-runtime = { path = "/home/yydcnjjw/workspace/project/tauri/crates/tauri-runtime" }
-# tauri-plugin = { path = "/home/yydcnjjw/workspace/project/tauri/crates/tauri-plugin" }
-# tauri-build = { path = "/home/yydcnjjw/workspace/project/tauri/crates/tauri-build" }
-# tauri-utils = { path = "/home/yydcnjjw/workspace/project/tauri/crates/tauri-utils" }
-# wry = { path = "/home/yydcnjjw/workspace/project/wry" }
-# tao = { path = "/home/yydcnjjw/workspace/project/tao" }
-
-# tauri-codegen = { path = "/home/yydcnjjw/workspace/project/tauri/core/tauri-codegen" }
-
-# dioxus-desktop = { git = "https://github.com/DioxusLabs/dioxus.git", branch = "main" }

@@ -1,6 +1,6 @@
 use std::{ops::Deref, rc::Rc, sync::Arc};
 
-use dioxus::prelude::*;
+use dioxus::{core::use_hook_with_cleanup, prelude::*};
 use fuzzy_matcher::{skim::SkimMatcherV2, FuzzyMatcher};
 use mapp::{anyhow, itertools::Itertools, rand::random, tracing::warn};
 use mtool_dioxus::{generate_keymap, local_action, prelude::*};

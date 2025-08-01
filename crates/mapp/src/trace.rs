@@ -1,9 +1,10 @@
 use anyhow::Context;
+use tracing::level_filters::LevelFilter;
 #[cfg(not(target_arch = "wasm32"))]
 use tracing_appender::non_blocking::WorkerGuard;
 use tracing_subscriber::{
     filter::Filtered,
-    fmt,
+    fmt::{self, layer},
     layer::{Filter, Layer},
     prelude::*,
     reload, Registry,
@@ -16,63 +17,68 @@ pub type LoggerLayer<S> = Filtered<BoxedLayer<S>, BoxedFilter<S>, S>;
 
 pub struct Tracing {
     logger: reload::Handle<LoggerLayer<Registry>, Registry>,
-    #[cfg(not(target_arch = "wasm32"))]
+    #[cfg(any(target_os = "windows", target_os = "linux"))]
     _logger_guard: WorkerGuard,
 }
 
 impl Tracing {
     pub fn new() -> Result<Self, anyhow::Error> {
-        #[cfg(not(target_family = "wasm"))]
-        let ((writer, _logger_guard), filter) = {
+        #[allow(unused)]
+        let mut layer = fmt::layer()
+            .with_file(true)
+            .with_line_number(true)
+            .with_target(false)
+            .with_thread_ids(true)
+            .with_thread_names(true);
+
+        #[cfg(any(target_os = "windows", target_os = "linux"))]
+        let (layer, _logger_guard, filter) = {
+            use time::{format_description::well_known::Rfc3339, UtcOffset};
+            use tracing_subscriber::fmt::time::OffsetTime;
+
+            let (writer, logger_guard) = tracing_appender::non_blocking(std::io::stdout());
             (
-                tracing_appender::non_blocking(std::io::stdout()),
+                layer
+                    .with_timer(
+                        OffsetTime::local_rfc_3339()
+                            .unwrap_or(OffsetTime::new(UtcOffset::from_hms(8, 0, 0)?, Rfc3339)),
+                    )
+                    .with_ansi(true)
+                    .pretty()
+                    .with_writer(writer),
+                logger_guard,
                 Box::new(tracing_subscriber::EnvFilter::from_env("MTOOL_LOG"))
                     as BoxedFilter<Registry>,
             )
         };
 
-        #[cfg(target_family = "wasm")]
-        let (writer, filter) = {
-            use tracing::metadata::LevelFilter;
+        #[cfg(target_os = "android")]
+        let (layer, filter) = {
             (
-                tracing_web::MakeConsoleWriter,
+                layer
+                    .with_level(false)
+                    .with_ansi(false)
+                    .without_time()
+                    .with_writer(crate::android::LogcatMakeWriter),
                 Box::new(LevelFilter::DEBUG) as BoxedFilter<Registry>,
             )
         };
 
-        let (logger_layer, logger) = reload::Layer::new({
-            #[allow(unused)]
-            let mut layer = fmt::layer()
-                // .without_time()
-                .with_ansi(if cfg!(target_arch = "wasm32") {
-                    false
-                } else {
-                    true
-                })
-                .with_file(true)
-                .with_line_number(true)
-                .with_target(false)
-                .with_thread_ids(true)
-                .with_thread_names(true)
-                .pretty()
-                .with_writer(writer);
+        #[cfg(target_family = "wasm")]
+        let (layer, filter) = {
+            use tracing::metadata::LevelFilter;
+            (
+                layer
+                    .with_ansi(false)
+                    .without_time()
+                    .with_writer(tracing_web::MakeConsoleWriter),
+                Box::new(LevelFilter::DEBUG) as BoxedFilter<Registry>,
+            )
+        };
 
-            #[cfg(not(target_family = "wasm"))]
-            let layer = {
-                use time::{format_description::well_known::Rfc3339, UtcOffset};
-                use tracing_subscriber::fmt::time::OffsetTime;
-                layer.with_timer(
-                    OffsetTime::local_rfc_3339()
-                        .unwrap_or(OffsetTime::new(UtcOffset::from_hms(8, 0, 0)?, Rfc3339)),
-                )
-            };
+        let layer = { layer.boxed() }.with_filter(filter);
 
-            #[cfg(target_family = "wasm")]
-            let layer = { layer.without_time() };
-
-            // #[cfg(target_family = "wasm")]
-            { layer.boxed() }.with_filter(filter)
-        });
+        let (logger_layer, logger) = reload::Layer::new(layer);
 
         tracing_subscriber::registry()
             .with(logger_layer)
@@ -81,7 +87,7 @@ impl Tracing {
 
         Ok(Self {
             logger,
-            #[cfg(not(target_arch = "wasm32"))]
+            #[cfg(any(target_os = "windows", target_os = "linux"))]
             _logger_guard,
         })
     }

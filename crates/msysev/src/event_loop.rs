@@ -2,15 +2,20 @@ use std::ops;
 
 use mapp::{
     anyhow,
+    cfg_if::cfg_if,
     tokio::{self, sync::mpsc},
     tracing::warn,
 };
 
-#[cfg(target_os = "windows")]
-use crate::windows::event_loop::PlatformEventLoop;
-
-#[cfg(target_os = "linux")]
-use crate::linux::event_loop::PlatformEventLoop;
+cfg_if! {
+    if #[cfg(target_os = "windows")] {
+        use crate::windows::event_loop::PlatformEventLoop;
+    } else if #[cfg(target_os = "linux")] {
+        use crate::linux::event_loop::PlatformEventLoop;
+    } else {
+        use crate::dummy::PlatformEventLoop;
+    }
+}
 
 use crate::event::Event;
 

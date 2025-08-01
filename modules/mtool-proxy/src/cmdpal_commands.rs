@@ -1,5 +1,5 @@
 use copypasta::{ClipboardContext, ClipboardProvider};
-use dioxus::prelude::*;
+use dioxus::{core::use_hook_with_cleanup, prelude::*};
 use mapp::{
     anyhow::{self, anyhow, Context},
     cfg_if::cfg_if,

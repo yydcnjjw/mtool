@@ -1,8 +1,8 @@
 use dioxus::{prelude::*, CapturedError};
 use dioxus_desktop::{
-    trayicon::{init_tray_icon, menu::MenuItem, DioxusTrayMenu},
-    use_global_shortcut, use_wry_event_handler, winit::event::Event,
-    UserWindowEvent,
+    use_global_shortcut, use_wry_event_handler,
+    winit::event::Event,
+    HotKeyState, UserWindowEvent,
 };
 use mapp::{
     anyhow::{self, anyhow},
@@ -27,9 +27,11 @@ fn init_global_hotkey() -> Result<(), anyhow::Error> {
 
     for (key, cb) in hotkeys.iter() {
         to_owned![cb];
-        use_global_shortcut(key.as_str(), move || {
-            if let Err(e) = cb() {
-                warn!("{:?}", e);
+        use_global_shortcut(key.as_str(), move |state| {
+            if state == HotKeyState::Pressed {
+                if let Err(e) = cb() {
+                    warn!("{:?}", e);
+                }
             }
         })
         .map_err(|e| anyhow!("register {} failed {:?}", key, e))?;
@@ -37,7 +39,9 @@ fn init_global_hotkey() -> Result<(), anyhow::Error> {
     Ok(())
 }
 
+#[cfg(not(any(target_os = "ios", target_os = "android")))]
 fn init_tray() {
+    use dioxus_desktop::trayicon::{init_tray_icon, menu::MenuItem, DioxusTrayMenu};
     let quit = MenuItem::new("Quit", true, None);
     let tray_menu = DioxusTrayMenu::with_items(&[&quit]).unwrap();
     init_tray_icon(tray_menu, None);
@@ -63,6 +67,7 @@ pub fn main_view() -> Element {
 
     use_window_factory();
 
+    #[cfg(not(any(target_os = "ios", target_os = "android")))]
     init_tray();
 
     rsx! {

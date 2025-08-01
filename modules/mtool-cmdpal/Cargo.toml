@@ -19,6 +19,5 @@ dioxus = { workspace = true }
 
 fuzzy-matcher = "*"
 shellwords = "*"
-applications = "*"
 base64 = "*"
 open = "5"
