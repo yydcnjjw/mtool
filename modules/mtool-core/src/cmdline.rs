@@ -5,7 +5,7 @@ use mapp::{anyhow, define_label, prelude::*};
 
 use crate::AppStage;
 
-pub struct Module;
+pub(crate) struct Module;
 
 define_label!(
     pub enum CmdlineStage {

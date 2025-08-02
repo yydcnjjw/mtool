@@ -1,24 +1,11 @@
 use std::{collections::HashMap, fmt::Debug};
 
-use crate::kbd::{KeyCombine, KeySequence, ToKeySequence};
+use crate::{
+    error::{Error, Result},
+    kbd::{KeyCombine, KeySequence, ToKeySequence},
+};
 
-use mapp::anyhow::{self, Context};
-use thiserror::Error;
-
-#[derive(Debug, Error)]
-pub enum Error {
-    #[error("Key sequence not found {0}")]
-    KeySequenceNotFound(KeySequence),
-    #[error("Key sequence {key} starts with non-prefix key {prefix}")]
-    KeySequenceExisted {
-        key: KeySequence,
-        prefix: KeySequence,
-    },
-    #[error(transparent)]
-    Other(#[from] anyhow::Error),
-}
-
-type Result<T> = std::result::Result<T, Error>;
+use mapp::anyhow::Context;
 
 #[derive(Debug, Clone)]
 pub enum Binding<Value> {

@@ -8,11 +8,13 @@ edition.workspace = true
 
 [dependencies]
 mapp = { path = "../../crates/mapp" }
-msysev = { path = "../../crates/msysev", features = ["event-loop"] } # for event module
-mkeybinding = { path = "../../crates/mkeybinding" } # for keybinding module
+# msysev = { path = "../../crates/msysev", features = ["event-loop"] } # for event module
+# mkeybinding = { path = "../../crates/mkeybinding" } # for keybinding module
 mtool-core = { path = "../mtool-core" }
+mtool-dioxus = { path = "../mtool-dioxus" }
 
-sysinfo = "*"
+# [target.'cfg(target_os = "linux")'.dependencies]
+# zbus = { version = "4", default-features = false, features = ["tokio"] }
 
-[target.'cfg(target_os = "linux")'.dependencies]
-zbus = { version = "4", default-features = false, features = ["tokio"] }
+[build-dependencies]
+tonic-prost-build = "*"

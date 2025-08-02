@@ -48,3 +48,5 @@ impl io::Write for LogcatWriter {
         Ok(())
     }
 }
+
+pub use android_log_sys;

@@ -1,0 +1,153 @@
+use std::sync::Arc;
+
+use dioxus_desktop::{winit::event::Event as WinitEvent, UserWindowEvent, WindowAttributes};
+use mapp::{
+    anyhow,
+    prelude::*,
+    tokio::sync::oneshot,
+    tracing::{debug, info, warn},
+};
+use mtool_core::ConfigStore;
+use mtool_storage::kv;
+
+use crate::{
+    builder::DioxusBuilder, context::DioxusContext, custom_protocol::file_handler,
+    main_view::main_view, router::Router,
+};
+
+type MainLoopRunner = Box<dyn FnOnce() -> Result<(), anyhow::Error> + Send>;
+
+#[cfg(target_os = "android")]
+use dioxus_desktop::winit::platform::android::activity::AndroidApp;
+
+pub(crate) async fn launch(
+    injector: Injector,
+    cs: Res<ConfigStore>,
+    builder: Take<Res<DioxusBuilder>>,
+    router: Res<Router>,
+    kvstore: Res<kv::Store>,
+    #[cfg(target_os = "android")] android_app: Res<AndroidApp>,
+    runner: Take<Arc<oneshot::Sender<MainLoopRunner>>>,
+) -> Result<(), anyhow::Error> {
+    let context_tx = injector.construct_oneshot();
+
+    let builder = builder.take()?;
+
+    let data_dir = cs.root_path().await;
+
+    if let Err(_) = runner.take()?.send(Box::new(move || {
+        info!("main thread loop is running");
+
+        builder
+            .with_launch_builder(move |builder| {
+                builder
+                    .with_context((*router).clone())
+                    .with_context((*kvstore).clone())
+            })
+            .with_config_builder(move |cfg| {
+                use dioxus_desktop::winit::event_loop::EventLoop;
+
+                #[cfg(target_os = "windows")]
+                use dioxus_desktop::winit::platform::windows::{
+                    EventLoopBuilderExtWindows, WindowAttributesExtWindows,
+                };
+
+                #[cfg(target_os = "linux")]
+                use dioxus_desktop::winit::platform::unix::EventLoopBuilderExtUnix;
+
+                #[cfg(any(target_os = "linux", target_os = "windows"))]
+                let event_loop = EventLoop::with_user_event()
+                    .with_any_thread(true)
+                    .build()
+                    .unwrap();
+
+                #[cfg(target_os = "android")]
+                let (event_loop, android_app) = {
+                    use dioxus_desktop::{
+                        winit::platform::android::EventLoopBuilderExtAndroid,
+                        wry::{self, prelude::*},
+                    };
+                    use std::ops::Deref;
+
+                    wry::android_binding!(org_yydcnjjw_mtool_dioxus, wry, wry);
+
+                    let android_app = android_app.deref().clone();
+
+                    (
+                        EventLoop::with_user_event()
+                            .with_android_app(android_app.clone())
+                            .build()
+                            .unwrap(),
+                        android_app,
+                    )
+                };
+
+                let (context, event_loop_context) = DioxusContext::new(
+                    event_loop.create_proxy(),
+                    #[cfg(target_os = "android")]
+                    android_app,
+                );
+
+                if let Err(e) = context_tx.send(Res::new(context)) {
+                    warn!("Failed to send DioxusContext");
+                }
+
+                let mut window_attrs = WindowAttributes::default()
+                    .with_decorations(false)
+                    .with_transparent(true);
+
+                #[cfg(target_os = "windows")]
+                {
+                    window_attrs = window_attrs.with_skip_taskbar(true);
+                }
+
+                cfg.with_data_directory(data_dir)
+                    .with_asynchronous_custom_protocol("mfile", file_handler)
+                    .with_event_loop(event_loop)
+                    .with_window(window_attrs)
+                    .with_custom_event_handler(move |event, event_loop| match event {
+                        WinitEvent::UserEvent(UserWindowEvent::WakeUp) => {
+                            event_loop_context.pool_events(event_loop);
+                        }
+                        _ => {}
+                    })
+            })
+            .launch(main_view);
+        Ok(())
+    })) {
+        warn!("failed to send runner");
+    }
+
+    Ok(())
+}
+
+pub(crate) fn main_loop(runner: oneshot::Receiver<MainLoopRunner>) -> Result<(), anyhow::Error> {
+    debug!("main_loop is startup");
+
+    runner.blocking_recv()?()
+}
+
+#[cfg(target_os = "android")]
+use dioxus_desktop::wry::{android_setup, prelude::*};
+
+#[cfg(target_os = "android")]
+android_fn![
+    org_yydcnjjw_mtool_dioxus,
+    wry,
+    WryActivity,
+    onCreate,
+    [JObject]
+];
+
+#[cfg(target_os = "android")]
+#[allow(non_snake_case)]
+pub unsafe fn onCreate(jenv: JNIEnv, _: JClass, activity: JObject) {
+    let activity = jenv.new_global_ref(activity).unwrap();
+
+    android_setup(
+        "org/yydcnjjw/mtool/dioxus/wry",
+        jenv,
+        &ndk::looper::ThreadLooper::for_thread().unwrap(),
+        activity,
+    );
+}

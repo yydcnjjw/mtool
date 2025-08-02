@@ -1,0 +1,26 @@
+syntax = "proto3";
+
+package mtool_assistant;
+
+message Notification {
+  string package_name = 1;
+}
+
+enum NotifyMode {
+  DESKTOP_MODE = 0;
+  REMOTE_DESKTOP_MODE = 1;
+}
+
+message NotifyModeMessage {
+  NotifyMode mode = 1;
+}
+
+
+message Empty {
+
+}
+
+service MtoolAssistant {
+  rpc PostNotification(Notification) returns (Empty);
+  rpc SetNotifyMode(NotifyModeMessage) returns (Empty);
+}

@@ -1,100 +1,33 @@
-use mapp::{
-    anyhow,
-    prelude::*,
-    serde::Deserialize,
-    sync::Mutex,
-    tokio::{
-        self,
-        sync::broadcast::{self, Receiver, Sender},
-    },
-    tracing::warn,
-};
-pub use msysev::prelude::*;
+use mapp::{anyhow, prelude::*, tokio::sync::broadcast};
 
-use msysev::{ControlFlow, EventLoop, ExitSignal};
-use mtool_core::ConfigStore;
+use crate::platform;
 
-pub struct Module;
-
-#[async_trait]
-impl AppModule for Module {
-    async fn init(&self, app: &mut AppContext) -> Result<(), anyhow::Error> {
-        app.injector().construct_once(Observer::construcct);
-        Ok(())
-    }
+#[derive(Clone, Debug)]
+pub enum SystenEvent {
+    NotificationPosted(Notification),
 }
 
-fn default_channel_size() -> usize {
-    1024
+#[derive(Clone, Debug)]
+pub struct Notification {
+    pub package_name: String,
 }
 
-#[derive(Debug, Clone, Deserialize)]
-#[serde(crate = "mapp::serde")]
-struct Config {
-    #[serde(default = "default_channel_size")]
-    channel_size: usize,
+pub struct SystemEventSource {
+    pub(crate) inner: platform::SystemEventSource,
 }
 
-pub struct Observer {
-    tx: Sender<Event>,
-    exit_signal: Mutex<Option<ExitSignal>>,
-}
-
-impl Observer {
-    async fn construcct(cs: Res<ConfigStore>) -> Result<Res<Self>, anyhow::Error> {
-        let config = cs.get::<Config>("system.event").await?;
-
-        let (tx, _) = broadcast::channel(config.channel_size);
-
-        Ok(Res::new(Self {
-            tx,
-            exit_signal: Mutex::new(None),
+impl SystemEventSource {
+    pub async fn construct(injector: Injector) -> Result<Res<SystemEventSource>, anyhow::Error> {
+        Ok(Res::new(SystemEventSource {
+            inner: inject_once(&injector, platform::SystemEventSource::new).await??,
         }))
     }
 
-    pub fn subscribe(&self) -> Receiver<Event> {
-        let rx = self.tx.subscribe();
-        if self.exit_signal.lock().is_none() {
-            self.run_event_loop();
-        }
-        rx
+    pub fn subscribe(&self) -> broadcast::Receiver<SystenEvent> {
+        self.inner.subscribe()
     }
 
-    pub fn run_event_loop(&self) {
-        match || -> Result<ExitSignal, anyhow::Error> {
-            let tx = self.tx.clone();
-            let event_loop = EventLoop::new()?;
-            let exit_signal = event_loop.exit_signal();
-
-            tokio::spawn(async move {
-                if let Err(e) = event_loop
-                    .run(move |ev| -> ControlFlow {
-                        let _ = tx.send(ev);
-                        ControlFlow::Continue(())
-                    })
-                    .await
-                {
-                    warn!("{:?}", e);
-                }
-            });
-            Ok(exit_signal)
-        }() {
-            Err(e) => {
-                warn!("{:?}", e);
-            }
-            Ok(exit_signal) => *self.exit_signal.lock() = Some(exit_signal),
-        }
-    }
-
-    #[allow(dead_code)]
-    pub fn receiver_count(&self) -> usize {
-        self.tx.receiver_count()
-    }
-
-    pub fn close(&self) -> Result<(), anyhow::Error> {
-        if let Some(signal) = self.exit_signal.lock().take() {
-            signal.exit()
-        }
-        Ok(())
-    }
+    pub fn sender(&self) -> broadcast::Sender<SystenEvent> {
+        self.inner.sender()
+    }    
 }

@@ -1,8 +1,6 @@
-pub mod event;
-pub mod keybinding;
+mod event;
 mod module;
-// mod system_info;
+mod platform;
 
 pub use module::module;
-// pub use sysinfo;
-// pub use system_info::*;
+pub use event::*;

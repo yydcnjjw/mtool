@@ -7,15 +7,14 @@ edition.workspace = true
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [features]
-dynamic_linking = [ # "bevy/dynamic_linking"
-]
+bevy = [ "dep:bevy" ]
+bevy_dynamic_linking = [ "bevy?/dynamic_linking" ]
 
 [dependencies]
 mapp = { path = "../../crates/mapp", features = ["web"] }
 mkeybinding = { path = "../../crates/mkeybinding" }
 
 mtool-core = { path = "../mtool-core" }
-mtool-system = { path = "../mtool-system" }
 mtool-storage = { path = "../mtool-storage" }
 
 dioxus = { workspace = true, features = ["router"] }
@@ -25,8 +24,7 @@ route-recognizer = "*"
 infer = "*"
 urlencoding = "*"
 
-# [dependencies.bevy]
-# workspace = true
+bevy = { workspace = true, optional = true }
 
 [dependencies.dioxus-desktop]
 workspace = true

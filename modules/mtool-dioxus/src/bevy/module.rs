@@ -9,7 +9,7 @@ use bevy::{
     window::ExitCondition,
     winit::{DisplayHandleWrapper, EventLoopProxyWrapper},
 };
-use dioxus_desktop::winit::{application::ApplicationHandler, event::Event as WInitEvent};
+use dioxus_desktop::winit::{application::ApplicationHandler, event::Event as WinitEvent};
 use mapp::{
     anyhow,
     once_cell::sync::OnceCell,
@@ -109,19 +109,19 @@ async fn bevy_setup(builder: AppRes<DioxusBuilder>) -> Result<(), anyhow::Error>
                 platform_config.with_custom_event_handler(move |event, event_loop| {
                     let app = &mut runner_state;
                     match event.clone() {
-                        WInitEvent::NewEvents(cause) => app.new_events(event_loop, cause),
-                        WInitEvent::WindowEvent { window_id, event } => {
+                        WinitEvent::NewEvents(cause) => app.new_events(event_loop, cause),
+                        WinitEvent::WindowEvent { window_id, event } => {
                             app.window_event(event_loop, window_id, event)
                         }
-                        WInitEvent::DeviceEvent { device_id, event } => {
+                        WinitEvent::DeviceEvent { device_id, event } => {
                             app.device_event(event_loop, device_id, event)
                         }
-                        WInitEvent::UserEvent(_) => {}
-                        WInitEvent::Suspended => app.suspended(event_loop),
-                        WInitEvent::Resumed => app.resumed(event_loop),
-                        WInitEvent::AboutToWait => app.about_to_wait(event_loop),
-                        WInitEvent::LoopExiting => app.exiting(event_loop),
-                        WInitEvent::MemoryWarning => app.memory_warning(event_loop),
+                        WinitEvent::UserEvent(_) => {}
+                        WinitEvent::Suspended => app.suspended(event_loop),
+                        WinitEvent::Resumed => app.resumed(event_loop),
+                        WinitEvent::AboutToWait => app.about_to_wait(event_loop),
+                        WinitEvent::LoopExiting => app.exiting(event_loop),
+                        WinitEvent::MemoryWarning => app.memory_warning(event_loop),
                     }
                 });
 

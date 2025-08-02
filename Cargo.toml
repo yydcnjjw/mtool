@@ -16,6 +16,7 @@ members = [
 
   "modules/mtool-core",
   "modules/mtool-system",
+  "modules/mtool-rpc",
   "modules/mtool-storage",
   "modules/mtool-dioxus",
   "modules/mtool-cmdpal",
@@ -46,19 +47,19 @@ edition = "2021"
 # TODO: macro re-export support
 dioxus = { version = "0.7.0-alpha.3" }
 dioxus-desktop = { version = "0.7.0-alpha.3" }
+dioxus-asset-resolver = { version = "0.7.0-alpha.3" }
+
 bevy = { version = "0.16.1" }
-# bevy = { path = "/home/yydcnjjw/workspace/project/bevy" }
-# yew = { version = "*", features = ["csr"] }
-# yew-autoprops = "*"
-# yew-router = "*"
-# yew_icons = "*"
-# tauri = { version = "2.*" }
-# tauri-plugin = { version = "2.*", features = ["build"] }
 ouroboros = "*"
 clap = { version = "*", features = ["derive", "cargo", "string"] }
 sea-orm = "*"
 sea-orm-migration = "*"
 thiserror = "*"
+
+tonic = "*"
+tonic-prost = "*"
+prost = "*"
+tonic-prost-build = "*"
 
 # NOTE: platform custom features
 web-sys = "*"

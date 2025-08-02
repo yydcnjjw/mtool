@@ -1,2 +1,5 @@
 ((nil . ((rust-rustfmt-bin . "yew-fmt")
-         (rust-rustfmt-switches . '("--edition" "2021")))))
+         (rust-rustfmt-switches . '("--edition" "2021"))
+         (lsp-rust-all-features . t)
+         (lsp-enable-file-watchers . nil)
+         (lsp-rust-analyzer-check-all-targets . nil))))

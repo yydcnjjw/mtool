@@ -1,6 +1,6 @@
 use std::{any::type_name, fmt, sync::Arc};
 
-use anyhow::Context;
+use anyhow::{anyhow, Context};
 use async_trait::async_trait;
 use minject::{LocalProvide, Provide};
 
@@ -9,21 +9,32 @@ use crate::{
     provider::Injector,
 };
 
-use super::LocalInjector;
+use super::{LocalInjector, Res};
 
-pub struct Take<T>(Arc<T>);
+pub struct Take<T>(T);
 
 impl<T> Take<T> {
     pub fn new(val: T) -> Self {
-        Self(Arc::new(val))
-    }
-
-    pub fn take(self) -> Result<T, anyhow::Error> {
-        Arc::try_unwrap(self.0).map_err(|_| anyhow::anyhow!(format!("take {}", type_name::<T>())))
+        Self(val)
     }
 }
 
-impl<T> Clone for Take<T> {
+impl<T> Take<Arc<T>> {
+    pub fn take(self) -> Result<T, anyhow::Error> {
+        Arc::try_unwrap(self.0).map_err(|_| anyhow!(format!("take {}", type_name::<T>())))
+    }
+}
+
+impl<T> Take<Res<T>> {
+    pub fn take(self) -> Result<T, anyhow::Error> {
+        Res::try_unwrap(self.0).map_err(|_| anyhow!(format!("take {}", type_name::<T>())))
+    }
+}
+
+impl<T> Clone for Take<T>
+where
+    T: Clone,
+{
     fn clone(&self) -> Self {
         Self(self.0.clone())
     }

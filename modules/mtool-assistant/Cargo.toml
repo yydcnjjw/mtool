@@ -6,19 +6,42 @@ edition.workspace = true
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
+[features]
+bevy = [
+  "dep:bevy",
+  "dep:bevy-inspector-egui",
+  "dep:smooth-bevy-cameras"
+]
+
 [dependencies]
 mapp = { path = "../../crates/mapp" }
 
 mtool-core = { path = "../mtool-core" }
 mtool-dioxus = { path = "../mtool-dioxus" }
 mtool-cmdpal = { path = "../mtool-cmdpal" }
+mtool-system = { path = "../mtool-system" }
+mtool-rpc = { path = "../mtool-rpc" }
 
 dioxus = { workspace = true }
 dioxus-desktop = { workspace = true }
-bevy = { workspace = true, features = ["bevy_dev_tools"] }
-bevy-inspector-egui = "*"
+dioxus-asset-resolver = { workspace = true }
+
 open = "*"
-smooth-bevy-cameras = "*"
 
-# rodio = "*"
+# notify
+include_dir = "*"
+rodio = { version = "0.20", features = ["symphonia-all"] }
+chrono = "*"
 
+# rpc
+tonic = { workspace = true }
+prost = { workspace = true }
+tonic-prost = { workspace = true }
+
+# bevy
+bevy = { workspace = true, features = ["bevy_dev_tools"], optional = true }
+bevy-inspector-egui = { version = "*", optional = true }
+smooth-bevy-cameras = { version = "*", optional = true }
+
+[build-dependencies]
+tonic-prost-build = { workspace = true }
