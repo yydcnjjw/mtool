@@ -1,6 +1,9 @@
 use std::collections::HashMap;
 
-use mapp::{reqwest, serde::{Deserialize, Serialize}};
+use mapp::{
+    reqwest,
+    serde::{Deserialize, Serialize},
+};
 
 use super::RequestMeta;
 
@@ -114,6 +117,8 @@ impl RequestMeta for ChatRequest {
 
 #[cfg(test)]
 mod tests {
+    use mapp::serde_json;
+
     use super::*;
 
     #[test]

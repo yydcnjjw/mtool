@@ -17,6 +17,13 @@ chrono = "0.4"
 digest = "0.10"
 hmac = "0.12"
 sha2 = "0.10"
+md5 = "*"
+lazy_static = "*"
+
+# netease
+openssl = { version = "*", features = ["aws-lc"] }
+isahc = { version = "^1", features = ["cookies"] }
+urlqstring = "*"
 
 [dev-dependencies]
 test-log = { version = "*", features = ["trace"] }

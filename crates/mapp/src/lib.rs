@@ -6,11 +6,11 @@ mod app;
 mod error;
 mod label;
 mod module;
+mod platform;
 pub mod provider;
 mod schedule;
 mod trace;
 mod utils;
-mod platform;
 
 pub mod prelude {
     pub use crate::{
@@ -21,7 +21,7 @@ pub mod prelude {
             LocalModule as AppLocalModule, LocalModuleGroup, Module as AppModule, ModuleGroup,
         },
         provider::{Injector, LocalInjector, Res, Take, TakeOpt},
-        schedule::ScheduleGraph,
+        schedule::{ExitSignal, ScheduleGraph},
         trace::Tracing,
         utils::rand_string,
     };
@@ -31,8 +31,8 @@ pub mod prelude {
 }
 
 pub use app::{AppBuilder, LocalAppBuilder};
-pub use platform::*;
 pub use label::Label;
+pub use platform::*;
 pub use schedule::{CreateLocalOnceTaskDescriptor, CreateOnceTaskDescriptor};
 
 pub use anyhow;
@@ -65,5 +65,8 @@ pub use tracing;
 pub use tracing_appender;
 pub use tracing_subscriber;
 
-#[cfg(target_os = "android")]
-pub use android_activity;
+cfg_if::cfg_if! {
+    if #[cfg(target_os = "android")] {
+        pub use android_activity;
+    }
+}

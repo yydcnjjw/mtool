@@ -20,6 +20,8 @@ pub type Result<T> = std::result::Result<T, Error>;
 
 #[cfg(test)]
 mod tests {
+    use mapp::serde_json;
+
     use super::{api::HttpResponse, ocr::GeneralBasicOCRResponse};
 
     #[test]

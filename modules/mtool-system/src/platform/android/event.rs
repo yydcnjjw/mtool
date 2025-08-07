@@ -7,6 +7,7 @@ use mapp::{
     anyhow::{self, Context},
     once_cell::sync::OnceCell,
     prelude::*,
+    serde_json,
     tokio::sync::broadcast,
     tracing::{debug, info, warn},
 };
@@ -66,7 +67,7 @@ impl SystemEventSource {
 
     pub fn sender(&self) -> broadcast::Sender<SystenEvent> {
         self.source.clone()
-    }    
+    }
 }
 
 android_fn![
@@ -74,28 +75,26 @@ android_fn![
     system,
     NotificationListener,
     onNotificationPostedNative,
-    [JString, JString]
+    [JString]
 ];
 
 #[allow(non_snake_case)]
-pub unsafe fn onNotificationPostedNative(
-    mut jenv: JNIEnv,
-    _: JClass,
-    pkg_name: JString,
-    _channel_id: JString,
-) {
-    match jenv.get_string(&pkg_name) {
-        Ok(pkg_name) => {
-            if let Some(source) = SOURCE.get() {
-                if let Err(e) = source.send(SystenEvent::NotificationPosted(Notification {
-                    package_name: pkg_name.to_string_lossy().to_string(),
-                })) {
-                    warn!("Failed to send {}", e);
+pub unsafe fn onNotificationPostedNative(mut jenv: JNIEnv, _: JClass, data: JString) {
+    match jenv.get_string(&data) {
+        Ok(data) => match serde_json::from_slice(data.to_bytes()) {
+            Ok(notification) => {
+                if let Some(source) = SOURCE.get() {
+                    if let Err(e) = source.send(SystenEvent::NotificationPosted(notification)) {
+                        warn!("Failed to send {}", e);
+                    }
+                } else {
+                    warn!("Failed to get source");
                 }
-            } else {
-                warn!("Failed to get source");
             }
-        }
+            Err(e) => {
+                warn!("{:?}", e);
+            }
+        },
         Err(e) => {
             warn!("Failed to parse JString: {}", e);
         }

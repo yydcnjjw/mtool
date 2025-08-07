@@ -16,5 +16,15 @@ mtool-dioxus = { path = "../mtool-dioxus" }
 # [target.'cfg(target_os = "linux")'.dependencies]
 # zbus = { version = "4", default-features = false, features = ["tokio"] }
 
+[target.'cfg(target_os = "windows")'.dependencies]
+windows-future = { version = "0.2", features = [ "std" ] }
+
+[target.'cfg(target_os = "windows")'.dependencies.windows]
+workspace = true
+features = [
+  "Media_Control",
+  "Media_Playback"
+]
+
 [build-dependencies]
 tonic-prost-build = "*"

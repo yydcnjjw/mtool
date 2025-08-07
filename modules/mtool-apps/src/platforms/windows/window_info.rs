@@ -207,7 +207,7 @@ pub fn get_process_path(process_id: u32) -> Result<String, anyhow::Error> {
         .context(format!("OpenProcess: {}", process_id))?;
 
         let mut buffer = vec![0u16; 1024];
-        let size = K32GetModuleFileNameExW(process_handle, None, &mut buffer);
+        let size = K32GetModuleFileNameExW(Some(process_handle), None, &mut buffer);
         CloseHandle(process_handle).context("CloseHandle")?;
 
         if size == 0 {

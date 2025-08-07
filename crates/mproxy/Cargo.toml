@@ -14,7 +14,6 @@ mapp = { path = "../mapp" }
 
 protobuf = "*"
 weak-table = "*"
-quinn = { version = "*" }
 hyper = { version = "*", features = ["full"] }
 hyper-util = { version = "*", features = ["tokio"] }
 http-body-util = "*"
@@ -23,11 +22,22 @@ strum = { version = "*", features = ["derive"] }
 enum_dispatch = "*"
 domain_matcher = { git = "https://github.com/Qv2ray/DomainMatcher" }
 warp = "*"
-rustls = { version = "*", default-features = false, features = ["ring", "logging", "std", "tls12"] }
+rustls = { version = "*" }
 rustls-pemfile = "*"
 rustls-pki-types = "*"
-tokio-rustls = { version = "*", default-features = false, features = ["ring", "logging", "tls12"] }
+tokio-rustls = { version = "*" }
 tokio_kcp = "*"
+
+[dependencies.quinn]
+version = "*"
+default-features = false
+features = [
+  "log",
+  "rustls-aws-lc-rs",
+  "platform-verifier",
+  "runtime-tokio",
+  "bloom",  
+]
 
 [build-dependencies]
 protobuf-codegen = "*"

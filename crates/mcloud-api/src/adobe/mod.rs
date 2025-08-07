@@ -284,34 +284,8 @@ impl Client {
 
 #[cfg(test)]
 mod tests {
+    use mapp::tokio::fs::{self, File};
     use test_log::test;
-    use tokio::fs::{self, File};
-
-    use super::*;
-
-    #[test(tokio::test)]
-    async fn test_pdf_extract() -> Result<(), anyhow::Error> {
-        let cli = Client::new(
-            "https://pdf-services.adobe.io",
-            "541915cb51f14e2eb486939cbd538f99",
-            "p8e-cCRzoAa675zQyapr2xdAYFyRbvwnR5Nq",
-        )
-        .await?;
-
-        let pdf = fs::read("/mnt/d/book/art.pdf").await?;
-        let asset_id = cli.upload_asset("application/pdf", pdf).await?;
-
-        debug!("{asset_id}");
-
-        debug!("{:?}", cli.extract_pdf(asset_id).await?);
-
-        Ok(())
-    }
-}
-
-#[cfg(test)]
-mod tests {
-    use tokio::fs::File;
 
     use super::*;
 

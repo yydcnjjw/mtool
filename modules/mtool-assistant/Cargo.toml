@@ -7,6 +7,10 @@ edition.workspace = true
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [features]
+desktop = []
+
+mobile = []
+
 bevy = [
   "dep:bevy",
   "dep:bevy-inspector-egui",
@@ -21,9 +25,9 @@ mtool-dioxus = { path = "../mtool-dioxus" }
 mtool-cmdpal = { path = "../mtool-cmdpal" }
 mtool-system = { path = "../mtool-system" }
 mtool-rpc = { path = "../mtool-rpc" }
+mtool-storage = { path = "../mtool-storage" }
 
 dioxus = { workspace = true }
-dioxus-desktop = { workspace = true }
 dioxus-asset-resolver = { workspace = true }
 
 open = "*"
@@ -42,6 +46,20 @@ tonic-prost = { workspace = true }
 bevy = { workspace = true, features = ["bevy_dev_tools"], optional = true }
 bevy-inspector-egui = { version = "*", optional = true }
 smooth-bevy-cameras = { version = "*", optional = true }
+
+# music
+mcloud-api = { path = "../../crates/mcloud-api" }
+
+pyo3 = { workspace = true }
+
+[target.'cfg(target_os = "windows")'.dependencies.windows]
+workspace = true
+features = [
+  "Foundation_Collections",
+  "Media_Core",
+  "Media_Control",
+  "Media_Playback",
+]
 
 [build-dependencies]
 tonic-prost-build = { workspace = true }

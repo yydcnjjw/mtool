@@ -1,6 +1,6 @@
-use std::{convert::Infallible, ops::DerefMut};
+use std::{any::type_name, convert::Infallible, ops::DerefMut};
 
-use mapp::sync::Mutex;
+use mapp::{sync::Mutex, tracing::info};
 use tonic::{
     body::Body,
     server::NamedService,
@@ -30,6 +30,7 @@ impl Router {
         S::Response: axum::response::IntoResponse,
         S::Future: Send + 'static,
     {
+        info!("{}", type_name::<S>());
         self.builder.lock().add_service(svc);
         self
     }

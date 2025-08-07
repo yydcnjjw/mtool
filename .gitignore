@@ -28,3 +28,7 @@ local.properties
 
 # Github
 /.bugs/
+
+# Python uv
+/.venv/
+/dist/

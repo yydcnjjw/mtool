@@ -61,10 +61,12 @@ tonic-prost = "*"
 prost = "*"
 tonic-prost-build = "*"
 
+pyo3 = { version = "*", features = ["auto-initialize", "abi3-py313", "generate-import-lib"] }
+pyo3-async-runtimes = { version = "*", features = ["attributes", "tokio-runtime"] }
+
 # NOTE: platform custom features
 web-sys = "*"
-windows = "0.58"
-
+windows = "*"
 
 # Enable a small amount of optimization in the dev profile.
 [profile.dev]

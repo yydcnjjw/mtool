@@ -18,7 +18,7 @@ use crate::app::{App, LocalApp};
 use super::{
     constructor::{Construct, IntoConstructor},
     BoxedAny, ConstructOnce, IntoLocalConstructor, IntoLocalOnceConstructor, IntoOnceConstructor,
-    LocalBoxedAny, LocalConstruct, LocalConstructOnce, Res, Take,
+    LocalBoxedAny, LocalConstruct, LocalConstructOnce, Res,
 };
 
 type BoxedConstruct = Box<dyn Construct<Injector> + Send + Sync>;
