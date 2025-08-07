@@ -1,7 +1,8 @@
 [patch.crates-io]
-dioxus = { path = "/home/yydcnjjw/workspace/project/dioxus/packages/dioxus" }
-dioxus-desktop = { path = "/home/yydcnjjw/workspace/project/dioxus/packages/desktop" }
-wry = { path = "/home/yydcnjjw/workspace/project/wry" }
+# dioxus = { path = "/home/yydcnjjw/workspace/project/dioxus/packages/dioxus" }
+# dioxus-desktop = { path = "/home/yydcnjjw/workspace/project/dioxus/packages/desktop" }
+# dioxus-asset-resolver = { path = "/home/yydcnjjw/workspace/project/dioxus/packages/asset-resolver" }
+# wry = { path = "/home/yydcnjjw/workspace/project/wry" }
 
 # dioxus-cli-config = { git = "https://github.com/yydcnjjw/dioxus.git", branch = "winit-bak" }
 # dioxus-config-macro = { git = "https://github.com/yydcnjjw/dioxus.git", branch = "winit-bak" }
@@ -13,7 +14,6 @@ wry = { path = "/home/yydcnjjw/workspace/project/wry" }
 # dioxus-core = { git = "https://github.com/yydcnjjw/dioxus.git", branch = "winit-bak" }
 # dioxus-rsx = { git = "https://github.com/yydcnjjw/dioxus.git", branch = "winit-bak" }
 # dioxus-core-macro = { git = "https://github.com/yydcnjjw/dioxus.git", branch = "winit-bak" }
-# dioxus-asset-resolver = { git = "https://github.com/yydcnjjw/dioxus.git", branch = "winit-bak" }
 # dioxus-devtools-types = { git = "https://github.com/yydcnjjw/dioxus.git", branch = "winit-bak" }
 # dioxus-signals = { git = "https://github.com/yydcnjjw/dioxus.git", branch = "winit-bak" }
 # dioxus-devtools = { git = "https://github.com/yydcnjjw/dioxus.git", branch = "winit-bak" }
@@ -24,7 +24,7 @@ wry = { path = "/home/yydcnjjw/workspace/project/wry" }
 # dioxus-document = { git = "https://github.com/yydcnjjw/dioxus.git", branch = "winit-bak" }
 # dioxus-history = { git = "https://github.com/yydcnjjw/dioxus.git", branch = "winit-bak" }
 # dioxus-interpreter-js = { git = "https://github.com/yydcnjjw/dioxus.git", branch = "winit-bak" }
-# dioxus-desktop = { git = "https://github.com/yydcnjjw/dioxus.git", branch = "winit-bak" }
+
 # dioxus-fullstack-protocol = { git = "https://github.com/yydcnjjw/dioxus.git", branch = "winit-bak" }
 # dioxus-fullstack-hooks = { git = "https://github.com/yydcnjjw/dioxus.git", branch = "winit-bak" }
 # dioxus-router-macro = { git = "https://github.com/yydcnjjw/dioxus.git", branch = "winit-bak" }
@@ -38,7 +38,10 @@ wry = { path = "/home/yydcnjjw/workspace/project/wry" }
 # manganis-core = { git = "https://github.com/yydcnjjw/dioxus.git", branch = "winit-bak" }
 # manganis-macro = { git = "https://github.com/yydcnjjw/dioxus.git", branch = "winit-bak" }
 # manganis = { git = "https://github.com/yydcnjjw/dioxus.git", branch = "winit-bak" }
-# dioxus = { git = "https://github.com/yydcnjjw/dioxus.git", branch = "winit-bak" }
+
+dioxus = { git = "https://github.com/yydcnjjw/dioxus.git", branch = "winit-bak" }
+dioxus-desktop = { git = "https://github.com/yydcnjjw/dioxus.git", branch = "winit-bak" }
+dioxus-asset-resolver = { git = "https://github.com/yydcnjjw/dioxus.git", branch = "winit-bak" }
 
 # depinfo
 # dioxus-autofmt

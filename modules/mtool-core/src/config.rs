@@ -12,7 +12,7 @@ use crate::CmdlineStage;
 
 use super::Cmdline;
 
-pub struct Module;
+pub(crate) struct Module;
 
 #[async_trait]
 impl AppModule for Module {

@@ -1,7 +1,7 @@
 use bevy::prelude::*;
 use mapp::{anyhow, sync::Mutex};
 
-pub struct BevyAppBuilderInner {
+struct BevyAppBuilderInner {
     setup_hooks: Vec<Box<dyn (FnOnce(&mut App) -> Result<(), anyhow::Error>) + Send>>,
 }
 

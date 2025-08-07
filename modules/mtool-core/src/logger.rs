@@ -111,7 +111,7 @@ async fn init(
     tracing.set_layer(
         fmt::layer()
             .with_ansi(false)
-            .with_timer(Res::try_unwrap(time.take()?)?)
+            .with_timer(time.take()?)
             .with_writer(writer)
             .with_thread_ids(true)
             .with_thread_names(true),

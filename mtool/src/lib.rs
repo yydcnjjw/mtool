@@ -5,15 +5,16 @@ pub fn run(mut builder: mapp::AppBuilder) {
     builder
         .add_module(mtool_core::module())
         .add_module(mtool_system::module())
+        .add_module(mtool_rpc::module())
         .add_module(mtool_storage::module())
         .add_module(mtool_dioxus::module())
         .add_module(mtool_cmdpal::module())
-        // .add_module(mtool_assistant::module())
-        // .add_module(mtool_proxy::module())
-        ;
+        .add_module(mtool_assistant::module());
 
     #[cfg(any(target_os = "linux", target_os = "windows"))]
-    builder.add_module(mtool_apps::module());
+    builder
+        .add_module(mtool_proxy::module())
+        .add_module(mtool_apps::module());
 
     // .add_module(mtool_pdf::module())
     // .add_module(mtool_interactive::module())

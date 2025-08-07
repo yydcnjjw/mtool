@@ -30,15 +30,7 @@ async fn dioxus_setup(
 
     add_route!(router, "cmdpal", components::CommandPaletteView);
 
+    #[cfg(any(target_os = "windows", target_os = "linux"))]
     router.route("cmdpal");
     Ok(())
-}
-
-#[component]
-pub fn Test() -> Element {
-    rsx! {
-        div {
-            "Hello World!"
-        }
-    }
 }

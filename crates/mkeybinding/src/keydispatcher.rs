@@ -89,8 +89,6 @@ where
 mod tests {
     use std::sync::Arc;
 
-    use tokio::sync::RwLock;
-
     use crate::kbd::ToKeySequence;
 
     use super::*;

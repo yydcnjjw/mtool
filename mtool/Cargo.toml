@@ -13,17 +13,22 @@ mobile = []
 
 desktop = []
 
-dynamic_linking = [ "mtool-dioxus/dynamic_linking" ]
+bevy = [
+  "mtool-dioxus/bevy",
+  "mtool-assistant/bevy"
+]
+bevy_dynamic_linking = [ "mtool-dioxus/bevy_dynamic_linking" ]
 
 [dependencies]
 mapp = { path = "../crates/mapp" }
 mtool-core = { path = "../modules/mtool-core" }
 mtool-system = { path = "../modules/mtool-system" }
+mtool-rpc = { path = "../modules/mtool-rpc" }
 mtool-storage = { path = "../modules/mtool-storage" }
 mtool-dioxus = { path = "../modules/mtool-dioxus" }
 mtool-cmdpal = { path = "../modules/mtool-cmdpal" }
 # mtool-pdf = { path = "../modules/mtool-pdf" }
-# mtool-assistant = { path = "../modules/mtool-assistant" }
+mtool-assistant = { path = "../modules/mtool-assistant" }
 mtool-proxy = { path = "../modules/mtool-proxy" }
 # mtool-wgui = { path = "../modules/mtool-wgui" }
 # mtool-main-window = { path = "../modules/mtool-main-window" }

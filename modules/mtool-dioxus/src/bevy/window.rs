@@ -1,5 +1,5 @@
 use bevy::{prelude::*, winit::WinitWindows};
-use dioxus_desktop::winit::window::Window as WInitWindow;
+use dioxus_desktop::winit::window::Window as WinitWindow;
 use mapp::{
     anyhow,
     once_cell::sync::OnceCell,
@@ -15,14 +15,14 @@ static WINDOW_SENDER: OnceCell<mpsc::UnboundedSender<CreateWindowData>> = OnceCe
 #[derive(Debug)]
 pub struct CreateWindowData {
     pub window_attributes: Window,
-    pub window_tx: oneshot::Sender<(Arc<WInitWindow>, Entity)>,
+    pub window_tx: oneshot::Sender<(Arc<WinitWindow>, Entity)>,
 }
 
 pub fn set_window_sender(tx: mpsc::UnboundedSender<CreateWindowData>) {
     _ = WINDOW_SENDER.set(tx);
 }
 
-pub async fn create_window(window: Window) -> Result<(Arc<WInitWindow>, Entity), anyhow::Error> {
+pub async fn create_window(window: Window) -> Result<(Arc<WinitWindow>, Entity), anyhow::Error> {
     let (tx, rx) = oneshot::channel();
 
     let sender = match WINDOW_SENDER.get() {
@@ -71,7 +71,7 @@ pub(super) fn receive_create_window_event(
 #[derive(Component)]
 pub struct WindowSender {
     window_id: Entity,
-    tx: Option<oneshot::Sender<(Arc<WInitWindow>, Entity)>>,
+    tx: Option<oneshot::Sender<(Arc<WinitWindow>, Entity)>>,
 }
 
 pub(super) fn try_send_window(

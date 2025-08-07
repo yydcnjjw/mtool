@@ -9,7 +9,15 @@ edition.workspace = true
 [dependencies]
 mapp = { path = "../../crates/mapp" }
 
+# cmdline
 clap = { workspace = true }
 
+# config
 dirs = "*"
+
+# logger
 time = { version = "0.3.20", features = ["formatting"] }
+
+# rpc
+tonic = "*"
+prost = "*"

@@ -4,5 +4,5 @@ mod module;
 mod window;
 
 pub use builder::*;
-pub use module::Module;
+pub(crate) use module::*;
 pub use window::*;

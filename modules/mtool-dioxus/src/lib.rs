@@ -1,10 +1,14 @@
-// pub mod bevy;
+#[cfg(feature = "bevy")]
+pub mod bevy;
 mod builder;
 pub mod components;
+mod context;
 mod custom_protocol;
 pub mod hooks;
 mod keybinding;
+mod launch;
 mod main_view;
+mod message;
 mod module;
 mod router;
 mod window;
@@ -12,6 +16,7 @@ mod window;
 pub mod prelude {
     pub use crate::{
         builder::DioxusBuilder,
+        context::*,
         hooks::*,
         keybinding::*,
         module::DioxusStage,
