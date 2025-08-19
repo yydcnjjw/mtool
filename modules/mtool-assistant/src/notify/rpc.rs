@@ -1,32 +1,34 @@
 use mapp::{anyhow, prelude::*, serde_json};
-use mtool_system::Notification;
-use pb::mtool_assistant_server::MtoolAssistantServer;
+use pb::notify_server::NotifyServer;
 use tonic::{Request, Response, Status};
 
 pub mod pb {
-    tonic::include_proto!("mtool_assistant");
+    tonic::include_proto!("mtool_assistant.notify");
 }
 
-use crate::notify::NotifyContext;
+pub(crate) use pb::notify_client::NotifyClient;
+pub(crate) use pb::*;
+
+use super::receiver::NotifyReceiver;
 
 pub struct RpcService {
-    ctx: Res<NotifyContext>,
+    receiver: Res<NotifyReceiver>,
 }
 
 impl RpcService {
-    pub fn server(ctx: Res<NotifyContext>) -> Result<MtoolAssistantServer<Self>, anyhow::Error> {
-        Ok(MtoolAssistantServer::new(Self { ctx }))
+    pub fn server(ctx: Res<NotifyReceiver>) -> Result<NotifyServer<Self>, anyhow::Error> {
+        Ok(NotifyServer::new(Self { receiver: ctx }))
     }
 }
 
 #[tonic::async_trait]
-impl pb::mtool_assistant_server::MtoolAssistant for RpcService {
+impl pb::notify_server::Notify for RpcService {
     async fn post_notification(
         &self,
         request: Request<pb::Notification>,
     ) -> Result<Response<pb::Empty>, Status> {
-        NotifyContext::handle_notification_posted(
-            self.ctx.clone(),
+        NotifyReceiver::handle_notification_posted(
+            self.receiver.clone(),
             serde_json::from_slice(&request.into_inner().data)
                 .map_err(|e| Status::invalid_argument(e.to_string()))?,
         )

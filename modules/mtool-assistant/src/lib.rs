@@ -4,9 +4,9 @@ mod components;
 mod config;
 mod emacs;
 mod module;
-mod music;
+mod media;
 mod notify;
-mod rpc;
+mod context;
 
 pub(crate) use config::*;
 pub use module::module;

@@ -1,0 +1,42 @@
+syntax = "proto3";
+
+package mtool_assistant.media;
+
+message Notification {
+  bytes data = 1;
+}
+
+message Empty {
+
+}
+
+message Volume {
+  double value = 1;
+}
+
+message MediaItem {
+  string url = 1;
+}
+
+message MediaItemList {
+  repeated MediaItem items = 1;
+}
+
+message MediaMetadata {
+  string id = 1;
+}
+
+message PlayerEvent {
+  oneof event {
+    MediaMetadata mediaMetadataChanged = 1;
+  }
+}
+
+service MediaPlayer {
+  rpc Play(Empty) returns (Empty);
+  rpc Pause(Empty) returns (Empty);
+  rpc GetVolume(Empty) returns (Volume);
+  rpc SetVolume(Volume) returns (Empty);
+  rpc AddMediaItems(MediaItemList) returns (Empty);
+  rpc Listen(Empty) returns (stream PlayerEvent);
+}

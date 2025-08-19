@@ -1,49 +1,22 @@
-use std::error::Error;
+use dioxus::prelude::*;
+use mapp::prelude::*;
+use mtool_dioxus::{components::WindowView, desktop::window};
 
-use dioxus::{prelude::*, CapturedError};
-use mapp::{
-    anyhow::{self, Context},
-    prelude::*,
-    tokio,
-    tracing::{info, warn},
-};
-use mtool_dioxus::{components::WindowView, desktop::window, prelude::DioxusContext};
+use crate::context::{AssistantContext, AssistantMode};
 
-use crate::{
-    music::{MediaPlayer, Netease, Playlist},
-    notify::{NotifyContext, NotifyMode},
-};
+use super::MediaPlayerControl;
 
 #[component]
 pub fn MainView() -> Element {
-    let notify_ctx: Res<NotifyContext> = use_context();
-    use_hook(move || {
-        window().set_visible(true);
-        window().set_transparent(false);
-        window().set_decorations(true);
-        #[cfg(target_os = "windows")]
-        {
-            use mtool_dioxus::desktop::winit::platform::windows::WindowExtWindows;
-            window().set_skip_taskbar(false);
-        }
-    });
+    let ctx: Res<AssistantContext> = use_context();
 
-    let notify_mode = notify_ctx.new_notify_mode_signal();
+    init_window();
 
-    let mut disabled = use_signal(|| false);
+    let mode = ctx.mode_change_signal();
 
     let onclick = use_callback({
         move |_: Event<MouseData>| {
-            to_owned![notify_ctx];
-            spawn(async move {
-                disabled.set(true);
-                if let Err(e) =
-                    NotifyContext::toggle_notify_mode_with_sync(notify_ctx.clone()).await
-                {
-                    warn!("{:?}", e);
-                };
-                disabled.set(false);
-            });
+            ctx.toggle_mode();
         }
     });
 
@@ -53,12 +26,11 @@ pub fn MainView() -> Element {
                 class: "flex flex-col items-center h-screen",
                 button {
                     class: "btn btn-wide btn-xl",
-                    disabled,
                     onclick,
                     {
-                        match notify_mode() {
-                            NotifyMode::Desktop => "Desktop",
-                            NotifyMode::RemoteDesktop => "Remote Dekstop",
+                        match mode() {
+                            AssistantMode::Desktop => "Desktop",
+                            AssistantMode::RemoteDesktop => "Remote Dekstop",
                         }
                     }
                 }
@@ -74,89 +46,16 @@ pub fn MainView() -> Element {
     }
 }
 
-#[component]
-fn MediaPlayerControl() -> Element {
-    let dioxus_context: Res<DioxusContext> = use_context();
-
-    let player = use_resource(move || {
-        to_owned![dioxus_context];
-        async move { MediaPlayer::new(dioxus_context).await.unwrap() }
-    })
-    .suspend()?;
-
-    {
-        to_owned![player];
-        let result = use_resource(move || {
-            to_owned![player];
-            async move {
-                match tokio::task::spawn_blocking(move || {
-                    let netease = Netease::new();
-                    Ok::<_, anyhow::Error>(vec![
-                        netease.get_playlist("71385702".into())?,
-                        netease.get_playlist("60131".into())?,
-                        netease.get_playlist("3001835560".into())?,
-                    ])
-                })
-                .await
-                .unwrap()
-                {
-                    Ok(playlists) => {
-                        if let Err(e) = playlists
-                            .into_iter()
-                            .try_for_each(|playlist| player().add_playlist(playlist))
-                        {
-                            warn!("{e:?}");
-                        }
-                    }
-                    Err(e) => {
-                        warn!("{e:?}");
-                    }
-                }
-            }
-        })
-        .suspend()?;
-    }
-
-    rsx! {
-        div {
-            class: "flex flex-row",
-            button {
-                class: "btn",
-                onclick: {
-                    to_owned![player];
-                    move |_| {
-                        info!("play");
-                        player().play().unwrap()
-                    }
-                },
-                "play"
-            },
-            button {
-                class: "btn",
-                onclick: {
-                    to_owned![player];
-                    move |_| {
-                        info!("pause");
-                        player().pause().unwrap()
-                    }
-                },
-                "pause"
-            },
-            input {
-                class: "range",
-                r#type: "range",
-                min: "0",
-                max: "100",
-                value: format!("{}", player().volume().unwrap()),
-                oninput: {
-                    to_owned![player];
-                    move|ev| {
-                        if let Ok(value) = ev.value().parse::<usize>() {
-                            player().set_volume(value).unwrap()
-                        }
-                    }
-                }
-            }
+fn init_window() {
+    use_hook(move || {
+        let win = window();
+        win.set_visible(true);
+        win.set_transparent(false);
+        win.set_decorations(true);
+        #[cfg(target_os = "windows")]
+        {
+            use mtool_dioxus::desktop::winit::platform::windows::WindowExtWindows;
+            win.set_skip_taskbar(false);
         }
-    }
+    });
 }

@@ -1,5 +1,9 @@
 use mapp::cfg_if::cfg_if;
 
+mod netease;
+mod player;
+mod remote;
+
 cfg_if! {
     if #[cfg(target_os = "windows")] {
         mod windows;
@@ -9,3 +13,7 @@ cfg_if! {
         pub use android::*;
     }
 }
+
+pub use netease::*;
+pub use player::*;
+pub use remote::*;
