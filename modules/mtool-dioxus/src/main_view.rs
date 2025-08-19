@@ -1,8 +1,6 @@
 use dioxus::{prelude::*, CapturedError};
 use dioxus_desktop::{
-    use_global_shortcut, use_wry_event_handler,
-    winit::event::Event,
-    HotKeyState, UserWindowEvent,
+    use_global_shortcut, use_wry_event_handler, winit::event::Event, HotKeyState, UserWindowEvent,
 };
 use mapp::{
     anyhow::{self, anyhow},
@@ -10,17 +8,8 @@ use mapp::{
 };
 
 use crate::{
-    builder::GlobalHotkeys, keybinding::Keybinding, router::Route, window::use_window_factory,
+    builder::GlobalHotkeys, components::WindowView, router::Route, window::use_window_factory,
 };
-
-fn provide_keybinding() -> Keybinding {
-    let keybinding = Keybinding::new();
-    {
-        let keybinding = keybinding.clone();
-        spawn(async move { keybinding.run_loop().await });
-    }
-    keybinding
-}
 
 fn init_global_hotkey() -> Result<(), anyhow::Error> {
     let hotkeys: GlobalHotkeys = use_context();
@@ -57,12 +46,6 @@ fn init_tray() {
 }
 
 pub fn main_view() -> Element {
-    let keybinding = use_context_provider(provide_keybinding);
-
-    let onkeydown = move |e| {
-        keybinding.handle_web_key_down(e);
-    };
-
     init_global_hotkey().map_err(|e| RenderError::Aborted(CapturedError::from_display(e)))?;
 
     use_window_factory();
@@ -71,11 +54,7 @@ pub fn main_view() -> Element {
     init_tray();
 
     rsx! {
-        document::Stylesheet {
-            href: asset!("/assets/tailwind.css")
-        },
-        body {
-            onkeydown,
+        WindowView {
             Router::<Route> {}
         }
     }

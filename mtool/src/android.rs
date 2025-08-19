@@ -1,4 +1,20 @@
-use mapp::{android_activity::AndroidApp, anyhow, prelude::*};
+use std::{
+    env,
+    ffi::CStr,
+    fs::{self, File},
+    io::{self, Read},
+    os,
+    path::PathBuf,
+};
+
+use mapp::{
+    android_activity::AndroidApp,
+    anyhow::{self, Context},
+    itertools::Itertools,
+    prelude::*,
+    tracing::{info, warn},
+};
+use mtool_dioxus::desktop::wry::prelude::ndk::asset::{AssetDir, AssetManager};
 
 use crate::run;
 
@@ -15,10 +31,10 @@ impl AppModule for Module {
 }
 
 #[no_mangle]
-fn android_main(android_app: AndroidApp) {
+fn android_main(app: AndroidApp) {
     let mut builder = mapp::AppBuilder::new().unwrap();
 
-    builder.add_module(Module { android_app });
+    builder.add_module(Module { android_app: app });
 
     run(builder);
 }

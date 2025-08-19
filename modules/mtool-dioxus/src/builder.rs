@@ -7,6 +7,15 @@ pub type GlobalHotkeys =
     Arc<HashMap<String, Arc<dyn Fn() -> Result<(), anyhow::Error> + Send + Sync>>>;
 
 struct DioxusBuilderInner {
+    dioxus_hooks: Vec<
+        Box<
+            dyn FnOnce(
+                    dioxus_desktop::Config,
+                    LaunchBuilder,
+                ) -> (dioxus_desktop::Config, LaunchBuilder)
+                + Send,
+        >,
+    >,
     launch_builder_hooks: Vec<Box<dyn FnOnce(LaunchBuilder) -> LaunchBuilder + Send>>,
     config_builder_hooks:
         Vec<Box<dyn FnOnce(dioxus_desktop::Config) -> dioxus_desktop::Config + Send>>,
@@ -17,6 +26,7 @@ struct DioxusBuilderInner {
 impl DioxusBuilderInner {
     fn new() -> Self {
         Self {
+            dioxus_hooks: Vec::new(),
             launch_builder_hooks: Vec::new(),
             config_builder_hooks: Vec::new(),
             global_hotkeys: HashMap::new(),
@@ -45,6 +55,16 @@ impl DioxusBuilderInner {
         self
     }
 
+    fn with_dioxus<F>(&mut self, f: F) -> &mut Self
+    where
+        F: FnOnce(dioxus_desktop::Config, LaunchBuilder) -> (dioxus_desktop::Config, LaunchBuilder)
+            + Send
+            + 'static,
+    {
+        self.dioxus_hooks.push(Box::new(f));
+        self
+    }
+
     fn add_global_hotkey<T, Callback>(&mut self, hotkey: T, cb: Callback) -> &mut Self
     where
         T: ToString,
@@ -64,9 +84,12 @@ impl DioxusBuilderInner {
         }
 
         let mut launch_builder = LaunchBuilder::custom(self.launcher);
-
         for hook in self.launch_builder_hooks {
             launch_builder = hook(launch_builder)
+        }
+
+        for hook in self.dioxus_hooks {
+            (config, launch_builder) = hook(config, launch_builder)
         }
 
         launch_builder = launch_builder.with_context(Arc::new(self.global_hotkeys));
@@ -88,6 +111,16 @@ impl DioxusBuilder {
 
     pub fn with_launcher(&self, launch_fn: LaunchFn) -> &Self {
         self.inner.lock().with_launcher(launch_fn);
+        self
+    }
+
+    pub fn with_dioxus<F>(&self, f: F) -> &Self
+    where
+        F: FnOnce(dioxus_desktop::Config, LaunchBuilder) -> (dioxus_desktop::Config, LaunchBuilder)
+            + Send
+            + 'static,
+    {
+        self.inner.lock().with_dioxus(f);
         self
     }
 

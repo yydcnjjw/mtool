@@ -7,11 +7,29 @@ edition.workspace = true
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [features]
-default = [ "desktop" ]
+default = [ "mobile" ]
 
-mobile = []
+graphic = [
+  "dep:mtool-dioxus",
+  "dep:mtool-system",
+]
 
-desktop = []
+mobile = [
+  "graphic",
+  "dep:mtool-assistant",
+  "mtool-assistant/mobile",
+]
+
+desktop = [
+  "graphic",
+  "dep:mtool-cmdpal",
+  "dep:mtool-assistant",
+  "mtool-assistant/desktop",
+  "dep:mtool-proxy",
+  "dep:mtool-apps",
+]
+
+server = []
 
 bevy = [
   "mtool-dioxus/bevy",
@@ -22,30 +40,15 @@ bevy_dynamic_linking = [ "mtool-dioxus/bevy_dynamic_linking" ]
 [dependencies]
 mapp = { path = "../crates/mapp" }
 mtool-core = { path = "../modules/mtool-core" }
-mtool-system = { path = "../modules/mtool-system" }
 mtool-rpc = { path = "../modules/mtool-rpc" }
 mtool-storage = { path = "../modules/mtool-storage" }
-mtool-dioxus = { path = "../modules/mtool-dioxus" }
-mtool-cmdpal = { path = "../modules/mtool-cmdpal" }
-# mtool-pdf = { path = "../modules/mtool-pdf" }
-mtool-assistant = { path = "../modules/mtool-assistant" }
-mtool-proxy = { path = "../modules/mtool-proxy" }
-# mtool-wgui = { path = "../modules/mtool-wgui" }
-# mtool-main-window = { path = "../modules/mtool-main-window" }
-# mtool-cmder = { path = "../modules/mtool-cmder" }
-# mtool-translate = { path = "../modules/mtool-translate" }
-# mtool-dict = { path = "../modules/mtool-dict" }
-# mtool-interactive = { path = "../modules/mtool-interactive" }
-# mtool-proxy = { path = "../modules/mtool-proxy" }
-# mtool-toast = { path = "../modules/mtool-toast" }
-# mtool-ai = { path = "../modules/mtool-ai" }
 
-# mtool-storage = { path = "../modules/mtool-storage" }
-
-# tauri = { workspace = true }
-
-[target.'cfg(any(target_os = "linux", target_os = "windows"))'.dependencies]
-mtool-apps = { path = "../modules/mtool-apps" }
+mtool-dioxus = { path = "../modules/mtool-dioxus", optional = true }
+mtool-system = { path = "../modules/mtool-system", optional = true }
+mtool-cmdpal = { path = "../modules/mtool-cmdpal", optional = true }
+mtool-assistant = { path = "../modules/mtool-assistant", optional = true }
+mtool-proxy = { path = "../modules/mtool-proxy", optional = true }
+mtool-apps = { path = "../modules/mtool-apps", optional = true }
 
 [build-dependencies]
-# tauri-build = { version = "*", features = ["codegen"] }
+

@@ -217,7 +217,7 @@ impl VersionInfoInternal {
             unsafe {
                 GetFileVersionInfoW(
                     PCWSTR(file_name.as_ptr()),
-                    0,
+                    None,
                     size,
                     data.as_mut_ptr().cast())
             }?;

@@ -7,11 +7,11 @@ use minject::{InjectOnce, Provide};
 use once_cell::sync::OnceCell;
 use parking_lot::RwLock;
 use petgraph::{graph::NodeIndex, Direction, Graph};
-use tokio::sync::Mutex;
-use tracing::{debug, warn};
+use tokio::{signal::ctrl_c, sync::Mutex};
+use tracing::{debug, info, warn};
 
 use super::{CondLoad, FnCondLoad, IntoOnceTaskDescriptor, OnceTaskDescriptor, ScheduleGraph};
-use crate::{app::App, label::Label};
+use crate::{app::App, label::Label, provider::Res};
 
 enum Node {
     OnceTask(OnceTaskNode),
@@ -193,7 +193,7 @@ impl ScheduleInner {
         })
     }
 
-    pub async fn run(mut self, app: &App) -> Result<(), anyhow::Error> {
+    pub async fn run(self, app: &App) -> Result<(), anyhow::Error> {
         let root_stage = self.get_stage(ScheduleGraph::Root).unwrap();
         let neighbors = self
             .graph
@@ -369,17 +369,56 @@ impl Schedule {
 
     pub(crate) async fn run(mut self, app: &App) -> Result<(), anyhow::Error> {
         let tasks_schedule = mem::take(self.inner.write().deref_mut());
-        let app = app.clone();
-        let tasks_loop = tokio::spawn(async move {
-            if let Err(e) = ScheduleInner::run(tasks_schedule, &app).await {
-                warn!("{:?}", e);
-            }
-        });
+        let tasks_loop = {
+            let app = app.clone();
+            tokio::spawn(async move {
+                if let Err(e) = ScheduleInner::run(tasks_schedule, &app).await {
+                    warn!("{:?}", e);
+                    ExitSignal::send(&app);
+                }
+            })
+        };
+
+        {
+            let app = app.clone();
+            tokio::spawn(async move {
+                match ctrl_c().await {
+                    Ok(_) => {
+                        ExitSignal::send(&app);
+                    }
+                    Err(e) => {
+                        warn!("{:?}", e);
+                    }
+                }
+            });
+        }
 
         if let Some(thread_loop) = self.main_thread_loop.take() {
-            tokio::task::block_in_place(move || thread_loop())?;
+            tokio::task::block_in_place(move || -> Result<(), anyhow::Error> {
+                thread_loop()?;
+                info!("main loop exited!");
+                Ok(())
+            })?;
         }
 
         Ok(tasks_loop.await?)
+    }
+}
+
+pub struct ExitSignal(Box<dyn FnOnce() + Send + Sync>);
+
+impl ExitSignal {
+    pub fn new<F>(f: F) -> Self
+    where
+        F: FnOnce() + Send + Sync + 'static,
+    {
+        Self(Box::new(f))
+    }
+
+    fn send(app: &App) {
+        if let Some(signal) = app.injector().remove::<Res<ExitSignal>>() {
+            info!("send exit signal");
+            _ = Res::try_unwrap(signal).and_then(|signal| Ok(signal.0()));
+        }
     }
 }

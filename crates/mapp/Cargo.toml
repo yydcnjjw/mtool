@@ -57,7 +57,7 @@ scopeguard = "*"
 [target.'cfg(not(target_family = "wasm"))'.dependencies]
 tokio = { version = "*", features = ["full"] }
 tracing-subscriber = { version = "*", features = ["env-filter", "time", "local-time"] }
-reqwest = { version = "*", features = ["blocking", "json", "stream", "rustls-tls"] }
+reqwest = { version = "*", default-features = false,  features = [ "charset", "http2", "system-proxy", "blocking", "json", "stream", "cookies" ] }
 tokio-stream = { version = "*", features = ["full"] }
 notify-rust = "*"
 

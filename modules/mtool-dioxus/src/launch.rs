@@ -39,12 +39,7 @@ pub(crate) async fn launch(
         info!("main thread loop is running");
 
         builder
-            .with_launch_builder(move |builder| {
-                builder
-                    .with_context((*router).clone())
-                    .with_context((*kvstore).clone())
-            })
-            .with_config_builder(move |cfg| {
+            .with_dioxus(move |cfg, builder| {
                 use dioxus_desktop::winit::event_loop::EventLoop;
 
                 #[cfg(target_os = "windows")]
@@ -88,8 +83,19 @@ pub(crate) async fn launch(
                     android_app,
                 );
 
-                if let Err(e) = context_tx.send(Res::new(context)) {
+                let context = Res::new(context);
+
+                if let Err(_) = context_tx.send(context.clone()) {
                     warn!("Failed to send DioxusContext");
+                }
+
+                {
+                    let event_loop = event_loop.create_proxy();
+                    injector.insert(Res::new(ExitSignal::new(move || {
+                        if let Err(e) = event_loop.send_event(UserWindowEvent::Shutdown) {
+                            warn!("{:?}", e);
+                        }
+                    })));
                 }
 
                 let mut window_attrs = WindowAttributes::default()
@@ -101,16 +107,22 @@ pub(crate) async fn launch(
                     window_attrs = window_attrs.with_skip_taskbar(true);
                 }
 
-                cfg.with_data_directory(data_dir)
-                    .with_asynchronous_custom_protocol("mfile", file_handler)
-                    .with_event_loop(event_loop)
-                    .with_window(window_attrs)
-                    .with_custom_event_handler(move |event, event_loop| match event {
-                        WinitEvent::UserEvent(UserWindowEvent::WakeUp) => {
-                            event_loop_context.pool_events(event_loop);
-                        }
-                        _ => {}
-                    })
+                (
+                    cfg.with_data_directory(data_dir)
+                        .with_asynchronous_custom_protocol("mfile", file_handler)
+                        .with_event_loop(event_loop)
+                        .with_window(window_attrs)
+                        .with_custom_event_handler(move |event, event_loop| match event {
+                            WinitEvent::UserEvent(UserWindowEvent::WakeUp) => {
+                                event_loop_context.pool_events(event_loop);
+                            }
+                            _ => {}
+                        }),
+                    builder
+                        .with_context((*router).clone())
+                        .with_context((*kvstore).clone())
+                        .with_context(context),
+                )
             })
             .launch(main_view);
         Ok(())

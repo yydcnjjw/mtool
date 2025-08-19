@@ -1,14 +1,14 @@
 use dioxus::prelude::*;
-use dioxus_desktop::{winit::window::Window, WindowAttributes};
+use dioxus_desktop::{winit::window::Window, Config};
 use mapp::{
     anyhow,
     once_cell::sync::OnceCell,
     tokio::{self, sync::mpsc},
     tracing::warn,
 };
-use std::sync::Arc;
+use std::{any::Any, sync::Arc};
 
-static SENDER: OnceCell<mpsc::UnboundedSender<AttachWebview>> = OnceCell::new();
+static SENDER: OnceCell<mpsc::UnboundedSender<WinitWebviewBuilder>> = OnceCell::new();
 
 pub fn use_window_factory() {
     use_hook(move || {
@@ -19,42 +19,67 @@ pub fn use_window_factory() {
                 warn!("{:?}", e);
             }
 
-            while let Some(AttachWebview { window, app }) = rx.recv().await {
-                let dom = VirtualDom::new(app);
+            while let Some(WinitWebviewBuilder {
+                window,
+                app,
+                contexts,
+                as_child_window,
+            }) = rx.recv().await
+            {
+                let mut dom = VirtualDom::new(app);
+                for ctx in contexts {
+                    dom.insert_any_root_context(ctx());
+                }
+
+                let mut config = dioxus_desktop::Config::default().with_menu(None);
+
+                if as_child_window {
+                    config = config.with_as_child_window();
+                }
 
                 // TODO: rename attach webview
-                dioxus_desktop::window().new_from_window(
-                    dom,
-                    dioxus_desktop::Config::new()
-                        .with_as_child_window()
-                        .with_menu(None)
-                        .with_window(WindowAttributes::default().with_transparent(true)),
-                    window,
-                );
+                dioxus_desktop::window().new_from_window(dom, config, window);
             }
         });
     });
 }
 
-struct AttachWebview {
+type ContextFn = Box<dyn Fn() -> Box<dyn Any> + Send + Sync + 'static>;
+
+pub struct WinitWebviewBuilder {
     window: Arc<Window>,
     app: fn() -> Element,
+    contexts: Vec<ContextFn>,
+    as_child_window: bool,
 }
 
-impl std::fmt::Debug for AttachWebview {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        f.debug_struct("AttachWebview").finish()
+impl WinitWebviewBuilder {
+    pub fn new(window: Arc<Window>, app: fn() -> Element) -> Self {
+        Self {
+            window,
+            app,
+            contexts: Vec::new(),
+            as_child_window: false,
+        }
     }
-}
 
-pub async fn attach_webview(
-    window: Arc<Window>,
-    app: fn() -> Element,
-) -> Result<(), anyhow::Error> {
-    let tx = match SENDER.get() {
-        Some(tx) => tx,
-        None => &tokio::task::spawn_blocking(move || SENDER.wait().clone()).await?,
-    };
+    pub fn with_context(mut self, state: impl Any + Clone + Send + Sync + 'static) -> Self {
+        self.contexts
+            .push(Box::new(move || Box::new(state.clone())));
+        self
+    }
 
-    Ok(tx.send(AttachWebview { window, app })?)
+    pub fn with_as_child_window(mut self) -> Self {
+        self.as_child_window = true;
+        self
+    }
+
+    pub async fn build(self) -> Result<(), anyhow::Error> {
+        let tx = match SENDER.get() {
+            Some(tx) => tx,
+            None => &tokio::task::spawn_blocking(move || SENDER.wait().clone()).await?,
+        };
+
+        Ok(tx.send(self)?)
+    }
 }

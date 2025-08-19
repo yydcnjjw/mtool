@@ -1,0 +1,28 @@
+syntax = "proto3";
+
+package mtool_storage;
+
+message Empty {
+}
+
+message CRDTDocVersion {
+  bytes data = 1;
+}
+
+message CRDTUpdates {
+  bytes version = 1;
+  bytes updates = 2;
+}
+
+message CRDTSyncMessage {
+  uint64 id = 1;
+  bytes updates = 2;
+}
+
+service MtoolStorage {
+  rpc CRDTPullPeerUpdates(CRDTDocVersion) returns (CRDTUpdates);
+
+  rpc CRDTPushLocalUpdates(CRDTUpdates) returns (Empty);
+
+  rpc CRDTSync(stream CRDTSyncMessage) returns (stream CRDTSyncMessage);
+}

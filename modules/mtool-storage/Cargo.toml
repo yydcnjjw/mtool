@@ -9,7 +9,22 @@ edition.workspace = true
 [dependencies]
 mapp = { path = "../../crates/mapp" }
 mtool-core = { path = "../mtool-core" }
+mtool-rpc = { path = "../mtool-rpc" }
 
+# rpc
+tonic = { workspace = true }
+prost = { workspace = true }
+tonic-prost = { workspace = true }
+
+# sqlite
 sea-orm = { workspace = true }
 sea-orm-migration = { workspace = true }
+
+# key-value local storage
 kv = "*"
+
+# CRDT
+loro = "*"
+
+[build-dependencies]
+tonic-prost-build = { workspace = true }

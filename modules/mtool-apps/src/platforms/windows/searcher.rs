@@ -10,12 +10,14 @@ use mapp::{
 use notify::Watcher;
 use std::{path::PathBuf, time::Duration};
 use walkdir::WalkDir;
-use windows::Win32::{
-    Foundation::{BOOL, FALSE, HWND, LPARAM, TRUE},
-    System::StationsAndDesktops::EnumDesktopWindows,
-    UI::WindowsAndMessaging::{
-        EnumWindows, GetWindowInfo, IsWindow, IsWindowVisible, WINDOWINFO, WS_EX_APPWINDOW,
-        WS_EX_TOOLWINDOW,
+use windows::{
+    core::BOOL,
+    Win32::{
+        Foundation::{FALSE, HWND, LPARAM, TRUE},
+        System::StationsAndDesktops::EnumDesktopWindows,
+        UI::WindowsAndMessaging::{
+            EnumWindows, IsWindow, IsWindowVisible, WS_EX_APPWINDOW, WS_EX_TOOLWINDOW,
+        },
     },
 };
 
@@ -211,7 +213,7 @@ where
 {
     let callback = lparam.0 as *mut Callback;
     unsafe {
-        if IsWindow(hwnd).as_bool() && IsWindowVisible(hwnd).as_bool() {
+        if IsWindow(Some(hwnd)).as_bool() && IsWindowVisible(hwnd).as_bool() {
             if let Err(e) = (*callback)(hwnd) {
                 warn!("{:?}", e);
                 return FALSE;

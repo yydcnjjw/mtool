@@ -1,7 +1,6 @@
 use mapp::{
     anyhow::{self, Context},
     regex, reqwest, serde_json,
-    
 };
 use thiserror::Error;
 
@@ -181,6 +180,8 @@ pub async fn query(q: &str, from: &str, to: &str) -> Result<String> {
 
 #[cfg(test)]
 mod tests {
+    use mapp::tokio;
+
     use super::*;
 
     #[tokio::test]
