@@ -19,12 +19,75 @@ use mtool_dioxus::{
     prelude::DioxusContext,
 };
 
-use crate::music::{Netease, Playlist};
+use super::{MediaItem, Netease, Player, PlayerEventStream, Playlist};
 
 #[derive(Clone)]
 pub struct MediaPlayer {
     ctx: Res<DioxusContext>,
     controller: GlobalRef,
+}
+
+#[async_trait]
+impl Player for MediaPlayer {
+    async fn play(&self) -> Result<(), anyhow::Error> {
+        self.with_env(|mut env| {
+            _ = env.call_method(self.controller.as_obj(), "play", "()V", &[])?;
+            Ok(())
+        })
+    }
+
+    async fn pause(&self) -> Result<(), anyhow::Error> {
+        self.with_env(|mut env| {
+            _ = env.call_method(self.controller.as_obj(), "pause", "()V", &[])?;
+            Ok(())
+        })
+    }
+
+    async fn volume(&self) -> Result<f64, anyhow::Error> {
+        self.with_env(|mut env| {
+            Ok(env
+                .call_method(self.controller.as_obj(), "getVolume", "()F", &[])?
+                .f()? as f64)
+        })
+    }
+
+    async fn set_volume(&self, value: f64) -> Result<(), anyhow::Error> {
+        self.with_env(|mut env| {
+            env.call_method(
+                self.controller.as_obj(),
+                "setVolume",
+                "(F)V",
+                &[(value as f32).into()],
+            )?;
+            Ok(())
+        })
+    }
+
+    async fn add_media_items(&self, items: Vec<MediaItem>) -> Result<(), anyhow::Error> {
+        self.with_env(|mut env| {
+            let vm = self.ctx.jvm().context("get java vm")?;
+            let mut env = vm.get_env()?;
+
+            let array =
+                env.new_object_array(items.len() as i32, "java/lang/String", JObject::null())?;
+
+            for (i, item) in items.into_iter().enumerate() {
+                env.set_object_array_element(&array, i as i32, env.new_string(item.uri)?)?;
+            }
+
+            env.call_method(
+                self.controller.as_obj(),
+                "addPlaylist",
+                "([Ljava/lang/String;)V",
+                &[JValue::Object(&array)],
+            )?;
+            Ok(())
+        })
+    }
+
+    async fn listen(&self) -> Result<PlayerEventStream, anyhow::Error> {
+        todo!()
+    }
 }
 
 impl MediaPlayer {
@@ -64,67 +127,13 @@ impl MediaPlayer {
         Ok(Self { ctx, controller })
     }
 
-    pub fn play(&self) -> Result<(), anyhow::Error> {
+    fn with_env<F, O>(&self, f: F) -> Result<O, anyhow::Error>
+    where
+        F: for<'local> FnOnce(JNIEnv<'local>) -> Result<O, anyhow::Error>,
+    {
         let vm = self.ctx.jvm().context("get java vm")?;
-        let mut env = vm.get_env()?;
-        env.call_method(self.controller.as_obj(), "play", "()V", &[])?;
-        Ok(())
-    }
-
-    pub fn pause(&self) -> Result<(), anyhow::Error> {
-        let vm = self.ctx.jvm().context("get java vm")?;
-        let mut env = vm.get_env()?;
-        env.call_method(self.controller.as_obj(), "pause", "()V", &[])?;
-        Ok(())
-    }
-
-    pub fn volume(&self) -> Result<usize, anyhow::Error> {
-        let vm = self.ctx.jvm().context("get java vm")?;
-        let mut env = vm.get_env()?;
-        let volume = env
-            .call_method(self.controller.as_obj(), "getVolume", "()F", &[])?
-            .f()?;
-
-        Ok((volume.clamp(0., 1.) * 100.).round() as usize)
-    }
-
-    pub fn set_volume(&mut self, value: usize) -> Result<(), anyhow::Error> {
-        let vm = self.ctx.jvm().context("get java vm")?;
-        let mut env = vm.get_env()?;
-        env.call_method(
-            self.controller.as_obj(),
-            "setVolume",
-            "(F)V",
-            &[(value as f32 / 100.).into()],
-        )?;
-
-        Ok(())
-    }
-
-    pub fn add_playlist(&self, netease_playlist: Playlist) -> Result<(), anyhow::Error> {
-        let playlist = netease_playlist
-            .entries
-            .into_iter()
-            .map(|entry| entry.url)
-            .collect_vec();
-        let vm = self.ctx.jvm().context("get java vm")?;
-        let mut env = vm.get_env()?;
-
-        let array =
-            env.new_object_array(playlist.len() as i32, "java/lang/String", JObject::null())?;
-
-        for (i, item) in playlist.iter().enumerate() {
-            env.set_object_array_element(&array, i as i32, env.new_string(item)?)?;
-        }
-
-        env.call_method(
-            self.controller.as_obj(),
-            "addPlaylist",
-            "([Ljava/lang/String;)V",
-            &[JValue::Object(&array)],
-        )?;
-
-        Ok(())
+        let env = vm.get_env()?;
+        f(env)
     }
 }
 
