@@ -3,15 +3,23 @@ use dioxus_desktop::{winit::window::Window, Config};
 use mapp::{
     anyhow,
     once_cell::sync::OnceCell,
+    prelude::Injector,
     tokio::{self, sync::mpsc},
     tracing::warn,
 };
 use std::{any::Any, sync::Arc};
 
+use crate::{context::DioxusContext, hooks::use_app_resource};
+
 static SENDER: OnceCell<mpsc::UnboundedSender<WinitWebviewBuilder>> = OnceCell::new();
 
 pub fn use_window_factory() {
+    let injector = use_context::<Injector>();
+    let dioxus_context = use_context::<DioxusContext>();
+
     use_hook(move || {
+        to_owned![injector, dioxus_context];
+
         spawn(async move {
             let (tx, mut rx) = mpsc::unbounded_channel();
 
@@ -27,6 +35,9 @@ pub fn use_window_factory() {
             }) = rx.recv().await
             {
                 let mut dom = VirtualDom::new(app);
+                dom.insert_any_root_context(Box::new(injector.clone()));
+                dom.insert_any_root_context(Box::new(dioxus_context.clone()));
+
                 for ctx in contexts {
                     dom.insert_any_root_context(ctx());
                 }

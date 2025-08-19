@@ -56,7 +56,7 @@ impl Player for MediaPlayer {
                 &TypedEventHandler::<MediaBinder, MediaBindingEventArgs>::new({
                     to_owned![rt];
                     move |_, args| {
-                        if let Some(args) = args {
+                        if let Some(args) = args.cloned() {
                             let defer = args.GetDeferral()?;
                             to_owned![uri, args];
                             info!("get song: {uri}");
@@ -101,7 +101,7 @@ impl Player for MediaPlayer {
 }
 
 impl MediaPlayer {
-    pub async fn new(_context: Res<DioxusContext>) -> Result<Self, anyhow::Error> {
+    pub async fn new(_context: DioxusContext) -> Result<Self, anyhow::Error> {
         let player = NativeMediaPlayer::new()?;
         let playback_list = {
             let playlist = MediaPlaybackList::new()?;
@@ -113,7 +113,7 @@ impl MediaPlayer {
                     MediaPlaybackList,
                     MediaPlaybackItemFailedEventArgs,
                 >::new(move |_, args| {
-                    if let Some(args) = args {
+                    if let Some(args) = args.cloned() {
                         warn!("{:?}: {:?}", args.Item()?.Source()?.Uri()?, args.Error()?);
                     }
                     Ok(())

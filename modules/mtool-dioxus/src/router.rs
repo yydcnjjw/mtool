@@ -1,9 +1,12 @@
 use dioxus::prelude::*;
 use mapp::{
+    prelude::*,
     sync::RwLock,
     tracing::{debug, warn},
 };
 use std::{collections::HashMap, sync::Arc};
+
+use crate::hooks::use_app_resource;
 
 pub type RouteParams = HashMap<String, String>;
 pub type RouteHandler = Arc<dyn Fn(&RouteParams) -> Element + Send + Sync>;
@@ -119,13 +122,13 @@ pub fn app_route(path: &str) -> Route {
 
 #[component]
 fn Main(path: String) -> Element {
-    let router = use_context::<Router>();
+    let router = use_app_resource::<Res<Router>>().suspend()?();
     router.route(&path);
     router.render()
 }
 
 #[component]
 fn Default() -> Element {
-    let router = use_context::<Router>();
-    router.render()
+    let router = use_app_resource::<Res<Router>>().suspend()?;
+    router().render()
 }

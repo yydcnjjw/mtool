@@ -37,12 +37,7 @@ async fn setup_cmdline(cmdline: Res<Cmdline>) -> Result<(), anyhow::Error> {
     cmdline.setup(|cmdline| Ok(cmdline.arg(arg!(--"no-proxy" "no proxy"))))
 }
 
-async fn dioxus_setup(
-    builder: Res<DioxusBuilder>,
-    service: Res<ProxyService>,
-    cmdpal: Res<CommandPalette>,
-) -> Result<(), anyhow::Error> {
-    builder.with_launch_builder(|builder| builder.with_context(service));
+async fn dioxus_setup(cmdpal: Res<CommandPalette>) -> Result<(), anyhow::Error> {
     cmdpal_commands::register(cmdpal).await?;
     Ok(())
 }

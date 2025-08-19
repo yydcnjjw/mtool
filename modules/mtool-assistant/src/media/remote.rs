@@ -2,15 +2,13 @@ use std::{pin::Pin, sync::Arc};
 
 use mapp::{
     anyhow,
-    futures::{FutureExt, Stream, StreamExt},
+    futures::{Stream, StreamExt},
     prelude::*,
-    tokio::sync::{broadcast, Mutex},
-    tokio_stream::wrappers::errors::BroadcastStreamRecvError,
+    sync::Mutex,
+    tokio::sync::{broadcast, Mutex as AsyncMutex},
     tracing::warn,
 };
 use pb::{media_player_client, media_player_server, player_event::Event, Empty, MediaMetadata};
-
-use crate::context::AssistantContext;
 
 use super::{MediaItem, Player, PlayerEvent, PlayerEventStream};
 
@@ -18,17 +16,46 @@ pub mod pb {
     tonic::include_proto!("mtool_assistant.media");
 }
 
-struct PlayerService {
-    player: Box<dyn Player + Send + Sync>,
+pub type AnyPlayer = Arc<dyn Player + Send + Sync>;
+
+pub struct PlayerService {
+    player: Mutex<Option<AnyPlayer>>,
+}
+
+impl PlayerService {
+    pub async fn construct() -> Result<Res<Self>, anyhow::Error> {
+        Ok(Res::new(Self {
+            player: Mutex::new(None),
+        }))
+    }
+
+    pub fn server(
+        this: Res<Self>,
+    ) -> Result<media_player_server::MediaPlayerServer<Res<Self>>, anyhow::Error> {
+        Ok(media_player_server::MediaPlayerServer::new(this))
+    }
+
+    pub fn set_player(&self, player: AnyPlayer) {
+        *self.player.lock() = Some(player);
+    }
+
+    fn player(&self) -> Result<AnyPlayer, tonic::Status> {
+        Ok(self
+            .player
+            .lock()
+            .clone()
+            .ok_or_else(|| tonic::Status::unavailable("player is not ready"))?
+            .to_owned())
+    }
 }
 
 #[tonic::async_trait]
-impl media_player_server::MediaPlayer for PlayerService {
+impl media_player_server::MediaPlayer for Res<PlayerService> {
     async fn play(
         &self,
         _request: tonic::Request<pb::Empty>,
     ) -> Result<tonic::Response<pb::Empty>, tonic::Status> {
-        self.player
+        self.player()?
             .play()
             .await
             .map_err(|e| tonic::Status::internal(format!("{e:?}")))?;
@@ -39,7 +66,7 @@ impl media_player_server::MediaPlayer for PlayerService {
         &self,
         _request: tonic::Request<pb::Empty>,
     ) -> Result<tonic::Response<pb::Empty>, tonic::Status> {
-        self.player
+        self.player()?
             .pause()
             .await
             .map_err(|e| tonic::Status::internal(format!("{e:?}")))?;
@@ -51,7 +78,7 @@ impl media_player_server::MediaPlayer for PlayerService {
         _request: tonic::Request<pb::Empty>,
     ) -> Result<tonic::Response<pb::Volume>, tonic::Status> {
         let volume = self
-            .player
+            .player()?
             .volume()
             .await
             .map_err(|e| tonic::Status::internal(format!("{e:?}")))?;
@@ -62,7 +89,7 @@ impl media_player_server::MediaPlayer for PlayerService {
         &self,
         request: tonic::Request<pb::Volume>,
     ) -> Result<tonic::Response<pb::Empty>, tonic::Status> {
-        self.player
+        self.player()?
             .set_volume(request.into_inner().value)
             .await
             .map_err(|e| tonic::Status::internal(format!("{e:?}")))?;
@@ -73,7 +100,7 @@ impl media_player_server::MediaPlayer for PlayerService {
         &self,
         request: tonic::Request<pb::MediaItemList>,
     ) -> Result<tonic::Response<pb::Empty>, tonic::Status> {
-        self.player
+        self.player()?
             .add_media_items(
                 request
                     .into_inner()
@@ -94,7 +121,7 @@ impl media_player_server::MediaPlayer for PlayerService {
         _request: tonic::Request<pb::Empty>,
     ) -> Result<tonic::Response<Self::ListenStream>, tonic::Status> {
         let stream = self
-            .player
+            .player()?
             .listen()
             .await
             .map_err(|e| tonic::Status::internal(format!("{e:?}")))?;
@@ -113,13 +140,15 @@ impl media_player_server::MediaPlayer for PlayerService {
 }
 
 pub struct RemotePlayer {
-    client: Mutex<media_player_client::MediaPlayerClient<tonic::transport::Channel>>,
+    client: AsyncMutex<media_player_client::MediaPlayerClient<tonic::transport::Channel>>,
 }
 
 impl RemotePlayer {
     pub async fn connect(address: String) -> Result<Self, anyhow::Error> {
         Ok(Self {
-            client: Mutex::new(media_player_client::MediaPlayerClient::connect(address).await?),
+            client: AsyncMutex::new(
+                media_player_client::MediaPlayerClient::connect(address).await?,
+            ),
         })
     }
 }

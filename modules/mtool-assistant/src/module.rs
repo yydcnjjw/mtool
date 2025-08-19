@@ -1,6 +1,9 @@
-use std::sync::{Arc, Once};
+use std::{
+    ops::Deref,
+    sync::{Arc, Once},
+};
 
-use dioxus::prelude::*;
+use dioxus::{html::g::media, prelude::*};
 use mapp::{
     anyhow,
     prelude::*,
@@ -25,12 +28,16 @@ use crate::{
     components,
     context::{self, AssistantContext},
     emacs::{capture_inbox, capture_project},
+    media::{self, AnyPlayer},
     notify,
 };
 
 pub fn module() -> ModuleGroup {
     let mut group = ModuleGroup::new("mtool-assistant");
-    group.add_module(Module).add_module(notify::Module);
+    group
+        .add_module(Module)
+        .add_module(media::Module)
+        .add_module(notify::Module);
 
     #[cfg(feature = "bevy")]
     group.add_module(crate::bevy::Module);
@@ -59,8 +66,6 @@ impl AppModule for Module {
 async fn setup(
     #[cfg(target_os = "android")] router: Res<Router>,
     builder: Res<DioxusBuilder>,
-    context: Res<AssistantContext>,
-    injector: Injector,
 ) -> Result<(), anyhow::Error> {
     builder.add_global_hotkey("alt+c", || {
         tokio::spawn(async move {
@@ -73,14 +78,12 @@ async fn setup(
 
     #[cfg(any(target_os = "windows", target_os = "linux"))]
     {
-        to_owned![context];
         builder.with_config_builder(move |cfg| {
             cfg.with_custom_event_handler(move |ev, event_loop| match ev {
                 Event::NewEvents(StartCause::Init) => {
                     static INIT: Once = Once::new();
-                    to_owned![context, injector];
                     INIT.call_once(move || {
-                        if let Err(e) = create_window(event_loop, context, injector) {
+                        if let Err(e) = create_window(event_loop) {
                             error!("{:?}", e);
                             event_loop.exit();
                         }
@@ -93,8 +96,6 @@ async fn setup(
 
     #[cfg(target_os = "android")]
     {
-        builder.with_launch_builder(|builder| builder.with_context(context));
-
         add_route!(router, "assistant", components::MainView);
         router.route("assistant");
     }
@@ -102,11 +103,7 @@ async fn setup(
     Ok(())
 }
 
-fn create_window(
-    event_loop: &ActiveEventLoop,
-    context: Res<AssistantContext>,
-    injector: Injector,
-) -> Result<(), anyhow::Error> {
+fn create_window(event_loop: &ActiveEventLoop) -> Result<(), anyhow::Error> {
     let window = event_loop.create_window(
         WindowAttributes::default()
             .with_title("Mtool assistant")
@@ -115,8 +112,6 @@ fn create_window(
 
     tokio::spawn(async move {
         if let Err(e) = WinitWebviewBuilder::new(Arc::new(window), components::MainView)
-            .with_context(context)
-            .with_context(injector.get::<Res<DioxusContext>>().await.unwrap())
             .build()
             .await
         {

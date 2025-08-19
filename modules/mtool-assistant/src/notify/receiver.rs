@@ -124,7 +124,7 @@ impl NotifyReceiver {
                 .entries()
                 .choose(&mut thread_rng())
                 .context("notify voice list is empty")?;
-            let resp = dioxus_asset_resolver::serve_asset(
+            let resp = dioxus_asset_resolver::native::serve_asset(
                 &notify_assets
                     .resolve()
                     .join(voice.path())

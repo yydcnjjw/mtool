@@ -1,4 +1,4 @@
-use std::sync::Arc;
+use std::{sync::Arc, time::Duration};
 
 use dioxus::prelude::*;
 use mapp::{
@@ -9,40 +9,47 @@ use mapp::{
     tokio,
     tracing::{info, warn},
 };
-use mtool_dioxus::prelude::*;
+use mtool_dioxus::{
+    prelude::*,
+    primitives::toast::{use_toast, ToastOptions, Toasts},
+};
 
 use crate::{
     context::{AssistantContext, AssistantMode},
-    media::{MediaItem, MediaPlayer, Netease, Player, RemotePlayer},
+    media::{AnyPlayer, MediaItem, MediaPlayer, Netease, PlayerService, RemotePlayer},
 };
 
 #[component]
 pub fn MediaPlayerControl() -> Element {
-    let player = use_media_player()
-        .suspend()?
-        .map(|player| player.as_ref().unwrap());
+    let player = create_player()?;
+    let toast = use_toast();
 
     let volume = {
-        to_owned![player];
-        use_resource(move || {
-            to_owned![player];
-            async move { player().volume().await.unwrap() }
+        use_resource(move || async move {
+            player()
+                .volume()
+                .unwrap_or_else(move |e| {
+                    toast_err(toast, e);
+                    0.
+                })
+                .await
         })
         .suspend()?
     };
 
-    {
-        to_owned![player];
-        use_resource(move || {
-            to_owned![player];
-            async move {
+    let context = use_app_resource::<Res<AssistantContext>>().suspend()?;
+
+    use_resource(move || {
+        async move {
+            if context().is_native() {
                 let items = collect_media_items().await?;
-                player().add_media_items(items).await
+                player().add_media_items(items).await?;
             }
-            .unwrap_or_else(|_| ())
-        })
-        .suspend()?;
-    }
+            Ok::<_, anyhow::Error>(())
+        }
+        .unwrap_or_else(move |e| toast_err(toast, e))
+    })
+    .suspend()?;
 
     rsx! {
         div {
@@ -50,28 +57,14 @@ pub fn MediaPlayerControl() -> Element {
             button {
                 class: "btn",
                 onclick: {
-                    to_owned![player];
-                    move |_| {
-                        to_owned![player];
-                        async move {
-                        info!("play");
-                        player().play().await.unwrap()
-                    }
-                    }
+                    move |_| async move { player().play().unwrap_or_else(|e| toast_err(toast, e)).await }
                 },
                 "play"
             },
             button {
                 class: "btn",
                 onclick: {
-                    to_owned![player];
-                    move |_| {
-                        to_owned![player];
-                        async move {
-                            info!("pause");
-                            player().pause().await.unwrap()
-                        }
-                    }
+                    move |_| async move { player().pause().unwrap_or_else(|e| toast_err(toast, e)).await }
                 },
                 "pause"
             },
@@ -82,12 +75,10 @@ pub fn MediaPlayerControl() -> Element {
                 max: "100",
                 value: format!("{}", (volume().clamp(0., 1.) * 100.).round() as usize),
                 oninput: {
-                    to_owned![player];
                     move|ev| {
-                        to_owned![player];
                         async move {
                             if let Ok(value) = ev.value().parse::<usize>() {
-                                player().set_volume(value as f64 / 100.).await.unwrap()
+                                player().set_volume(value as f64 / 100.).unwrap_or_else(|e| toast_err(toast, e)).await
                             }
                         }
                     }
@@ -95,35 +86,6 @@ pub fn MediaPlayerControl() -> Element {
             }
         }
     }
-}
-
-type AnyPlayer = Arc<dyn Player + Send + Sync>;
-
-fn use_media_player() -> Resource<Option<AnyPlayer>> {
-    let dioxus_context: Res<DioxusContext> = use_context();
-    let context: Res<AssistantContext> = use_context();
-
-    let mode = context.mode_change_signal();
-
-    use_resource(move || {
-        to_owned![dioxus_context, context];
-        async move {
-            let use_remote = match mode() {
-                AssistantMode::Desktop => !context.is_desktop(),
-                AssistantMode::RemoteDesktop => context.is_desktop(),
-            };
-
-            let player: AnyPlayer = if use_remote && context.request_address().is_some() {
-                Arc::new(RemotePlayer::connect(context.request_address().unwrap()).await?)
-            } else {
-                Arc::new(MediaPlayer::new(dioxus_context).await?)
-            };
-
-            Ok::<_, anyhow::Error>(Some(player))
-        }
-        .inspect_err(|e| warn!("{e:?}"))
-        .unwrap_or_else(|_| None)
-    })
 }
 
 async fn collect_media_items() -> Result<Vec<MediaItem>, anyhow::Error> {
@@ -143,4 +105,71 @@ async fn collect_media_items() -> Result<Vec<MediaItem>, anyhow::Error> {
         Ok(items)
     })
     .await?
+}
+
+pub fn create_player() -> Result<MappedSignal<AnyPlayer, Signal<Option<AnyPlayer>>>, RenderError> {
+    let context = use_app_resource::<Res<AssistantContext>>().suspend()?;
+    let player_service = use_app_resource::<Res<PlayerService>>().suspend()?;
+    let dioxus_context = use_context::<DioxusContext>();
+
+    let mode = context().mode_change_signal();
+    use_resource(move || {
+        to_owned![context, dioxus_context, player_service];
+        async move {
+            let player = get_player(mode(), context(), dioxus_context.clone())
+                .await
+                .unwrap();
+            player_service().set_player(player.clone());
+            player
+        }
+    })
+    .suspend()
+}
+
+async fn try_get_remote_player(
+    mode: AssistantMode,
+    context: Res<AssistantContext>,
+) -> Option<RemotePlayer> {
+    let use_remote = match mode {
+        AssistantMode::Desktop => !context.is_desktop(),
+        AssistantMode::RemoteDesktop => context.is_desktop(),
+    };
+
+    if use_remote {
+        let request_address = context.request_address()?;
+        RemotePlayer::connect(request_address)
+            .await
+            .inspect(|_| info!("use remote player"))
+            .inspect_err(|e| warn!("{e:?}"))
+            .ok()
+    } else {
+        None
+    }
+}
+
+async fn get_player(
+    mode: AssistantMode,
+    context: Res<AssistantContext>,
+    dioxus_context: DioxusContext,
+) -> Result<AnyPlayer, anyhow::Error> {
+    Ok(match try_get_remote_player(mode, context).await {
+        Some(player) => Arc::new(player) as AnyPlayer,
+        None => Arc::new(
+            MediaPlayer::new(dioxus_context)
+                .await
+                .inspect(|_| info!("use native player"))?,
+        ),
+    })
+}
+
+fn toast_err<E>(toast: Toasts, e: E)
+where
+    E: Into<anyhow::Error>,
+{
+    toast.error(
+        "Error occurred".into(),
+        ToastOptions::default()
+            .description(e.into())
+            .duration(Duration::from_secs(3)),
+    );
 }

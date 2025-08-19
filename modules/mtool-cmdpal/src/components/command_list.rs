@@ -2,7 +2,7 @@ use std::{ops::Deref, rc::Rc, sync::Arc};
 
 use dioxus::{core::use_hook_with_cleanup, prelude::*};
 use fuzzy_matcher::{skim::SkimMatcherV2, FuzzyMatcher};
-use mapp::{anyhow, itertools::Itertools, rand::random, tracing::warn};
+use mapp::{anyhow, itertools::Itertools, prelude::Res, rand::random, tracing::warn};
 use mtool_dioxus::{generate_keymap, local_action, prelude::*};
 use mtool_storage::kv;
 
@@ -79,6 +79,8 @@ impl Deref for CommandInput {
 
 #[component]
 pub fn CommandList(items: ReadOnlySignal<Vec<CommandItem>>) -> Element {
+    let kvstore = use_app_resource::<Res<kv::Store>>().suspend()?;
+
     let command_input: Signal<CommandInput> = use_context();
     let command_result: Signal<CommandResult> = use_context();
 
@@ -88,10 +90,8 @@ pub fn CommandList(items: ReadOnlySignal<Vec<CommandItem>>) -> Element {
 
     let mut filtered_items = use_signal(Vec::new);
 
-    let kvstore: kv::Store = use_context();
-
     let command_history = use_hook(|| {
-        kvstore
+        kvstore()
             .bucket::<String, String>(Some("cmdpal.command_history"))
             .context("cmdpal.command_history")
     })?;

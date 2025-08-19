@@ -1,4 +1,4 @@
-use std::sync::Arc;
+use std::{any::type_name_of_val, sync::Arc};
 
 use dioxus_desktop::{winit::event::Event as WinitEvent, UserWindowEvent, WindowAttributes};
 use mapp::{
@@ -24,16 +24,14 @@ pub(crate) async fn launch(
     injector: Injector,
     cs: Res<ConfigStore>,
     builder: Take<Res<DioxusBuilder>>,
-    router: Res<Router>,
-    kvstore: Res<kv::Store>,
     #[cfg(target_os = "android")] android_app: Res<AndroidApp>,
     runner: Take<Arc<oneshot::Sender<MainLoopRunner>>>,
 ) -> Result<(), anyhow::Error> {
-    let context_tx = injector.construct_oneshot();
-
     let builder = builder.take()?;
 
     let data_dir = cs.root_path().await;
+
+    let context_tx = injector.construct_oneshot();
 
     if let Err(_) = runner.take()?.send(Box::new(move || {
         info!("main thread loop is running");
@@ -83,10 +81,8 @@ pub(crate) async fn launch(
                     android_app,
                 );
 
-                let context = Res::new(context);
-
-                if let Err(_) = context_tx.send(context.clone()) {
-                    warn!("Failed to send DioxusContext");
+                if let Err(e) = context_tx.send(Res::new(context.clone())) {
+                    warn!("Failed to send {}", type_name_of_val(&e));
                 }
 
                 {
@@ -118,10 +114,7 @@ pub(crate) async fn launch(
                             }
                             _ => {}
                         }),
-                    builder
-                        .with_context((*router).clone())
-                        .with_context((*kvstore).clone())
-                        .with_context(context),
+                    builder.with_context(context).with_context(injector),
                 )
             })
             .launch(main_view);

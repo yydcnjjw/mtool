@@ -51,6 +51,20 @@ impl AssistantContext {
         cfg!(feature = "mobile")
     }
 
+    pub fn is_remote(&self) -> bool {
+        match self.mode() {
+            AssistantMode::Desktop => self.is_mobile(),
+            AssistantMode::RemoteDesktop => self.is_desktop(),
+        }
+    }
+
+    pub fn is_native(&self) -> bool {
+        match self.mode() {
+            AssistantMode::Desktop => self.is_desktop(),
+            AssistantMode::RemoteDesktop => self.is_mobile(),
+        }
+    }    
+
     pub fn request_address(&self) -> Option<String> {
         if self.is_desktop() {
             self.config.mobile_rpc_address.clone()

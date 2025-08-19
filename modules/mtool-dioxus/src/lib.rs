@@ -29,3 +29,4 @@ pub use module::module;
 
 pub use dioxus_desktop as desktop;
 pub use dioxus_free_icons as free_icons;
+pub use dioxus_primitives as primitives;
