@@ -9,7 +9,6 @@ edition.workspace = true
 [dependencies]
 mapp = { path = "../../crates/mapp" }
 mtool-core = { path = "../mtool-core" }
-mllama-sys = { path = "../../crates/mllama-sys" }
 
 serde = { workspace = true }
 tracing = { workspace = true }

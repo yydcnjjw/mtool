@@ -1,3 +1,0 @@
-[submodule "crates/mllama-sys/llama.cpp"]
-	path = crates/mllama-sys/llama.cpp
-	url = https://github.com/ggerganov/llama.cpp.git
