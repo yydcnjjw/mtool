@@ -53,7 +53,7 @@ fn clipboard_content() -> Result<String, anyhow::Error> {
 
 #[component]
 fn AddProxyRuleView() -> Element {
-    let service = use_context::<Res<ProxyService>>();
+    let service = use_app_resource::<Res<ProxyService>>().suspend()?;
 
     let keybinding = use_context::<Keybinding>();
 
@@ -76,7 +76,7 @@ fn AddProxyRuleView() -> Element {
             let target = command_input().value;
             notify_result(
                 &format!("Add proxy rule: {}", &target),
-                service.add_routing_rule(&target).await,
+                service().add_routing_rule(&target).await,
             )
             .await;
             command_result.set(CommandResult::Dismiss);
@@ -125,12 +125,12 @@ impl InvokeCommand for RemoveProxyRuleCommand {
 
 #[component]
 fn RemoveProxyRuleView() -> Element {
-    let service = use_context::<Res<ProxyService>>();
+    let service = use_app_resource::<Res<ProxyService>>().suspend()?;
 
     let keybinding = use_context::<Keybinding>();
 
     let items = use_hook(move || {
-        service
+        service()
             .routing_rules()
             .into_iter()
             .map(|item| CommandItem {
@@ -141,7 +141,7 @@ fn RemoveProxyRuleView() -> Element {
                 source: "proxy".to_owned(),
                 command: Arc::new(Command::new(
                     "proxy.remove_proxy_rule",
-                    RemoveProxyRuleCommand::new(service.clone(), item.clone()),
+                    RemoveProxyRuleCommand::new(service(), item.clone()),
                 )),
                 more_commands: Vec::new(),
             })

@@ -23,7 +23,7 @@ use super::{MediaItem, Netease, Player, PlayerEventStream, Playlist};
 
 #[derive(Clone)]
 pub struct MediaPlayer {
-    ctx: Res<DioxusContext>,
+    ctx: DioxusContext,
     controller: GlobalRef,
 }
 
@@ -77,7 +77,7 @@ impl Player for MediaPlayer {
 
             env.call_method(
                 self.controller.as_obj(),
-                "addPlaylist",
+                "addMediaItems",
                 "([Ljava/lang/String;)V",
                 &[JValue::Object(&array)],
             )?;
@@ -91,34 +91,37 @@ impl Player for MediaPlayer {
 }
 
 impl MediaPlayer {
-    pub async fn new(ctx: Res<DioxusContext>) -> Result<Self, anyhow::Error> {
-        let vm = ctx.jvm().context("get java vm")?;
-        let mut env = vm.get_env()?;
-        let activity = unsafe { JObject::from_raw(ctx.android_app().activity_as_ptr() as _) };
+    pub async fn new(ctx: DioxusContext) -> Result<Self, anyhow::Error> {
+        let rx = {
+            let vm = ctx.jvm().context("get java vm")?;
+            let mut env = vm.get_env()?;
+            let activity = unsafe { JObject::from_raw(ctx.android_app().activity_as_ptr() as _) };
 
-        let controller_class = find_class(
-            &mut env,
-            &activity,
-            "org/yydcnjjw/mtool/assistant/PlaybackController".into(),
-        )?;
+            let controller_class = find_class(
+                &mut env,
+                &activity,
+                "org/yydcnjjw/mtool/assistant/PlaybackController".into(),
+            )?;
 
-        let callback_class = find_class(
-            &mut env,
-            &activity,
-            "org/yydcnjjw/mtool/assistant/Callback".into(),
-        )?;
+            let callback_class = find_class(
+                &mut env,
+                &activity,
+                "org/yydcnjjw/mtool/assistant/Callback".into(),
+            )?;
 
-        let (tx, rx) = oneshot::channel();
-        let sender = Box::into_raw(Box::new(tx)) as i64;
+            let (tx, rx) = oneshot::channel();
+            let sender = Box::into_raw(Box::new(tx)) as i64;
 
-        let callback = env.new_object(callback_class, "(J)V", &[JValue::Long(sender)])?;
+            let callback = env.new_object(callback_class, "(J)V", &[JValue::Long(sender)])?;
 
-        env.call_static_method(
-            controller_class,
-            "connect",
-            "(Landroid/content/Context;Lorg/yydcnjjw/mtool/assistant/Callback;)V",
-            &[JValue::Object(&activity), JValue::Object(&callback)],
-        )?;
+            env.call_static_method(
+                controller_class,
+                "connect",
+                "(Landroid/content/Context;Lorg/yydcnjjw/mtool/assistant/Callback;)V",
+                &[JValue::Object(&activity), JValue::Object(&callback)],
+            )?;
+            rx
+        };
 
         let controller = rx.await?;
 

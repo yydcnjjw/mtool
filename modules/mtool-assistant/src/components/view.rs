@@ -1,6 +1,6 @@
 use dioxus::prelude::*;
 use mapp::prelude::*;
-use mtool_dioxus::{components::WindowView, desktop::window};
+use mtool_dioxus::{components::WindowView, desktop::window, prelude::*};
 
 use crate::context::{AssistantContext, AssistantMode};
 
@@ -8,15 +8,15 @@ use super::MediaPlayerControl;
 
 #[component]
 pub fn MainView() -> Element {
-    let ctx: Res<AssistantContext> = use_context();
+    let ctx = use_app_resource::<Res<AssistantContext>>().suspend()?;
 
     init_window();
 
-    let mode = ctx.mode_change_signal();
+    let mode = ctx().mode_change_signal();
 
     let onclick = use_callback({
         move |_: Event<MouseData>| {
-            ctx.toggle_mode();
+            ctx().toggle_mode();
         }
     });
 

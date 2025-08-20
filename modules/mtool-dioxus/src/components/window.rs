@@ -1,4 +1,5 @@
 use dioxus::prelude::*;
+use dioxus_primitives::toast::ToastProvider;
 
 use crate::keybinding::Keybinding;
 
@@ -16,7 +17,9 @@ pub fn WindowView(children: Element) -> Element {
         },
         body {
             onkeydown,
-            { children }
+            ToastProvider {
+                children
+            }
         }
     }
 }

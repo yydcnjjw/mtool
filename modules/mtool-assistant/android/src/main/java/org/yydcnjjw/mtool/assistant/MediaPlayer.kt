@@ -98,6 +98,13 @@ class PlaybackController(
         }
     }
 
+    init {
+        controller.run {
+            repeatMode = Player.REPEAT_MODE_ALL
+            shuffleModeEnabled = true
+        }
+    }
+
     fun play() {
         handler.postAtFrontOfQueue {
             controller.play()
@@ -112,14 +119,10 @@ class PlaybackController(
 
     var volume: Float = 1f
 
-    fun addPlaylist(playlist: Array<String>) {
+    fun addMediaItems(playlist: Array<String>) {
         handler.postAtFrontOfQueue {
             controller.run {
-                playlist.forEach { uri ->
-                    addMediaItem(MediaItem.fromUri(uri))
-                }
-                repeatMode = Player.REPEAT_MODE_ALL
-                shuffleModeEnabled = true
+                addMediaItems(playlist.map { uri -> MediaItem.fromUri(uri) })
                 prepare()
 
                 Log.d(TAG, "current media count: $mediaItemCount")

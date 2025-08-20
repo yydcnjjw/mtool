@@ -1,5 +1,6 @@
 [application]
 name = "mtool"
+android_min_sdk_version = 28
 
 [bundle]
 identifier = "com.yydcnjjw"

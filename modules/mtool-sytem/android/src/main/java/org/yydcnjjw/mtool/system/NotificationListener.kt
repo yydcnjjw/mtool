@@ -147,35 +147,35 @@ class NotificationListener : NotificationListenerService() {
         Log.d(TAG, "onNotificationPosted: ${sbn.packageName}, ${sbn.notification.channelId}")
 
         if (pkgName == NETEASE_PKG_NAME) {
-            if (controller == null) {
-                (getSystemService(MEDIA_SESSION_SERVICE) as MediaSessionManager).let { manager ->
-                    controller =
-                        manager.getActiveSessions(
-                            ComponentName(
-                                this,
-                                NotificationListener::class.java
-                            )
-                        ).find { it.packageName == NETEASE_PKG_NAME }?.apply {
-                            registerCallback(object : MediaController.Callback() {
-                                override fun onPlaybackStateChanged(state: PlaybackState?) {
-                                    controller?.let {
-                                        postNative(MediaNotification(AppInfo(pkgName), it))
-                                    }
-
-                                }
-
-                                override fun onSessionDestroyed() {
-                                    super.onSessionDestroyed()
-                                    controller = null
-                                }
-                            })
-                        }
-
-                    controller?.let {
-                        postNative(MediaNotification(AppInfo(pkgName), it))
-                    }
-                }
-            }
+//            if (controller == null) {
+//                (getSystemService(MEDIA_SESSION_SERVICE) as MediaSessionManager).let { manager ->
+//                    controller =
+//                        manager.getActiveSessions(
+//                            ComponentName(
+//                                this,
+//                                NotificationListener::class.java
+//                            )
+//                        ).find { it.packageName == NETEASE_PKG_NAME }?.apply {
+//                            registerCallback(object : MediaController.Callback() {
+//                                override fun onPlaybackStateChanged(state: PlaybackState?) {
+//                                    controller?.let {
+//                                        postNative(MediaNotification(AppInfo(pkgName), it))
+//                                    }
+//
+//                                }
+//
+//                                override fun onSessionDestroyed() {
+//                                    super.onSessionDestroyed()
+//                                    controller = null
+//                                }
+//                            })
+//                        }
+//
+//                    controller?.let {
+//                        postNative(MediaNotification(AppInfo(pkgName), it))
+//                    }
+//                }
+//            }
 
             return
         } else if (IM_PKG_LIST.contains(pkgName)) {
