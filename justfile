@@ -12,11 +12,16 @@ build-android:
     dx_android_assets_dir=$dx_android_out_dir/app/app/src/main/assets
     dx_android_libs=$dx_android_jnilibs_dir/libdioxusmain.so
 
-    export PATH=$ANDROID_NDK_HOME/toolchains/llvm/prebuilt/linux-x86_64/bin:$PATH
+    android_toolchain=$ANDROID_NDK/toolchains/llvm/prebuilt/linux-x86_64
+
+    # for aws-lc
+    export PATH=$android_toolchain/bin:$PATH
+    export BINDGEN_EXTRA_CLANG_ARGS="--sysroot=$android_toolchain/sysroot"
+
     export PYO3_CROSS_PYTHON_VERSION={{python_version}}
     export PYO3_CROSS_LIB_DIR=/home/yydcnjjw/workspace/project/cross-libs/aarch64-linux-android/python-{{python_version}}
 
-    dx build --target aarch64-linux-android -p mtool --platform android --android
+    dx build --target aarch64-linux-android -p mtool --platform android --android --no-default-features
     cp $PYO3_CROSS_LIB_DIR/libpython*.so $PYO3_CROSS_LIB_DIR/lib*_python.so $dx_android_jnilibs_dir
 
     llvm-strip $dx_android_libs
@@ -32,26 +37,17 @@ run-android: build-android
     ./gradlew :mtool:android:assembleDebug
     ./gradlew :mtool:android:installDebug
 
-# generate-android-pkg:
-#     export WRY_ANDROID_PACKAGE=org.yydcnjjw.mtool.wry
-#     export WRY_ANDROID_KOTLIN_FILES_OUT_DIR=$(pwd)/mtool/app/src/main/java/org/yydcnjjw/mtool/wry
-
 alias bs := build-server
-
 build-server:
-    cargo build --target x86_64-unknown-linux-musl -p mtool --features 'server'
+    cargo build --target x86_64-unknown-linux-musl -p mtool --features 'server' --no-default-features
 
 build:
     #!/usr/bin/env bash
     set -euo pipefail
     dx_windows_out_dir={{dx_out_dir}}/windows
     dx_windows_app_dir=$dx_windows_out_dir/app
-    dx_windows_assets_dir=$dx_windows_app_dir/assets
 
-    dx build --target x86_64-pc-windows-msvc -p mtool --platform windows --desktop
-    
-    # cp $python_cross_lib/* $dx_windows_app_dir
-    # mv $dx_windows_app_dir/python313.dll $dx_windows_app_dir/python313.DLL
+    dx build --target x86_64-pc-windows-msvc -p mtool --platform windows --desktop --no-default-features
 
     uv build --all-packages --wheel
     uv pip install dist/*.whl --target $dx_windows_app_dir/site-packages --compile-bytecode
@@ -62,9 +58,8 @@ serve:
     export PATH=$PYTHONPATH:$PATH
     export WSLENV=PYTHONPATH/wpl:${WSLENV}
 
-    dx serve --target x86_64-pc-windows-msvc -p mtool --platform windows --addr 127.0.0.1 --features 'desktop'
+    dx serve --target x86_64-pc-windows-msvc -p mtool --platform windows --desktop --no-default-features --addr 127.0.0.1
 
-# dx run --target x86_64-pc-windows-msvc -p mtool --platform windows --addr 127.0.0.1 --features 'desktop'
 run: build
     #!/usr/bin/env bash
     export PYTHONPATH=/mnt/d/workspace/project/cross-libs/x86_64-pc-windows-msvc/python3.13:$PYTHONPATH

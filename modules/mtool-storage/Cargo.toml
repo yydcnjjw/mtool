@@ -10,6 +10,7 @@ edition.workspace = true
 mapp = { path = "../../crates/mapp" }
 mtool-core = { path = "../mtool-core" }
 mtool-rpc = { path = "../mtool-rpc" }
+mtool-p2p = { path = "../mtool-p2p" }
 
 # rpc
 tonic = { workspace = true }

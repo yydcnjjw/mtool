@@ -27,17 +27,11 @@ impl AppModule for Module {
                     .context("Failed to get config_dir")?;
 
                 cmdline.setup(move |cmdline| {
-                    Ok(cmdline
-                        .arg(
-                            arg!(-c --config <FILE> "configuration directory")
-                                .value_parser(value_parser!(PathBuf))
-                                .default_value_os(config_dir.into_os_string()),
-                        )
-                        .arg(
-                            arg!(--mode <MODE> "startup mode")
-                                .value_parser(["cli", "wgui", "tui"])
-                                .default_value("cli"),
-                        ))
+                    Ok(cmdline.arg(
+                        arg!(-c --config <FILE> "configuration directory")
+                            .value_parser(value_parser!(PathBuf))
+                            .default_value_os(config_dir.into_os_string()),
+                    ))
                 })?;
 
                 Ok(())

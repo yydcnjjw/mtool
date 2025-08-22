@@ -1,13 +1,14 @@
 pub use isahc::cookies::{CookieBuilder, CookieJar};
-use isahc::{prelude::*, *};
+use isahc::{config::SslOption, prelude::*, *};
 use lazy_static::lazy_static;
 use mapp::{
     anyhow::{anyhow, Result},
     rand,
     regex::Regex,
     serde_json,
+    sync::Mutex,
 };
-use std::{cell::RefCell, collections::HashMap, path::PathBuf, time::Duration};
+use std::{cell::RefCell, collections::HashMap, path::PathBuf, sync::Arc, time::Duration};
 use urlqstring::QueryParams;
 
 use super::{encrypt::Crypto, model::*};
@@ -43,7 +44,7 @@ const USER_AGENT_LIST: [&str; 14] = [
 #[derive(Clone)]
 pub struct MusicApi {
     client: HttpClient,
-    csrf: RefCell<String>,
+    csrf: Arc<Mutex<String>>,
 }
 
 #[allow(unused)]
@@ -65,12 +66,13 @@ impl MusicApi {
         let client = HttpClient::builder()
             .timeout(Duration::from_secs(TIMEOUT))
             .max_connections(max_cons)
+            .ssl_options(SslOption::DANGER_ACCEPT_INVALID_CERTS)
             .cookies()
             .build()
             .expect("初始化网络请求失败!");
         Self {
             client,
-            csrf: RefCell::new(String::new()),
+            csrf: Arc::new(Mutex::new(String::new())),
         }
     }
 
@@ -85,7 +87,7 @@ impl MusicApi {
             .expect("初始化网络请求失败!");
         Self {
             client,
-            csrf: RefCell::new(String::new()),
+            csrf: Arc::new(Mutex::new(String::new())),
         }
     }
 
@@ -140,13 +142,13 @@ impl MusicApi {
         ua: &str,
         append_csrf: bool,
     ) -> Result<String> {
-        let mut csrf = self.csrf.borrow().to_owned();
+        let mut csrf = self.csrf.lock().to_owned();
         if csrf.is_empty() {
             if let Some(cookies) = self.cookie_jar() {
                 let uri = BASE_URL.parse().unwrap();
                 if let Some(cookie) = cookies.get_by_name(&uri, "__csrf") {
                     let __csrf = cookie.value().to_string();
-                    self.csrf.replace(__csrf.to_owned());
+                    *self.csrf.lock() = __csrf.to_owned();
                     csrf = __csrf;
                 }
             }
@@ -426,7 +428,7 @@ impl MusicApi {
     /// songlist_id: 歌单 id
     #[allow(unused)]
     pub async fn song_list_detail(&self, songlist_id: u64) -> Result<PlayListDetail> {
-        let csrf_token = self.csrf.borrow().to_owned();
+        let csrf_token = self.csrf.lock().to_owned();
         let path = "/weapi/v6/playlist/detail";
         let mut params = HashMap::new();
         let songlist_id = songlist_id.to_string();
@@ -810,7 +812,7 @@ impl MusicApi {
     /// offset: 起始点
     /// limit: 数量
     /// order: 排序方式:
-    //	      "hot": 热门，
+    ///        "hot": 热门，
     ///        "new": 最新
     /// cat: 全部,华语,欧美,日语,韩语,粤语,小语种,流行,摇滚,民谣,电子,舞曲,说唱,轻音乐,爵士,乡村,R&B/Soul,古典,民族,英伦,金属,朋克,蓝调,雷鬼,世界音乐,拉丁,另类/独立,New Age,古风,后摇,Bossa Nova,清晨,夜晚,学习,工作,午休,下午茶,地铁,驾车,运动,旅行,散步,酒吧,怀旧,清新,浪漫,性感,伤感,治愈,放松,孤独,感动,兴奋,快乐,安静,思念,影视原声,ACG,儿童,校园,游戏,70后,80后,90后,网络歌曲,KTV,经典,翻唱,吉他,钢琴,器乐,榜单,00后
     #[allow(unused)]
@@ -902,7 +904,7 @@ impl MusicApi {
     /// music_id: 歌曲id
     #[allow(unused)]
     pub async fn song_lyric(&self, music_id: u64) -> Result<Lyrics> {
-        let csrf_token = self.csrf.borrow().to_owned();
+        let csrf_token = self.csrf.lock().to_owned();
         let path = "/weapi/song/lyric";
         let mut params = HashMap::new();
         let id = music_id.to_string();
@@ -1134,7 +1136,9 @@ mod tests {
                     .map(|song| song.id)
                     .collect_vec(),
                 "1900000"
-            ).await.unwrap()
+            )
+            .await
+            .unwrap()
         );
 
         assert!(api.banners().await.is_ok());

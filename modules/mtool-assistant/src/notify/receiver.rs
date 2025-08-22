@@ -3,66 +3,33 @@ use mapp::{
     anyhow::{self, Context},
     prelude::*,
     rand::{seq::SliceRandom, thread_rng},
-    serde_json,
     tokio::{self},
     tracing::{debug, warn},
 };
-use mtool_system::{AppInfo, Notification, SystemEventSource, SystenEvent};
+use mtool_system::{Notification, SystemEvent, SystemEventSource};
 use std::{
     io::{BufReader, Cursor},
     sync::atomic::{AtomicBool, Ordering},
 };
 
-use crate::context::{AssistantContext, AssistantMode};
-
-use super::rpc::{self, NotifyClient};
-
 pub(crate) struct NotifyReceiver {
     is_playing: AtomicBool,
-    context: Res<AssistantContext>,
 }
 
 impl NotifyReceiver {
-    pub async fn construct(context: Res<AssistantContext>) -> Result<Res<Self>, anyhow::Error> {
+    pub async fn construct() -> Result<Res<Self>, anyhow::Error> {
         Ok(Res::new(Self {
             is_playing: AtomicBool::new(false),
-            context,
         }))
     }
 }
 
 impl NotifyReceiver {
-    async fn post_notification(
-        receiver: Res<Self>,
-        notification: Notification,
-    ) -> Result<(), anyhow::Error> {
-        if let Some(request_address) = receiver.context.request_address() {
-            let mut client = NotifyClient::connect(request_address).await?;
-
-            let request = tonic::Request::new(rpc::Notification {
-                data: serde_json::to_vec(&notification)?,
-            });
-
-            _ = client.post_notification(request).await?;
-        }
-        Ok(())
-    }
-
-    async fn handle_im_notification(
-        receiver: Res<Self>,
-        app: AppInfo,
-    ) -> Result<(), anyhow::Error> {
-        let ctx = &receiver.context;
-
-        let do_play = match ctx.mode() {
-            AssistantMode::Desktop => ctx.is_desktop(),
-            AssistantMode::RemoteDesktop => !ctx.is_desktop(),
-        };
-
-        if do_play {
+    async fn handle_im_notification(receiver: Res<Self>) -> Result<(), anyhow::Error> {
+        if cfg!(feature = "mobile") {
             Self::play(receiver)
         } else {
-            Self::post_notification(receiver, Notification::Im { app }).await
+            Ok(())
         }
     }
 
@@ -71,7 +38,7 @@ impl NotifyReceiver {
         notification: Notification,
     ) -> Result<(), anyhow::Error> {
         match notification {
-            Notification::Im { app } => Self::handle_im_notification(receiver, app).await,
+            Notification::Im { app: _ } => Self::handle_im_notification(receiver).await,
             _ => Ok(()),
         }
     }
@@ -89,7 +56,7 @@ impl NotifyReceiver {
 
                 tokio::spawn(async move {
                     if let Err(e) = match ev {
-                        SystenEvent::NotificationPosted(notification) => {
+                        SystemEvent::NotificationPosted(notification) => {
                             Self::handle_notification_posted(receiver.clone(), notification).await
                         }
                     } {

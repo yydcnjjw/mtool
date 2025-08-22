@@ -6,7 +6,7 @@ use mapp::{
 };
 use std::{collections::HashMap, sync::Arc};
 
-use crate::hooks::use_app_resource;
+use crate::hooks::use_app_context;
 
 pub type RouteParams = HashMap<String, String>;
 pub type RouteHandler = Arc<dyn Fn(&RouteParams) -> Element + Send + Sync>;
@@ -122,13 +122,13 @@ pub fn app_route(path: &str) -> Route {
 
 #[component]
 fn Main(path: String) -> Element {
-    let router = use_app_resource::<Res<Router>>().suspend()?();
+    let router = use_app_context::<Res<Router>>().suspend()?();
     router.route(&path);
     router.render()
 }
 
 #[component]
 fn Default() -> Element {
-    let router = use_app_resource::<Res<Router>>().suspend()?;
+    let router = use_app_context::<Res<Router>>().suspend()?;
     router().render()
 }

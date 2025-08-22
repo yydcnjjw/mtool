@@ -6,7 +6,7 @@ use mapp::{
     dpi::{PhysicalPosition, PhysicalSize},
     itertools::Itertools,
     prelude::*,
-    tracing::{info, warn},
+    tracing::{debug, warn},
 };
 use mtool_dioxus::{
     desktop::{use_global_shortcut, window, HotKeyState},
@@ -119,7 +119,7 @@ fn DefaultView() -> Element {
                     rx.borrow()
                         .iter()
                         .inspect(|(source, items)| {
-                            info!("source: {}, count: {}", source, items.len());
+                            debug!("source: {}, count: {}", source, items.len());
                         })
                         .map(|(_, items)| items.clone())
                         .flatten()
@@ -249,15 +249,6 @@ fn init_window() {
             let x = (monitor_size.width - window_size.width) / 2;
             let y = (monitor_size.height - window_size.height) / 2;
             window.set_outer_position(PhysicalPosition::new(x, y));
-        }
-
-        #[cfg(windows)]
-        {
-            use mtool_dioxus::desktop::winit::platform::windows::{
-                CornerPreference, WindowExtWindows,
-            };
-            window.set_undecorated_shadow(true);
-            window.set_corner_preference(CornerPreference::Round);
         }
     })
 }

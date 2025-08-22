@@ -53,6 +53,9 @@ rand = "0.8"
 time = { version = "0.3.20", features = ["formatting"] }
 keyboard-types = "0.7"
 scopeguard = "*"
+rustls = "*"
+url = "*"
+base64 = "*"
 
 [target.'cfg(not(target_family = "wasm"))'.dependencies]
 tokio = { version = "*", features = ["full"] }

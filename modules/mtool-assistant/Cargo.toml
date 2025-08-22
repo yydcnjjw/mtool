@@ -25,6 +25,7 @@ mtool-dioxus = { path = "../mtool-dioxus" }
 mtool-cmdpal = { path = "../mtool-cmdpal" }
 mtool-system = { path = "../mtool-system" }
 mtool-rpc = { path = "../mtool-rpc" }
+mtool-p2p = { path = "../mtool-p2p" }
 mtool-storage = { path = "../mtool-storage" }
 
 dioxus = { workspace = true }
@@ -49,13 +50,17 @@ smooth-bevy-cameras = { version = "*", optional = true }
 
 # music
 mcloud-api = { path = "../../crates/mcloud-api" }
+rsubs-lib = "*"
+time = "*"
 
 pyo3 = { workspace = true }
 
 [target.'cfg(target_os = "windows")'.dependencies.windows]
 workspace = true
 features = [
+  "Foundation",
   "Foundation_Collections",
+  "Storage_Streams",
   "Media_Core",
   "Media_Control",
   "Media_Playback",

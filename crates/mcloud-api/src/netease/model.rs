@@ -3,7 +3,6 @@ use mapp::{
     serde::{Deserialize, Serialize},
     serde_json::{self, Value},
 };
-
 use std::fmt;
 
 trait DeVal<'a>: Sized {
@@ -86,34 +85,21 @@ macro_rules! get_val {
 #[serde(crate = "mapp::serde")]
 pub struct Lyrics {
     /// 歌词
-    pub lyric: Vec<String>,
+    pub lyric: String,
     /// 歌词翻译
-    pub tlyric: Vec<String>,
+    pub tlyric: Option<String>,
 }
 
 #[allow(unused)]
 pub fn to_lyric(json: String) -> Result<Lyrics> {
     let value = &serde_json::from_str::<Value>(&json)?;
+
+    mapp::tracing::info!("{json}");
+
     let code: i64 = get_val!(value, "code")?;
     if code == 200 {
-        let mut lyric: Vec<String> = Vec::new();
-        let lrc: String = get_val!(value, "lrc", "lyric")?;
-        lyric = lrc
-            .split('\n')
-            .collect::<Vec<&str>>()
-            .iter()
-            .map(|s| (*s).to_string())
-            .filter(|s| !s.is_empty())
-            .collect::<Vec<String>>();
-        let lrc: String = get_val!(value, "tlyric", "lyric")?;
-        let mut tlyric: Vec<String> = Vec::new();
-        tlyric = lrc
-            .split('\n')
-            .collect::<Vec<&str>>()
-            .iter()
-            .map(|s| (*s).to_string())
-            .filter(|s| !s.is_empty())
-            .collect::<Vec<String>>();
+        let lyric = get_val!(value, "lrc", "lyric")?;
+        let tlyric = get_val!(value, "tlyric").ok();
         return Ok(Lyrics { lyric, tlyric });
     }
     Err(anyhow!("none"))
@@ -168,7 +154,7 @@ pub struct SongUrl {
 
 #[allow(unused)]
 pub fn to_song_url(json: String) -> Result<Vec<SongUrl>> {
-    let value = &serde_json::from_str::<Value>(&json)?;
+    let value = &serde_json::from_str::<Value>(&json).context(format!("{json}"))?;
     let code: i64 = get_val!(value, "code")?;
     if code == 200 {
         let mut vec: Vec<SongUrl> = Vec::new();

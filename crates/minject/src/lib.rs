@@ -6,6 +6,8 @@ pub use container::*;
 pub use injectable::*;
 pub use provider::*;
 
+pub use minject_macro::*;
+
 use std::{any::type_name, future::Future};
 
 use anyhow::Context;

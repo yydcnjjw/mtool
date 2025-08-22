@@ -79,7 +79,7 @@ impl Deref for CommandInput {
 
 #[component]
 pub fn CommandList(items: ReadOnlySignal<Vec<CommandItem>>) -> Element {
-    let kvstore = use_app_resource::<Res<kv::Store>>().suspend()?;
+    let kvstore = use_app_context::<Res<kv::Store>>().suspend()?;
 
     let command_input: Signal<CommandInput> = use_context();
     let command_result: Signal<CommandResult> = use_context();

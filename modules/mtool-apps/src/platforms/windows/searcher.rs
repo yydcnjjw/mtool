@@ -162,7 +162,7 @@ impl Searcher {
                 if !ex_style.contains(WS_EX_TOOLWINDOW) || ex_style.contains(WS_EX_APPWINDOW) {
                     match WindowInfo::new(hwnd) {
                         Ok(win) => vec.push(win),
-                        Err(e) => warn!("{:#}", e),
+                        Err(_e) => {}
                     }
                 }
 

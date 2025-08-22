@@ -3,7 +3,6 @@ mod dbconn;
 mod kvstore;
 mod migration;
 mod module;
-mod rpc;
 
 pub use module::module;
 
