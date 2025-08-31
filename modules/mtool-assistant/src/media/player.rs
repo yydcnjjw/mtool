@@ -31,12 +31,8 @@ pub trait Player {
 #[derive(Clone, Debug, Serialize, Deserialize)]
 #[serde(crate = "mapp::serde")]
 #[serde(tag = "type")]
+#[non_exhaustive]
 pub enum PlayerEvent {
-    MediaMetadataChanged {
-        metadata: MediaMetadata,
-    },
-    TimedCuesChanged {
-        track_id: String,
-        cue: TimedCue,
-    },
+    MediaMetadataChanged { metadata: MediaMetadata },
+    TimedCuesChanged { track_id: String, cue: TimedCue },
 }

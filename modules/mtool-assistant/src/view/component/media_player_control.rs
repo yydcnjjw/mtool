@@ -26,7 +26,7 @@ use mtool_p2p::{self as p2p, gossipsub::IdentTopic};
 use mtool_storage::crdt;
 
 use crate::{
-    media::{MediaMetadata, MediaPlayer, Player, PlayerEvent, PlayerService},
+    media::{MediaMetadata, MediaPlayer, Player, PlayerEvent, PlayerService, TimedCue},
     model::NeteaseViewModel,
 };
 
@@ -35,6 +35,8 @@ pub struct MediaPlayerControlContext {
     pub id: String,
     pub online_player_id: crdt::State<String>,
     pub media_metadata: crdt::State<MediaMetadata>,
+
+    pub current_timed_cue: crdt::State<TimedCue>,
 
     pub player: Signal<Option<Arc<MediaPlayer>>>,
     pub volume: Signal<f64>,
@@ -58,6 +60,11 @@ impl MediaPlayerControlContext {
                         media_metadata: crdt::State::new(
                             consume_app_context().await,
                             "assistant.media_metadata",
+                        )
+                        .await?,
+                        current_timed_cue: crdt::State::new(
+                            consume_app_context().await,
+                            "assistant.current_timed_cue",
                         )
                         .await?,
                         player: Signal::new_in_scope(None, ScopeId::ROOT),
@@ -143,6 +150,9 @@ pub fn MediaPlayerControl() -> Element {
                 match event {
                     PlayerEvent::MediaMetadataChanged { metadata } => {
                         context.media_metadata.set(metadata)
+                    }
+                    PlayerEvent::TimedCuesChanged { cue, .. } => {
+                        context.current_timed_cue.set(cue);
                     }
                     _ => {}
                 }
