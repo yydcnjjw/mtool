@@ -7404,7 +7404,7 @@ dependencies = [
  "anyhow",
  "async-recursion",
  "async-trait",
- "base64 0.13.1",
+ "base64 0.22.1",
  "cfg-if",
  "dashmap",
  "dpi",
