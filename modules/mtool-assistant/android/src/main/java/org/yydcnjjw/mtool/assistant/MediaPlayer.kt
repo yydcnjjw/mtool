@@ -25,9 +25,14 @@ import androidx.media3.session.MediaSession
 import androidx.media3.session.MediaSession.ControllerInfo
 import androidx.media3.session.MediaSessionService
 import androidx.media3.session.SessionToken
+import kotlinx.serialization.Contextual
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
+import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
+import kotlin.time.Duration
+import kotlin.time.Duration.Companion.microseconds
+import kotlin.time.Duration.Companion.seconds
 
 @UnstableApi
 class PlaybackService : MediaSessionService() {
@@ -169,39 +174,48 @@ class PlaybackController(
     var listener: Player.Listener? = null
 
     fun listen(cb: Callback) {
-        listener?.let { controller.removeListener(it) }
+        handler.postAtFrontOfQueue {
+            listener?.let { controller.removeListener(it) }
 
-        listener = object : Player.Listener {
-            override fun onMediaMetadataChanged(mediaMetadata: MediaMetadata) {
-                val data = Json.encodeToString<PlayerEvent>(
-                    MediaMetadataChangedEvent(
-                        MtoolMediaMetadata(
-                            title = mediaMetadata.title.toString(),
-                            artist = mediaMetadata.artist.toString(),
-                            album = mediaMetadata.albumTitle.toString(),
-                            picUrl = mediaMetadata.artworkUri.toString(),
-                            duration = mediaMetadata.durationMs?.toUInt() ?: 0u,
+            listener = object : Player.Listener {
+                override fun onMediaMetadataChanged(mediaMetadata: MediaMetadata) {
+                    val data = Json.encodeToString<PlayerEvent>(
+                        MediaMetadataChangedEvent(
+                            MtoolMediaMetadata(
+                                title = mediaMetadata.title.toString(),
+                                artist = mediaMetadata.artist.toString(),
+                                album = mediaMetadata.albumTitle.toString(),
+                                picUrl = mediaMetadata.artworkUri.toString(),
+                                duration = mediaMetadata.durationMs?.toUInt() ?: 0u,
+                            )
                         )
                     )
-                )
-                Log.d(TAG, "listen: $data")
-                cb.invoke(data)
+                    Log.d(TAG, "listen: $data")
+                    cb.invoke(data)
+                }
+
+                override fun onCues(cueGroup: CueGroup) {
+                    cueGroup.cues.getOrNull(0)?.run {
+                        cb.invoke(
+                            Json.encodeToString<PlayerEvent>(
+                                TimedCuesChangedEvent(
+                                    "", TimedCue(
+                                        null,
+                                        TimedCueText(text?.toString() ?: ""),
+                                        0u,
+                                        cueGroup.presentationTimeUs.microseconds.inWholeMilliseconds.toUInt()
+                                    )
+                                )
+                            )
+                        )
+                    }
+                }
             }
 
-            override fun onCues(cueGroup: CueGroup) {
-                // cueGroup.
-                Log.d(TAG, "onCues: $cueGroup")
-            }
-
-            override fun onPlayerError(error: PlaybackException) {
-                Log.d(TAG, "player error: $error")
+            listener?.let {
+                controller.addListener(it)
             }
         }
-
-        listener?.let {
-            controller.addListener(it)
-        }
-
     }
 }
 
@@ -226,6 +240,27 @@ data class MtoolMediaMetadata(
 )
 
 @Serializable
+data class TimedCue(
+    val id: String?,
+    val data: TimedCueText,
+    @SerialName("start_time")
+    val startTIme: UInt,
+    val duration: UInt,
+)
+
+@Serializable
+class TimedCueText(
+    @SerialName("Text")
+    val text: String
+)
+
+//@Serializable
+//class TimedCueBinary(
+//    @SerialName("Binary")
+//    val binary: String
+//)
+
+@Serializable
 sealed class PlayerEvent
 
 @Serializable
@@ -237,6 +272,7 @@ class MediaMetadataChangedEvent(val metadata: MtoolMediaMetadata) : PlayerEvent(
 class TimedCuesChangedEvent(
     @SerialName("track_id")
     val trackId: String,
+    val cue: TimedCue,
 ) : PlayerEvent()
 
 class Callback(var handle: Long = 0) {

@@ -2,9 +2,8 @@ use mapp::{
     anyhow,
     async_recursion::async_recursion,
     futures::future::{BoxFuture, FutureExt},
-    regex::Regex,
     serde::{Deserialize, Serialize},
-    tracing::info,
+    serde_with::{serde_as, DurationMilliSeconds},
 };
 use std::{fmt, future::Future, sync::Arc, time::Duration};
 
@@ -70,12 +69,15 @@ pub struct TimedRawTrack {
     pub cues: Vec<TimedCue>,
 }
 
+#[serde_as(crate = "mapp::serde_with")]
 #[derive(Clone, Debug, Serialize, Deserialize)]
 #[serde(crate = "mapp::serde")]
 pub struct TimedCue {
     pub id: Option<String>,
     pub data: TimedCueData,
+    #[serde_as(as = "DurationMilliSeconds<u64>")]
     pub start_time: Duration,
+    #[serde_as(as = "DurationMilliSeconds<u64>")]
     pub duration: Duration,
 }
 

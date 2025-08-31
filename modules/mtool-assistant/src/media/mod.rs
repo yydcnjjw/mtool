@@ -5,7 +5,7 @@ mod module;
 mod player;
 mod remote;
 mod subtitle_track;
-mod timed_metadata_track;
+mod timed_metadata_source;
 
 pub use media_item::*;
 pub use media_metadata::*;
@@ -14,7 +14,7 @@ pub use module::*;
 pub use player::*;
 pub use remote::*;
 pub use subtitle_track::*;
-pub use timed_metadata_track::*;
+pub use timed_metadata_source::*;
 
 mapp::cfg_if::cfg_if! {
     if #[cfg(target_os = "windows")] {
