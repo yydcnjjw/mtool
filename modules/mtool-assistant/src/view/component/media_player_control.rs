@@ -1,4 +1,4 @@
-use std::{any::type_name, rc::Rc, sync::Arc, time::Duration};
+use std::{any::type_name, pin::Pin, sync::Arc, time::Duration};
 
 use dioxus::{
     core::{provide_root_context, SpawnIfAsync},
@@ -6,15 +6,15 @@ use dioxus::{
 };
 use mapp::{
     anyhow::{self, anyhow},
-    futures::{future, StreamExt, TryFutureExt, TryStreamExt},
+    futures::{Stream, StreamExt, TryFutureExt, TryStreamExt},
     prelude::*,
     tokio,
-    tracing::{info, warn},
+    tracing::warn,
 };
 use mtool_dioxus::{
     free_icons::{
         icons::fa_solid_icons::{FaCloud, FaComputer, FaMobile, FaPause, FaPlay, FaVolumeHigh},
-        Icon, IconShape,
+        Icon,
     },
     prelude::*,
     primitives::{
@@ -31,19 +31,19 @@ use crate::{
 };
 
 #[derive(Clone)]
-struct MediaPlayerControlContext {
-    id: String,
-    online_player_id: crdt::State<String>,
-    media_metadata: crdt::State<MediaMetadata>,
+pub struct MediaPlayerControlContext {
+    pub id: String,
+    pub online_player_id: crdt::State<String>,
+    pub media_metadata: crdt::State<MediaMetadata>,
 
-    player: Signal<Option<Arc<MediaPlayer>>>,
-    volume: Signal<f64>,
+    pub player: Signal<Option<Arc<MediaPlayer>>>,
+    pub volume: Signal<f64>,
 
-    subject: Arc<p2p::Subject<PlayerEvent>>,
+    pub subject: Arc<p2p::Subject<PlayerEvent>>,
 }
 
 impl MediaPlayerControlContext {
-    fn get() -> Resource<Self> {
+    pub fn get() -> Resource<Self> {
         use_resource(move || async move {
             async move {
                 let this = match try_consume_context::<Self>() {
@@ -77,6 +77,20 @@ impl MediaPlayerControlContext {
             .expect(&format!("{}", type_name::<Self>()))
         })
     }
+
+    pub async fn player_event_stream(
+        &self,
+    ) -> Result<Pin<Box<dyn Stream<Item = Result<PlayerEvent, anyhow::Error>> + Send>>, anyhow::Error>
+    {
+        Ok(if let Some(player) = (self.player)() {
+            player.listen().await?.map_err(|e| anyhow!("{e:?}")).boxed()
+        } else {
+            self.subject
+                .stream()
+                .map(|msg| msg.map(|msg| msg.data))
+                .boxed()
+        })
+    }
 }
 
 #[component]
@@ -105,11 +119,11 @@ pub fn MediaPlayerControl() -> Element {
         }
     });
 
-    use_effect(move || {
+    use_resource(move || {
         let mut context = context();
         let player = (context.player)();
         async move {
-            let mut stream = if let Some(player) = player {
+            if let Some(player) = player {
                 let metadata = player
                     .current_media_item()
                     .await?
@@ -121,31 +135,22 @@ pub fn MediaPlayerControl() -> Element {
                 player.set_volume(0.1).await?;
                 // TODO: volume changed event
                 context.volume.set(0.1);
-
-                player.listen().await?.map_err(|e| anyhow!("{e:?}")).boxed()
-            } else {
-                context
-                    .subject
-                    .stream()
-                    .map(|msg| msg.map(|msg| msg.data))
-                    .boxed()
             };
+
+            let mut stream = context.player_event_stream().await?;
 
             while let Some(Ok(event)) = stream.next().await {
                 match event {
                     PlayerEvent::MediaMetadataChanged { metadata } => {
                         context.media_metadata.set(metadata)
                     }
-                    PlayerEvent::TimedCuesChanged { track_id, cue } => {
-                        info!("{track_id}: {cue:?}");
-                    }
+                    _ => {}
                 }
             }
 
             Ok::<_, anyhow::Error>(())
         }
-        .unwrap_or_else(move |e| warn!("{e:?}"))
-        .spawn()
+        .unwrap_or_else(|e| warn!("{e:?}"))
     });
 
     let mut is_playing = use_signal(|| false);

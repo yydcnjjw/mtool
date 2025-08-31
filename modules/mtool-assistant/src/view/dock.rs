@@ -1,6 +1,6 @@
 use dioxus::prelude::*;
 
-use crate::view::component::MediaPlayerControl;
+use crate::view::{hydra::HydraView, mini::MiniView};
 
 #[component]
 pub fn DockView() -> Element {
@@ -13,7 +13,7 @@ pub fn DockView() -> Element {
         }
     });
 
-    let mut window_top = use_signal(|| 128);
+    let mut window_top = use_signal(|| 256);
 
     #[cfg(feature = "desktop")]
     {
@@ -29,7 +29,7 @@ pub fn DockView() -> Element {
         use_effect(move || {
             let (width, height) = match dock_mode() {
                 DockMode::Show => (512, 512),
-                DockMode::Hide => (48, 256),
+                DockMode::Hide => (48, 512),
             };
 
             let win = window();
@@ -95,9 +95,14 @@ pub fn DockView() -> Element {
             div {
                 class: "w-screen @3xs:w-full transition-[width] duration-300 ease-in-out bg-transparent flex flex-col",
 
-                match dock_mode() {
-                    DockMode::Show => rsx! { Show {} },
-                    DockMode::Hide => rsx! { Hide {} },
+                SuspenseBoundary {
+                    fallback: |_| rsx! {
+                        div { "Loading ..." }
+                    },
+                    match dock_mode() {
+                        DockMode::Show => rsx! { HydraView {} },
+                        DockMode::Hide => rsx! { MiniView {} },
+                    }
                 }
             }
         }
@@ -108,23 +113,4 @@ pub fn DockView() -> Element {
 enum DockMode {
     Show,
     Hide,
-}
-
-#[component]
-fn Hide() -> Element {
-    rsx! {
-        div { }
-    }
-}
-
-#[component]
-fn Show() -> Element {
-    rsx! {
-        SuspenseBoundary {
-            fallback: |_| rsx! {
-                div { "Loading media player control" }
-            },
-            MediaPlayerControl {  }
-        }
-    }
 }

@@ -79,9 +79,35 @@ pub struct TimedCue {
     pub duration: Duration,
 }
 
+impl Default for TimedCue {
+    fn default() -> Self {
+        Self {
+            id: Default::default(),
+            data: Default::default(),
+            start_time: Default::default(),
+            duration: Default::default(),
+        }
+    }
+}
+
 #[derive(Clone, Debug, Serialize, Deserialize)]
 #[serde(crate = "mapp::serde")]
 pub enum TimedCueData {
     Text(String),
     Binary(Vec<u8>),
+}
+
+impl ToString for TimedCueData {
+    fn to_string(&self) -> String {
+        match self {
+            TimedCueData::Text(text) => text.clone(),
+            TimedCueData::Binary(_) => String::new(),
+        }
+    }
+}
+
+impl Default for TimedCueData {
+    fn default() -> Self {
+        Self::Text(Default::default())
+    }
 }
