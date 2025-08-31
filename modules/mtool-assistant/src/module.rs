@@ -78,13 +78,16 @@ async fn create_window() -> Result<(), anyhow::Error> {
             CornerPreference, WindowAttributesExtWindows,
         };
         window_attrs
-            .with_skip_taskbar(false)
-            .with_undecorated_shadow(true)
+            .with_skip_taskbar(true)
             .with_corner_preference(CornerPreference::Round)
     };
 
-    spawn_window(WebviewWindowConfig::new(view::MainView).with_window_attributes(window_attrs))
-        .await
+    spawn_window(
+        WebviewWindowConfig::new(view::MainView)
+            // .with_background_color((0, 0, 0, 0))
+            .with_window_attributes(window_attrs),
+    )
+    .await
 }
 
 async fn init(cmdpal: Res<CommandPalette>) -> Result<(), anyhow::Error> {

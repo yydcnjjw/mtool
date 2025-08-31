@@ -8,11 +8,10 @@ use mapp::{
     tracing::{debug, info, warn},
 };
 use mtool_core::ConfigStore;
-use mtool_storage::kv;
 
 use crate::{
     builder::DioxusBuilder, context::DioxusContext, custom_protocol::file_handler,
-    main_view::main_view, router::Router,
+    main_view::main_view,
 };
 
 type MainLoopRunner = Box<dyn FnOnce() -> Result<(), anyhow::Error> + Send>;
@@ -104,7 +103,6 @@ pub(crate) async fn launch(
                     use dioxus_desktop::winit::platform::windows::CornerPreference;
                     window_attrs = window_attrs
                         .with_skip_taskbar(true)
-                        .with_undecorated_shadow(true)
                         .with_corner_preference(CornerPreference::Round);
                 }
 
@@ -113,7 +111,6 @@ pub(crate) async fn launch(
                         .with_asynchronous_custom_protocol("mfile", file_handler)
                         .with_event_loop(event_loop)
                         .with_window(window_attrs)
-                        .with_background_color((0, 0, 0, 0))
                         .with_custom_event_handler(move |event, event_loop| match event {
                             WinitEvent::UserEvent(UserWindowEvent::WakeUp) => {
                                 event_loop_context.pool_events(event_loop);
