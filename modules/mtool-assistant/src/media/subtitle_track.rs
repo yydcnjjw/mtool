@@ -98,7 +98,11 @@ impl SubtitleTrack {
                     id: Some(format!("{i}")),
                     data: TimedCueData::Text(text),
                     start_time,
-                    duration: current_time - start_time,
+                    duration: if current_time > start_time {
+                        current_time - start_time
+                    } else {
+                        Duration::from_secs(0)
+                    },
                 });
                 start_time = current_time;
                 text = current_text;
