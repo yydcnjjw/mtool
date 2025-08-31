@@ -1,11 +1,17 @@
 use std::{
     any::type_name,
+    fmt,
     future::Future,
     sync::atomic::{AtomicUsize, Ordering},
 };
 
 use dioxus::prelude::*;
-use mapp::{anyhow, prelude::*};
+use mapp::{
+    anyhow,
+    prelude::*,
+    serde::{de::DeserializeOwned, Serialize},
+};
+use mtool_storage::crdt;
 
 pub fn use_unique_id() -> Signal<String> {
     static NEXT_ID: AtomicUsize = AtomicUsize::new(0);
@@ -48,25 +54,23 @@ where
         .expect(&format!("Failed to get {}", type_name::<T>()))
 }
 
-// pub fn use_app_context_provider<T, F, O>(f: F) -> Resource<T>
-// where
-//     T: Send + Sync + Clone + 'static,
-//     F: FnMut() -> O + 'static,
-//     O: Future<Output = Result<T, anyhow::Error>> + 'static,
-// {
-//     let injector: Injector = use_context();
+pub fn use_crdt_signal<T>(state: crdt::State<T>) -> ReadOnlySignal<T>
+where
+    T: Serialize + DeserializeOwned + fmt::Debug + Clone + Send + Sync + 'static,
+{
+    let (rx, mut signal) = use_hook(|| {
+        let rx = state.subscribe();
+        let value = rx.borrow().clone();
+        (rx, Signal::new(value))
+    });
 
-//     use_resource(move || {
-//         to_owned![injector];
-//         async move {
-//             match injector.get_without_construct::<T>().await {
-//                 Some(value) => value,
-//                 None => {
-//                     let value = f().await.unwrap();
-//                     injector.insert(value.clone());
-//                     value
-//                 }
-//             }
-//         }
-//     })
-// }
+    use_future(move || {
+        to_owned![rx];
+        async move {
+            while let Ok(_) = rx.changed().await {
+                signal.set(rx.borrow_and_update().clone());
+            }
+        }
+    });
+    signal.into()
+}

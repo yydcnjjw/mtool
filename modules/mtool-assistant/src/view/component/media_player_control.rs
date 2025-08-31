@@ -13,8 +13,8 @@ use mapp::{
 };
 use mtool_dioxus::{
     free_icons::{
-        icons::fa_solid_icons::{FaCloud, FaComputer, FaPause, FaPlay, FaVolumeHigh},
-        Icon,
+        icons::fa_solid_icons::{FaCloud, FaComputer, FaMobile, FaPause, FaPlay, FaVolumeHigh},
+        Icon, IconShape,
     },
     prelude::*,
     primitives::{
@@ -34,8 +34,9 @@ use crate::{
 struct MediaPlayerControlContext {
     id: String,
     online_player_id: crdt::State<String>,
+    media_metadata: crdt::State<MediaMetadata>,
+
     player: Signal<Option<Arc<MediaPlayer>>>,
-    media_metadata: Signal<MediaMetadata>,
     volume: Signal<f64>,
 
     subject: Arc<p2p::Subject<PlayerEvent>>,
@@ -54,13 +55,13 @@ impl MediaPlayerControlContext {
                             "assistant.online_player_id",
                         )
                         .await?,
+                        media_metadata: crdt::State::new(
+                            consume_app_context().await,
+                            "assistant.media_metadata",
+                        )
+                        .await?,
                         player: Signal::new_in_scope(None, ScopeId::ROOT),
-                        media_metadata: Signal::new_in_scope(
-                            MediaMetadata::default(),
-                            ScopeId::ROOT,
-                        ),
                         volume: Signal::new_in_scope(0., ScopeId::ROOT),
-
                         subject: Arc::new(
                             consume_app_context::<Res<p2p::Peer>>()
                                 .await
@@ -76,24 +77,6 @@ impl MediaPlayerControlContext {
             .expect(&format!("{}", type_name::<Self>()))
         })
     }
-
-    fn online_player_id_signal(&self) -> ReadOnlySignal<String> {
-        let (rx, mut signal) = use_hook(|| {
-            let rx = self.online_player_id.subscribe();
-            let value = rx.borrow().clone();
-            (rx, Signal::new(value))
-        });
-
-        use_future(move || {
-            to_owned![rx];
-            async move {
-                while let Ok(_) = rx.changed().await {
-                    signal.set(rx.borrow_and_update().clone());
-                }
-            }
-        });
-        signal.into()
-    }
 }
 
 #[component]
@@ -102,7 +85,8 @@ pub fn MediaPlayerControl() -> Element {
 
     let context = MediaPlayerControlContext::get().suspend()?;
 
-    let online_player_id = context().online_player_id_signal();
+    let online_player_id = use_crdt_signal(context().online_player_id.clone());
+    let media_metadata = use_crdt_signal(context().media_metadata.clone());
 
     let is_native = use_memo(move || online_player_id() == context().id);
 
@@ -174,7 +158,7 @@ pub fn MediaPlayerControl() -> Element {
         album,
         pic_url,
         ..
-    } = (context.media_metadata)();
+    } = media_metadata();
 
     let volume = ((context.volume)().clamp(0., 1.) * 100.).round() as usize;
 
@@ -219,10 +203,18 @@ pub fn MediaPlayerControl() -> Element {
                     },
                     button {
                         class: "btn btn-circle swap-off fill-current",
-                        Icon {
-                            width: 24,
-                            height: 24,
-                            icon: FaComputer,
+                        if cfg!(feature = "desktop") {
+                            Icon {
+                                width: 24,
+                                height: 24,
+                                icon: FaComputer,
+                            }
+                        } else {
+                            Icon {
+                                width: 24,
+                                height: 24,
+                                icon: FaMobile,
+                            }
                         }
                     }
                     button {

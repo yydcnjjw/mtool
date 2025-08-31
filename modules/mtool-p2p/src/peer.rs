@@ -11,7 +11,7 @@ use mapp::{
     serde_json,
     tokio::sync::{broadcast, mpsc},
     tokio_stream::wrappers::BroadcastStream,
-    tracing::{info, warn},
+    tracing::{debug, info, warn},
 };
 
 use crate::{
@@ -65,7 +65,7 @@ impl Peer {
     where
         T: Serialize,
     {
-        info!(
+        debug!(
             "Publishing to topic {}: {}",
             topic,
             serde_json::to_string(data)?
@@ -138,7 +138,8 @@ where
     pub async fn publish(&self, data: &T) -> Result<(), anyhow::Error> {
         let data = serde_json::to_string(data)?;
         let topic = self.topic.clone();
-        info!("publishing to topic {topic}: {data}");
+
+        debug!("publishing to topic {topic}: {data}");
 
         let (result, rx) = CommandResult::new();
         self.command_sender.send(Command::Publish {
