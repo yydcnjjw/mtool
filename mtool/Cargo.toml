@@ -10,6 +10,7 @@ edition.workspace = true
 default = [ "mobile" ]
 
 graphic = [
+  "mtool-core/python",
   "dep:mtool-dioxus",
   "dep:mtool-system",
 ]
@@ -41,6 +42,7 @@ bevy_dynamic_linking = [ "mtool-dioxus/bevy_dynamic_linking" ]
 mapp = { path = "../crates/mapp" }
 mtool-core = { path = "../modules/mtool-core" }
 mtool-rpc = { path = "../modules/mtool-rpc" }
+mtool-p2p = { path = "../modules/mtool-p2p" }
 mtool-storage = { path = "../modules/mtool-storage" }
 
 mtool-dioxus = { path = "../modules/mtool-dioxus", optional = true }

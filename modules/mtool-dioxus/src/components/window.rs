@@ -4,7 +4,10 @@ use dioxus_primitives::toast::ToastProvider;
 use crate::keybinding::Keybinding;
 
 #[component]
-pub fn WindowView(children: Element) -> Element {
+pub fn WindowView(
+    #[props(extends = GlobalAttributes)] attributes: Vec<Attribute>,
+    children: Element,
+) -> Element {
     let keybinding = use_context_provider(provide_keybinding);
 
     let onkeydown = move |e| {
@@ -15,8 +18,9 @@ pub fn WindowView(children: Element) -> Element {
         document::Stylesheet {
             href: asset!("/assets/tailwind.css")
         },
-        body {
+        div {
             onkeydown,
+            ..attributes,
             ToastProvider {
                 children
             }

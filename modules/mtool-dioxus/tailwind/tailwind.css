@@ -1,5 +1,7 @@
 @import "tailwindcss";
 @source "./modules/**/*.rs";
 
+@plugin "@tailwindcss/typography";
+
 @plugin "daisyui" {
 }

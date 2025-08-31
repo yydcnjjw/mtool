@@ -1,9 +1,7 @@
 mod enum_params;
 mod repeat;
-// mod inject;
 
-use enum_params::EnumParams;
-// use inject::Inject;
+use enum_params::{EnumParams, EnumParamsWithIndex};
 use proc_macro::TokenStream;
 use quote::ToTokens;
 use repeat::Repeat;
@@ -23,9 +21,10 @@ pub fn enum_params(input: TokenStream) -> TokenStream {
         .into()
 }
 
-// #[proc_macro]
-// pub fn inject(input: TokenStream) -> TokenStream {
-//     parse_macro_input!(input as Inject)
-//         .into_token_stream()
-//         .into()
-// }
+#[proc_macro]
+pub fn enum_params_with_index(input: TokenStream) -> TokenStream {
+    parse_macro_input!(input as EnumParamsWithIndex)
+        .into_token_stream()
+        .into()
+}
+

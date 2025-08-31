@@ -6,6 +6,12 @@ edition.workspace = true
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
+[features]
+python = [
+  "dep:pyo3",
+  "dep:pyo3-async-runtimes",
+]
+
 [dependencies]
 mapp = { path = "../../crates/mapp" }
 
@@ -19,5 +25,5 @@ dirs = "*"
 time = { version = "0.3.20", features = ["formatting"] }
 
 # python
-pyo3 = { workspace = true }
-pyo3-async-runtimes = { workspace = true }
+pyo3 = { workspace = true, optional = true }
+pyo3-async-runtimes = { workspace = true, optional = true }

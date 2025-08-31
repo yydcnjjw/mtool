@@ -22,6 +22,13 @@ class MainActivity : WryActivity() {
 
         init {
             System.loadLibrary("dioxusmain")
+
+            val proxyAddress = System.getProperty("http.proxyHost")
+            val proxyPort = System.getProperty("http.proxyPort")
+            if (proxyAddress != null && proxyPort != null) {
+                Os.setenv("HTTP_PROXY", "http://${proxyAddress}:${proxyPort}", true)
+                Os.setenv("HTTPS_PROXY", "http://${proxyAddress}:${proxyPort}", true)
+            }
         }
     }
 
@@ -67,9 +74,6 @@ class MainActivity : WryActivity() {
 
     fun tryInstallPython() {
         val pythonHome = filesDir.resolve("python")
-
-        Os.setenv("HTTP_PROXY", "http://10.30.183.179:8188", true)
-        Os.setenv("HTTPS_PROXY", "http://10.30.183.179:8188", true)
 
         Os.setenv("PYTHONPATH", "$pythonHome/python3.13:$pythonHome/python3.13/site-packages", true)
         Os.setenv("PYTHONPLATLIBDIR", "$pythonHome", true)

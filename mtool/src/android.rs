@@ -1,20 +1,8 @@
-use std::{
-    env,
-    ffi::CStr,
-    fs::{self, File},
-    io::{self, Read},
-    os,
-    path::PathBuf,
-};
-
 use mapp::{
     android_activity::AndroidApp,
-    anyhow::{self, Context},
-    itertools::Itertools,
+    anyhow::{self},
     prelude::*,
-    tracing::{info, warn},
 };
-use mtool_dioxus::desktop::wry::prelude::ndk::asset::{AssetDir, AssetManager};
 
 use crate::run;
 

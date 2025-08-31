@@ -45,3 +45,30 @@ impl ToTokens for EnumParams {
         tokens.extend([self.r#gen()]);
     }
 }
+
+
+
+pub struct EnumParamsWithIndex(EnumParams);
+
+impl EnumParamsWithIndex {
+    fn r#gen(&self) -> TokenStream2 {
+        let EnumParams { count, r#macro, idents } = &self.0;
+        let params = (0..*count).map(|i| {
+            let idents = idents.iter().map(|ident| format_ident!("{}{}", ident, i));
+            quote! { ((#(#idents),*), #i) }
+        });
+        quote! { #r#macro!(#( #params ),*); }
+    }
+}
+
+impl Parse for EnumParamsWithIndex {
+    fn parse(input: ParseStream) -> syn::Result<Self> {
+        Ok(Self(input.parse()?))
+    }
+}
+
+impl ToTokens for EnumParamsWithIndex {
+    fn to_tokens(&self, tokens: &mut TokenStream2) {
+        tokens.extend([self.r#gen()]);
+    }
+}

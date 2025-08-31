@@ -18,7 +18,6 @@ mtool-core = { path = "../mtool-core" }
 mtool-storage = { path = "../mtool-storage" }
 
 dioxus = { workspace = true, features = ["router"] }
-dioxus-free-icons = { version = "0.10.0-alpha.1", features = ["octicons"] }
 dioxus-primitives = { git = "https://github.com/DioxusLabs/components" }
 blake3 = { version = "1.5", features = ["pure"] } # use pure for fix compile error
 route-recognizer = "*"
@@ -26,6 +25,15 @@ infer = "*"
 urlencoding = "*"
 
 bevy = { workspace = true, optional = true }
+
+[dependencies.dioxus-free-icons]
+version = "0.10.0-alpha.1"
+features = [
+  "octicons",
+  "font-awesome-brands",
+  "font-awesome-regular",
+  "font-awesome-solid"
+]
 
 [dependencies.dioxus-desktop]
 workspace = true

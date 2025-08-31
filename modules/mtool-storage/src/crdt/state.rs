@@ -1,6 +1,7 @@
 use loro::{ContainerTrait, EventTriggerKind, LoroBinaryValue, LoroMap, LoroValue, Subscription};
 use mapp::{
     anyhow::{self, anyhow},
+    futures::future,
     prelude::*,
     serde::{de::DeserializeOwned, Serialize},
     serde_json,
@@ -23,6 +24,14 @@ impl<T> State<T>
 where
     T: Serialize + DeserializeOwned + Debug + Send + Sync + 'static,
 {
+    pub async fn new<K>(service: Res<CrdtService>, key: K) -> Result<Self, anyhow::Error>
+    where
+        K: ToString,
+        T: Default,
+    {
+        Self::new_with(service, key, || future::ready(Ok(T::default()))).await
+    }
+
     pub async fn new_with<K, F, O>(
         service: Res<CrdtService>,
         key: K,

@@ -16,13 +16,13 @@ use mtool_dioxus::{
     prelude::*,
 };
 
-use crate::{Notification, SystenEvent};
+use crate::{Notification, SystemEvent};
 
 pub struct SystemEventSource {
-    source: broadcast::Sender<SystenEvent>,
+    source: broadcast::Sender<SystemEvent>,
 }
 
-static SOURCE: OnceCell<broadcast::Sender<SystenEvent>> = OnceCell::new();
+static SOURCE: OnceCell<broadcast::Sender<SystemEvent>> = OnceCell::new();
 
 impl SystemEventSource {
     pub async fn new(context: Res<DioxusContext>) -> Result<SystemEventSource, anyhow::Error> {
@@ -61,11 +61,11 @@ impl SystemEventSource {
         Ok(SystemEventSource { source })
     }
 
-    pub fn subscribe(&self) -> broadcast::Receiver<SystenEvent> {
+    pub fn subscribe(&self) -> broadcast::Receiver<SystemEvent> {
         self.source.subscribe()
     }
 
-    pub fn sender(&self) -> broadcast::Sender<SystenEvent> {
+    pub fn sender(&self) -> broadcast::Sender<SystemEvent> {
         self.source.clone()
     }
 }
@@ -84,7 +84,7 @@ pub unsafe fn onNotificationPostedNative(mut jenv: JNIEnv, _: JClass, data: JStr
         Ok(data) => match serde_json::from_slice(data.to_bytes()) {
             Ok(notification) => {
                 if let Some(source) = SOURCE.get() {
-                    if let Err(e) = source.send(SystenEvent::NotificationPosted(notification)) {
+                    if let Err(e) = source.send(SystemEvent::NotificationPosted(notification)) {
                         warn!("Failed to send {}", e);
                     }
                 } else {

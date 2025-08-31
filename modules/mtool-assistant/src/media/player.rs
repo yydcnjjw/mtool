@@ -1,5 +1,3 @@
-use std::pin::Pin;
-
 use mapp::{
     anyhow,
     futures::Stream,
@@ -7,6 +5,9 @@ use mapp::{
     serde::{Deserialize, Serialize},
     tokio::sync::broadcast::error::RecvError,
 };
+use std::pin::Pin;
+
+use super::{MediaItem, MediaMetadata, TimedCue};
 
 pub type PlayerEventStream = Pin<Box<dyn Stream<Item = Result<PlayerEvent, RecvError>> + Send>>;
 
@@ -20,38 +21,22 @@ pub trait Player {
 
     async fn set_volume(&self, value: f64) -> Result<(), anyhow::Error>;
 
-    async fn add_media_items(&self, items: Vec<MediaItem>) -> Result<(), anyhow::Error>;
+    async fn set_media_items(&self, items: Vec<MediaItem>) -> Result<(), anyhow::Error>;
+
+    async fn current_media_item(&self) -> Result<Option<MediaItem>, anyhow::Error>;
 
     async fn listen(&self) -> Result<PlayerEventStream, anyhow::Error>;
 }
 
-#[derive(Debug, Serialize, Deserialize)]
-#[serde(crate = "mapp::serde")]
-pub struct MediaItem {
-    pub uri: String,
-    pub metadata: Option<MediaMetadata>,
-}
-
-impl MediaItem {
-    pub fn new(uri: String) -> Self {
-        Self {
-            uri,
-            metadata: None,
-        }
-    }
-}
-
-#[derive(Clone, Debug, Default, Serialize, Deserialize)]
-#[serde(crate = "mapp::serde")]
-pub struct MediaMetadata {
-    pub id: String,
-    pub title: String,
-    pub artist: String,
-    pub album: String,
-}
-
 #[derive(Clone, Debug, Serialize, Deserialize)]
 #[serde(crate = "mapp::serde")]
+#[serde(tag = "type")]
 pub enum PlayerEvent {
-    MediaMetadataChanged(MediaMetadata),
+    MediaMetadataChanged {
+        metadata: MediaMetadata,
+    },
+    TimedCuesChanged {
+        track_id: String,
+        cue: TimedCue,
+    },
 }

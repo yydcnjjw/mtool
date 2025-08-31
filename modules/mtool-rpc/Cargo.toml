@@ -11,7 +11,7 @@ mapp = { path = "../../crates/mapp" }
 
 mtool-core = { path = "../mtool-core" }
 
-tonic = { workspace = true, features = ["tls-aws-lc"] }
+tonic = { workspace = true }# , features = ["tls-aws-lc"]
 prost = { workspace = true }
 tower = "*"
 axum = "*"

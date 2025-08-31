@@ -8,6 +8,7 @@ use crate::{
     schedule::{LocalSchedule, Schedule},
     trace::Tracing,
 };
+use rustls::crypto::{aws_lc_rs, CryptoProvider};
 
 pub struct AppBuilder {
     modules: ModuleGroup,
@@ -16,6 +17,8 @@ pub struct AppBuilder {
 
 impl AppBuilder {
     pub fn new() -> Result<Self, anyhow::Error> {
+        CryptoProvider::install_default(aws_lc_rs::default_provider()).unwrap();
+
         Ok(Self {
             modules: ModuleGroup::new("app_group"),
             tracing: Some(Tracing::new()?),

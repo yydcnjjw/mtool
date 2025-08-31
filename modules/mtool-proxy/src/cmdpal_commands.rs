@@ -53,7 +53,7 @@ fn clipboard_content() -> Result<String, anyhow::Error> {
 
 #[component]
 fn AddProxyRuleView() -> Element {
-    let service = use_app_resource::<Res<ProxyService>>().suspend()?;
+    let service = use_app_context::<Res<ProxyService>>().suspend()?;
 
     let keybinding = use_context::<Keybinding>();
 
@@ -125,7 +125,7 @@ impl InvokeCommand for RemoveProxyRuleCommand {
 
 #[component]
 fn RemoveProxyRuleView() -> Element {
-    let service = use_app_resource::<Res<ProxyService>>().suspend()?;
+    let service = use_app_context::<Res<ProxyService>>().suspend()?;
 
     let keybinding = use_context::<Keybinding>();
 

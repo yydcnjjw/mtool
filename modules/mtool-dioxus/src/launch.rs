@@ -24,6 +24,7 @@ pub(crate) async fn launch(
     injector: Injector,
     cs: Res<ConfigStore>,
     builder: Take<Res<DioxusBuilder>>,
+    exit_signal: Res<ExitSignal>,
     #[cfg(target_os = "android")] android_app: Res<AndroidApp>,
     runner: Take<Arc<oneshot::Sender<MainLoopRunner>>>,
 ) -> Result<(), anyhow::Error> {
@@ -87,11 +88,11 @@ pub(crate) async fn launch(
 
                 {
                     let event_loop = event_loop.create_proxy();
-                    injector.insert(Res::new(ExitSignal::new(move || {
+                    exit_signal.add_handler(move || {
                         if let Err(e) = event_loop.send_event(UserWindowEvent::Shutdown) {
                             warn!("{:?}", e);
                         }
-                    })));
+                    });
                 }
 
                 let mut window_attrs = WindowAttributes::default()
@@ -100,7 +101,11 @@ pub(crate) async fn launch(
 
                 #[cfg(target_os = "windows")]
                 {
-                    window_attrs = window_attrs.with_skip_taskbar(true);
+                    use dioxus_desktop::winit::platform::windows::CornerPreference;
+                    window_attrs = window_attrs
+                        .with_skip_taskbar(true)
+                        .with_undecorated_shadow(true)
+                        .with_corner_preference(CornerPreference::Round);
                 }
 
                 (
@@ -108,6 +113,7 @@ pub(crate) async fn launch(
                         .with_asynchronous_custom_protocol("mfile", file_handler)
                         .with_event_loop(event_loop)
                         .with_window(window_attrs)
+                        .with_background_color((0, 0, 0, 0))
                         .with_custom_event_handler(move |event, event_loop| match event {
                             WinitEvent::UserEvent(UserWindowEvent::WakeUp) => {
                                 event_loop_context.pool_events(event_loop);

@@ -100,17 +100,17 @@ impl media_player_server::MediaPlayer for Res<PlayerService> {
         &self,
         request: tonic::Request<pb::MediaItemList>,
     ) -> Result<tonic::Response<pb::Empty>, tonic::Status> {
-        self.player()?
-            .add_media_items(
-                request
-                    .into_inner()
-                    .items
-                    .into_iter()
-                    .map(|item| MediaItem::new(item.url))
-                    .collect(),
-            )
-            .await
-            .map_err(|e| tonic::Status::internal(format!("{e:?}")))?;
+        // self.player()?
+        //     .add_media_items(
+        //         request
+        //             .into_inner()
+        //             .items
+        //             .into_iter()
+        //             .map(|item| MediaItem::new())
+        //             .collect(),
+        //     )
+        //     .await
+        //     .map_err(|e| tonic::Status::internal(format!("{e:?}")))?;
         Ok(tonic::Response::new(Empty {}))
     }
 
@@ -128,11 +128,14 @@ impl media_player_server::MediaPlayer for Res<PlayerService> {
 
         Ok(tonic::Response::new(Box::pin(stream.map(|ev| match ev {
             Ok(ev) => Ok(pb::PlayerEvent {
-                event: Some(match ev {
-                    PlayerEvent::MediaMetadataChanged(metadata) => {
-                        Event::MediaMetadataChanged(pb::MediaMetadata { id: metadata.id })
+                event: match ev {
+                    PlayerEvent::MediaMetadataChanged { metadata: _ } => {
+                        Some(Event::MediaMetadataChanged(pb::MediaMetadata {
+                            id: "".into(),
+                        }))
                     }
-                }),
+                    _ => None,
+                },
             }),
             Err(e) => Err(tonic::Status::internal(format!("{e:?}"))),
         }))))
@@ -193,18 +196,22 @@ impl Player for RemotePlayer {
         Ok(())
     }
 
-    async fn add_media_items(&self, items: Vec<MediaItem>) -> Result<(), anyhow::Error> {
-        self.client
-            .lock()
-            .await
-            .add_media_items(tonic::Request::new(pb::MediaItemList {
-                items: items
-                    .into_iter()
-                    .map(|item| pb::MediaItem { url: item.uri })
-                    .collect(),
-            }))
-            .await?;
+    async fn set_media_items(&self, items: Vec<MediaItem>) -> Result<(), anyhow::Error> {
+        // self.client
+        //     .lock()
+        //     .await
+        //     .add_media_items(tonic::Request::new(pb::MediaItemList {
+        //         items: items
+        //             .into_iter()
+        //             .map(|item| pb::MediaItem { url: item.uri })
+        //             .collect(),
+        //     }))
+        //     .await?;
         Ok(())
+    }
+
+    async fn current_media_item(&self) -> Result<Option<MediaItem>, anyhow::Error> {
+        todo!()
     }
 
     async fn listen(&self) -> Result<PlayerEventStream, anyhow::Error> {
@@ -219,10 +226,9 @@ impl Player for RemotePlayer {
                     Ok(pb::PlayerEvent { event }) => match event {
                         Some(ev) => Ok(match ev {
                             pb::player_event::Event::MediaMetadataChanged(MediaMetadata { id }) => {
-                                PlayerEvent::MediaMetadataChanged(super::MediaMetadata {
-                                    id,
-                                    ..Default::default()
-                                })
+                                PlayerEvent::MediaMetadataChanged {
+                                    metadata: super::MediaMetadata::default(),
+                                }
                             }
                         }),
                         None => Err(broadcast::error::RecvError::Closed),

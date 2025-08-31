@@ -1,6 +1,6 @@
 use mapp::{anyhow, prelude::*};
 
-use crate::{event, SystemEventSource};
+use crate::{p2p::RemoteSystemEventSource, SystemEventSource};
 
 pub struct Module;
 
@@ -8,6 +8,8 @@ pub struct Module;
 impl AppModule for Module {
     async fn init(&self, app: &mut AppContext) -> Result<(), anyhow::Error> {
         app.injector().construct_once(SystemEventSource::construct);
+        app.injector()
+            .construct_once(RemoteSystemEventSource::construct);
         Ok(())
     }
 }

@@ -1,5 +1,5 @@
 mod service;
 mod state;
 
-pub use service::*;
+pub use service::CrdtService;
 pub use state::*;

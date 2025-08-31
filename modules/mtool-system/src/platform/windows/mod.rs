@@ -1,3 +1,3 @@
-mod event;
+mod event_source;
 
-pub use event::*;
+pub use event_source::*;

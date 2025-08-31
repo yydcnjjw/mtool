@@ -368,14 +368,17 @@ impl Schedule {
     }
 
     pub(crate) async fn run(mut self, app: &App) -> Result<(), anyhow::Error> {
+        app.injector().insert(ExitSignal::new());
+
         let tasks_schedule = mem::take(self.inner.write().deref_mut());
         let tasks_loop = {
             let app = app.clone();
             tokio::spawn(async move {
                 if let Err(e) = ScheduleInner::run(tasks_schedule, &app).await {
                     warn!("{:?}", e);
-                    ExitSignal::send(&app);
+                    ExitSignal::trigger(&app);
                 }
+                info!("task loop exited!");
             })
         };
 
@@ -384,7 +387,7 @@ impl Schedule {
             tokio::spawn(async move {
                 match ctrl_c().await {
                     Ok(_) => {
-                        ExitSignal::send(&app);
+                        ExitSignal::trigger(&app);
                     }
                     Err(e) => {
                         warn!("{:?}", e);
@@ -401,24 +404,37 @@ impl Schedule {
             })?;
         }
 
+        info!("waiting for task loop, {}", tasks_loop.is_finished());
         Ok(tasks_loop.await?)
     }
 }
 
-pub struct ExitSignal(Box<dyn FnOnce() + Send + Sync>);
+pub struct ExitSignal {
+    handlers: crate::sync::Mutex<Vec<Box<dyn FnOnce() + Send + Sync>>>,
+}
 
 impl ExitSignal {
-    pub fn new<F>(f: F) -> Self
+    fn new() -> Res<Self> {
+        Res::new(Self {
+            handlers: crate::sync::Mutex::new(Vec::new()),
+        })
+    }
+
+    pub fn add_handler<F>(&self, f: F) -> &Self
     where
         F: FnOnce() + Send + Sync + 'static,
     {
-        Self(Box::new(f))
+        self.handlers.lock().push(Box::new(f));
+        self
     }
 
-    fn send(app: &App) {
+    fn trigger(app: &App) {
         if let Some(signal) = app.injector().remove::<Res<ExitSignal>>() {
-            info!("send exit signal");
-            _ = Res::try_unwrap(signal).and_then(|signal| Ok(signal.0()));
+            info!("trigger exit signal");
+
+            for handler in signal.handlers.lock().drain(..) {
+                handler();
+            }
         }
     }
 }

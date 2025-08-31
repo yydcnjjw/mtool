@@ -1,7 +1,20 @@
 ;;; Directory Local Variables            -*- no-byte-compile: t -*-
 ;;; For more information see (info "(emacs) Directory Variables")
 
-((nil . ((lsp-enable-file-watchers . nil)))
- (rust-mode . ((lsp-rust-all-features . nil)
-               (lsp-rust-features . ["desktop"])
-               (lsp-rust-analyzer-check-all-targets . nil))))
+((nil . ((lsp-enable-file-watchers . nil)
+         ;; (lsp-rust-all-features . nil)
+         (eval . (progn
+                   (when (string-equal lsp-rust-analyzer-cargo-target "aarch64-linux-android")
+                     (let* ((android-ndk (getenv "ANDROID_NDK"))
+                            (android-toolchain (expand-file-name "toolchains/llvm/prebuilt/linux-x86_64" android-ndk))
+                            (env-path (concat (expand-file-name "bin" android-toolchain) path-separator
+                                             (getenv "PATH")))
+                            (extra-env (make-hash-table)))
+                       ;; for aws-lc
+                       (puthash "PATH" env-path extra-env)
+                       (puthash "ANDROID_NDK" android-ndk extra-env)
+                       (puthash "BINDGEN_EXTRA_CLANG_ARGS" (format "--sysroot=%s" (expand-file-name "sysroot" android-toolchain)) extra-env)
+                       (setq-local lsp-rust-analyzer-cargo-extra-env extra-env)
+                       ))
+                   ))
+         )))
