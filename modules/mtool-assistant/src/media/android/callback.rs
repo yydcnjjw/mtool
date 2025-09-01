@@ -27,7 +27,7 @@ unsafe fn invokeNative<'local>(
     (&mut *(handle as *mut DynCallback)).invoke(env, args)
 }
 
-struct CallbackWrapper<Func, Args, Output> {
+pub struct CallbackWrapper<Func, Args, Output> {
     f: Func,
     _phantom_data: PhantomData<(Args, Output)>,
 }
