@@ -108,33 +108,34 @@ impl EventLoop {
                         _ = kademlia.add_address(&peer_id, addr);
                     }
                 }
+                self.swarm
+                    .behaviour_mut()
+                    .gossipsub
+                    .add_explicit_peer(&peer_id);
             }
-            SwarmEvent::Behaviour(BehaviourEvent::Gossipsub(behavior)) => {
-                info!(?behavior);
-                match behavior {
-                    gossipsub::Event::Message { message, .. } => {
-                        if let Some(sender) = self.topic_sources.get(&message.topic) {
-                            if let Err(e) = sender.send(message) {
-                                warn!("{e:?}");
-                            }
+            SwarmEvent::Behaviour(BehaviourEvent::Gossipsub(behavior)) => match behavior {
+                gossipsub::Event::Message { message, .. } => {
+                    if let Some(sender) = self.topic_sources.get(&message.topic) {
+                        if let Err(e) = sender.send(message) {
+                            warn!("{e:?}");
                         }
                     }
-                    gossipsub::Event::Subscribed { peer_id: _, topic } => {
-                        if let Some(items) = self.pending_publish.remove(&topic) {
-                            let gossipsub = &mut self.swarm.behaviour_mut().gossipsub;
-                            for (data, result) in items {
-                                result.with(|| {
-                                    if let Err(e) = gossipsub.publish(topic.clone(), data) {
-                                        warn!("{e:?}");
-                                    }
-                                    Ok(())
-                                });
-                            }
-                        }
-                    }
-                    _ => {}
                 }
-            }
+                gossipsub::Event::Subscribed { peer_id: _, topic } => {
+                    if let Some(items) = self.pending_publish.remove(&topic) {
+                        let gossipsub = &mut self.swarm.behaviour_mut().gossipsub;
+                        for (data, result) in items {
+                            result.with(|| {
+                                if let Err(e) = gossipsub.publish(topic.clone(), data) {
+                                    warn!("{e:?}");
+                                }
+                                Ok(())
+                            });
+                        }
+                    }
+                }
+                _ => {}
+            },
             event => {
                 debug!(?event)
             }
@@ -156,9 +157,11 @@ impl EventLoop {
 
                 Ok(source.subscribe())
             }),
+
             Command::Unsubscribe { topic, result } => {
                 result.with(move || Ok(self.swarm.behaviour_mut().gossipsub.unsubscribe(&topic)))
             }
+
             Command::Publish {
                 topic,
                 data,

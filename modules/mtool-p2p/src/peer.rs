@@ -11,7 +11,7 @@ use mapp::{
     serde_json,
     tokio::sync::{broadcast, mpsc},
     tokio_stream::wrappers::BroadcastStream,
-    tracing::{debug, info, warn},
+    tracing::{debug, warn},
 };
 
 use crate::{
