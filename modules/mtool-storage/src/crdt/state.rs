@@ -118,6 +118,10 @@ where
         self.sender.subscribe()
     }
 
+    pub fn receiver_count(&self) -> usize {
+        self.sender.receiver_count()
+    }
+
     fn value_from(value: loro::ValueOrContainer) -> Result<T, anyhow::Error> {
         Ok(serde_json::from_slice(
             &value
