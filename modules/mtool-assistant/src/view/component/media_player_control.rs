@@ -143,21 +143,6 @@ pub fn MediaPlayerControl() -> Element {
                 // TODO: volume changed event
                 context.volume.set(0.1);
             };
-
-            let mut stream = context.player_event_stream().await?;
-
-            while let Some(Ok(event)) = stream.next().await {
-                match event {
-                    PlayerEvent::MediaMetadataChanged { metadata } => {
-                        context.media_metadata.set(metadata)
-                    }
-                    PlayerEvent::TimedCuesChanged { cue, .. } => {
-                        context.current_timed_cue.set(cue);
-                    }
-                    _ => {}
-                }
-            }
-
             Ok::<_, anyhow::Error>(())
         }
         .unwrap_or_else(|e| warn!("{e:?}"))
@@ -313,10 +298,20 @@ async fn try_load_player_and_media(
             let mut stream = player.listen().await?;
             tokio::spawn(async move {
                 while let Some(Ok(ev)) = stream.next().await {
-                    subject
-                        .publish(&ev)
-                        .await
-                        .unwrap_or_else(|e| warn!("{e:?}"));
+                    match ev {
+                        PlayerEvent::MediaMetadataChanged { metadata } => {
+                            context.media_metadata.set(metadata)
+                        }
+                        PlayerEvent::TimedCuesChanged { cue, .. } => {
+                            context.current_timed_cue.set(cue);
+                        }
+                        _ => {
+                            subject
+                                .publish(&ev)
+                                .await
+                                .unwrap_or_else(|e| warn!("{e:?}"));
+                        }
+                    }
                 }
             });
         }
