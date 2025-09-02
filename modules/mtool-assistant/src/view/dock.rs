@@ -13,6 +13,7 @@ pub fn DockView() -> Element {
         }
     });
 
+    #[allow(unused_mut)]
     let mut window_top = use_signal(|| 256);
 
     #[cfg(feature = "desktop")]

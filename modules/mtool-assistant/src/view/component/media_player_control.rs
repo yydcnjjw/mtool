@@ -1,4 +1,4 @@
-use std::{any::type_name, pin::Pin, sync::Arc, time::Duration};
+use std::{any::type_name, collections::HashMap, pin::Pin, sync::Arc, time::Duration};
 
 use dioxus::{
     core::{provide_root_context, SpawnIfAsync},
@@ -36,7 +36,7 @@ pub struct MediaPlayerControlContext {
     pub online_player_id: crdt::State<String>,
     pub media_metadata: crdt::State<MediaMetadata>,
 
-    pub current_timed_cue: crdt::State<TimedCue>,
+    pub current_timed_cue: crdt::State<(String, TimedCue)>,
 
     pub player: Signal<Option<Arc<MediaPlayer>>>,
     pub volume: Signal<f64>,
@@ -107,7 +107,20 @@ pub fn MediaPlayerControl() -> Element {
     let context = MediaPlayerControlContext::get().suspend()?;
 
     let online_player_id = use_crdt_signal(context().online_player_id.clone());
+
     let media_metadata = use_crdt_signal(context().media_metadata.clone());
+
+    // let mut cues = use_signal(|| Vec::new());
+    let timed_cue = use_crdt_signal(context().current_timed_cue);
+
+    // use_effect(move || {
+    //     _ = media_metadata.read(); // watch changed
+    //     cues.clear();
+    // });
+
+    // use_effect(move || {
+    //     cues.insert(timed_cue());
+    // });
 
     let is_native = use_memo(move || online_player_id() == context().id);
 
@@ -164,21 +177,17 @@ pub fn MediaPlayerControl() -> Element {
 
     rsx! {
         div {
-            class: "flex flex-col items-center",
-
+            class: "flex flex-col items-center justify-stretch h-full",
             div {
-                class: "flex flex-row",
-                div {
-                    class: "stack w-[128px] h-[128px]",
-                    img {
-                        class: "mask mask-circle",
-                        src: pic_url,
-                    }
+                class: "flex flex-row items-center w-full gap-2 shrink-0",
+                img {
+                    class: "mask mask-circle shrink-0 w-36 h-36",
+                    src: pic_url,
                 }
                 div {
                     class: "prose dark:prose-invert",
                     h4 {
-                        class: "text-primary-content",
+                        class: "text-primary-content truncate",
                         { title }
                     }
                     p {
@@ -186,48 +195,59 @@ pub fn MediaPlayerControl() -> Element {
                         { album }
                     }
                     p {
-                        class: "text-sm text-base-content/50",
+                        class: "text-sm text-base-content/50 truncate",
                         { artist }
                     }
                 }
             }
             div {
-                class: "flex flex-row items-center",
+                class: "divider"
+            }
+            div {
+                class: "flex flex-col gap-2 w-full text-center truncate basis-full overflow-y-auto",
+                // for cue in cues() {
+                //     p {
+                //         { cue.data.to_string() }
+                //     }
+                // }
+            }
+            div {
+                class: "divider"
+            }
+            div {
+                class: "flex flex-row w-full justify-center items-center shrink-0 mb-2",
                 Switch {
-                    class: "swap aria-checked:swap-active",
+                    class: "btn btn-circle btn-ghost swap aria-checked:swap-active",
                     checked: is_native(),
                     on_checked_change: move |is_native| {
                         if is_native {
                             context.online_player_id.set(context.id.clone());
                         }
                     },
-                    button {
-                        class: "btn btn-circle swap-off fill-current",
-                        if cfg!(feature = "desktop") {
-                            Icon {
-                                width: 24,
-                                height: 24,
-                                icon: FaComputer,
-                            }
-                        } else {
-                            Icon {
-                                width: 24,
-                                height: 24,
-                                icon: FaMobile,
-                            }
-                        }
-                    }
-                    button {
-                        class: "btn btn-circle swap-on fill-current",
+                    if cfg!(feature = "desktop") {
                         Icon {
+                            class: "swap-off fill-current",
                             width: 24,
                             height: 24,
-                            icon: FaCloud,
+                            icon: FaComputer,
                         }
+                    } else {
+                        Icon {
+                            class: "swap-off fill-current",
+                            width: 24,
+                            height: 24,
+                            icon: FaMobile,
+                        }
+                    }
+                    Icon {
+                        class: "swap-on fill-current",
+                        width: 24,
+                        height: 24,
+                        icon: FaCloud,
                     }
                 }
                 Switch {
-                    class: "swap aria-checked:swap-active",
+                    class: "btn btn-circle btn-ghost swap aria-checked:swap-active",
                     checked: is_playing(),
                     on_checked_change: move |value| async move {
                         is_playing.set(value);
@@ -240,27 +260,23 @@ pub fn MediaPlayerControl() -> Element {
                                 .await
                         }
                     },
-                    button {
-                        class: "btn btn-circle swap-off fill-current",
-                        Icon {
-                            width: 24,
-                            height: 24,
-                            icon: FaPlay,
-                        }
+                    Icon {
+                        class: "swap-off fill-current",
+                        width: 24,
+                        height: 24,
+                        icon: FaPlay,
                     }
-                    button {
-                        class: "btn btn-circle swap-on fill-current",
-                        Icon {
-                            width: 24,
-                            height: 24,
-                            icon: FaPause,
-                        }
+                    Icon {
+                        class: "swap-on fill-current",
+                        width: 24,
+                        height: 24,
+                        icon: FaPause,
                     }
                 }
                 div {
                     class: "flex flex-row items-center h-[32px]",
                     button {
-                        class: "btn btn-circle",
+                        class: "btn btn-circle btn-ghost",
                         Icon {
                             width: 24,
                             height: 24,
@@ -302,8 +318,8 @@ async fn try_load_player_and_media(
                         PlayerEvent::MediaMetadataChanged { metadata } => {
                             context.media_metadata.set(metadata)
                         }
-                        PlayerEvent::TimedCuesChanged { cue, .. } => {
-                            context.current_timed_cue.set(cue);
+                        PlayerEvent::TimedCuesChanged { track_id, cue } => {
+                            context.current_timed_cue.set((track_id, cue));
                         }
                         _ => {
                             subject
