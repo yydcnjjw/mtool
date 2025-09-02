@@ -20,7 +20,7 @@ enum Message {
 }
 
 #[derive(Clone)]
-pub struct CrdtService {
+pub struct CrdtStore {
     pub(crate) store: LoroDoc,
 
     _subscription: Arc<Subscription>,
@@ -28,7 +28,7 @@ pub struct CrdtService {
 
 static CRDT_TOPIC: LazyLock<IdentTopic> = LazyLock::new(|| IdentTopic::new("CRDT"));
 
-impl CrdtService {
+impl CrdtStore {
     pub async fn sync_request(&self, peer: &Res<Peer>) -> Result<(), anyhow::Error> {
         peer.publish(
             &CRDT_TOPIC,

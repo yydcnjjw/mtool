@@ -10,7 +10,7 @@ use mapp::{
 };
 use std::{borrow::Cow, fmt::Debug, future::Future, sync::Arc};
 
-use super::CrdtService;
+use super::CrdtStore;
 
 #[derive(Clone)]
 pub struct State<T> {
@@ -24,7 +24,7 @@ impl<T> State<T>
 where
     T: Serialize + DeserializeOwned + Debug + Send + Sync + 'static,
 {
-    pub async fn new<K>(service: Res<CrdtService>, key: K) -> Result<Self, anyhow::Error>
+    pub async fn new<K>(service: Res<CrdtStore>, key: K) -> Result<Self, anyhow::Error>
     where
         K: ToString,
         T: Default,
@@ -33,7 +33,7 @@ where
     }
 
     pub async fn new_with<K, F, O>(
-        service: Res<CrdtService>,
+        service: Res<CrdtStore>,
         key: K,
         default: F,
     ) -> Result<Self, anyhow::Error>

@@ -1,5 +1,5 @@
 mod store;
 mod state;
 
-pub use store::CrdtStore;
+pub use store::LwwStore;
 pub use state::*;

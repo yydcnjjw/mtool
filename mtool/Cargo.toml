@@ -30,7 +30,10 @@ desktop = [
   "dep:mtool-apps",
 ]
 
-server = []
+server = [
+  "mtool-p2p/server",
+  "mtool-storage/server",
+]
 
 bevy = [
   "mtool-dioxus/bevy",

@@ -4,7 +4,7 @@ use dioxus::prelude::*;
 use mapp::{anyhow, futures::TryFutureExt, prelude::*, tokio, tracing::warn};
 use mtool_dioxus::{
     free_icons::{icons::fa_solid_icons::FaNetworkWired, Icon},
-    hooks::{consume_app_context, use_crdt_signal},
+    hooks::{consume_app_context, use_lww_signal},
 };
 use mtool_p2p as p2p;
 
@@ -14,7 +14,7 @@ use crate::view::component::MediaPlayerControlContext;
 pub fn MiniView() -> Element {
     let context = MediaPlayerControlContext::get().suspend()?;
 
-    let timed_cue = use_crdt_signal(context().current_timed_cue).map(|(_, cue)| cue);
+    let timed_cue = use_lww_signal(context().current_timed_cue).map(|(_, cue)| cue);
     let stats = use_p2p_stats();
 
     let n_peers = stats

@@ -1,7 +1,8 @@
-use crate::{crdt::CrdtService, create_kvstore, DBMigrationStage};
-use mapp::{anyhow, prelude::*};
+use mapp::{anyhow, futures::future, prelude::*, CreateOnceTaskDescriptor};
 
 use mtool_core::{AppStage, CmdlineStage};
+
+use crate::{crdt::CrdtStore, create_kvstore, lww::LwwStore, sync::sync, DBMigrationStage};
 
 struct Module;
 
@@ -10,11 +11,17 @@ impl AppModule for Module {
     async fn init(&self, app: &mut AppContext) -> Result<(), anyhow::Error> {
         app.injector()
             .construct_once(create_kvstore)
-            .construct_once(CrdtService::construct);
+            .construct_once(CrdtStore::construct)
+            .construct_once(LwwStore::construct);
 
         app.schedule()
             .insert_stage(AppStage::Startup, DBMigrationStage::Register)
             .insert_stage(CmdlineStage::AfterParse, DBMigrationStage::Migrate);
+
+        app.schedule().add_once_task(
+            AppStage::Init,
+            sync.cond(|| future::ok(cfg!(feature = "server"))),
+        );
         // .add_once_task(DBMigrationStage::Migrate, migrate);
         Ok(())
     }

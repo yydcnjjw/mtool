@@ -108,6 +108,8 @@ impl EventLoop {
                         _ = kademlia.add_address(&peer_id, addr);
                     }
                 }
+
+                #[cfg(not(feature = "server"))]
                 self.swarm
                     .behaviour_mut()
                     .gossipsub
@@ -115,6 +117,8 @@ impl EventLoop {
             }
             SwarmEvent::Behaviour(BehaviourEvent::Gossipsub(behavior)) => match behavior {
                 gossipsub::Event::Message { message, .. } => {
+                    debug!(?message, "{:?}", self.topic_sources.keys());
+
                     if let Some(sender) = self.topic_sources.get(&message.topic) {
                         if let Err(e) = sender.send(message) {
                             warn!("{e:?}");

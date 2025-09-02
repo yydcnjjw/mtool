@@ -121,6 +121,11 @@ pub fn new(cfg: Config) -> Result<(Peer, EventLoop), anyhow::Error> {
             .with(Protocol::QuicV1),
     )?;
 
+    swarm
+        .behaviour_mut()
+        .kademlia
+        .set_mode(Some(kad::Mode::Server));
+
     let (command_sender, command_receiver) = mpsc::unbounded_channel();
     let (event_sender, _) = broadcast::channel(64);
 

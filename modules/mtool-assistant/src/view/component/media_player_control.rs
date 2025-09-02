@@ -23,7 +23,7 @@ use mtool_dioxus::{
     },
 };
 use mtool_p2p::{self as p2p, gossipsub::IdentTopic};
-use mtool_storage::crdt;
+use mtool_storage::lww;
 
 use crate::{
     media::{MediaMetadata, MediaPlayer, Player, PlayerEvent, PlayerService, TimedCue},
@@ -33,10 +33,10 @@ use crate::{
 #[derive(Clone)]
 pub struct MediaPlayerControlContext {
     pub id: String,
-    pub online_player_id: crdt::State<String>,
-    pub media_metadata: crdt::State<MediaMetadata>,
+    pub online_player_id: lww::State<String>,
+    pub media_metadata: lww::State<MediaMetadata>,
 
-    pub current_timed_cue: crdt::State<(String, TimedCue)>,
+    pub current_timed_cue: lww::State<(String, TimedCue)>,
 
     pub player: Signal<Option<Arc<MediaPlayer>>>,
     pub volume: Signal<f64>,
@@ -52,17 +52,17 @@ impl MediaPlayerControlContext {
                     Some(this) => this,
                     None => provide_root_context(Self {
                         id: rand_string(),
-                        online_player_id: crdt::State::new(
+                        online_player_id: lww::State::new(
                             consume_app_context().await,
                             "assistant.online_player_id",
                         )
                         .await?,
-                        media_metadata: crdt::State::new(
+                        media_metadata: lww::State::new(
                             consume_app_context().await,
                             "assistant.media_metadata",
                         )
                         .await?,
-                        current_timed_cue: crdt::State::new(
+                        current_timed_cue: lww::State::new(
                             consume_app_context().await,
                             "assistant.current_timed_cue",
                         )
@@ -106,12 +106,12 @@ pub fn MediaPlayerControl() -> Element {
 
     let context = MediaPlayerControlContext::get().suspend()?;
 
-    let online_player_id = use_crdt_signal(context().online_player_id.clone());
+    let online_player_id = use_lww_signal(context().online_player_id.clone());
 
-    let media_metadata = use_crdt_signal(context().media_metadata.clone());
+    let media_metadata = use_lww_signal(context().media_metadata.clone());
 
     // let mut cues = use_signal(|| Vec::new());
-    let timed_cue = use_crdt_signal(context().current_timed_cue);
+    let timed_cue = use_lww_signal(context().current_timed_cue);
 
     // use_effect(move || {
     //     _ = media_metadata.read(); // watch changed
@@ -143,19 +143,21 @@ pub fn MediaPlayerControl() -> Element {
         let mut context = context();
         let player = (context.player)();
         async move {
-            if let Some(player) = player {
-                let metadata = player
-                    .current_media_item()
-                    .await?
-                    .map(|item| item.metadata)
-                    .flatten()
-                    .unwrap_or_default();
-                context.media_metadata.set(metadata);
+            if is_native() {
+                if let Some(player) = player {
+                    let metadata = player
+                        .current_media_item()
+                        .await?
+                        .map(|item| item.metadata)
+                        .flatten()
+                        .unwrap_or_default();
+                    context.media_metadata.set(metadata);
 
-                player.set_volume(0.1).await?;
-                // TODO: volume changed event
-                context.volume.set(0.1);
-            };
+                    player.set_volume(0.1).await?;
+                    // TODO: volume changed event
+                    context.volume.set(0.1);
+                }
+            }
             Ok::<_, anyhow::Error>(())
         }
         .unwrap_or_else(|e| warn!("{e:?}"))
