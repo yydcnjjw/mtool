@@ -1,7 +1,7 @@
 use std::time::Duration;
 
 use dioxus::prelude::*;
-use mapp::{anyhow, futures::TryFutureExt, prelude::*, tokio, tracing::warn};
+use mapp::{anyhow, futures::TryFutureExt, itertools::Itertools, prelude::*, tokio, tracing::warn};
 use mtool_dioxus::hooks::consume_app_context;
 use mtool_p2p as p2p;
 
@@ -9,21 +9,64 @@ use mtool_p2p as p2p;
 pub fn P2pDashboard() -> Element {
     let stats = use_p2p_stats();
 
-    let n_peers = stats
-        .as_ref()
-        .map(|stats| stats.gossipsub.all_peers.len())
-        .unwrap_or_default();
+    if let Some(p2p::Stats {
+        network_info,
+        gossipsub,
+        ..
+    }) = stats()
+    {
+        rsx! {
+            div {
+                class: "flex flex-col",
+                ul {
+                    class: "list rounded-box shadow-md",
+                    li {
+                        class: "p-4 pb-2 text-xs opacity-60",
+                        "Gossipsub all peers",
+                        span {
+                            class: "badge mx-2",
+                            "{gossipsub.all_peers.len()}"
+                        }
+                    }
 
-    rsx! {
-        div {
-            class: "flex flex-col",
-            div { class: "stats shadow",
-                  div { class: "stat",
-                        div { class: "stat-title", "Gossipsub all peers" }
-                        div { class: "stat-value", "{n_peers}" }
-                  }
+                    for (peer_id, topics) in gossipsub.all_peers.iter() {
+                        li {
+                            class: "list-row",
+                            div {
+                                div {
+                                    class: "text-sm opacity-60 p-1",
+                                    "{peer_id}"
+                                }
+                                div {
+                                    class: "flex flex-row flex-wrap justify-stretch",
+                                    for topic in topics {
+                                        span {
+                                            class: "badge badge-xs truncate max-w-32 mx-1",
+                                            { topic.to_string() }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+
+                div {
+                    class: "flex flex-row",
+                    div {
+                        class: "stats shadow",
+                        div {
+                            class: "stat",
+                            div { class: "stat-title", "Connected peers" }
+                            div { class: "stat-value", "{network_info.num_peers()}" }
+                            div { class: "stat-desc", "The total number of connected peers" }
+                        }
+                    }
+                }
             }
         }
+    } else {
+        rsx! {}
     }
 }
 
