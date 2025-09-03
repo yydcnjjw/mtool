@@ -6,6 +6,7 @@ use mapp::{
     sync::RwLock,
     tokio::fs,
     toml::{self, macros::Deserialize},
+    tracing::warn,
 };
 
 use crate::CmdlineStage;
@@ -112,7 +113,11 @@ impl ConfigInner {
             }
         }
 
-        value.clone().try_into().ok()
+        value
+            .clone()
+            .try_into()
+            .inspect_err(|e| warn!("{keys}: {e:?}"))
+            .ok()
     }
 
     fn get<T>(&self, keys: &str) -> Result<T, anyhow::Error>
