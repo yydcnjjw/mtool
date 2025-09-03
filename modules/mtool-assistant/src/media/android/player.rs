@@ -113,8 +113,8 @@ impl Player for MediaPlayer {
     async fn current_media_item(&self) -> Result<Option<MediaItem>, anyhow::Error> {
         let (tx, rx) = oneshot::channel();
         self.with_env(|mut env, activity| {
-            let handler = new_once_callback(&mut env, &activity, |uri: String| {
-                _ = tx.send(uri);
+            let handler = new_once_callback(&mut env, &activity, |id: String| {
+                _ = tx.send(id);
             })?;
 
             env.call_method(

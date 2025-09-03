@@ -167,7 +167,7 @@ class PlaybackController(
 
     fun currentMediaItem(callback: OnceCallback) {
         handler.postAtFrontOfQueue {
-            callback.invoke(controller.currentMediaItem?.localConfiguration?.uri?.toString() ?: "")
+            callback.invoke(controller.currentMediaItem?.mediaId ?: "")
         }
     }
 
