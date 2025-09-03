@@ -4,7 +4,6 @@ mod kvstore;
 pub mod lww;
 mod migration;
 mod module;
-mod sync;
 
 pub use module::module;
 

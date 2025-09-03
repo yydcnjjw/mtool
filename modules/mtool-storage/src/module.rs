@@ -2,7 +2,7 @@ use mapp::{anyhow, futures::future, prelude::*, CreateOnceTaskDescriptor};
 
 use mtool_core::{AppStage, CmdlineStage};
 
-use crate::{crdt::CrdtStore, create_kvstore, lww::LwwStore, sync::sync, DBMigrationStage};
+use crate::{crdt::CrdtStore, create_kvstore, lww::LwwStore, DBMigrationStage};
 
 struct Module;
 
@@ -17,12 +17,6 @@ impl AppModule for Module {
         app.schedule()
             .insert_stage(AppStage::Startup, DBMigrationStage::Register)
             .insert_stage(CmdlineStage::AfterParse, DBMigrationStage::Migrate);
-
-        app.schedule().add_once_task(
-            AppStage::Init,
-            sync.cond(|| future::ok(cfg!(feature = "server"))),
-        );
-        // .add_once_task(DBMigrationStage::Migrate, migrate);
         Ok(())
     }
 }
