@@ -15,15 +15,28 @@ use mapp::{
 };
 use mtool_p2p::{gossipsub::IdentTopic, Peer, SubjectMessage};
 use std::{
+    fmt,
     ops::Deref,
     sync::{Arc, LazyLock},
 };
 
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Serialize, Deserialize)]
 #[serde(crate = "mapp::serde")]
 enum Message {
     SyncRequest,
     Update { updates: Vec<(String, Vec<u8>)> },
+}
+
+impl fmt::Debug for Message {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        match self {
+            Self::SyncRequest => write!(f, "SyncRequest"),
+            Self::Update { updates } => f
+                .debug_struct("Update")
+                .field("updates", &updates.iter().map(|(key, _)| key).join(", "))
+                .finish(),
+        }
+    }
 }
 
 pub(crate) type ValueChangedSubscriber = Box<dyn Fn(LoroValue) -> bool + Send + Sync>;
@@ -54,7 +67,7 @@ impl LwwStore {
                 move |EphemeralStoreEvent {
                           by, added, updated, ..
                       }| {
-                    warn!(?by, ?added, ?updated);
+                    debug!(?by, ?added, ?updated);
                     match by {
                         EphemeralEventTrigger::Local => {
                             let peer = peer.clone();
@@ -74,7 +87,7 @@ impl LwwStore {
                             });
                         }
                         EphemeralEventTrigger::Import => {
-                            warn!(
+                            debug!(
                                 "{:?}",
                                 value_changed_subscribers
                                     .iter()
@@ -149,7 +162,7 @@ impl LwwStore {
                         }
                         Message::Update { updates } => {
                             for (_, update) in updates {
-                                store.apply(&update);
+                                store.apply(&update).unwrap_or_else(|e| warn!("{e:?}"));
                             }
                         }
                     }

@@ -1,4 +1,4 @@
-use std::{marker::PhantomData, pin::Pin};
+use std::{fmt::Debug, marker::PhantomData, pin::Pin};
 
 use libp2p::{
     gossipsub::{IdentTopic, Message, TopicHash},
@@ -69,13 +69,9 @@ impl Peer {
 
     pub async fn publish<T>(&self, topic: &IdentTopic, data: &T) -> Result<(), anyhow::Error>
     where
-        T: Serialize,
+        T: Serialize + Debug,
     {
-        debug!(
-            "Publishing to topic {}: {}",
-            topic,
-            serde_json::to_string(data)?
-        );
+        debug!("Publishing to {topic}: {data:?}");
 
         let (result, rx) = CommandResult::new();
         self.command_sender.send(Command::Publish {

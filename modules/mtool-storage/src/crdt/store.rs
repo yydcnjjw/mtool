@@ -9,14 +9,27 @@ use mapp::{
     tracing::{debug, warn},
 };
 use mtool_p2p::{gossipsub::IdentTopic, Peer, SubjectMessage};
-use std::sync::{Arc, LazyLock};
+use std::{
+    fmt,
+    sync::{Arc, LazyLock},
+};
 
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Serialize, Deserialize)]
 #[serde(crate = "mapp::serde")]
 enum Message {
     SyncRequest { version: Vec<u8> },
     SyncReply { version: Vec<u8>, data: Vec<u8> },
     Update { update: Vec<u8> },
+}
+
+impl fmt::Debug for Message {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        match self {
+            Self::SyncRequest { .. } => f.debug_struct("SyncRequest").finish(),
+            Self::SyncReply { .. } => f.debug_struct("SyncReply").finish(),
+            Self::Update { .. } => f.debug_struct("Update").finish(),
+        }
+    }
 }
 
 #[derive(Clone)]

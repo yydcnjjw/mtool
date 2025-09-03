@@ -78,14 +78,14 @@ impl EventLoop {
                 listener_id,
                 address,
             } => {
-                info!(?listener_id, ?address, "NewListenAddr");
+                debug!(?listener_id, ?address, "NewListenAddr");
                 self.listeners.insert(listener_id);
             }
             SwarmEvent::ExpiredListenAddr {
                 listener_id,
                 address,
             } => {
-                info!(?listener_id, ?address, "ExpiredListenAddr");
+                debug!(?listener_id, ?address, "ExpiredListenAddr");
                 self.listeners.remove(&listener_id);
             }
             SwarmEvent::ConnectionEstablished {
@@ -105,11 +105,11 @@ impl EventLoop {
                 endpoint,
                 ..
             } => {
-                info!(?peer_id, ?connection_id, ?endpoint, "ConnectionClosed");
+                warn!(?peer_id, ?connection_id, ?endpoint, "ConnectionClosed");
             }
 
             SwarmEvent::NewExternalAddrCandidate { address } => {
-                info!(?address, "NewExternalAddrCandidate");
+                debug!(?address, "NewExternalAddrCandidate");
             }
             SwarmEvent::Behaviour(BehaviourEvent::Identify(identify::Event::Received {
                 connection_id,
@@ -133,8 +133,12 @@ impl EventLoop {
                     .add_explicit_peer(&peer_id);
             }
             SwarmEvent::Behaviour(BehaviourEvent::Gossipsub(behavior)) => match behavior {
-                gossipsub::Event::Message { message, .. } => {
-                    debug!(?message, "{:?}", self.topic_sources.keys());
+                gossipsub::Event::Message {
+                    propagation_source,
+                    message,
+                    ..
+                } => {
+                    debug!(?propagation_source, ?message.source, ?message.topic);
 
                     if let Some(sender) = self.topic_sources.get(&message.topic) {
                         if let Err(e) = sender.send(message) {
