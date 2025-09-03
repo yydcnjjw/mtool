@@ -24,7 +24,7 @@ pub fn MiniView() -> Element {
 
     rsx! {
         div {
-            class: "flex flex-col items-center h-vh my-2 overflow-hidden",
+            class: "h-screen w-screen flex flex-col items-center my-2 overflow-hidden",
             div {
                 class: "indicator",
                 span {

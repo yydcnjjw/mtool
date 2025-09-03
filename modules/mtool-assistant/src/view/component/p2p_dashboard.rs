@@ -1,12 +1,20 @@
 use std::time::Duration;
 
 use dioxus::prelude::*;
-use mapp::{anyhow, futures::TryFutureExt, itertools::Itertools, prelude::*, tokio, tracing::warn};
-use mtool_dioxus::hooks::consume_app_context;
+use mapp::{anyhow, futures::TryFutureExt, prelude::*, tokio, tracing::warn};
+use mtool_dioxus::{
+    components::toast_err,
+    hooks::{consume_app_context, use_app_context},
+    primitives::toast::use_toast,
+};
 use mtool_p2p as p2p;
 
 #[component]
 pub fn P2pDashboard() -> Element {
+    let toast = use_toast();
+    let peer = use_app_context::<Res<p2p::Peer>>().suspend()?;
+    let mut is_loading = use_signal(|| false);
+
     let stats = use_p2p_stats();
 
     if let Some(p2p::Stats {
@@ -18,6 +26,38 @@ pub fn P2pDashboard() -> Element {
         rsx! {
             div {
                 class: "flex flex-col",
+                div {
+                    class: "flex flex-row p-2",
+                    button {
+                        class: "btn btn-ghost",
+                        disabled: is_loading(),
+                        onclick: move |_| {
+                            is_loading.set(true);
+                            spawn(async move {
+                                peer().bootstrap().unwrap_or_else(|e|toast_err(toast, e)).await;
+                                is_loading.set(false);
+                            });
+                        },
+                        "reload",
+                        if is_loading() {
+                            span {
+                                class: "loading loading-spinner"
+                            }
+                        }
+                    }
+                }
+                div {
+                    class: "flex flex-row",
+                    div {
+                        class: "stats shadow",
+                        div {
+                            class: "stat",
+                            div { class: "stat-title", "Connected peers" }
+                            div { class: "stat-value", "{network_info.num_peers()}" }
+                            div { class: "stat-desc", "The total number of connected peers" }
+                        }
+                    }
+                }
                 ul {
                     class: "list rounded-box shadow-md",
                     li {
@@ -47,19 +87,6 @@ pub fn P2pDashboard() -> Element {
                                     }
                                 }
                             }
-                        }
-                    }
-                }
-
-                div {
-                    class: "flex flex-row",
-                    div {
-                        class: "stats shadow",
-                        div {
-                            class: "stat",
-                            div { class: "stat-title", "Connected peers" }
-                            div { class: "stat-value", "{network_info.num_peers()}" }
-                            div { class: "stat-desc", "The total number of connected peers" }
                         }
                     }
                 }

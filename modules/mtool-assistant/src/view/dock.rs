@@ -94,7 +94,8 @@ pub fn DockView() -> Element {
             class: "@container h-screen flex flex-row-reverse",
             onmousedown,
             div {
-                class: "w-screen @3xs:w-full transition-[width] duration-300 ease-in-out bg-transparent flex flex-col",
+                class: "w-screen bg-transparent flex flex-col",
+                // @3xs:w-full transition-[width] duration-300 ease-in-out
 
                 SuspenseBoundary {
                     fallback: |_| rsx! {

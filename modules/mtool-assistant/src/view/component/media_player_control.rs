@@ -12,15 +12,13 @@ use mapp::{
     tracing::warn,
 };
 use mtool_dioxus::{
+    components::toast_err,
     free_icons::{
         icons::fa_solid_icons::{FaCloud, FaComputer, FaMobile, FaPause, FaPlay, FaVolumeHigh},
         Icon,
     },
     prelude::*,
-    primitives::{
-        switch::Switch,
-        toast::{use_toast, ToastOptions, Toasts},
-    },
+    primitives::{switch::Switch, toast::use_toast},
 };
 use mtool_p2p::{self as p2p, gossipsub::IdentTopic};
 use mtool_storage::lww;
@@ -342,16 +340,4 @@ async fn try_load_player_and_media(
 
 async fn create_player(dioxus_context: DioxusContext) -> Result<Arc<MediaPlayer>, anyhow::Error> {
     Ok(Arc::new(MediaPlayer::new(dioxus_context).await?))
-}
-
-fn toast_err<E>(toast: Toasts, e: E)
-where
-    E: Into<anyhow::Error>,
-{
-    toast.error(
-        "Error occurred".into(),
-        ToastOptions::default()
-            .description(e.into())
-            .duration(Duration::from_secs(3)),
-    );
 }
