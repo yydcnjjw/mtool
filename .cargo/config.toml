@@ -43,6 +43,8 @@ dioxus = { git = "https://github.com/yydcnjjw/dioxus.git", branch = "winit" }
 dioxus-desktop = { git = "https://github.com/yydcnjjw/dioxus.git", branch = "winit" }
 dioxus-asset-resolver = { git = "https://github.com/yydcnjjw/dioxus.git", branch = "winit" }
 
+libp2p = { git = "https://github.com/yydcnjjw/rust-libp2p.git", branch = "dev" }
+
 # depinfo
 # dioxus-autofmt
 # dioxus-check
