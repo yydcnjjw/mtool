@@ -1,6 +1,7 @@
-use std::collections::HashMap;
+use std::collections::{HashMap, HashSet};
 
 use libp2p::{
+    core::transport::ListenerId,
     gossipsub::{self, Message, TopicHash},
     identify, kad,
     swarm::{Swarm, SwarmEvent},
@@ -16,14 +17,18 @@ use mapp::{
 };
 
 use crate::{
-    network::{Behaviour, BehaviourEvent, Command, CommandResult, Event},
-    GossipsubStats, Stats,
+    network::{self, Behaviour, BehaviourEvent, Command, CommandResult, Event},
+    BootNode, Config, GossipsubStats, Stats,
 };
 
 pub struct EventLoop {
+    cfg: Config,
+
     swarm: Swarm<Behaviour>,
     command_receiver: mpsc::UnboundedReceiver<Command>,
     event_sender: broadcast::Sender<Event>,
+
+    listeners: HashSet<ListenerId>,
 
     pending_publish: HashMap<TopicHash, Vec<(Vec<u8>, CommandResult<()>)>>,
 
@@ -32,14 +37,18 @@ pub struct EventLoop {
 
 impl EventLoop {
     pub fn new(
+        cfg: Config,
         swarm: Swarm<Behaviour>,
         command_receiver: mpsc::UnboundedReceiver<Command>,
         event_sender: broadcast::Sender<Event>,
     ) -> Self {
         Self {
+            cfg,
             swarm,
             command_receiver,
             event_sender,
+
+            listeners: HashSet::new(),
 
             pending_publish: HashMap::new(),
 
@@ -69,7 +78,15 @@ impl EventLoop {
                 listener_id,
                 address,
             } => {
-                info!(?listener_id, ?address);
+                info!(?listener_id, ?address, "NewListenAddr");
+                self.listeners.insert(listener_id);
+            }
+            SwarmEvent::ExpiredListenAddr {
+                listener_id,
+                address,
+            } => {
+                info!(?listener_id, ?address, "ExpiredListenAddr");
+                self.listeners.remove(&listener_id);
             }
             SwarmEvent::ConnectionEstablished {
                 peer_id,
@@ -93,13 +110,13 @@ impl EventLoop {
 
             SwarmEvent::NewExternalAddrCandidate { address } => {
                 info!(?address, "NewExternalAddrCandidate");
-                self.swarm.add_external_address(address);
             }
             SwarmEvent::Behaviour(BehaviourEvent::Identify(identify::Event::Received {
                 connection_id,
                 peer_id,
                 info,
             })) => {
+                info!(?connection_id, ?peer_id, ?info, "Identify Received");
                 if info.protocols.iter().any(|p| *p == kad::PROTOCOL_NAME) {
                     let kademlia = &mut self.swarm.behaviour_mut().kademlia;
                     _ = kademlia.remove_peer(&peer_id);
@@ -150,6 +167,24 @@ impl EventLoop {
         debug!(?command);
 
         match command {
+            Command::Bootstrap { result } => {
+                result.with(|| {
+                    if let Some(BootNode { peer_id, address }) = &self.cfg.boot_node {
+                        let kad = &mut self.swarm.behaviour_mut().kademlia;
+                        kad.add_address(&peer_id.parse()?, address.parse()?);
+                        _ = kad.bootstrap();
+                    }
+
+                    for id in &self.listeners {
+                        self.swarm.remove_listener(id.clone());
+                    }
+                    self.listeners.clear();
+
+                    network::listen_on(&mut self.swarm, &self.cfg)?;
+                    Ok(())
+                });
+            }
+
             Command::Subscribe { topic, result } => result.with(move || {
                 let source = self.topic_sources.entry(topic.hash()).or_insert_with(|| {
                     info!("subscribe -> {topic}");

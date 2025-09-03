@@ -15,6 +15,7 @@ mapp = { path = "../../crates/mapp" }
 mtool-core = { path = "../mtool-core" }
 
 base64 = "*"
+if-addrs = "*"
 
 [dependencies.libp2p]
 version = "*"

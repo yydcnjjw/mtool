@@ -1,3 +1,4 @@
+use base64::Engine;
 use libp2p::{
     core::ConnectedPoint,
     gossipsub::{self, IdentTopic, Message},
@@ -6,14 +7,14 @@ use libp2p::{
     kad::{self, store::MemoryStore},
     multiaddr::Protocol,
     swarm::NetworkBehaviour,
-    Multiaddr, PeerId,
+    Multiaddr, PeerId, Swarm,
 };
 use mapp::{
     anyhow,
     tokio::sync::{broadcast, mpsc, oneshot},
-    tracing::{info, warn},
+    tracing::{debug, info, warn},
 };
-use std::{any::type_name_of_val, io, net::Ipv4Addr, time::Duration};
+use std::{any::type_name_of_val, io, time::Duration};
 
 use crate::{BootNode, Config, EventLoop, Peer, Stats};
 
@@ -26,6 +27,9 @@ pub struct Behaviour {
 
 #[derive(Debug)]
 pub enum Command {
+    Bootstrap {
+        result: CommandResult<()>,
+    },
     Subscribe {
         topic: IdentTopic,
         result: CommandResult<broadcast::Receiver<Message>>,
@@ -75,7 +79,7 @@ impl<T> CommandResult<T> {
 pub fn new(cfg: Config) -> Result<(Peer, EventLoop), anyhow::Error> {
     let mut swarm = match &cfg.peer_id {
         Some(peer_id) => libp2p::SwarmBuilder::with_existing_identity(Keypair::ed25519_from_bytes(
-            base64::decode(peer_id)?,
+            base64::engine::general_purpose::STANDARD.decode(peer_id)?,
         )?),
         None => libp2p::SwarmBuilder::with_new_identity(),
     }
@@ -114,12 +118,7 @@ pub fn new(cfg: Config) -> Result<(Peer, EventLoop), anyhow::Error> {
     })?
     .build();
 
-    swarm.listen_on(
-        Multiaddr::empty()
-            .with(Protocol::from(Ipv4Addr::UNSPECIFIED))
-            .with(Protocol::Udp(cfg.listen_port.unwrap_or(0)))
-            .with(Protocol::QuicV1),
-    )?;
+    listen_on(&mut swarm, &cfg)?;
 
     swarm
         .behaviour_mut()
@@ -135,6 +134,35 @@ pub fn new(cfg: Config) -> Result<(Peer, EventLoop), anyhow::Error> {
             command_sender,
             event_sender.clone(),
         ),
-        EventLoop::new(swarm, command_receiver, event_sender),
+        EventLoop::new(cfg, swarm, command_receiver, event_sender),
     ))
+}
+
+pub(crate) fn listen_on(swarm: &mut Swarm<Behaviour>, cfg: &Config) -> Result<(), anyhow::Error> {
+    for listen_addr in if_addrs::get_if_addrs()?
+        .iter()
+        .inspect(|iface| debug!(?iface))
+        .filter_map(|iface| {
+            if cfg.listen_iface_name_list.contains(&iface.name)
+                || iface
+                    .index
+                    .is_some_and(|index| cfg.listen_iface_index_list.contains(&index))
+            {
+                Some(iface.addr.ip())
+            } else {
+                None
+            }
+        })
+        .chain(cfg.listen_addr_list.iter().cloned())
+    {
+        info!("listen on {}", listen_addr);
+        swarm.listen_on(
+            Multiaddr::empty()
+                .with(Protocol::from(listen_addr))
+                .with(Protocol::Udp(cfg.listen_port.unwrap_or(0)))
+                .with(Protocol::QuicV1),
+        )?;
+    }
+
+    Ok(())
 }

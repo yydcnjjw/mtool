@@ -42,6 +42,12 @@ impl Peer {
         &self.id
     }
 
+    pub async fn bootstrap(&self) -> Result<(), anyhow::Error> {
+        let (result, rx) = CommandResult::new();
+        self.command_sender.send(Command::Bootstrap { result })?;
+        rx.await?
+    }
+
     pub async fn subscribe<T>(&self, topic: &IdentTopic) -> Result<Subject<T>, anyhow::Error> {
         let (result, rx) = CommandResult::new();
         self.command_sender.send(Command::Subscribe {
