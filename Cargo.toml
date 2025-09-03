@@ -26,8 +26,6 @@ members = [
   # "modules/mtool-dict",
   # "modules/mtool-translate",
   
-  # "modules/mtool-toast",
-  # "modules/mtool-ai",
   "mtool",
 ]
 

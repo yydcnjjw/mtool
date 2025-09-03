@@ -29,6 +29,6 @@ dependencyResolutionManagement {
 
 rootProject.name = "mtool"
 include(":mtool:android")
-include(":modules:mtool-sytem:android")
+include(":modules:mtool-system:android")
 include(":modules:mtool-dioxus:android")
 include(":modules:mtool-assistant:android")

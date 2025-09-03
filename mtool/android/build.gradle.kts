@@ -54,6 +54,6 @@ android {
 
 dependencies {
     implementation(project(":modules:mtool-dioxus:android"))
-    implementation(project(":modules:mtool-sytem:android"))
+    implementation(project(":modules:mtool-system:android"))
     implementation(project(":modules:mtool-assistant:android"))
 }
