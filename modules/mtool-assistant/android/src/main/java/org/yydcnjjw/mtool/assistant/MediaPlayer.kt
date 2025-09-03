@@ -40,7 +40,7 @@ class PlaybackService : MediaSessionService() {
         const val TAG = "assistant.PlaybackService"
 
         @JvmStatic
-        private external fun resolveUri(uri: String): String
+        private external fun resolveUri(uri: String): String?
     }
 
     private var mediaSession: MediaSession? = null
@@ -52,7 +52,8 @@ class PlaybackService : MediaSessionService() {
             .setMediaSourceFactory(
                 DefaultMediaSourceFactory(this).setDataSourceFactory(
                     ResolvingDataSource.Factory(DefaultDataSource.Factory(this)) {
-                        it.withUri(resolveUri(it.uri.toString()).toUri())
+                        val uri = resolveUri(it.uri.toString())?.toUri()
+                        if (uri != null) it.withUri(uri) else it
                     }
                 )
             )
