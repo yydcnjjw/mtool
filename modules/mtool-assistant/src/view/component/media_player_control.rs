@@ -25,7 +25,8 @@ use mtool_storage::lww;
 
 use crate::{
     media::{MediaMetadata, MediaPlayer, Player, PlayerEvent, PlayerService, TimedCue},
-    model::NeteaseViewModel,
+    model::{ChatPrompt, ChatQuery, NeteaseViewModel},
+    view::component::AiChatPreview,
 };
 
 #[derive(Clone)]
@@ -179,38 +180,52 @@ pub fn MediaPlayerControl() -> Element {
         div {
             class: "flex flex-col items-center justify-stretch h-full",
             div {
-                class: "flex flex-row items-center w-full gap-2 shrink-0",
+                class: "flex flex-row items-center justify-stretch w-full gap-2 shrink-0",
                 img {
                     class: "mask mask-circle shrink-0 w-36 h-36",
                     src: pic_url,
                 }
                 div {
-                    class: "prose dark:prose-invert",
+                    class: "prose dark:prose-invert basis-full",
                     h4 {
-                        class: "text-primary-content truncate",
-                        { title }
+                        class: "text-primary-content text-pretty",
+                        { title.clone() }
                     }
                     p {
-                        class: "text-sm text-base-content/50",
+                        class: "text-sm text-base-content/50 truncate",
                         { album }
                     }
                     p {
                         class: "text-sm text-base-content/50 truncate",
-                        { artist }
+                        { artist.clone() }
                     }
                 }
             }
             div {
                 class: "divider"
             }
-            div {
-                class: "flex flex-col gap-2 w-full text-center truncate basis-full overflow-y-auto",
-                // for cue in cues() {
-                //     p {
-                //         { cue.data.to_string() }
-                //     }
-                // }
+            if !title.is_empty() && !artist.is_empty() {
+                div {
+                    class: "w-full text-pretty basis-full overflow-y-auto",
+                    AiChatPreview {
+                        prompt: ChatPrompt::Query(ChatQuery {
+                            content: "歌曲出处".into(),
+                            conds: vec![
+                                ("歌曲名".into(), title),
+                                ("作者/出品方".into(), artist),
+                            ],
+                        })
+                    }
+                }
             }
+            // div {
+            //     class: "flex flex-col gap-2 w-full text-center truncate basis-full overflow-y-auto",
+            //     // for cue in cues() {
+            //     //     p {
+            //     //         { cue.data.to_string() }
+            //     //     }
+            //     // }
+            // }
             div {
                 class: "divider"
             }

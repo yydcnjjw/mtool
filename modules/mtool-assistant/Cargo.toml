@@ -53,6 +53,9 @@ mcloud-api = { path = "../../crates/mcloud-api" }
 rsubs-lib = "*"
 time = "*"
 
+# ai agent
+markdown = "*"
+
 pyo3 = { workspace = true }
 
 [target.'cfg(target_os = "windows")'.dependencies.windows]

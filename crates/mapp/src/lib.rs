@@ -66,6 +66,7 @@ pub use tracing_appender;
 pub use tracing_subscriber;
 pub use url;
 pub use base64;
+pub use rig;
 
 cfg_if::cfg_if! {
     if #[cfg(target_os = "android")] {
