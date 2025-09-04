@@ -1,4 +1,4 @@
-use std::collections::{HashMap, HashSet, VecDeque};
+use std::collections::{HashMap, HashSet};
 
 use libp2p::{
     core::transport::ListenerId,
@@ -30,8 +30,6 @@ pub struct EventLoop {
 
     listeners: HashSet<ListenerId>,
 
-    pending_publish: HashMap<TopicHash, VecDeque<Vec<u8>>>,
-
     topic_sources: HashMap<TopicHash, broadcast::Sender<Message>>,
 }
 
@@ -49,8 +47,6 @@ impl EventLoop {
             event_sender,
 
             listeners: HashSet::new(),
-
-            pending_publish: HashMap::new(),
 
             topic_sources: HashMap::new(),
         }
@@ -146,16 +142,6 @@ impl EventLoop {
                         }
                     }
                 }
-                gossipsub::Event::Subscribed { peer_id: _, topic } => {
-                    if let Some(items) = self.pending_publish.remove(&topic) {
-                        let gossipsub = &mut self.swarm.behaviour_mut().gossipsub;
-                        for data in items {
-                            if let Err(e) = gossipsub.publish(topic.clone(), data) {
-                                warn!("{e:?}");
-                            }
-                        }
-                    }
-                }
                 _ => {}
             },
             event => {
@@ -207,33 +193,17 @@ impl EventLoop {
                 data,
                 result,
             } => {
-                let gossipsub = &mut self.swarm.behaviour_mut().gossipsub;
-                let has_topic = gossipsub
-                    .all_peers()
-                    .find(|(_, topics)| topics.contains(&&topic.hash()))
-                    .is_some();
-                if has_topic {
-                    result.with(|| {
-                        if let Err(e) = self
-                            .swarm
-                            .behaviour_mut()
-                            .gossipsub
-                            .publish(topic.hash(), data)
-                        {
-                            warn!("{e:?}");
-                        }
-                        Ok(())
-                    });
-                } else {
-                    result.with(|| {
-                        let entry = self.pending_publish.entry(topic.hash()).or_default();
-                        if entry.len() == 8 {
-                            entry.pop_front();
-                        }
-                        entry.push_back(data);
-                        Ok(())
-                    });
-                }
+                result.with(|| {
+                    if let Err(e) = self
+                        .swarm
+                        .behaviour_mut()
+                        .gossipsub
+                        .publish(topic.hash(), data.clone())
+                    {
+                        warn!("{e:?}");
+                    }
+                    Ok(())
+                });
             }
 
             Command::Stats { result } => result.with(move || {
