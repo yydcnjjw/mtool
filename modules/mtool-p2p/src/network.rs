@@ -14,7 +14,7 @@ use mapp::{
     tokio::sync::{broadcast, mpsc, oneshot},
     tracing::{debug, info, warn},
 };
-use std::{any::type_name_of_val, io, time::Duration};
+use std::{any::type_name_of_val, fmt, io, time::Duration};
 
 use crate::{BootNode, Config, EventLoop, Peer, Stats};
 
@@ -25,7 +25,6 @@ pub struct Behaviour {
     pub gossipsub: gossipsub::Behaviour,
 }
 
-#[derive(Debug)]
 pub enum Command {
     Bootstrap {
         result: CommandResult<()>,
@@ -47,6 +46,23 @@ pub enum Command {
         result: CommandResult<Stats>,
     },
     Shutdown,
+}
+
+impl fmt::Debug for Command {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        match self {
+            Self::Bootstrap { .. } => f.debug_struct("Bootstrap").finish(),
+            Self::Subscribe { topic, .. } => {
+                f.debug_struct("Subscribe").field("topic", topic).finish()
+            }
+            Self::Unsubscribe { topic, .. } => {
+                f.debug_struct("Unsubscribe").field("topic", topic).finish()
+            }
+            Self::Publish { topic, .. } => f.debug_struct("Publish").field("topic", topic).finish(),
+            Self::Stats { .. } => f.debug_struct("Stats").finish(),
+            Self::Shutdown => write!(f, "Shutdown"),
+        }
+    }
 }
 
 #[derive(Debug, Clone)]
