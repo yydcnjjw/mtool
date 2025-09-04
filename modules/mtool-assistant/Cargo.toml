@@ -18,7 +18,7 @@ bevy = [
 ]
 
 [dependencies]
-mapp = { path = "../../crates/mapp" }
+mapp = { path = "../../crates/mapp", features = ["ai"] }
 
 mtool-core = { path = "../mtool-core" }
 mtool-dioxus = { path = "../mtool-dioxus" }

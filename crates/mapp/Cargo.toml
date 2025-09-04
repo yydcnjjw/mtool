@@ -9,11 +9,15 @@ edition.workspace = true
 [features]
 default = []
 
+ai = [
+  "dep:rig-core"
+]
+
 web = [
-"dep:wasm-bindgen",
-"dep:serde-wasm-bindgen",
-"dep:wasm-bindgen-futures",
-"dep:js-sys",
+  "dep:wasm-bindgen",
+  "dep:serde-wasm-bindgen",
+  "dep:wasm-bindgen-futures",
+  "dep:js-sys",
 ]
 
 [dependencies]
@@ -56,7 +60,7 @@ scopeguard = "*"
 rustls = "*"
 url = "*"
 base64 = "*"
-rig-core = "*"
+rig-core = { version = "*", optional = true }
 
 [target.'cfg(not(target_family = "wasm"))'.dependencies]
 tokio = { version = "*", features = ["full"] }
