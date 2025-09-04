@@ -97,8 +97,8 @@ pub fn new(cfg: Config) -> Result<(Peer, EventLoop), anyhow::Error> {
         }
 
         let gossipsub_config = gossipsub::ConfigBuilder::default()
-            .heartbeat_interval(Duration::from_secs(1))
-            .check_explicit_peers_ticks(15)
+            .heartbeat_interval(Duration::from_secs(5))
+            .check_explicit_peers_ticks(3)
             .build()
             .map_err(io::Error::other)?;
 
