@@ -1,4 +1,4 @@
-use std::collections::{HashMap, HashSet};
+use std::collections::{HashMap, HashSet, VecDeque};
 
 use libp2p::{
     core::transport::ListenerId,
@@ -17,7 +17,7 @@ use mapp::{
 };
 
 use crate::{
-    network::{self, Behaviour, BehaviourEvent, Command, CommandResult, Event},
+    network::{self, Behaviour, BehaviourEvent, Command, Event},
     BootNode, Config, GossipsubStats, Stats,
 };
 
@@ -30,7 +30,7 @@ pub struct EventLoop {
 
     listeners: HashSet<ListenerId>,
 
-    pending_publish: HashMap<TopicHash, Vec<(Vec<u8>, CommandResult<()>)>>,
+    pending_publish: HashMap<TopicHash, VecDeque<Vec<u8>>>,
 
     topic_sources: HashMap<TopicHash, broadcast::Sender<Message>>,
 }
@@ -149,13 +149,10 @@ impl EventLoop {
                 gossipsub::Event::Subscribed { peer_id: _, topic } => {
                     if let Some(items) = self.pending_publish.remove(&topic) {
                         let gossipsub = &mut self.swarm.behaviour_mut().gossipsub;
-                        for (data, result) in items {
-                            result.with(|| {
-                                if let Err(e) = gossipsub.publish(topic.clone(), data) {
-                                    warn!("{e:?}");
-                                }
-                                Ok(())
-                            });
+                        for data in items {
+                            if let Err(e) = gossipsub.publish(topic.clone(), data) {
+                                warn!("{e:?}");
+                            }
                         }
                     }
                 }
@@ -228,8 +225,14 @@ impl EventLoop {
                         Ok(())
                     });
                 } else {
-                    let entry = self.pending_publish.entry(topic.hash()).or_default();
-                    entry.push((data, result));
+                    result.with(|| {
+                        let entry = self.pending_publish.entry(topic.hash()).or_default();
+                        if entry.len() == 8 {
+                            entry.pop_front();
+                        }
+                        entry.push_back(data);
+                        Ok(())
+                    });
                 }
             }
 
