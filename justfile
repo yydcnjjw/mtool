@@ -5,7 +5,7 @@ dx_out_dir := `pwd` / "target/dx/mtool/debug"
 python_version := "3.13"
 
 build-android:
-    #!/usr/bin/env bash
+    #!/usr/bin/env zsh
     set -euo pipefail
     dx_android_out_dir={{dx_out_dir}}/android
     dx_android_jnilibs_dir=$dx_android_out_dir/app/app/src/main/jniLibs/arm64-v8a
@@ -42,7 +42,7 @@ build-server:
     cargo build --target x86_64-unknown-linux-musl -p mtool --features 'server' --no-default-features
 
 build:
-    #!/usr/bin/env bash
+    #!/usr/bin/env zsh
     set -euo pipefail
     dx_windows_out_dir={{dx_out_dir}}/windows
     dx_windows_app_dir=$dx_windows_out_dir/app
@@ -61,7 +61,7 @@ serve:
     dx serve --target x86_64-pc-windows-msvc -p mtool --platform windows --desktop --no-default-features --addr 127.0.0.1
 
 run: build
-    #!/usr/bin/env bash
+    #!/usr/bin/env zsh
     export PYTHONPATH=/mnt/d/workspace/project/cross-libs/x86_64-pc-windows-msvc/python3.13:$PYTHONPATH
     export PATH=$PYTHONPATH:$PATH
     export WSLENV=PYTHONPATH/wpl:${WSLENV}
@@ -71,7 +71,7 @@ run: build
 alias bp := build-python
 
 build-python:
-    #!/usr/bin/env bash
+    #!/usr/bin/env zsh
     python_cross_libs=/mnt/d/workspace/project/cross-libs/x86_64-pc-windows-msvc/python3.13
     uv build --all-packages --wheel
     uv pip install dist/*.whl --target $python_cross_libs/site-packages --compile-bytecode
