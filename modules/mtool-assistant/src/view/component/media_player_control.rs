@@ -128,13 +128,6 @@ pub fn MediaPlayerControl() -> Element {
             try_load_player_and_media(context())
                 .unwrap_or_else(|e| warn!("{e:?}"))
                 .spawn()
-        } else {
-            if let Some(player) = (context().player)() {
-                spawn(
-                    async move { player.pause().await }
-                        .unwrap_or_else(move |e| toast_err(toast, e)),
-                );
-            }
         }
     });
 
@@ -325,23 +318,33 @@ async fn try_load_player_and_media(
         player.set_media_items(items).await?;
 
         {
-            to_owned![context.subject];
+            to_owned![context.subject, player];
+            let mut online_player_id = context.online_player_id.subscribe();
+
             let mut stream = player.listen().await?;
             tokio::spawn(async move {
-                while let Some(Ok(ev)) = stream.next().await {
-                    match ev {
-                        PlayerEvent::MediaMetadataChanged { metadata } => {
-                            context.media_metadata.set(metadata)
+                loop {
+                    tokio::select! {
+                        Some(Ok(ev)) = stream.next() => match ev {
+                            PlayerEvent::MediaMetadataChanged { metadata } => {
+                                context.media_metadata.set(metadata)
+                            }
+                            PlayerEvent::TimedCuesChanged { track_id, cue } => {
+                                context.current_timed_cue.set((track_id, cue));
+                            }
+                            _ => {
+                                subject
+                                    .publish(&ev)
+                                    .await
+                                    .unwrap_or_else(|e| warn!("{e:?}"));
+                            }
+                        },
+                        Ok(()) = online_player_id.changed() => {
+                            if *online_player_id.borrow_and_update() != context.id {
+                                player.pause().await.unwrap_or_else(|e| warn!("{e:?}"));
+                            }
                         }
-                        PlayerEvent::TimedCuesChanged { track_id, cue } => {
-                            context.current_timed_cue.set((track_id, cue));
-                        }
-                        _ => {
-                            subject
-                                .publish(&ev)
-                                .await
-                                .unwrap_or_else(|e| warn!("{e:?}"));
-                        }
+                        else => break,
                     }
                 }
             });
