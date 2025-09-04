@@ -44,6 +44,7 @@ dioxus-desktop = { git = "https://github.com/yydcnjjw/dioxus.git", branch = "win
 dioxus-asset-resolver = { git = "https://github.com/yydcnjjw/dioxus.git", branch = "winit" }
 
 libp2p = { git = "https://github.com/yydcnjjw/rust-libp2p.git", branch = "dev" }
+# libp2p = { path = "/home/yydcnjjw/workspace/project/rust-libp2p/libp2p" }
 
 # depinfo
 # dioxus-autofmt
