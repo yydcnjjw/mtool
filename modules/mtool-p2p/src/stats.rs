@@ -11,4 +11,5 @@ pub struct Stats {
 pub struct GossipsubStats {
     pub topics: Vec<TopicHash>,
     pub all_peers: Vec<(PeerId, Vec<TopicHash>)>,
+    pub all_mesh_peers: Vec<(TopicHash, Vec<PeerId>)>,
 }

@@ -217,10 +217,24 @@ impl EventLoop {
                     .map(|(peer, topics)| (peer.clone(), topics.into_iter().cloned().collect_vec()))
                     .collect_vec();
 
+                let all_mesh_peers = gossipsub
+                    .topics()
+                    .map(|topic| {
+                        (
+                            topic.clone(),
+                            gossipsub.mesh_peers(topic).cloned().collect_vec(),
+                        )
+                    })
+                    .collect_vec();
+
                 Ok(Stats {
                     network_info,
                     connected_peers,
-                    gossipsub: GossipsubStats { topics, all_peers },
+                    gossipsub: GossipsubStats {
+                        topics,
+                        all_peers,
+                        all_mesh_peers,
+                    },
                 })
             }),
             Command::Shutdown => {
