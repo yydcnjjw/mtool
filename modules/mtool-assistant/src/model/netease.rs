@@ -3,15 +3,14 @@ use std::sync::Arc;
 use dioxus::hooks::to_owned;
 use mapp::{
     anyhow::{self, Context},
-    futures::{future::try_join_all, FutureExt, TryFutureExt},
+    futures::{future::try_join_all, TryFutureExt},
     tokio::sync::OnceCell,
-    tracing::info,
+    tracing::debug,
 };
 use mcloud_api::netease::{Lyrics, MusicApi, SongInfo};
 
 use crate::media::{
     MediaItem, MediaMetadata, MediaSource, SubtitleTrack, TimedMetadataSource, TimedMetadataTrack,
-    TimedRawTrack,
 };
 
 #[derive(Clone)]
@@ -55,7 +54,7 @@ impl NeteaseViewModel {
                         move || {
                             to_owned![api];
 
-                            info!("get song {id}");
+                            debug!("get song {id}");
 
                             async move {
                                 api.songs_url(&[id], "1900000")
@@ -84,7 +83,7 @@ impl NeteaseViewModel {
                         move || {
                             to_owned![api, song_lyrics];
 
-                            info!("get song lyric {id}");
+                            debug!("get song lyric {id}");
 
                             async move {
                                 let Lyrics { lyric, tlyric } = song_lyrics
