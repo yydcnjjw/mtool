@@ -9,6 +9,7 @@ use mapp::{
     serde::{Deserialize, Serialize},
     serde_json,
     tokio_stream::StreamExt,
+    tracing::warn,
 };
 use mtool_dioxus::{
     components::toast_err, hooks::consume_app_context, primitives::toast::use_toast,
@@ -18,7 +19,7 @@ use mtool_storage::kv;
 use crate::model::{Agent, ChatPrompt};
 
 #[component]
-pub fn AiChatPreview(prompt: ChatPrompt) -> Element {
+pub fn AiChatPreview(prompt: ReadOnlySignal<ChatPrompt>) -> Element {
     let toast = use_toast();
 
     let mut reasoning_content = use_signal(|| String::new());
@@ -31,6 +32,8 @@ pub fn AiChatPreview(prompt: ChatPrompt) -> Element {
         async move {
             let kvstore = consume_app_context::<Res<kv::Store>>().await;
             let history = kvstore.bucket::<kv::Integer, String>(Some("assistant.ai_chat"))?;
+
+            let prompt = prompt();
 
             let key = calculate_hash(&prompt).into();
 
@@ -61,6 +64,7 @@ pub fn AiChatPreview(prompt: ChatPrompt) -> Element {
                                 text: text_content(),
                             })?,
                         )?;
+                        _ = history.flush_async().await.inspect_err(|e| warn!("{e:?}"));
                     }
                 }
             }
