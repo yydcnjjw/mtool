@@ -192,11 +192,11 @@ pub fn MediaPlayerControl() -> Element {
                         { title.clone() }
                     }
                     p {
-                        class: "text-sm text-base-content/50 truncate",
+                        class: "text-sm text-base-content/50 text-pretty",
                         { album }
                     }
                     p {
-                        class: "text-sm text-base-content/50 truncate",
+                        class: "text-sm text-base-content/50 text-pretty",
                         { artist.clone() }
                     }
                 }
