@@ -148,11 +148,11 @@ pub struct ConfigStore {
 }
 
 impl ConfigStore {
-    pub async fn root_path(&self) -> PathBuf {
+    pub fn root_path(&self) -> PathBuf {
         self.inner.read().root_path().to_owned()
     }
 
-    pub async fn get<T>(&self, key: &str) -> Result<T, anyhow::Error>
+    pub fn get<T>(&self, key: &str) -> Result<T, anyhow::Error>
     where
         T: for<'de> Deserialize<'de>,
     {

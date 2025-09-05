@@ -30,6 +30,6 @@ async fn setup(
     db: Res<DatabaseConnection>,
     pdf_api: Res<PdfApi>,
 ) -> Result<(), anyhow::Error> {
-    let config: Config = cs.get("pdf").await?;
+    let config: Config = cs.get("pdf")?;
     builder.setup(|builder| Ok(builder.plugin(pdf_loader::init(config, db, pdf_api))))
 }

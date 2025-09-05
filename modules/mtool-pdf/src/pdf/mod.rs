@@ -22,7 +22,7 @@ impl Deref for PdfApi {
 
 impl PdfApi {
     async fn construct(cs: Res<ConfigStore>) -> Result<Res<Self>, anyhow::Error> {
-        Ok(Res::new(Self::new(&cs.get("pdf").await?)?))
+        Ok(Res::new(Self::new(&cs.get("pdf")?)?))
     }
 
     fn new(config: &Config) -> Result<Self, anyhow::Error> {

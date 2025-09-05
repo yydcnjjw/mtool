@@ -29,7 +29,7 @@ pub(crate) async fn launch(
 ) -> Result<(), anyhow::Error> {
     let builder = builder.take()?;
 
-    let data_dir = cs.root_path().await;
+    let data_dir = cs.root_path();
 
     let context_tx = injector.construct_oneshot();
 

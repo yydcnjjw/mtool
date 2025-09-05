@@ -42,7 +42,7 @@ pub struct Observer {
 
 impl Observer {
     async fn construcct(cs: Res<ConfigStore>) -> Result<Res<Self>, anyhow::Error> {
-        let config = cs.get::<Config>("system.event").await?;
+        let config = cs.get::<Config>("system.event")?;
 
         let (tx, _) = broadcast::channel(config.channel_size);
 

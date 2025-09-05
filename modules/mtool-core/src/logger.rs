@@ -41,7 +41,7 @@ impl Config {
     async fn get_path(&self, cs: &Res<ConfigStore>) -> PathBuf {
         self.path
             .as_ref()
-            .unwrap_or(&cs.root_path().await.join("log"))
+            .unwrap_or(&cs.root_path().join("log"))
             .clone()
     }
 
@@ -98,7 +98,7 @@ async fn init(
         return Ok(());
     }
 
-    let cfg = cs.get::<Config>("logger").await?;
+    let cfg = cs.get::<Config>("logger")?;
 
     let (writer, guard) = tracing_appender::non_blocking(tracing_appender::rolling::daily(
         cfg.get_path(&cs).await,

@@ -22,7 +22,7 @@ pub struct Agent {
 impl Agent {
     async fn new(cs: Res<ConfigStore>) -> Result<Self, anyhow::Error> {
         Ok(Self {
-            api_key: cs.get("ai.gemini.api_key").await?,
+            api_key: cs.get("ai.gemini.api_key")?,
         })
     }
 

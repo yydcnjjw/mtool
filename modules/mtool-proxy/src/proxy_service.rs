@@ -27,10 +27,7 @@ pub struct ProxyService {
 
 impl ProxyService {
     pub async fn construct(cs: Res<ConfigStore>) -> Result<Res<ProxyService>, anyhow::Error> {
-        let config = cs
-            .get::<Config>("proxy")
-            .await
-            .context("Failed to parse proxy")?;
+        let config = cs.get::<Config>("proxy").context("Failed to parse proxy")?;
 
         let mut app_config = toml::from_str::<AppConfig>(&fs::read_to_string(config.path).await?)?;
 

@@ -11,7 +11,7 @@ pub async fn create_dbconn(
 pub(crate) async fn create_dbconn_inner(
     cs: Res<ConfigStore>,
 ) -> Result<DatabaseConnection, anyhow::Error> {
-    let path = cs.get::<String>("storage.db").await?;
+    let path = cs.get::<String>("storage.db")?;
     let db: DatabaseConnection = Database::connect(format!("sqlite://{}?mode=rwc", path)).await?;
     Ok(db)
 }
