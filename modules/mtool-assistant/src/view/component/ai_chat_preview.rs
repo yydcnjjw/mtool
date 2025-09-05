@@ -12,7 +12,9 @@ use mapp::{
     tracing::warn,
 };
 use mtool_dioxus::{
-    components::toast_err, hooks::consume_app_context, primitives::toast::use_toast,
+    components::toast_err,
+    hooks::consume_app_context,
+    primitives::toast::use_toast,
 };
 use mtool_storage::kv;
 
@@ -21,6 +23,14 @@ use crate::model::{Agent, ChatPrompt};
 #[component]
 pub fn AiChatPreview(prompt: ReadOnlySignal<ChatPrompt>) -> Element {
     let toast = use_toast();
+
+    let history = use_resource(|| async move {
+        let kvstore = consume_app_context::<Res<kv::Store>>().await;
+        kvstore
+            .bucket::<kv::Integer, String>(Some("assistant.ai_chat"))
+            .expect("kvstore assistant.ai_chat")
+    })
+    .suspend()?;
 
     let mut is_chating = use_signal(|| false);
 
@@ -33,9 +43,7 @@ pub fn AiChatPreview(prompt: ReadOnlySignal<ChatPrompt>) -> Element {
 
         spawn(
             async move {
-                let kvstore = consume_app_context::<Res<kv::Store>>().await;
-                let history = kvstore.bucket::<kv::Integer, String>(Some("assistant.ai_chat"))?;
-
+                let history = history();
                 let key = calculate_hash(&prompt).into();
 
                 if let Some(result) = history.get(&key)? {
@@ -74,6 +82,12 @@ pub fn AiChatPreview(prompt: ReadOnlySignal<ChatPrompt>) -> Element {
         );
     });
 
+    let update = use_callback(move |_| {
+        let key = calculate_hash(&prompt()).into();
+        _ = history().remove(&key);
+        chat.mark_dirty();
+    });
+
     rsx! {
         div {
             article {
@@ -83,7 +97,7 @@ pub fn AiChatPreview(prompt: ReadOnlySignal<ChatPrompt>) -> Element {
                     "歌曲出处",
                     button {
                         class: "btn btn-ghost btn-xs mx-4",
-                        onclick: move |_| { chat.mark_dirty(); },
+                        onclick: update,
                         if is_chating() {
                             span { class: "mx-4 loading loading-spinner loading-xs" }
                         }
