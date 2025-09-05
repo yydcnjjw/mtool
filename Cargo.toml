@@ -23,8 +23,6 @@ members = [
   "modules/mtool-assistant",
   "modules/mtool-proxy",  
   # "modules/mtool-pdf",
-  # "modules/mtool-dict",
-  # "modules/mtool-translate",
   
   "mtool",
 ]
