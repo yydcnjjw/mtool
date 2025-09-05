@@ -1,12 +1,10 @@
-use std::{any::type_name, collections::HashMap, pin::Pin, sync::Arc, time::Duration};
-
 use dioxus::{
     core::{provide_root_context, SpawnIfAsync},
     prelude::*,
 };
 use mapp::{
-    anyhow::{self, anyhow},
-    futures::{Stream, StreamExt, TryFutureExt, TryStreamExt},
+    anyhow,
+    futures::{StreamExt, TryFutureExt},
     prelude::*,
     tokio,
     tracing::warn,
@@ -20,8 +18,8 @@ use mtool_dioxus::{
     prelude::*,
     primitives::{switch::Switch, toast::use_toast},
 };
-use mtool_p2p::{self as p2p, gossipsub::IdentTopic};
 use mtool_storage::lww;
+use std::{any::type_name, sync::Arc};
 
 use crate::{
     media::{MediaMetadata, MediaPlayer, Player, PlayerEvent, TimedCue},
@@ -39,8 +37,6 @@ pub struct MediaPlayerControlContext {
 
     pub player: Signal<Option<Arc<MediaPlayer>>>,
     pub volume: Signal<f64>,
-
-    pub subject: Arc<p2p::Subject<PlayerEvent>>,
 }
 
 impl MediaPlayerControlContext {
@@ -68,12 +64,6 @@ impl MediaPlayerControlContext {
                         .await?,
                         player: Signal::new_in_scope(None, ScopeId::ROOT),
                         volume: Signal::new_in_scope(0., ScopeId::ROOT),
-                        subject: Arc::new(
-                            consume_app_context::<Res<p2p::Peer>>()
-                                .await
-                                .subscribe(&IdentTopic::new("PLAYER_EVENT"))
-                                .await?,
-                        ),
                     }),
                 };
 
@@ -81,20 +71,6 @@ impl MediaPlayerControlContext {
             }
             .await
             .expect(&format!("{}", type_name::<Self>()))
-        })
-    }
-
-    pub async fn player_event_stream(
-        &self,
-    ) -> Result<Pin<Box<dyn Stream<Item = Result<PlayerEvent, anyhow::Error>> + Send>>, anyhow::Error>
-    {
-        Ok(if let Some(player) = (self.player)() {
-            player.listen().await?.map_err(|e| anyhow!("{e:?}")).boxed()
-        } else {
-            self.subject
-                .stream()
-                .map(|msg| msg.map(|msg| msg.data))
-                .boxed()
         })
     }
 }
@@ -108,18 +84,6 @@ pub fn MediaPlayerControl() -> Element {
     let online_player_id = use_lww_signal(context().online_player_id.clone());
 
     let media_metadata = use_lww_signal(context().media_metadata.clone());
-
-    // let mut cues = use_signal(|| Vec::new());
-    let timed_cue = use_lww_signal(context().current_timed_cue);
-
-    // use_effect(move || {
-    //     _ = media_metadata.read(); // watch changed
-    //     cues.clear();
-    // });
-
-    // use_effect(move || {
-    //     cues.insert(timed_cue());
-    // });
 
     let is_native = use_memo(move || online_player_id() == context().id);
 
@@ -211,14 +175,6 @@ pub fn MediaPlayerControl() -> Element {
                     }
                 }
             }
-            // div {
-            //     class: "flex flex-col gap-2 w-full text-center truncate basis-full overflow-y-auto",
-            //     // for cue in cues() {
-            //     //     p {
-            //     //         { cue.data.to_string() }
-            //     //     }
-            //     // }
-            // }
             div {
                 class: "divider"
             }
@@ -316,7 +272,7 @@ async fn try_load_player_and_media(
         player.set_media_items(items).await?;
 
         {
-            to_owned![context.subject, player];
+            to_owned![player];
             let mut online_player_id = context.online_player_id.subscribe();
 
             let mut stream = player.listen().await?;
@@ -329,12 +285,6 @@ async fn try_load_player_and_media(
                             }
                             PlayerEvent::TimedCuesChanged { track_id, cue } => {
                                 context.current_timed_cue.set((track_id, cue));
-                            }
-                            _ => {
-                                subject
-                                    .publish(&ev)
-                                    .await
-                                    .unwrap_or_else(|e| warn!("{e:?}"));
                             }
                         },
                         Ok(()) = online_player_id.changed() => {
