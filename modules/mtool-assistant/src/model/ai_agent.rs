@@ -1,14 +1,10 @@
-use std::pin::Pin;
-
 use dioxus::prelude::*;
 use mapp::{
     anyhow,
-    futures::Stream,
     itertools::Itertools,
     prelude::*,
     reqwest,
     rig::{
-        agent::MultiTurnStreamItem,
         client::CompletionClient,
         message::Message,
         providers::gemini::{self, completion::gemini_api_types::*},
@@ -17,9 +13,6 @@ use mapp::{
     serde_json,
 };
 use mtool_core::ConfigStore;
-
-type StreamingResult =
-    Pin<Box<dyn Stream<Item = Result<MultiTurnStreamItem, anyhow::Error>> + Send>>;
 
 #[derive(Clone)]
 pub struct Agent {
