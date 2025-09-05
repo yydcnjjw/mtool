@@ -24,7 +24,7 @@ use mtool_p2p::{self as p2p, gossipsub::IdentTopic};
 use mtool_storage::lww;
 
 use crate::{
-    media::{MediaMetadata, MediaPlayer, Player, PlayerEvent, PlayerService, TimedCue},
+    media::{MediaMetadata, MediaPlayer, Player, PlayerEvent, TimedCue},
     model::{ChatPrompt, ChatQuery, NeteaseViewModel},
     view::component::AiChatPreview,
 };
@@ -304,13 +304,11 @@ pub fn MediaPlayerControl() -> Element {
 async fn try_load_player_and_media(
     mut context: MediaPlayerControlContext,
 ) -> Result<(), anyhow::Error> {
-    let player_service = consume_app_context::<Res<PlayerService>>().await;
     let dioxus_context = use_context::<DioxusContext>();
     let netease = use_context_provider(|| NeteaseViewModel::new());
 
     if (context.player)().is_none() {
         let player = create_player(dioxus_context.clone()).await?;
-        player_service.set_player(player.clone());
 
         let items = netease
             .load_media_items_from_playlist(&[71385702, 60131, 3001835560])

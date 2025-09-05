@@ -3,7 +3,6 @@ mod media_metadata;
 mod media_source;
 mod module;
 mod player;
-mod remote;
 mod subtitle_track;
 mod timed_metadata_source;
 
@@ -12,7 +11,6 @@ pub use media_metadata::*;
 pub use media_source::*;
 pub use module::*;
 pub use player::*;
-pub use remote::*;
 pub use subtitle_track::*;
 pub use timed_metadata_source::*;
 

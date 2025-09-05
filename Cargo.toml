@@ -14,7 +14,7 @@ members = [
 
   "modules/mtool-core",
   "modules/mtool-system",
-  "modules/mtool-rpc",
+  # "modules/mtool-rpc",
   "modules/mtool-p2p",
   "modules/mtool-storage",
   "modules/mtool-dioxus",
@@ -46,11 +46,6 @@ clap = { version = "*", features = ["derive", "cargo", "string"] }
 sea-orm = "*"
 sea-orm-migration = "*"
 thiserror = "*"
-
-tonic = "*"
-tonic-prost = "*"
-prost = "*"
-tonic-prost-build = "*"
 
 pyo3 = { version = "*", features = ["auto-initialize", "abi3-py313", "generate-import-lib"] }
 pyo3-async-runtimes = { version = "*", features = ["attributes", "tokio-runtime"] }

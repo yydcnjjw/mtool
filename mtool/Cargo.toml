@@ -44,7 +44,6 @@ bevy_dynamic_linking = [ "mtool-dioxus/bevy_dynamic_linking" ]
 [dependencies]
 mapp = { path = "../crates/mapp" }
 mtool-core = { path = "../modules/mtool-core" }
-mtool-rpc = { path = "../modules/mtool-rpc" }
 mtool-p2p = { path = "../modules/mtool-p2p" }
 mtool-storage = { path = "../modules/mtool-storage" }
 

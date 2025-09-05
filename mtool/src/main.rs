@@ -9,7 +9,6 @@ mod android;
 fn run(mut builder: mapp::AppBuilder) {
     builder
         .add_module(mtool_core::module())
-        .add_module(mtool_rpc::module())
         .add_module(mtool_p2p::module())
         .add_module(mtool_storage::module());
 

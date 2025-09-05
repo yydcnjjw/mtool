@@ -24,7 +24,6 @@ mtool-core = { path = "../mtool-core" }
 mtool-dioxus = { path = "../mtool-dioxus" }
 mtool-cmdpal = { path = "../mtool-cmdpal" }
 mtool-system = { path = "../mtool-system" }
-mtool-rpc = { path = "../mtool-rpc" }
 mtool-p2p = { path = "../mtool-p2p" }
 mtool-storage = { path = "../mtool-storage" }
 
@@ -37,11 +36,6 @@ open = "*"
 include_dir = "*"
 rodio = { version = "0.20", features = ["symphonia-all"] }
 chrono = "*"
-
-# rpc
-tonic = { workspace = true }
-prost = { workspace = true }
-tonic-prost = { workspace = true }
 
 # bevy
 bevy = { workspace = true, features = ["bevy_dev_tools"], optional = true }
@@ -68,6 +62,3 @@ features = [
   "Media_Control",
   "Media_Playback",
 ]
-
-[build-dependencies]
-tonic-prost-build = { workspace = true }

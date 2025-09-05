@@ -12,13 +12,7 @@ server = []
 [dependencies]
 mapp = { path = "../../crates/mapp" }
 mtool-core = { path = "../mtool-core" }
-mtool-rpc = { path = "../mtool-rpc" }
 mtool-p2p = { path = "../mtool-p2p" }
-
-# rpc
-tonic = { workspace = true }
-prost = { workspace = true }
-tonic-prost = { workspace = true }
 
 # sqlite
 sea-orm = { workspace = true }
@@ -29,6 +23,3 @@ kv = "*"
 
 # CRDT
 loro = "*"
-
-[build-dependencies]
-tonic-prost-build = { workspace = true }
