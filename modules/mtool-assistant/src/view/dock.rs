@@ -45,7 +45,7 @@ pub fn DockView() -> Element {
             }
 
             win.set_visible(true);
-            // win.focus_window();
+            win.focus_window();
         });
 
         _ = use_global_shortcut("alt+z", move |state| {

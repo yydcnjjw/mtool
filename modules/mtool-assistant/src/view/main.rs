@@ -16,6 +16,8 @@ pub fn MainView() -> Element {
             href: asset!("/assets/style.css")
         },
         WindowView {
+            tabindex: 0,
+            autofocus: true,
             DockView {}
         }
     }
