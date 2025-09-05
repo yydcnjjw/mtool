@@ -73,7 +73,7 @@ impl ChatPrompt {
             ChatPrompt::Query(_) => AdditionalParameters::default().with_config(GenerationConfig {
                 top_p: Some(0.95),
                 candidate_count: Some(1),
-                temperature: Some(0.1),
+                temperature: Some(0.),
                 thinking_config: Some(ThinkingConfig {
                     include_thoughts: Some(true),
                     thinking_budget: 4096,
