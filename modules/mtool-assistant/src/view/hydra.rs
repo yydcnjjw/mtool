@@ -41,7 +41,7 @@ fn HydraNav() -> Element {
 
     rsx! {
         div {
-            class: "h-screen w-screen flex flex-row py-2 overflow-hidden",
+            class: "h-screen w-screen flex flex-row py-2 overflow-hidden bg-base-100",
             ul {
                 class: "menu-sm",
                 li {
