@@ -1,4 +1,5 @@
 use dioxus::prelude::*;
+use mtool_dioxus::desktop::winit::window::WindowLevel;
 
 use crate::view::{hydra::HydraView, mini::MiniView};
 
@@ -58,6 +59,14 @@ pub fn DockView() -> Element {
                         dock_mode.set(DockMode::Show);
                     }
                 }
+            }
+            window().set_window_level(WindowLevel::AlwaysOnTop);
+        })
+        .inspect_err(|e| warn!("{:?}", e));
+
+        _ = use_global_shortcut("alt+shift+z", move |state| {
+            if state == HotKeyState::Pressed {
+                window().set_window_level(WindowLevel::AlwaysOnBottom);
             }
         })
         .inspect_err(|e| warn!("{:?}", e));
