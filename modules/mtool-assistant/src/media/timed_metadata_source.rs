@@ -41,6 +41,7 @@ impl TimedMetadataSource {
     }
 }
 
+#[allow(unused)]
 #[derive(Clone)]
 pub enum TimedMetadataTrack {
     Vendor(

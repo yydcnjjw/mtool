@@ -52,7 +52,7 @@ where
         .expect(&format!("Failed to get {}", type_name::<T>()))
 }
 
-pub fn use_lww_signal<T>(state: lww::State<T>) -> ReadOnlySignal<T>
+pub fn use_lww_signal<T>(state: lww::State<T>) -> ReadSignal<T>
 where
     T: Serialize + DeserializeOwned + fmt::Debug + Clone + Send + Sync + 'static,
 {

@@ -2,7 +2,7 @@ use std::{collections::HashMap, fmt::Display, time::Duration};
 
 use mapp::{
     anyhow::{self, Context},
-    base64,
+    base64::{self, Engine},
     regex::Regex,
     tracing::debug,
 };
@@ -13,6 +13,7 @@ use crate::media::{TimedCue, TimedCueData};
 
 use super::TimedRawTrack;
 
+#[allow(unused)]
 #[derive(Debug, Clone)]
 pub enum SubtitleTrack {
     VTT(VTT),
@@ -119,6 +120,7 @@ impl SubtitleTrack {
         Self::from_raw(TimedRawTrack { cues })
     }
 
+    #[allow(unused)]
     pub fn data_uri(&self) -> String {
         let mime_type = match self {
             SubtitleTrack::VTT(_) => "text/vtt",
@@ -128,7 +130,7 @@ impl SubtitleTrack {
 
         format!(
             "data:{mime_type};base64,{}",
-            base64::encode(self.to_string().as_bytes())
+            base64::engine::general_purpose::STANDARD.encode(self.to_string().as_bytes())
         )
     }
 }

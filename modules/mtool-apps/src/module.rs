@@ -1,5 +1,5 @@
 use dioxus::prelude::*;
-use mapp::{anyhow, prelude::*, tracing::error};
+use mapp::{anyhow, prelude::*};
 use mtool_cmdpal::{Command, CommandItem, CommandPalette, CommandResult};
 use mtool_dioxus::prelude::*;
 

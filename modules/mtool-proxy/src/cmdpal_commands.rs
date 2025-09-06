@@ -127,8 +127,6 @@ impl InvokeCommand for RemoveProxyRuleCommand {
 fn RemoveProxyRuleView() -> Element {
     let service = use_app_context::<Res<ProxyService>>().suspend()?;
 
-    let keybinding = use_context::<Keybinding>();
-
     let items = use_hook(move || {
         service()
             .routing_rules()

@@ -8,7 +8,7 @@ use mapp::{
     serde_json,
     sync::Mutex,
 };
-use std::{cell::RefCell, collections::HashMap, path::PathBuf, sync::Arc, time::Duration};
+use std::{collections::HashMap, path::PathBuf, sync::Arc, time::Duration};
 use urlqstring::QueryParams;
 
 use super::{encrypt::Crypto, model::*};

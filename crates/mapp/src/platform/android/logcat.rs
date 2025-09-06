@@ -1,4 +1,4 @@
-use std::{ffi::{CStr, CString}, io};
+use std::{ffi::CString, io};
 
 use android_log_sys::LogPriority;
 use tracing::Level;

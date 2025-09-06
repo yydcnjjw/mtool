@@ -1,22 +1,17 @@
 use mapp::{
-    android::{
-        android_log_sys::{self, LogPriority},
-        LogcatWriter,
-    },
-    android_activity::AndroidApp,
     anyhow::{self, Context},
     once_cell::sync::OnceCell,
     prelude::*,
     serde_json,
     tokio::sync::broadcast,
-    tracing::{debug, info, warn},
+    tracing::warn,
 };
 use mtool_dioxus::{
     desktop::wry::prelude::{jni::objects::JValue, *},
     prelude::*,
 };
 
-use crate::{Notification, SystemEvent};
+use crate::SystemEvent;
 
 pub struct SystemEventSource {
     source: broadcast::Sender<SystemEvent>,

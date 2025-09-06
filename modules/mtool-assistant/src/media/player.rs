@@ -17,6 +17,7 @@ pub trait Player {
 
     async fn pause(&self) -> Result<(), anyhow::Error>;
 
+    #[allow(unused)]
     async fn volume(&self) -> Result<f64, anyhow::Error>;
 
     async fn set_volume(&self, value: f64) -> Result<(), anyhow::Error>;

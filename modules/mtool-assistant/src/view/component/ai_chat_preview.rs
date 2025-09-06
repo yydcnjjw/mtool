@@ -21,7 +21,7 @@ use mtool_storage::kv;
 use crate::model::{Agent, ChatPrompt};
 
 #[component]
-pub fn AiChatPreview(prompt: ReadOnlySignal<ChatPrompt>) -> Element {
+pub fn AiChatPreview(prompt: ReadSignal<ChatPrompt>) -> Element {
     let toast = use_toast();
 
     let history = use_resource(|| async move {

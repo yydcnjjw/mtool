@@ -13,7 +13,7 @@ use mapp::{
     send_wrapper::SendWrapper,
     sync::{Mutex, RwLock},
     tokio,
-    tracing::{debug, trace, warn},
+    tracing::{debug, warn},
 };
 pub use mkeybinding::*;
 

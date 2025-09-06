@@ -65,6 +65,7 @@ impl fmt::Debug for Command {
     }
 }
 
+#[allow(unused)]
 #[derive(Debug, Clone)]
 pub enum Event {
     ConnectionEstablished {

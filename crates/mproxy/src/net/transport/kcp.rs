@@ -3,7 +3,7 @@ use std::net::SocketAddr;
 use mapp::{
     anyhow,
     tokio::sync::{Mutex, RwLock},
-    tracing::{self, debug, info},
+    tracing::{debug, info},
 };
 use tokio_kcp::{KcpConfig, KcpListener, KcpStream};
 

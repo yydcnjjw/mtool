@@ -78,7 +78,7 @@ impl Deref for CommandInput {
 }
 
 #[component]
-pub fn CommandList(items: ReadOnlySignal<Vec<CommandItem>>) -> Element {
+pub fn CommandList(items: ReadSignal<Vec<CommandItem>>) -> Element {
     let kvstore = use_app_context::<Res<kv::Store>>().suspend()?;
 
     let command_input: Signal<CommandInput> = use_context();

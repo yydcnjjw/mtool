@@ -1,9 +1,10 @@
 use mapp::{
-    anyhow::{self, anyhow},
+    anyhow,
     futures::{future::BoxFuture, FutureExt},
     prelude::*,
 };
 
+#[allow(unused)]
 pub(crate) struct Module;
 
 #[async_trait]
@@ -33,7 +34,7 @@ impl AppModule for Module {
             ) -> Result<Res<StartupMode>, anyhow::Error> {
                 Ok(Res::new(StartupMode::from(
                     args.get_one::<String>("mode")
-                        .ok_or(anyhow!("missing mode"))?
+                        .ok_or(anyhow::anyhow!("missing mode"))?
                         .as_str(),
                 )))
             }

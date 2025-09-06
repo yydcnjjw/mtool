@@ -1,4 +1,4 @@
-use std::sync::{mpsc, Arc};
+use std::sync::mpsc;
 
 #[cfg(target_os = "android")]
 use dioxus_desktop::wry::prelude::*;
@@ -9,9 +9,12 @@ use dioxus_desktop::{
 
 #[cfg(target_os = "android")]
 use mapp::android_activity::AndroidApp;
+
+#[allow(unused)]
+use mapp::prelude::*;
+
 use mapp::{
     anyhow::{self, Context},
-    prelude::*,
     tokio::sync::oneshot,
     tracing::{debug, warn},
 };

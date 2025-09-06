@@ -2338,9 +2338,9 @@ checksum = "a2698f953def977c68f935bb0dfa959375ad4638570e969e2f1e9f433cbf1af6"
 
 [[package]]
 name = "cc"
-version = "1.2.35"
+version = "1.2.36"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "590f9024a68a8c40351881787f1934dc11afd69090f5edb6831464694d836ea3"
+checksum = "5252b3d2648e5eedbc1a6f501e3c795e07025c1e93bbf8bbdd6eef7f447a6d54"
 dependencies = [
  "find-msvc-tools",
  "jobserver",
@@ -2408,7 +2408,7 @@ dependencies = [
  "num-traits",
  "serde",
  "wasm-bindgen",
- "windows-link",
+ "windows-link 0.1.3",
 ]
 
 [[package]]
@@ -2618,7 +2618,7 @@ checksum = "c2459377285ad874054d797f3ccebf984978aa39129f6eafde5cdc8315b612f8"
 [[package]]
 name = "const-serialize"
 version = "0.7.0-rc.0"
-source = "git+https://github.com/yydcnjjw/dioxus.git?branch=winit#31f2ead8a5ccb6816276261879f233db7c020fc5"
+source = "git+https://github.com/yydcnjjw/dioxus.git?branch=winit#406ddf3fe7fbeb22b33594ea392710e7ea855ff2"
 dependencies = [
  "const-serialize-macro",
  "serde",
@@ -2627,7 +2627,7 @@ dependencies = [
 [[package]]
 name = "const-serialize-macro"
 version = "0.7.0-rc.0"
-source = "git+https://github.com/yydcnjjw/dioxus.git?branch=winit#31f2ead8a5ccb6816276261879f233db7c020fc5"
+source = "git+https://github.com/yydcnjjw/dioxus.git?branch=winit#406ddf3fe7fbeb22b33594ea392710e7ea855ff2"
 dependencies = [
  "proc-macro2",
  "quote",
@@ -3368,7 +3368,7 @@ dependencies = [
 [[package]]
 name = "dioxus"
 version = "0.7.0-rc.0"
-source = "git+https://github.com/yydcnjjw/dioxus.git?branch=winit#31f2ead8a5ccb6816276261879f233db7c020fc5"
+source = "git+https://github.com/yydcnjjw/dioxus.git?branch=winit#406ddf3fe7fbeb22b33594ea392710e7ea855ff2"
 dependencies = [
  "dioxus-asset-resolver",
  "dioxus-cli-config",
@@ -3395,7 +3395,7 @@ dependencies = [
 [[package]]
 name = "dioxus-asset-resolver"
 version = "0.7.0-rc.0"
-source = "git+https://github.com/yydcnjjw/dioxus.git?branch=winit#31f2ead8a5ccb6816276261879f233db7c020fc5"
+source = "git+https://github.com/yydcnjjw/dioxus.git?branch=winit#406ddf3fe7fbeb22b33594ea392710e7ea855ff2"
 dependencies = [
  "dioxus-cli-config",
  "http 1.3.1",
@@ -3413,7 +3413,7 @@ dependencies = [
 [[package]]
 name = "dioxus-cli-config"
 version = "0.7.0-rc.0"
-source = "git+https://github.com/yydcnjjw/dioxus.git?branch=winit#31f2ead8a5ccb6816276261879f233db7c020fc5"
+source = "git+https://github.com/yydcnjjw/dioxus.git?branch=winit#406ddf3fe7fbeb22b33594ea392710e7ea855ff2"
 dependencies = [
  "wasm-bindgen",
 ]
@@ -3421,7 +3421,7 @@ dependencies = [
 [[package]]
 name = "dioxus-config-macro"
 version = "0.7.0-rc.0"
-source = "git+https://github.com/yydcnjjw/dioxus.git?branch=winit#31f2ead8a5ccb6816276261879f233db7c020fc5"
+source = "git+https://github.com/yydcnjjw/dioxus.git?branch=winit#406ddf3fe7fbeb22b33594ea392710e7ea855ff2"
 dependencies = [
  "proc-macro2",
  "quote",
@@ -3430,12 +3430,12 @@ dependencies = [
 [[package]]
 name = "dioxus-config-macros"
 version = "0.7.0-rc.0"
-source = "git+https://github.com/yydcnjjw/dioxus.git?branch=winit#31f2ead8a5ccb6816276261879f233db7c020fc5"
+source = "git+https://github.com/yydcnjjw/dioxus.git?branch=winit#406ddf3fe7fbeb22b33594ea392710e7ea855ff2"
 
 [[package]]
 name = "dioxus-core"
 version = "0.7.0-rc.0"
-source = "git+https://github.com/yydcnjjw/dioxus.git?branch=winit#31f2ead8a5ccb6816276261879f233db7c020fc5"
+source = "git+https://github.com/yydcnjjw/dioxus.git?branch=winit#406ddf3fe7fbeb22b33594ea392710e7ea855ff2"
 dependencies = [
  "const_format",
  "dioxus-core-types",
@@ -3456,7 +3456,7 @@ dependencies = [
 [[package]]
 name = "dioxus-core-macro"
 version = "0.7.0-rc.0"
-source = "git+https://github.com/yydcnjjw/dioxus.git?branch=winit#31f2ead8a5ccb6816276261879f233db7c020fc5"
+source = "git+https://github.com/yydcnjjw/dioxus.git?branch=winit#406ddf3fe7fbeb22b33594ea392710e7ea855ff2"
 dependencies = [
  "convert_case 0.8.0",
  "dioxus-rsx",
@@ -3468,12 +3468,12 @@ dependencies = [
 [[package]]
 name = "dioxus-core-types"
 version = "0.7.0-rc.0"
-source = "git+https://github.com/yydcnjjw/dioxus.git?branch=winit#31f2ead8a5ccb6816276261879f233db7c020fc5"
+source = "git+https://github.com/yydcnjjw/dioxus.git?branch=winit#406ddf3fe7fbeb22b33594ea392710e7ea855ff2"
 
 [[package]]
 name = "dioxus-desktop"
 version = "0.7.0-rc.0"
-source = "git+https://github.com/yydcnjjw/dioxus.git?branch=winit#31f2ead8a5ccb6816276261879f233db7c020fc5"
+source = "git+https://github.com/yydcnjjw/dioxus.git?branch=winit#406ddf3fe7fbeb22b33594ea392710e7ea855ff2"
 dependencies = [
  "async-trait",
  "base64 0.22.1",
@@ -3526,7 +3526,7 @@ dependencies = [
 [[package]]
 name = "dioxus-devtools"
 version = "0.7.0-rc.0"
-source = "git+https://github.com/yydcnjjw/dioxus.git?branch=winit#31f2ead8a5ccb6816276261879f233db7c020fc5"
+source = "git+https://github.com/yydcnjjw/dioxus.git?branch=winit#406ddf3fe7fbeb22b33594ea392710e7ea855ff2"
 dependencies = [
  "dioxus-cli-config",
  "dioxus-core",
@@ -3544,7 +3544,7 @@ dependencies = [
 [[package]]
 name = "dioxus-devtools-types"
 version = "0.7.0-rc.0"
-source = "git+https://github.com/yydcnjjw/dioxus.git?branch=winit#31f2ead8a5ccb6816276261879f233db7c020fc5"
+source = "git+https://github.com/yydcnjjw/dioxus.git?branch=winit#406ddf3fe7fbeb22b33594ea392710e7ea855ff2"
 dependencies = [
  "dioxus-core",
  "serde",
@@ -3554,7 +3554,7 @@ dependencies = [
 [[package]]
 name = "dioxus-document"
 version = "0.7.0-rc.0"
-source = "git+https://github.com/yydcnjjw/dioxus.git?branch=winit#31f2ead8a5ccb6816276261879f233db7c020fc5"
+source = "git+https://github.com/yydcnjjw/dioxus.git?branch=winit#406ddf3fe7fbeb22b33594ea392710e7ea855ff2"
 dependencies = [
  "dioxus-core",
  "dioxus-core-macro",
@@ -3581,7 +3581,7 @@ dependencies = [
 [[package]]
 name = "dioxus-fullstack"
 version = "0.7.0-rc.0"
-source = "git+https://github.com/yydcnjjw/dioxus.git?branch=winit#31f2ead8a5ccb6816276261879f233db7c020fc5"
+source = "git+https://github.com/yydcnjjw/dioxus.git?branch=winit#406ddf3fe7fbeb22b33594ea392710e7ea855ff2"
 dependencies = [
  "base64 0.22.1",
  "bytes",
@@ -3606,7 +3606,7 @@ dependencies = [
 [[package]]
 name = "dioxus-fullstack-hooks"
 version = "0.7.0-rc.0"
-source = "git+https://github.com/yydcnjjw/dioxus.git?branch=winit#31f2ead8a5ccb6816276261879f233db7c020fc5"
+source = "git+https://github.com/yydcnjjw/dioxus.git?branch=winit#406ddf3fe7fbeb22b33594ea392710e7ea855ff2"
 dependencies = [
  "dioxus-core",
  "dioxus-document",
@@ -3621,7 +3621,7 @@ dependencies = [
 [[package]]
 name = "dioxus-fullstack-protocol"
 version = "0.7.0-rc.0"
-source = "git+https://github.com/yydcnjjw/dioxus.git?branch=winit#31f2ead8a5ccb6816276261879f233db7c020fc5"
+source = "git+https://github.com/yydcnjjw/dioxus.git?branch=winit#406ddf3fe7fbeb22b33594ea392710e7ea855ff2"
 dependencies = [
  "base64 0.22.1",
  "ciborium",
@@ -3633,7 +3633,7 @@ dependencies = [
 [[package]]
 name = "dioxus-history"
 version = "0.7.0-rc.0"
-source = "git+https://github.com/yydcnjjw/dioxus.git?branch=winit#31f2ead8a5ccb6816276261879f233db7c020fc5"
+source = "git+https://github.com/yydcnjjw/dioxus.git?branch=winit#406ddf3fe7fbeb22b33594ea392710e7ea855ff2"
 dependencies = [
  "dioxus-core",
  "tracing",
@@ -3642,7 +3642,7 @@ dependencies = [
 [[package]]
 name = "dioxus-hooks"
 version = "0.7.0-rc.0"
-source = "git+https://github.com/yydcnjjw/dioxus.git?branch=winit#31f2ead8a5ccb6816276261879f233db7c020fc5"
+source = "git+https://github.com/yydcnjjw/dioxus.git?branch=winit#406ddf3fe7fbeb22b33594ea392710e7ea855ff2"
 dependencies = [
  "dioxus-core",
  "dioxus-signals",
@@ -3658,7 +3658,7 @@ dependencies = [
 [[package]]
 name = "dioxus-html"
 version = "0.7.0-rc.0"
-source = "git+https://github.com/yydcnjjw/dioxus.git?branch=winit#31f2ead8a5ccb6816276261879f233db7c020fc5"
+source = "git+https://github.com/yydcnjjw/dioxus.git?branch=winit#406ddf3fe7fbeb22b33594ea392710e7ea855ff2"
 dependencies = [
  "async-trait",
  "dioxus-core",
@@ -3682,7 +3682,7 @@ dependencies = [
 [[package]]
 name = "dioxus-html-internal-macro"
 version = "0.7.0-rc.0"
-source = "git+https://github.com/yydcnjjw/dioxus.git?branch=winit#31f2ead8a5ccb6816276261879f233db7c020fc5"
+source = "git+https://github.com/yydcnjjw/dioxus.git?branch=winit#406ddf3fe7fbeb22b33594ea392710e7ea855ff2"
 dependencies = [
  "convert_case 0.8.0",
  "proc-macro2",
@@ -3693,7 +3693,7 @@ dependencies = [
 [[package]]
 name = "dioxus-interpreter-js"
 version = "0.7.0-rc.0"
-source = "git+https://github.com/yydcnjjw/dioxus.git?branch=winit#31f2ead8a5ccb6816276261879f233db7c020fc5"
+source = "git+https://github.com/yydcnjjw/dioxus.git?branch=winit#406ddf3fe7fbeb22b33594ea392710e7ea855ff2"
 dependencies = [
  "dioxus-core",
  "dioxus-core-types",
@@ -3712,7 +3712,7 @@ dependencies = [
 [[package]]
 name = "dioxus-logger"
 version = "0.7.0-rc.0"
-source = "git+https://github.com/yydcnjjw/dioxus.git?branch=winit#31f2ead8a5ccb6816276261879f233db7c020fc5"
+source = "git+https://github.com/yydcnjjw/dioxus.git?branch=winit#406ddf3fe7fbeb22b33594ea392710e7ea855ff2"
 dependencies = [
  "dioxus-cli-config",
  "tracing",
@@ -3723,7 +3723,7 @@ dependencies = [
 [[package]]
 name = "dioxus-primitives"
 version = "0.0.1"
-source = "git+https://github.com/DioxusLabs/components#9297deb44c9bceee6f74b32cdbcbfde48e420ae6"
+source = "git+https://github.com/DioxusLabs/components#9edcc59610a48533939735f6066e5ca5c84ab9aa"
 dependencies = [
  "dioxus",
  "dioxus-time",
@@ -3735,7 +3735,7 @@ dependencies = [
 [[package]]
 name = "dioxus-router"
 version = "0.7.0-rc.0"
-source = "git+https://github.com/yydcnjjw/dioxus.git?branch=winit#31f2ead8a5ccb6816276261879f233db7c020fc5"
+source = "git+https://github.com/yydcnjjw/dioxus.git?branch=winit#406ddf3fe7fbeb22b33594ea392710e7ea855ff2"
 dependencies = [
  "dioxus-cli-config",
  "dioxus-core",
@@ -3754,7 +3754,7 @@ dependencies = [
 [[package]]
 name = "dioxus-router-macro"
 version = "0.7.0-rc.0"
-source = "git+https://github.com/yydcnjjw/dioxus.git?branch=winit#31f2ead8a5ccb6816276261879f233db7c020fc5"
+source = "git+https://github.com/yydcnjjw/dioxus.git?branch=winit#406ddf3fe7fbeb22b33594ea392710e7ea855ff2"
 dependencies = [
  "base16",
  "digest 0.10.7",
@@ -3768,7 +3768,7 @@ dependencies = [
 [[package]]
 name = "dioxus-rsx"
 version = "0.7.0-rc.0"
-source = "git+https://github.com/yydcnjjw/dioxus.git?branch=winit#31f2ead8a5ccb6816276261879f233db7c020fc5"
+source = "git+https://github.com/yydcnjjw/dioxus.git?branch=winit#406ddf3fe7fbeb22b33594ea392710e7ea855ff2"
 dependencies = [
  "proc-macro2",
  "proc-macro2-diagnostics",
@@ -3779,7 +3779,7 @@ dependencies = [
 [[package]]
 name = "dioxus-signals"
 version = "0.7.0-rc.0"
-source = "git+https://github.com/yydcnjjw/dioxus.git?branch=winit#31f2ead8a5ccb6816276261879f233db7c020fc5"
+source = "git+https://github.com/yydcnjjw/dioxus.git?branch=winit#406ddf3fe7fbeb22b33594ea392710e7ea855ff2"
 dependencies = [
  "dioxus-core",
  "futures-channel",
@@ -3794,7 +3794,7 @@ dependencies = [
 [[package]]
 name = "dioxus-stores"
 version = "0.7.0-rc.0"
-source = "git+https://github.com/yydcnjjw/dioxus.git?branch=winit#31f2ead8a5ccb6816276261879f233db7c020fc5"
+source = "git+https://github.com/yydcnjjw/dioxus.git?branch=winit#406ddf3fe7fbeb22b33594ea392710e7ea855ff2"
 dependencies = [
  "dioxus-core",
  "dioxus-signals",
@@ -3804,7 +3804,7 @@ dependencies = [
 [[package]]
 name = "dioxus-stores-macro"
 version = "0.7.0-rc.0"
-source = "git+https://github.com/yydcnjjw/dioxus.git?branch=winit#31f2ead8a5ccb6816276261879f233db7c020fc5"
+source = "git+https://github.com/yydcnjjw/dioxus.git?branch=winit#406ddf3fe7fbeb22b33594ea392710e7ea855ff2"
 dependencies = [
  "convert_case 0.8.0",
  "proc-macro2",
@@ -3826,7 +3826,7 @@ dependencies = [
 [[package]]
 name = "dioxus-web"
 version = "0.7.0-rc.0"
-source = "git+https://github.com/yydcnjjw/dioxus.git?branch=winit#31f2ead8a5ccb6816276261879f233db7c020fc5"
+source = "git+https://github.com/yydcnjjw/dioxus.git?branch=winit#406ddf3fe7fbeb22b33594ea392710e7ea855ff2"
 dependencies = [
  "async-trait",
  "dioxus-cli-config",
@@ -3859,7 +3859,7 @@ dependencies = [
 [[package]]
 name = "dioxus_server_macro"
 version = "0.7.0-rc.0"
-source = "git+https://github.com/yydcnjjw/dioxus.git?branch=winit#31f2ead8a5ccb6816276261879f233db7c020fc5"
+source = "git+https://github.com/yydcnjjw/dioxus.git?branch=winit#406ddf3fe7fbeb22b33594ea392710e7ea855ff2"
 dependencies = [
  "proc-macro2",
  "quote",
@@ -3885,7 +3885,7 @@ dependencies = [
  "libc",
  "option-ext",
  "redox_users",
- "windows-sys 0.60.2",
+ "windows-sys 0.61.0",
 ]
 
 [[package]]
@@ -4498,9 +4498,9 @@ dependencies = [
 
 [[package]]
 name = "find-msvc-tools"
-version = "0.1.0"
+version = "0.1.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "e178e4fba8a2726903f6ba98a6d221e76f9c12c650d5dc0e6afdc50677b49650"
+checksum = "7fd99930f64d146689264c637b5af2f0233a933bef0d8570e2526bf9e083192d"
 
 [[package]]
 name = "fixedbitset"
@@ -4906,7 +4906,7 @@ dependencies = [
 [[package]]
 name = "generational-box"
 version = "0.7.0-rc.0"
-source = "git+https://github.com/yydcnjjw/dioxus.git?branch=winit#31f2ead8a5ccb6816276261879f233db7c020fc5"
+source = "git+https://github.com/yydcnjjw/dioxus.git?branch=winit#406ddf3fe7fbeb22b33594ea392710e7ea855ff2"
 dependencies = [
  "parking_lot 0.12.4",
  "tracing",
@@ -5012,7 +5012,7 @@ dependencies = [
  "js-sys",
  "libc",
  "r-efi",
- "wasi 0.14.3+wasi-0.2.4",
+ "wasi 0.14.4+wasi-0.2.4",
  "wasm-bindgen",
 ]
 
@@ -6432,9 +6432,9 @@ dependencies = [
 
 [[package]]
 name = "js-sys"
-version = "0.3.77"
+version = "0.3.78"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "1cfaf33c695fc6e08064efbc1f72ec937429614f25eef83af942d0e227c3a28f"
+checksum = "0c0b063578492ceec17683ef2f8c5e89121fbd0b172cbc280635ab7567db2738"
 dependencies = [
  "once_cell",
  "wasm-bindgen",
@@ -6564,7 +6564,7 @@ checksum = "e49596223b9d9d4947a14a25c142a6e7d8ab3f27eb3ade269d238bb8b5c267e2"
 [[package]]
 name = "lazy-js-bundle"
 version = "0.7.0-rc.0"
-source = "git+https://github.com/yydcnjjw/dioxus.git?branch=winit#31f2ead8a5ccb6816276261879f233db7c020fc5"
+source = "git+https://github.com/yydcnjjw/dioxus.git?branch=winit#406ddf3fe7fbeb22b33594ea392710e7ea855ff2"
 
 [[package]]
 name = "lazy_static"
@@ -7328,7 +7328,7 @@ dependencies = [
 [[package]]
 name = "manganis"
 version = "0.7.0-rc.0"
-source = "git+https://github.com/yydcnjjw/dioxus.git?branch=winit#31f2ead8a5ccb6816276261879f233db7c020fc5"
+source = "git+https://github.com/yydcnjjw/dioxus.git?branch=winit#406ddf3fe7fbeb22b33594ea392710e7ea855ff2"
 dependencies = [
  "const-serialize",
  "manganis-core",
@@ -7338,7 +7338,7 @@ dependencies = [
 [[package]]
 name = "manganis-core"
 version = "0.7.0-rc.0"
-source = "git+https://github.com/yydcnjjw/dioxus.git?branch=winit#31f2ead8a5ccb6816276261879f233db7c020fc5"
+source = "git+https://github.com/yydcnjjw/dioxus.git?branch=winit#406ddf3fe7fbeb22b33594ea392710e7ea855ff2"
 dependencies = [
  "const-serialize",
  "dioxus-cli-config",
@@ -7349,7 +7349,7 @@ dependencies = [
 [[package]]
 name = "manganis-macro"
 version = "0.7.0-rc.0"
-source = "git+https://github.com/yydcnjjw/dioxus.git?branch=winit#31f2ead8a5ccb6816276261879f233db7c020fc5"
+source = "git+https://github.com/yydcnjjw/dioxus.git?branch=winit#406ddf3fe7fbeb22b33594ea392710e7ea855ff2"
 dependencies = [
  "dunce",
  "macro-string",
@@ -7749,7 +7749,7 @@ dependencies = [
  "tracing-test",
  "wayland-client",
  "wayland-protocols-wlr",
- "windows 0.61.3",
+ "windows 0.62.0",
  "x11",
  "xproto",
 ]
@@ -7788,7 +7788,7 @@ dependencies = [
  "parselnk",
  "pinyin",
  "walkdir",
- "windows 0.61.3",
+ "windows 0.62.0",
  "windows-icons",
 ]
 
@@ -7817,7 +7817,7 @@ dependencies = [
  "rsubs-lib",
  "smooth-bevy-cameras",
  "time",
- "windows 0.61.3",
+ "windows 0.62.0",
 ]
 
 [[package]]
@@ -7914,7 +7914,7 @@ dependencies = [
  "mtool-core",
  "mtool-dioxus",
  "mtool-p2p",
- "windows 0.61.3",
+ "windows 0.62.0",
  "windows-future 0.2.1",
 ]
 
@@ -9828,9 +9828,9 @@ dependencies = [
 
 [[package]]
 name = "pxfm"
-version = "0.1.20"
+version = "0.1.22"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "6e790881194f6f6e86945f0a42a6981977323669aeb6c40e9c7ec253133b96f8"
+checksum = "376f733579ac4d3b9fbf0afca99bf8f6b698d541118affca554d0b86f73c2470"
 dependencies = [
  "num-traits",
 ]
@@ -12220,7 +12220,7 @@ dependencies = [
 [[package]]
 name = "subsecond"
 version = "0.7.0-rc.0"
-source = "git+https://github.com/yydcnjjw/dioxus.git?branch=winit#31f2ead8a5ccb6816276261879f233db7c020fc5"
+source = "git+https://github.com/yydcnjjw/dioxus.git?branch=winit#406ddf3fe7fbeb22b33594ea392710e7ea855ff2"
 dependencies = [
  "js-sys",
  "libc",
@@ -12238,7 +12238,7 @@ dependencies = [
 [[package]]
 name = "subsecond-types"
 version = "0.7.0-rc.0"
-source = "git+https://github.com/yydcnjjw/dioxus.git?branch=winit#31f2ead8a5ccb6816276261879f233db7c020fc5"
+source = "git+https://github.com/yydcnjjw/dioxus.git?branch=winit#406ddf3fe7fbeb22b33594ea392710e7ea855ff2"
 dependencies = [
  "serde",
 ]
@@ -13740,9 +13740,9 @@ checksum = "ccf3ec651a847eb01de73ccad15eb7d99f80485de043efb2f370cd654f4ea44b"
 
 [[package]]
 name = "wasi"
-version = "0.14.3+wasi-0.2.4"
+version = "0.14.4+wasi-0.2.4"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "6a51ae83037bdd272a9e28ce236db8c07016dd0d50c27038b3f407533c030c95"
+checksum = "88a5f4a424faf49c3c2c344f166f0662341d470ea185e939657aaff130f0ec4a"
 dependencies = [
  "wit-bindgen",
 ]
@@ -13755,21 +13755,22 @@ checksum = "b8dad83b4f25e74f184f64c43b150b91efe7647395b42289f38e50566d82855b"
 
 [[package]]
 name = "wasm-bindgen"
-version = "0.2.100"
+version = "0.2.101"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "1edc8929d7499fc4e8f0be2262a241556cfc54a0bea223790e71446f2aab1ef5"
+checksum = "7e14915cadd45b529bb8d1f343c4ed0ac1de926144b746e2710f9cd05df6603b"
 dependencies = [
  "cfg-if",
  "once_cell",
  "rustversion",
  "wasm-bindgen-macro",
+ "wasm-bindgen-shared",
 ]
 
 [[package]]
 name = "wasm-bindgen-backend"
-version = "0.2.100"
+version = "0.2.101"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "2f0a0651a5c2bc21487bde11ee802ccaf4c51935d0d3d42a6101f98161700bc6"
+checksum = "e28d1ba982ca7923fd01448d5c30c6864d0a14109560296a162f80f305fb93bb"
 dependencies = [
  "bumpalo",
  "log",
@@ -13781,9 +13782,9 @@ dependencies = [
 
 [[package]]
 name = "wasm-bindgen-futures"
-version = "0.4.50"
+version = "0.4.51"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "555d470ec0bc3bb57890405e5d4322cc9ea83cebb085523ced7be4144dac1e61"
+checksum = "0ca85039a9b469b38336411d6d6ced91f3fc87109a2a27b0c197663f5144dffe"
 dependencies = [
  "cfg-if",
  "js-sys",
@@ -13794,9 +13795,9 @@ dependencies = [
 
 [[package]]
 name = "wasm-bindgen-macro"
-version = "0.2.100"
+version = "0.2.101"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "7fe63fc6d09ed3792bd0897b314f53de8e16568c2b3f7982f468c0bf9bd0b407"
+checksum = "7c3d463ae3eff775b0c45df9da45d68837702ac35af998361e2c84e7c5ec1b0d"
 dependencies = [
  "quote",
  "wasm-bindgen-macro-support",
@@ -13804,9 +13805,9 @@ dependencies = [
 
 [[package]]
 name = "wasm-bindgen-macro-support"
-version = "0.2.100"
+version = "0.2.101"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "8ae87ea40c9f689fc23f209965b6fb8a99ad69aeeb0231408be24920604395de"
+checksum = "7bb4ce89b08211f923caf51d527662b75bdc9c9c7aab40f86dcb9fb85ac552aa"
 dependencies = [
  "proc-macro2",
  "quote",
@@ -13817,9 +13818,9 @@ dependencies = [
 
 [[package]]
 name = "wasm-bindgen-shared"
-version = "0.2.100"
+version = "0.2.101"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "1a05d73b933a847d6cccdda8f838a22ff101ad9bf93e33684f39c1f5f0eece3d"
+checksum = "f143854a3b13752c6950862c906306adb27c7e839f7414cec8fea35beab624c1"
 dependencies = [
  "unicode-ident",
 ]
@@ -13954,9 +13955,9 @@ checksum = "323f4da9523e9a669e1eaf9c6e763892769b1d38c623913647bfdc1532fe4549"
 
 [[package]]
 name = "web-sys"
-version = "0.3.77"
+version = "0.3.78"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "33b6dd2ef9186f1f2072e409e99cd22a975331a6b3591b12c764e0e55c60d5d2"
+checksum = "77e4b637749ff0d92b8fad63aa1f7cff3cbe125fd49c175cd6345e7272638b12"
 dependencies = [
  "js-sys",
  "wasm-bindgen",
@@ -14307,7 +14308,7 @@ dependencies = [
  "windows-collections 0.1.1",
  "windows-core 0.60.1",
  "windows-future 0.1.1",
- "windows-link",
+ "windows-link 0.1.3",
  "windows-numerics 0.1.1",
 ]
 
@@ -14320,8 +14321,21 @@ dependencies = [
  "windows-collections 0.2.0",
  "windows-core 0.61.2",
  "windows-future 0.2.1",
- "windows-link",
+ "windows-link 0.1.3",
  "windows-numerics 0.2.0",
+]
+
+[[package]]
+name = "windows"
+version = "0.62.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "9579d0e6970fd5250aa29aba5994052385ff55cf7b28a059e484bb79ea842e42"
+dependencies = [
+ "windows-collections 0.3.0",
+ "windows-core 0.62.0",
+ "windows-future 0.3.0",
+ "windows-link 0.2.0",
+ "windows-numerics 0.3.0",
 ]
 
 [[package]]
@@ -14340,6 +14354,15 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "3beeceb5e5cfd9eb1d76b381630e82c4241ccd0d27f1a39ed41b2760b255c5e8"
 dependencies = [
  "windows-core 0.61.2",
+]
+
+[[package]]
+name = "windows-collections"
+version = "0.3.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "a90dd7a7b86859ec4cdf864658b311545ef19dbcf17a672b52ab7cefe80c336f"
+dependencies = [
+ "windows-core 0.62.0",
 ]
 
 [[package]]
@@ -14395,7 +14418,7 @@ checksum = "ca21a92a9cae9bf4ccae5cf8368dce0837100ddf6e6d57936749e85f152f6247"
 dependencies = [
  "windows-implement 0.59.0",
  "windows-interface 0.59.1",
- "windows-link",
+ "windows-link 0.1.3",
  "windows-result 0.3.4",
  "windows-strings 0.3.1",
 ]
@@ -14408,9 +14431,22 @@ checksum = "c0fdd3ddb90610c7638aa2b3a3ab2904fb9e5cdbecc643ddb3647212781c4ae3"
 dependencies = [
  "windows-implement 0.60.0",
  "windows-interface 0.59.1",
- "windows-link",
+ "windows-link 0.1.3",
  "windows-result 0.3.4",
  "windows-strings 0.4.2",
+]
+
+[[package]]
+name = "windows-core"
+version = "0.62.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "57fe7168f7de578d2d8a05b07fd61870d2e73b4020e9f49aa00da8471723497c"
+dependencies = [
+ "windows-implement 0.60.0",
+ "windows-interface 0.59.1",
+ "windows-link 0.2.0",
+ "windows-result 0.4.0",
+ "windows-strings 0.5.0",
 ]
 
 [[package]]
@@ -14420,7 +14456,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "a787db4595e7eb80239b74ce8babfb1363d8e343ab072f2ffe901400c03349f0"
 dependencies = [
  "windows-core 0.60.1",
- "windows-link",
+ "windows-link 0.1.3",
 ]
 
 [[package]]
@@ -14430,8 +14466,19 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "fc6a41e98427b19fe4b73c550f060b59fa592d7d686537eebf9385621bfbad8e"
 dependencies = [
  "windows-core 0.61.2",
- "windows-link",
- "windows-threading",
+ "windows-link 0.1.3",
+ "windows-threading 0.1.0",
+]
+
+[[package]]
+name = "windows-future"
+version = "0.3.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "b2194dee901458cb79e1148a4e9aac2b164cc95fa431891e7b296ff0b2f1d8a6"
+dependencies = [
+ "windows-core 0.62.0",
+ "windows-link 0.2.0",
+ "windows-threading 0.2.0",
 ]
 
 [[package]]
@@ -14530,13 +14577,19 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "5e6ad25900d524eaabdbbb96d20b4311e1e7ae1699af4fb28c17ae66c80d798a"
 
 [[package]]
+name = "windows-link"
+version = "0.2.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "45e46c0661abb7180e7b9c281db115305d49ca1709ab8242adf09666d2173c65"
+
+[[package]]
 name = "windows-numerics"
 version = "0.1.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "005dea54e2f6499f2cee279b8f703b3cf3b5734a2d8d21867c8f44003182eeed"
 dependencies = [
  "windows-core 0.60.1",
- "windows-link",
+ "windows-link 0.1.3",
 ]
 
 [[package]]
@@ -14546,7 +14599,17 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "9150af68066c4c5c07ddc0ce30421554771e528bde427614c61038bc2c92c2b1"
 dependencies = [
  "windows-core 0.61.2",
- "windows-link",
+ "windows-link 0.1.3",
+]
+
+[[package]]
+name = "windows-numerics"
+version = "0.3.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "2ce3498fe0aba81e62e477408383196b4b0363db5e0c27646f932676283b43d8"
+dependencies = [
+ "windows-core 0.62.0",
+ "windows-link 0.2.0",
 ]
 
 [[package]]
@@ -14555,7 +14618,7 @@ version = "0.5.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "5b8a9ed28765efc97bbc954883f4e6796c33a06546ebafacbabee9696967499e"
 dependencies = [
- "windows-link",
+ "windows-link 0.1.3",
  "windows-result 0.3.4",
  "windows-strings 0.4.2",
 ]
@@ -14584,7 +14647,16 @@ version = "0.3.4"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "56f42bd332cc6c8eac5af113fc0c1fd6a8fd2aa08a0119358686e5160d0586c6"
 dependencies = [
- "windows-link",
+ "windows-link 0.1.3",
+]
+
+[[package]]
+name = "windows-result"
+version = "0.4.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "7084dcc306f89883455a206237404d3eaf961e5bd7e0f312f7c91f57eb44167f"
+dependencies = [
+ "windows-link 0.2.0",
 ]
 
 [[package]]
@@ -14603,7 +14675,7 @@ version = "0.3.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "87fa48cc5d406560701792be122a10132491cff9d0aeb23583cc2dcafc847319"
 dependencies = [
- "windows-link",
+ "windows-link 0.1.3",
 ]
 
 [[package]]
@@ -14612,7 +14684,16 @@ version = "0.4.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "56e6c93f3a0c3b36176cb1327a4958a0353d5d166c2a35cb268ace15e91d3b57"
 dependencies = [
- "windows-link",
+ "windows-link 0.1.3",
+]
+
+[[package]]
+name = "windows-strings"
+version = "0.5.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "7218c655a553b0bed4426cf54b20d7ba363ef543b52d515b3e48d7fd55318dda"
+dependencies = [
+ "windows-link 0.2.0",
 ]
 
 [[package]]
@@ -14658,6 +14739,15 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "f2f500e4d28234f72040990ec9d39e3a6b950f9f22d3dba18416c35882612bcb"
 dependencies = [
  "windows-targets 0.53.3",
+]
+
+[[package]]
+name = "windows-sys"
+version = "0.61.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "e201184e40b2ede64bc2ea34968b28e33622acdbbf37104f0e4a33f7abe657aa"
+dependencies = [
+ "windows-link 0.2.0",
 ]
 
 [[package]]
@@ -14712,7 +14802,7 @@ version = "0.53.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "d5fe6031c4041849d7c496a8ded650796e7b6ecc19df1a431c1a363342e5dc91"
 dependencies = [
- "windows-link",
+ "windows-link 0.1.3",
  "windows_aarch64_gnullvm 0.53.0",
  "windows_aarch64_msvc 0.53.0",
  "windows_i686_gnu 0.53.0",
@@ -14729,16 +14819,25 @@ version = "0.1.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "b66463ad2e0ea3bbf808b7f1d371311c80e115c0b71d60efc142cafbcfb057a6"
 dependencies = [
- "windows-link",
+ "windows-link 0.1.3",
+]
+
+[[package]]
+name = "windows-threading"
+version = "0.2.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "ab47f085ad6932defa48855254c758cdd0e2f2d48e62a34118a268d8f345e118"
+dependencies = [
+ "windows-link 0.2.0",
 ]
 
 [[package]]
 name = "windows-version"
-version = "0.1.4"
+version = "0.1.5"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "e04a5c6627e310a23ad2358483286c7df260c964eb2d003d8efd6d0f4e79265c"
+checksum = "69e061eb0a22b4a1d778ad70f7575ec7845490abb35b08fa320df7895882cacb"
 dependencies = [
- "windows-link",
+ "windows-link 0.2.0",
 ]
 
 [[package]]
@@ -15013,9 +15112,9 @@ dependencies = [
 
 [[package]]
 name = "wit-bindgen"
-version = "0.45.0"
+version = "0.45.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "052283831dbae3d879dc7f51f3d92703a316ca49f91540417d38591826127814"
+checksum = "5c573471f125075647d03df72e026074b7203790d41351cd6edc96f46bcccd36"
 
 [[package]]
 name = "writeable"
@@ -15409,9 +15508,9 @@ dependencies = [
 
 [[package]]
 name = "zune-jpeg"
-version = "0.4.20"
+version = "0.4.21"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "fc1f7e205ce79eb2da3cd71c5f55f3589785cb7c79f6a03d1c8d1491bda5d089"
+checksum = "29ce2c8a9384ad323cf564b67da86e21d3cfdff87908bc1223ed5c99bc792713"
 dependencies = [
  "zune-core",
 ]

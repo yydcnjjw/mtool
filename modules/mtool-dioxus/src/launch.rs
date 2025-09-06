@@ -94,6 +94,7 @@ pub(crate) async fn launch(
                     });
                 }
 
+                #[allow(unused_mut)]
                 let mut window_attrs = WindowAttributes::default()
                     .with_decorations(false)
                     .with_transparent(true);

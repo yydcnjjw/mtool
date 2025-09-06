@@ -70,6 +70,7 @@ impl MediaItem {
         self
     }
 
+    #[allow(unused)]
     #[async_recursion]
     pub async fn resolve_uri(&self, uri: Url) -> Result<String, anyhow::Error> {
         match uri.path() {

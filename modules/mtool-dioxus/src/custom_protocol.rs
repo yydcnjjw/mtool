@@ -7,10 +7,7 @@ use dioxus_desktop::{
     },
     RequestAsyncResponder,
 };
-use mapp::{
-    anyhow, tokio,
-    tracing::{info, warn},
-};
+use mapp::{anyhow, tokio, tracing::warn};
 
 fn get_mime_from_path(asset: &Path) -> Result<&'static str, anyhow::Error> {
     if asset.extension().is_some_and(|ext| ext == "svg") {

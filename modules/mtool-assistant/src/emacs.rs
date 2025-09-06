@@ -87,6 +87,7 @@ impl OrgCapture {
         Self::new("p")
     }
 
+    #[allow(unused)]
     pub fn with_url<T>(mut self, url: T) -> Self
     where
         T: ToString,
@@ -103,6 +104,7 @@ impl OrgCapture {
         self
     }
 
+    #[allow(unused)]
     pub fn with_body<T>(mut self, body: T) -> Self
     where
         T: ToString,
@@ -112,11 +114,13 @@ impl OrgCapture {
     }
 }
 
+#[allow(unused)]
 pub async fn capture_inbox() -> Result<CommandResult, anyhow::Error> {
     OrgCapture::inbox().with_title("").open()?;
     Ok(CommandResult::Dismiss)
 }
 
+#[allow(unused)]
 pub async fn capture_project() -> Result<CommandResult, anyhow::Error> {
     OrgCapture::project().with_title("").open()?;
     Ok(CommandResult::Dismiss)

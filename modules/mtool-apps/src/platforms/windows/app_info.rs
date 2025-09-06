@@ -9,6 +9,7 @@ use crate::AppInfoExt;
 #[derive(Clone)]
 pub struct AppInfo {
     path: PathBuf,
+    #[allow(unused)]
     lnk: Lnk,
 }
 

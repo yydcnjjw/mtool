@@ -1,15 +1,14 @@
+#[allow(unused)]
 use dioxus::prelude::*;
 use mapp::{anyhow, futures::TryFutureExt, prelude::*, tokio, tracing::warn};
+#[cfg(feature = "desktop")]
 use mtool_cmdpal::{Command, CommandItem, CommandPalette};
 use mtool_dioxus::{
     desktop::{winit::window::WindowLevel, WindowAttributes},
     prelude::*,
 };
 
-use crate::{
-    emacs::{capture_inbox, capture_project},
-    media, notify, view,
-};
+use crate::{emacs, media, notify, view};
 
 pub fn module() -> ModuleGroup {
     let mut group = ModuleGroup::new("mtool-assistant");
@@ -46,7 +45,7 @@ async fn setup(
 ) -> Result<(), anyhow::Error> {
     builder.add_global_hotkey("alt+c", || {
         tokio::spawn(async move {
-            if let Err(e) = capture_inbox().await {
+            if let Err(e) = emacs::capture_inbox().await {
                 warn!("{:?}", e);
             }
         });
@@ -90,13 +89,14 @@ async fn create_window() -> Result<(), anyhow::Error> {
     .await
 }
 
+#[cfg(feature = "desktop")]
 async fn init(cmdpal: Res<CommandPalette>) -> Result<(), anyhow::Error> {
     cmdpal
         .add_top_level_command(CommandItem::from(
-            Command::new("Capture project", capture_project).description("Capture project"),
+            Command::new("Capture project", emacs::capture_project).description("Capture project"),
         ))
         .add_top_level_command(CommandItem::from(
-            Command::new("Capture inbox", capture_inbox).description("Capture inbox"),
+            Command::new("Capture inbox", emacs::capture_inbox).description("Capture inbox"),
         ));
 
     Ok(())

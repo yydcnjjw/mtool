@@ -29,6 +29,7 @@ impl MediaSource {
         MediaSource::Vendor(Arc::new(move || f().boxed()))
     }
 
+    #[allow(unused)]
     #[async_recursion]
     pub async fn resolve_uri(&self) -> Result<String, anyhow::Error> {
         match self {

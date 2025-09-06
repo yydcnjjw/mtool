@@ -3,7 +3,6 @@ use std::rc::Rc;
 use dioxus::{core::use_hook_with_cleanup, prelude::*};
 use mapp::{
     anyhow,
-    dpi::{PhysicalPosition, PhysicalSize},
     itertools::Itertools,
     prelude::*,
     tracing::{debug, warn},
@@ -139,7 +138,7 @@ fn DefaultView() -> Element {
 type ViewFn = fn() -> Element;
 
 #[component]
-fn DynamicView(view: ReadOnlySignal<ViewFn>) -> Element {
+fn DynamicView(view: ReadSignal<ViewFn>) -> Element {
     view.read()()
 }
 
@@ -238,7 +237,9 @@ fn init_keybinding(mut command_result: Signal<CommandResult>) {
     );
 }
 
+#[cfg(any(target_os = "windows", target_os = "linux"))]
 fn init_window() {
+    use mapp::dpi::{PhysicalPosition, PhysicalSize};
     use_hook(move || {
         let window = window();
         let window_size = PhysicalSize::new(800, 600);

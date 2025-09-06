@@ -29,6 +29,7 @@ define_label!(
     }
 );
 
+#[allow(unused)]
 pub(crate) async fn migrate(cs: Res<ConfigStore>) -> Result<(), anyhow::Error> {
     let db = create_dbconn_inner(cs).await?;
     Migrator::up(&db, None).await?;

@@ -2,7 +2,7 @@ use clap::{arg, ArgMatches};
 use mapp::{anyhow, prelude::*, tokio, tracing::warn, CreateOnceTaskDescriptor};
 use mtool_cmdpal::CommandPalette;
 use mtool_core::{AppStage, Cmdline, CmdlineStage, ConfigStore};
-use mtool_dioxus::prelude::{DioxusBuilder, DioxusStage};
+use mtool_dioxus::prelude::*;
 
 use crate::{cmdpal_commands, proxy_service::ProxyService};
 
@@ -27,6 +27,7 @@ impl AppModule for Module {
 }
 
 pub async fn is_runnable(
+    #[allow(unused)]
     config: Res<ConfigStore>,
     args: Res<ArgMatches>,
 ) -> Result<bool, anyhow::Error> {

@@ -1,7 +1,5 @@
 use dioxus::{prelude::*, CapturedError};
-use dioxus_desktop::{
-    use_global_shortcut, use_wry_event_handler, winit::event::Event, HotKeyState, UserWindowEvent,
-};
+use dioxus_desktop::{use_global_shortcut, HotKeyState};
 use mapp::{
     anyhow::{self, anyhow},
     tracing::warn,
@@ -30,7 +28,12 @@ fn init_global_hotkey() -> Result<(), anyhow::Error> {
 
 #[cfg(not(any(target_os = "ios", target_os = "android")))]
 fn init_tray() {
-    use dioxus_desktop::trayicon::{init_tray_icon, menu::MenuItem, DioxusTrayMenu};
+    use dioxus_desktop::{
+        trayicon::{init_tray_icon, menu::MenuItem, DioxusTrayMenu},
+        use_wry_event_handler,
+        winit::event::Event,
+        UserWindowEvent,
+    };
     let quit = MenuItem::new("Quit", true, None);
     let tray_menu = DioxusTrayMenu::with_items(&[&quit]).unwrap();
     init_tray_icon(tray_menu, None);

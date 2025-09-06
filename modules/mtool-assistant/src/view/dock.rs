@@ -1,5 +1,4 @@
 use dioxus::prelude::*;
-use mtool_dioxus::desktop::winit::window::WindowLevel;
 
 use crate::view::{hydra::HydraView, mini::MiniView};
 
@@ -14,7 +13,7 @@ pub fn DockView() -> Element {
         }
     });
 
-    #[allow(unused_mut)]
+    #[allow(unused)]
     let mut window_top = use_signal(|| 256);
 
     #[cfg(feature = "desktop")]
@@ -24,7 +23,8 @@ pub fn DockView() -> Element {
             tracing::warn,
         };
         use mtool_dioxus::desktop::{
-            use_global_shortcut, use_wry_event_handler, window, winit::event::Event as WinitEvent,
+            use_global_shortcut, use_wry_event_handler, window,
+            winit::{event::Event as WinitEvent, window::WindowLevel},
             HotKeyState, WindowEvent,
         };
 

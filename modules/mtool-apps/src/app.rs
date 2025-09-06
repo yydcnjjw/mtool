@@ -1,7 +1,7 @@
 use image::DynamicImage;
 use mapp::{anyhow, itertools::Itertools, prelude::*, tracing::warn};
 use mtool_cmdpal::{Command, CommandItem, CommandResult, InvokeCommand};
-use pinyin::{to_pinyin_vec, Pinyin, ToPinyin};
+use pinyin::{Pinyin, ToPinyin};
 use std::sync::Arc;
 
 use crate::{base64_image, platforms};

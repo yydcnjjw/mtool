@@ -7,6 +7,7 @@ use crate::platforms;
 #[derive(Clone)]
 pub struct WindowInfo {
     pub title: String,
+    #[allow(unused)]
     pub position: WindowPosition,
     pub process: ProcessInfo,
 
@@ -17,6 +18,7 @@ pub struct WindowInfo {
 pub struct ProcessInfo {
     pub name: String,
     pub description: String,
+    #[allow(unused)]
     pub pid: usize,
 }
 
@@ -25,6 +27,7 @@ pub trait WindowInfoExt {
     fn active(&self) -> Result<(), anyhow::Error>;
 }
 
+#[allow(unused)]
 #[derive(Debug, Clone)]
 pub struct WindowPosition {
     pub x: i32,

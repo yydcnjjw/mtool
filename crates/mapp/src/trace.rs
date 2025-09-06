@@ -1,10 +1,11 @@
 use anyhow::Context;
+#[allow(unused)]
 use tracing::level_filters::LevelFilter;
-#[cfg(not(target_arch = "wasm32"))]
+#[cfg(not(any(target_arch = "wasm32", target_os = "android")))]
 use tracing_appender::non_blocking::WorkerGuard;
 use tracing_subscriber::{
     filter::Filtered,
-    fmt::{self, layer},
+    fmt,
     layer::{Filter, Layer},
     prelude::*,
     reload, Registry,

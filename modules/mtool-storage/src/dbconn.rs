@@ -2,6 +2,7 @@ use mapp::{anyhow, prelude::*};
 use mtool_core::ConfigStore;
 use sea_orm::{Database, DatabaseConnection};
 
+#[allow(unused)]
 pub async fn create_dbconn(
     cs: Res<ConfigStore>,
 ) -> Result<Res<DatabaseConnection>, anyhow::Error> {

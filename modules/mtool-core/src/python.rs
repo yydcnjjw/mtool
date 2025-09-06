@@ -10,7 +10,7 @@ where
     F: for<'py> FnOnce(Python<'py>) -> PyResult<R> + 'static,
     R: 'static,
 {
-    Python::with_gil(move |py| {
+    Python::attach(move |py| {
         INIT.call_once(|| {
             move || -> PyResult<()> {
                 let signal = py.import("signal")?;

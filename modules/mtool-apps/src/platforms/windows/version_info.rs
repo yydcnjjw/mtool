@@ -1,26 +1,15 @@
 use std::{
     ffi,
     ffi::OsString,
-    os::windows::prelude::{
-        OsStrExt,
-        OsStringExt,
-    },
+    os::windows::prelude::{OsStrExt, OsStringExt},
     path::Path,
-    ptr,
-    slice,
+    ptr, slice,
 };
 
-use windows::core::{
-    Error,
-    Result,
-    PCWSTR,
-    w as pcwstr,
-};
+use windows::core::{w as pcwstr, Error, Result, PCWSTR};
 
 use windows::Win32::Storage::FileSystem::{
-    GetFileVersionInfoSizeW,
-    GetFileVersionInfoW,
-    VerQueryValueW,
+    GetFileVersionInfoSizeW, GetFileVersionInfoW, VerQueryValueW,
 };
 
 /// Represents version information for a file.
@@ -28,13 +17,13 @@ use windows::Win32::Storage::FileSystem::{
 /// This struct contains various fields that provide detailed information
 /// about the file, such as its description and version number, company that
 /// produced it, and other metadata.
-/// 
+///
 /// This struct uses the idiomatic [`String`] for its string fields. This means
 /// that any possibly ill-formed UTF-16 data that may be present in the version
 /// information of the file will be replaced with the Unicode replacement
 /// character (?) when converting to a [`String`]. If you need to preserve such
 /// data, use [`VersionInfoOs`] instead.
-/// 
+///
 #[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord, Default, Hash)]
 #[non_exhaustive]
 pub struct VersionInfo {
@@ -66,13 +55,13 @@ pub struct VersionInfo {
 
 impl VersionInfo {
     /// Retrieves version information from the specified file.
-    /// 
+    ///
     /// As [`VersionInfo`] uses [`String`] for its string fields, any possibly
     /// ill-formed UTF-16 data that may be present in the version information
     /// of the file will be replaced with the Unicode replacement character (?)
     /// when converting to a [`String`]. If you need to preserve such data, use
     /// [`VersionInfoOs::from_file`] instead.
-    /// 
+    ///
     /// # Errors
     ///
     /// This function will return an error if:
@@ -115,11 +104,11 @@ impl VersionInfo {
 /// This struct contains various fields that provide detailed information
 /// about the file, such as its description and version number, company that
 /// produced it, and other metadata.
-/// 
+///
 /// This struct is similar to [`VersionInfo`], but it uses [`OsString`] instead
 /// of [`String`] for its string fields to preserve any possibly ill-formed
 /// UTF-16 data that may be present in the version information of the file.
-/// 
+///
 #[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord, Default, Hash)]
 #[non_exhaustive]
 pub struct VersionInfoOs {
@@ -151,38 +140,39 @@ pub struct VersionInfoOs {
 
 impl VersionInfoOs {
     /// Retrieves version information from the specified file.
-    /// 
+    ///
     /// This function is similar to [`VersionInfo::from_file`], but it uses
     /// [`OsString`] instead of [`String`] for its string fields to preserve any
     /// possibly ill-formed UTF-16 data that may be present in the version
     /// information of the file.
-    /// 
+    ///
     /// # Errors
-    /// 
+    ///
     /// This function will return an error if:
     /// - The file does not exist.
     /// - The file is not accessible.
     /// - The version information cannot be retrieved.
-    /// 
+    ///
     /// # Examples
-    /// 
+    ///
     /// ```
     /// use your_crate_name::VersionInfoOs;
-    /// 
+    ///
     /// let info = VersionInfoOs::from_file("path/to/your/file.exe")
     ///    .expect("Failed to retrieve version information");
-    /// 
+    ///
     /// println!("File description: {}", info.file_description.to_string_lossy());
     /// println!("File version: {}", info.file_version.to_string_lossy());
     /// ```
-    /// 
+    ///
     pub fn from_file<P: AsRef<Path>>(file_name: P) -> Result<Self> {
         const LANG_US_ENGLISH_CP_UNKNOWN: u32 = 0x04090000;
         const LANG_US_ENGLISH_CP_UNICODE: u32 = 0x040904B0;
         const LANG_US_ENGLISH_CP_USASCII: u32 = 0x040904E4;
         let ver_data = VersionInfoInternal::from_file(file_name.as_ref())?;
         let ver_info = Self::default();
-        Ok(ver_data.get_translation_id()
+        Ok(ver_data
+            .get_translation_id()
             .into_iter()
             .chain([
                 // anyway, these fallback values are exactly what .NET Framework uses =_=
@@ -209,9 +199,7 @@ impl VersionInfoInternal {
             .encode_wide()
             .chain(Some(0))
             .collect::<Vec<_>>();
-        let size = unsafe {
-            GetFileVersionInfoSizeW(PCWSTR(file_name.as_ptr()), None)
-        };
+        let size = unsafe { GetFileVersionInfoSizeW(PCWSTR(file_name.as_ptr()), None) };
         if size > 0 {
             let mut data = vec![0u8; size as usize];
             unsafe {
@@ -219,62 +207,55 @@ impl VersionInfoInternal {
                     PCWSTR(file_name.as_ptr()),
                     None,
                     size,
-                    data.as_mut_ptr().cast())
+                    data.as_mut_ptr().cast(),
+                )
             }?;
             Ok(Self(data))
         } else {
-            Err(Error::from_win32())
+            Err(Error::from_thread())
         }
     }
 
     fn get_translation_id(&self) -> Option<u32> {
         self.get_value_by_path(pcwstr!("\\VarFileInfo\\Translation"))
             .filter(|&(_, len)| len >= 4)
-            .map(|(ptr, _)| unsafe {
-                ptr::read_unaligned::<u32>(ptr.cast())
-                    .rotate_right(16)
-            })
+            .map(|(ptr, _)| unsafe { ptr::read_unaligned::<u32>(ptr.cast()).rotate_right(16) })
     }
 
-    fn get_all_fields_in_translation(
-        &self,
-        translation_id: u32,
-        info: &mut VersionInfoOs) {
-        info.comments          = self.get_field_in_translation("Comments", translation_id);
-        info.company_name      = self.get_field_in_translation("CompanyName", translation_id);
-        info.file_description  = self.get_field_in_translation("FileDescription", translation_id);
-        info.file_version      = self.get_field_in_translation("FileVersion", translation_id);
-        info.internal_name     = self.get_field_in_translation("InternalName", translation_id);
-        info.legal_copyright   = self.get_field_in_translation("LegalCopyright", translation_id);
-        info.legal_trademarks  = self.get_field_in_translation("LegalTrademarks", translation_id);
+    fn get_all_fields_in_translation(&self, translation_id: u32, info: &mut VersionInfoOs) {
+        info.comments = self.get_field_in_translation("Comments", translation_id);
+        info.company_name = self.get_field_in_translation("CompanyName", translation_id);
+        info.file_description = self.get_field_in_translation("FileDescription", translation_id);
+        info.file_version = self.get_field_in_translation("FileVersion", translation_id);
+        info.internal_name = self.get_field_in_translation("InternalName", translation_id);
+        info.legal_copyright = self.get_field_in_translation("LegalCopyright", translation_id);
+        info.legal_trademarks = self.get_field_in_translation("LegalTrademarks", translation_id);
         info.original_filename = self.get_field_in_translation("OriginalFilename", translation_id);
-        info.product_name      = self.get_field_in_translation("ProductName", translation_id);
-        info.product_version   = self.get_field_in_translation("ProductVersion", translation_id);
-        info.private_build     = self.get_field_in_translation("PrivateBuild", translation_id);
-        info.special_build     = self.get_field_in_translation("SpecialBuild", translation_id);
+        info.product_name = self.get_field_in_translation("ProductName", translation_id);
+        info.product_version = self.get_field_in_translation("ProductVersion", translation_id);
+        info.private_build = self.get_field_in_translation("PrivateBuild", translation_id);
+        info.special_build = self.get_field_in_translation("SpecialBuild", translation_id);
     }
 
     fn get_field_in_translation(&self, name: &str, translation_id: u32) -> OsString {
-        let path =
-            format!("\\StringFileInfo\\{translation_id:08x}\\{name}")
-                .encode_utf16()
-                .chain(Some(0))
-                .collect::<Vec<_>>();
+        let path = format!("\\StringFileInfo\\{translation_id:08x}\\{name}")
+            .encode_utf16()
+            .chain(Some(0))
+            .collect::<Vec<_>>();
         self.get_value_by_path(PCWSTR(path.as_ptr()))
-            .map(|(ptr, len)| OsString::from_wide({
-                let mut slice = unsafe {
-                    slice::from_raw_parts(ptr.cast(), len)
-                };
-                while slice.last() == Some(&0) {
-                    slice = &slice[..slice.len() - 1];
-                }
-                slice
-            }))
+            .map(|(ptr, len)| {
+                OsString::from_wide({
+                    let mut slice = unsafe { slice::from_raw_parts(ptr.cast(), len) };
+                    while slice.last() == Some(&0) {
+                        slice = &slice[..slice.len() - 1];
+                    }
+                    slice
+                })
+            })
             .unwrap_or_default()
     }
 
-    fn get_value_by_path(&self, path: PCWSTR)
-    -> Option<(*const ffi::c_void, usize)> {
+    fn get_value_by_path(&self, path: PCWSTR) -> Option<(*const ffi::c_void, usize)> {
         let mut ptr = ptr::null_mut();
         let mut len = 0;
         unsafe {
@@ -282,8 +263,10 @@ impl VersionInfoInternal {
                 self.0.as_ptr().cast(),
                 PCWSTR(path.as_ptr()),
                 &mut ptr,
-                &mut len)
-        }   .as_bool()
-            .then(|| (ptr.cast_const(), len as usize))
+                &mut len,
+            )
+        }
+        .as_bool()
+        .then(|| (ptr.cast_const(), len as usize))
     }
 }

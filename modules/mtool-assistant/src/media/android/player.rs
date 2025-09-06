@@ -1,8 +1,5 @@
-use std::{borrow::Cow, collections::HashMap};
-
 use mapp::{
-    anyhow::{self, anyhow, Context},
-    async_recursion::{self, async_recursion},
+    anyhow::{self, Context},
     dashmap::DashMap,
     futures::{StreamExt, TryStreamExt},
     once_cell::sync::Lazy,
@@ -17,20 +14,12 @@ use mapp::{
     url::Url,
 };
 use mtool_dioxus::{
-    desktop::wry::prelude::{
-        android_fn,
-        jni::{
-            objects::{JObjectArray, JValue},
-            sys::jlong,
-        },
-        *,
-    },
+    desktop::wry::prelude::{android_fn, jni::objects::JValue, *},
     prelude::DioxusContext,
 };
 
 use crate::media::{
-    android::once_callback::new_once_callback, MediaItem, MediaSource, Player, PlayerEvent,
-    PlayerEventStream,
+    android::once_callback::new_once_callback, MediaItem, Player, PlayerEvent, PlayerEventStream,
 };
 
 use super::callback::new_callback;

@@ -32,6 +32,7 @@ pub mod prelude {
 
 pub use app::{AppBuilder, LocalAppBuilder};
 pub use label::Label;
+#[allow(unused)]
 pub use platform::*;
 pub use schedule::{CreateLocalOnceTaskDescriptor, CreateOnceTaskDescriptor};
 

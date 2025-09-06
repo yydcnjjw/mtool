@@ -51,7 +51,7 @@ pub fn MiniView() -> Element {
     }
 }
 
-fn use_p2p_stats() -> ReadOnlySignal<Option<p2p::Stats>> {
+fn use_p2p_stats() -> ReadSignal<Option<p2p::Stats>> {
     let mut stats = use_signal(|| None);
     use_future(move || {
         async move {

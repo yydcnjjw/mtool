@@ -1,17 +1,13 @@
 use std::path::{Path, PathBuf};
 
 use mapp::{
-    anyhow::{self, anyhow, Context},
+    anyhow::{self, Context},
     prelude::*,
     sync::RwLock,
     tokio::fs,
     toml::{self, macros::Deserialize},
     tracing::warn,
 };
-
-use crate::CmdlineStage;
-
-use super::Cmdline;
 
 pub(crate) struct Module;
 
@@ -20,6 +16,7 @@ impl AppModule for Module {
     async fn init(&self, app: &mut AppContext) -> Result<(), anyhow::Error> {
         #[cfg(any(target_os = "windows", target_os = "linux"))]
         {
+            use crate::{CmdlineStage, Cmdline};
             use clap::{arg, value_parser, ArgMatches};
 
             async fn setup_cmdline(cmdline: Res<Cmdline>) -> Result<(), anyhow::Error> {
@@ -46,7 +43,7 @@ impl AppModule for Module {
             ) -> Result<Res<ConfigStore>, anyhow::Error> {
                 let config_dir = args
                     .get_one::<PathBuf>("config")
-                    .ok_or(anyhow!("missing config"))?;
+                    .ok_or(anyhow::anyhow!("missing config"))?;
 
                 Ok(Res::new(ConfigStore {
                     inner: RwLock::new(ConfigInner::new(config_dir).await?),

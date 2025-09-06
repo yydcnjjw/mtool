@@ -29,7 +29,7 @@ unsafe fn invokeNative<'local>(
         .invoke(env, args)
 }
 
-struct CallbackWrapper<Func, Args, Output> {
+pub struct CallbackWrapper<Func, Args, Output> {
     f: Func,
     _phantom_data: PhantomData<(Args, Output)>,
 }
@@ -80,6 +80,7 @@ pub struct DynOnceCallback {
     inner: Box<dyn OnceCallback>,
 }
 
+#[allow(unused)]
 impl DynOnceCallback {
     pub fn invoke<'local>(
         self,

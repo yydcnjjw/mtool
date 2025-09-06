@@ -18,7 +18,7 @@ use windows::Win32::{
     },
     UI::WindowsAndMessaging::{
         FlashWindow, GetWindowInfo, GetWindowRect, GetWindowTextW, GetWindowThreadProcessId,
-        SetForegroundWindow, ShowWindow, SW_RESTORE, SW_SHOW, WINDOWINFO, WINDOW_EX_STYLE,
+        SetForegroundWindow, ShowWindow, SW_RESTORE, WINDOWINFO, WINDOW_EX_STYLE,
         WINDOW_STYLE, WS_MINIMIZE,
     },
 };
@@ -213,7 +213,7 @@ pub fn get_process_path(process_id: u32) -> Result<String, anyhow::Error> {
         if size == 0 {
             return Err(anyhow::anyhow!(
                 "K32GetModuleFileNameExW: {}",
-                windows::core::Error::from_win32()
+                windows::core::Error::from_thread()
             ));
         }
 

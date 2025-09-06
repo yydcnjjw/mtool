@@ -1,9 +1,4 @@
-use dioxus_desktop::winit::event_loop::ActiveEventLoop;
-use mapp::{
-    anyhow,
-    tokio::sync::oneshot,
-    tracing::{info, warn},
-};
+use mapp::{anyhow, tokio::sync::oneshot};
 
 pub(crate) enum Message {
     Task(
