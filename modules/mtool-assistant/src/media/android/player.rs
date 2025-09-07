@@ -19,7 +19,8 @@ use mtool_dioxus::{
 };
 
 use crate::media::{
-    android::once_callback::new_once_callback, MediaItem, Player, PlayerEvent, PlayerEventStream,
+    android::once_callback::new_once_callback, MediaItem, PlaybackState, Player, PlayerEvent,
+    PlayerEventStream,
 };
 
 use super::callback::new_callback;
@@ -48,6 +49,26 @@ impl Player for MediaPlayer {
             _ = env.call_method(self.controller.as_obj(), "pause", "()V", &[])?;
             Ok(())
         })
+    }
+
+    async fn playback_state(&self) -> Result<PlaybackState, anyhow::Error> {
+        let (tx, rx) = oneshot::channel();        
+        self.with_env(|mut env, activity| {
+            let handler = new_once_callback(&mut env, &activity, |id: String| {
+                _ = tx.send(id);
+            })?;
+
+            env.call_method(
+                self.controller.as_obj(),
+                "playbackState",
+                "(Lorg/yydcnjjw/mtool/assistant/OnceCallback;)V",
+                &[JValue::Object(&handler)],
+            )?;
+            Ok(())
+        })?;
+        let state = rx.await?;
+        Ok(serde_json::from_str(&state)?)
+        
     }
 
     async fn volume(&self) -> Result<f64, anyhow::Error> {

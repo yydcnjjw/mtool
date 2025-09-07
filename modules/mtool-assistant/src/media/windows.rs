@@ -1,6 +1,6 @@
 use dioxus::hooks::to_owned;
 use mapp::{
-    anyhow::{self, anyhow, Context},
+    anyhow::{self, anyhow, bail, Context},
     async_recursion::async_recursion,
     dashmap::DashMap,
     futures::{StreamExt, TryFutureExt, TryStreamExt},
@@ -13,7 +13,7 @@ use mapp::{
 use mtool_dioxus::prelude::*;
 use std::sync::Arc;
 use windows::{
-    core::{h, Interface, HRESULT, HSTRING},
+    core::{h, IInspectable, Interface, HRESULT, HSTRING},
     Foundation::{
         Collections::IVectorChangedEventArgs, IPropertyValue, PropertyValue, TimeSpan,
         TypedEventHandler, Uri,
@@ -28,7 +28,8 @@ use windows::{
         },
         Playback::{
             CurrentMediaPlaybackItemChangedEventArgs, MediaPlaybackItem,
-            MediaPlaybackItemFailedEventArgs, MediaPlaybackList, MediaPlayer as NativeMediaPlayer,
+            MediaPlaybackItemFailedEventArgs, MediaPlaybackList, MediaPlaybackSession,
+            MediaPlaybackState, MediaPlayer as NativeMediaPlayer,
             TimedMetadataTrackPresentationMode,
         },
     },
@@ -36,8 +37,8 @@ use windows::{
 };
 
 use super::{
-    MediaItem, MediaMetadata, MediaSource, Player, PlayerEvent, PlayerEventStream, TimedCue,
-    TimedCueData, TimedMetadataSource, TimedMetadataTrack, TimedRawTrack,
+    MediaItem, MediaMetadata, MediaSource, PlaybackState, Player, PlayerEvent, PlayerEventStream,
+    TimedCue, TimedCueData, TimedMetadataSource, TimedMetadataTrack, TimedRawTrack,
 };
 
 pub struct MediaPlayer {
@@ -61,6 +62,10 @@ impl Player for MediaPlayer {
 
     async fn pause(&self) -> Result<(), anyhow::Error> {
         Ok(self.player.Pause()?)
+    }
+
+    async fn playback_state(&self) -> Result<PlaybackState, anyhow::Error> {
+        self.player.PlaybackSession()?.PlaybackState()?.try_into()
     }
 
     async fn volume(&self) -> Result<f64, anyhow::Error> {
@@ -206,6 +211,27 @@ impl MediaPlayer {
 
                     Ok(())
                 }))?;
+            }
+
+            {
+                to_owned![sender];
+                player
+                    .PlaybackSession()?
+                    .PlaybackStateChanged(
+                        &TypedEventHandler::<MediaPlaybackSession, IInspectable>::new(
+                            move |session, _| {
+                                if let Some(session) = session.as_ref() {
+                                    if let Err(e) = sender.send(PlayerEvent::PlaybackStateChanged {
+                                        state: session.PlaybackState()?.try_into().unwrap(),
+                                    }) {
+                                        warn!("{e:?}, receiver_count: {}", sender.receiver_count());
+                                    }
+                                }
+
+                                Ok(())
+                            },
+                        ),
+                    )?;
             }
 
             playlist
@@ -466,6 +492,21 @@ impl TryFrom<TimedTextCue> for TimedCue {
             ),
             start_time: cue.StartTime()?.into(),
             duration: cue.Duration()?.into(),
+        })
+    }
+}
+
+impl TryFrom<MediaPlaybackState> for PlaybackState {
+    type Error = anyhow::Error;
+
+    fn try_from(value: MediaPlaybackState) -> Result<Self, Self::Error> {
+        Ok(match value {
+            MediaPlaybackState::None => Self::None,
+            MediaPlaybackState::Opening => Self::Opening,
+            MediaPlaybackState::Buffering => Self::Buffering,
+            MediaPlaybackState::Playing => Self::Playing,
+            MediaPlaybackState::Paused => Self::Paused,
+            value => bail!("Unknown MediaPlaybackState: {}", value.0),
         })
     }
 }

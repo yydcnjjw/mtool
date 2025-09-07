@@ -129,6 +129,13 @@ class PlaybackController(
         }
     }
 
+    fun playbackState(callback: OnceCallback) {
+        handler.postAtFrontOfQueue {
+            val state = if (controller.isPlaying) PlaybackState.Playing else PlaybackState.Paused
+            callback.invoke(Json.encodeToString(state))
+        }
+    }
+
     var volume: Float = 1f
 
     fun setMediaItems(items: Array<String>) {
@@ -211,6 +218,15 @@ class PlaybackController(
                         )
                     }
                 }
+
+                override fun onIsPlayingChanged(isPlaying: Boolean) {
+                    val state = if (isPlaying) PlaybackState.Playing else PlaybackState.Paused
+                    cb.invoke(
+                        Json.encodeToString<PlayerEvent>(
+                            PlaybackStateChangedEvent(state)
+                        )
+                    )
+                }
             }
 
             listener?.let {
@@ -275,6 +291,19 @@ class TimedCuesChangedEvent(
     val trackId: String,
     val cue: TimedCue,
 ) : PlayerEvent()
+
+@Serializable
+@SerialName("PlaybackStateChanged")
+class PlaybackStateChangedEvent(val state: PlaybackState) : PlayerEvent()
+
+@Serializable
+enum class PlaybackState {
+    None,
+    Opening,
+    Buffering,
+    Playing,
+    Paused,
+}
 
 class Callback(var handle: Long = 0) {
     fun invoke(vararg args: Any) {

@@ -1,5 +1,5 @@
 use dioxus::{
-    core::{provide_root_context, SpawnIfAsync},
+    core::{provide_root_context, use_hook_with_cleanup, SpawnIfAsync},
     prelude::*,
 };
 use mapp::{
@@ -15,6 +15,7 @@ use mtool_dioxus::{
         icons::fa_solid_icons::{FaCloud, FaComputer, FaMobile, FaPause, FaPlay, FaVolumeHigh},
         Icon,
     },
+    generate_keymap, local_action,
     prelude::*,
     primitives::{switch::Switch, toast::use_toast},
 };
@@ -22,7 +23,7 @@ use mtool_storage::lww;
 use std::{any::type_name, sync::Arc};
 
 use crate::{
-    media::{MediaMetadata, MediaPlayer, Player, PlayerEvent, TimedCue},
+    media::{MediaMetadata, MediaPlayer, PlaybackState, Player, PlayerEvent, TimedCue},
     model::{ChatPrompt, ChatQuery, NeteaseViewModel},
     view::component::AiChatPreview,
 };
@@ -30,10 +31,10 @@ use crate::{
 #[derive(Clone)]
 pub struct MediaPlayerControlContext {
     pub id: String,
-    pub online_player_id: lww::State<String>,
+    pub online_player_id: lww::State<Option<String>>,
     pub media_metadata: lww::State<MediaMetadata>,
-
     pub current_timed_cue: lww::State<(String, TimedCue)>,
+    pub playback_state: lww::State<PlaybackState>,
 
     pub player: Signal<Option<Arc<MediaPlayer>>>,
     pub volume: Signal<f64>,
@@ -49,17 +50,22 @@ impl MediaPlayerControlContext {
                         id: rand_string(),
                         online_player_id: lww::State::new(
                             consume_app_context().await,
-                            "assistant.online_player_id",
+                            "assistant.player.online_player_id",
                         )
                         .await?,
                         media_metadata: lww::State::new(
                             consume_app_context().await,
-                            "assistant.media_metadata",
+                            "assistant.player.media_metadata",
                         )
                         .await?,
                         current_timed_cue: lww::State::new(
                             consume_app_context().await,
-                            "assistant.current_timed_cue",
+                            "assistant.player.current_timed_cue",
+                        )
+                        .await?,
+                        playback_state: lww::State::new(
+                            consume_app_context().await,
+                            "assistant.player.playback_state",
                         )
                         .await?,
                         player: Signal::new_in_scope(None, ScopeId::ROOT),
@@ -73,6 +79,30 @@ impl MediaPlayerControlContext {
             .expect(&format!("{}", type_name::<Self>()))
         })
     }
+
+    fn is_online(&self) -> bool {
+        self.online_player_id.borrow().as_ref() == Some(&self.id)
+    }
+
+    fn set_online(&self, online: bool) {
+        if online {
+            self.online_player_id.set(Some(self.id.clone()));
+        } else {
+            self.online_player_id.set(None);
+        }
+    }
+
+    async fn set_play_pause(&self, play: bool) -> Result<(), anyhow::Error> {
+        if let Some(player) = (self.player)() {
+            if play {
+                player.play().await
+            } else {
+                player.pause().await
+            }
+        } else {
+            Ok(())
+        }
+    }
 }
 
 #[component]
@@ -81,14 +111,19 @@ pub fn MediaPlayerControl() -> Element {
 
     let context = MediaPlayerControlContext::get().suspend()?;
 
+    init_keybinding(context.into())?;
+
     let online_player_id = use_lww_signal(context().online_player_id.clone());
 
     let media_metadata = use_lww_signal(context().media_metadata.clone());
 
-    let is_native = use_memo(move || online_player_id() == context().id);
+    let playback_state = use_lww_signal(context().playback_state.clone());
+
+    let is_online = use_memo(move || online_player_id() == Some(context().id));
+    let is_playing = use_memo(move || matches!(playback_state(), PlaybackState::Playing));
 
     use_effect(move || {
-        if is_native() {
+        if is_online() {
             try_load_player_and_media(context())
                 .unwrap_or_else(|e| warn!("{e:?}"))
                 .spawn()
@@ -99,7 +134,7 @@ pub fn MediaPlayerControl() -> Element {
         let mut context = context();
         let player = (context.player)();
         async move {
-            if is_native() {
+            if is_online() {
                 if let Some(player) = player {
                     let metadata = player
                         .current_media_item()
@@ -108,6 +143,8 @@ pub fn MediaPlayerControl() -> Element {
                         .flatten()
                         .unwrap_or_default();
                     context.media_metadata.set(metadata);
+
+                    context.playback_state.set(player.playback_state().await?);
 
                     player.set_volume(0.1).await?;
                     // TODO: volume changed event
@@ -119,10 +156,6 @@ pub fn MediaPlayerControl() -> Element {
         .unwrap_or_else(|e| warn!("{e:?}"))
     });
 
-    let mut is_playing = use_signal(|| false);
-
-    let context = context();
-
     let MediaMetadata {
         title,
         artist,
@@ -131,7 +164,7 @@ pub fn MediaPlayerControl() -> Element {
         ..
     } = media_metadata();
 
-    let volume = ((context.volume)().clamp(0., 1.) * 100.).round() as usize;
+    let volume = ((context.read().volume)().clamp(0., 1.) * 100.).round() as usize;
 
     rsx! {
         div {
@@ -182,11 +215,9 @@ pub fn MediaPlayerControl() -> Element {
                 class: "flex flex-row w-full justify-center items-center shrink-0 mb-2",
                 Switch {
                     class: "btn btn-circle btn-ghost swap aria-checked:swap-active",
-                    checked: is_native(),
-                    on_checked_change: move |is_native| {
-                        if is_native {
-                            context.online_player_id.set(context.id.clone());
-                        }
+                    checked: is_online(),
+                    on_checked_change: move |is_online| {
+                        context.read().set_online(is_online);
                     },
                     if cfg!(feature = "desktop") {
                         Icon {
@@ -214,15 +245,7 @@ pub fn MediaPlayerControl() -> Element {
                     class: "btn btn-circle btn-ghost swap aria-checked:swap-active",
                     checked: is_playing(),
                     on_checked_change: move |value| async move {
-                        is_playing.set(value);
-                        if let Some(player) = (context.player)() {
-                            if value {
-                                player.play()
-                            } else {
-                                player.pause()
-                            }.unwrap_or_else(|e| toast_err(toast, e))
-                                .await
-                        }
+                        context.read().set_play_pause(value).unwrap_or_else(|e| toast_err(toast, e)).await;
                     },
                     Icon {
                         class: "swap-off fill-current",
@@ -257,6 +280,48 @@ pub fn MediaPlayerControl() -> Element {
     }
 }
 
+fn init_keybinding(context: ReadSignal<MediaPlayerControlContext>) -> Result<(), RenderError> {
+    let keybinding = use_context::<Keybinding>();
+    let toast = use_toast();
+
+    let toggle_online_player = use_callback(move |_| {
+        let ctx = context.read();
+        ctx.set_online(!ctx.is_online());
+        Ok(())
+    });
+
+    let toggle_play_pause = use_callback(move |_| {
+        spawn(async move {
+            let ctx = context.read();
+            ctx.set_play_pause(!matches!(
+                *ctx.playback_state.borrow(),
+                PlaybackState::Playing
+            ))
+            .unwrap_or_else(|e| toast_err(toast, e))
+            .await;
+        });
+        Ok(())
+    });
+
+    use_hook_with_cleanup(
+        move || {
+            let name = "assistant.media_player_control";
+            let km = generate_keymap!(
+                ("n", local_action!(toggle_online_player)),
+                ("p", local_action!(toggle_play_pause)),
+            )
+            .unwrap();
+
+            keybinding.push_keymap(name, km);
+            (name, keybinding)
+        },
+        move |(name, keybinding)| {
+            keybinding.remove_keymap(&name);
+        },
+    );
+    Ok(())
+}
+
 async fn try_load_player_and_media(
     mut context: MediaPlayerControlContext,
 ) -> Result<(), anyhow::Error> {
@@ -280,15 +345,12 @@ async fn try_load_player_and_media(
                 loop {
                     tokio::select! {
                         Some(Ok(ev)) = stream.next() => match ev {
-                            PlayerEvent::MediaMetadataChanged { metadata } => {
-                                context.media_metadata.set(metadata)
-                            }
-                            PlayerEvent::TimedCuesChanged { track_id, cue } => {
-                                context.current_timed_cue.set((track_id, cue));
-                            }
+                            PlayerEvent::MediaMetadataChanged{ metadata } => { context.media_metadata.set(metadata) }
+                            PlayerEvent::TimedCuesChanged{ track_id, cue}=>{ context.current_timed_cue.set((track_id,cue)) }
+                            PlayerEvent::PlaybackStateChanged { state } => { context.playback_state.set(state) },
                         },
                         Ok(()) = online_player_id.changed() => {
-                            if *online_player_id.borrow_and_update() != context.id {
+                            if online_player_id.borrow_and_update().as_ref() != Some(&context.id) {
                                 player.pause().await.unwrap_or_else(|e| warn!("{e:?}"));
                             }
                         }
