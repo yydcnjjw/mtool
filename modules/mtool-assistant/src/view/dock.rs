@@ -23,8 +23,7 @@ pub fn DockView() -> Element {
             tracing::warn,
         };
         use mtool_dioxus::desktop::{
-            use_global_shortcut, use_wry_event_handler, window,
-            winit::{event::Event as WinitEvent, window::WindowLevel},
+            use_global_shortcut, use_wry_event_handler, window, winit::event::Event as WinitEvent,
             HotKeyState, WindowEvent,
         };
 
@@ -44,29 +43,65 @@ pub fn DockView() -> Element {
                     window_top(),
                 ));
             }
-
             win.set_visible(true);
-            win.focus_window();
         });
+
+        let mut previous_foreground_window = use_signal(|| None);
 
         _ = use_global_shortcut("alt+z", move |state| {
             if state == HotKeyState::Pressed {
+                let win = window();
+
                 match dock_mode() {
                     DockMode::Show => {
                         dock_mode.set(DockMode::Hide);
+                        if let Some(hwnd) = previous_foreground_window() {
+                            #[cfg(target_os = "windows")]
+                            unsafe {
+                                use windows::Win32::UI::WindowsAndMessaging::SetForegroundWindow;
+                                _ = SetForegroundWindow(hwnd);
+                            }
+                        }
                     }
                     DockMode::Hide => {
                         dock_mode.set(DockMode::Show);
+
+                        #[cfg(target_os = "windows")]
+                        unsafe {
+                            use std::ffi::c_void;
+
+                            use mtool_dioxus::desktop::wry::raw_window_handle::{
+                                HasWindowHandle, RawWindowHandle,
+                            };
+                            use windows::Win32::UI::WindowsAndMessaging::GetForegroundWindow;
+                            use windows::Win32::{
+                                Foundation::HWND, UI::WindowsAndMessaging::SetForegroundWindow,
+                            };
+                            {
+                                let hwnd = GetForegroundWindow();
+                                previous_foreground_window.set(Some(hwnd));
+                            }
+
+                            let hwnd = match win.window_handle().unwrap().as_raw() {
+                                RawWindowHandle::WinRt(handle) => HWND(handle.core_window.as_ptr()),
+                                RawWindowHandle::Win32(handle) => {
+                                    HWND(handle.hwnd.get() as *mut c_void)
+                                }
+                                _ => unreachable!(),
+                            };
+                            _ = SetForegroundWindow(hwnd);
+                        }
                     }
                 }
-                window().set_window_level(WindowLevel::AlwaysOnTop);
+
+                win.set_visible(true);
             }
         })
         .inspect_err(|e| warn!("{:?}", e));
 
         _ = use_global_shortcut("alt+shift+z", move |state| {
             if state == HotKeyState::Pressed {
-                window().set_window_level(WindowLevel::AlwaysOnBottom);
+                window().set_visible(false);
             }
         })
         .inspect_err(|e| warn!("{:?}", e));
