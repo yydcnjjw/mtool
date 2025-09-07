@@ -59,8 +59,8 @@ pub fn DockView() -> Element {
                         dock_mode.set(DockMode::Show);
                     }
                 }
+                window().set_window_level(WindowLevel::AlwaysOnTop);
             }
-            window().set_window_level(WindowLevel::AlwaysOnTop);
         })
         .inspect_err(|e| warn!("{:?}", e));
 
