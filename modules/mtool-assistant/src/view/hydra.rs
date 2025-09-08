@@ -112,8 +112,8 @@ fn init_keybinding() -> Result<(), RenderError> {
         move || {
             let name = "assistant.hydra";
             let km = generate_keymap!(
-                ("m", local_action!(link_to(Route::MediaPlayerControl {}))),
-                ("p", local_action!(link_to(Route::P2pDashboard {}))),
+                ("M-m", local_action!(link_to(Route::MediaPlayerControl {}))),
+                ("M-p", local_action!(link_to(Route::P2pDashboard {}))),
             )
             .unwrap();
 
