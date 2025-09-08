@@ -125,8 +125,8 @@ impl ParseKbd for Modifiers {
         match s {
             "S" => Ok(Modifiers::SHIFT),
             "C" => Ok(Modifiers::CONTROL),
-            "M" => Ok(Modifiers::SUPER),
-            "A" => Ok(Modifiers::ALT),
+            "s" => Ok(Modifiers::SUPER),
+            "M" => Ok(Modifiers::ALT),
             _ => Err(anyhow!("Unknown ModifierState: {}", s)),
         }
     }
@@ -167,11 +167,11 @@ impl fmt::Display for KeyCombine {
         }
 
         if mods.contains(Modifiers::SUPER) {
-            write!(f, "M-")?;
+            write!(f, "s-")?;
         }
 
         if mods.contains(Modifiers::ALT) {
-            write!(f, "A-")?;
+            write!(f, "M-")?;
         }
 
         if mods.contains(Modifiers::CAPS_LOCK) {
