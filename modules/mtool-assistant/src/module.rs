@@ -3,6 +3,7 @@ use dioxus::prelude::*;
 use mapp::{anyhow, futures::TryFutureExt, prelude::*, tokio, tracing::warn};
 #[cfg(feature = "desktop")]
 use mtool_cmdpal::{Command, CommandItem, CommandPalette};
+use mtool_core::ConfigStore;
 use mtool_dioxus::{
     desktop::{winit::window::WindowLevel, WindowAttributes},
     prelude::*,
@@ -42,6 +43,7 @@ impl AppModule for Module {
 async fn setup(
     #[cfg(target_os = "android")] router: Res<Router>,
     builder: Res<DioxusBuilder>,
+    cs: Res<ConfigStore>,
 ) -> Result<(), anyhow::Error> {
     builder.add_global_hotkey("alt+c", || {
         tokio::spawn(async move {
@@ -52,7 +54,7 @@ async fn setup(
         Ok(())
     });
 
-    _ = tokio::spawn(create_window().inspect_err(|e| warn!("{e:?}")));
+    _ = tokio::spawn(create_window(cs).inspect_err(|e| warn!("{e:?}")));
 
     #[cfg(target_os = "android")]
     {
@@ -63,7 +65,7 @@ async fn setup(
     Ok(())
 }
 
-async fn create_window() -> Result<(), anyhow::Error> {
+async fn create_window(cs: Res<ConfigStore>) -> Result<(), anyhow::Error> {
     let window_attrs = WindowAttributes::default()
         .with_title("Mtool assistant")
         .with_transparent(true)
@@ -83,6 +85,7 @@ async fn create_window() -> Result<(), anyhow::Error> {
 
     spawn_window(
         WebviewWindowConfig::new(view::MainView)
+            .with_data_directory(cs.root_path())
             // .with_background_color((0, 0, 0, 0))
             .with_window_attributes(window_attrs),
     )
