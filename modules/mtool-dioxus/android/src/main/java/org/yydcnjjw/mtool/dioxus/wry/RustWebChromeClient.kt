@@ -11,25 +11,37 @@ package org.yydcnjjw.mtool.dioxus.wry
 // taken from https://github.com/ionic-team/capacitor/blob/6658bca41e78239347e458175b14ca8bd5c1d6e8/android/capacitor/src/main/java/com/getcapacitor/BridgeWebChromeClient.java
 
 import android.Manifest
+import android.R
+import android.annotation.SuppressLint
 import android.app.Activity
 import android.app.AlertDialog
+import android.app.Dialog
 import android.content.ActivityNotFoundException
 import android.content.DialogInterface
 import android.content.Intent
 import android.net.Uri
 import android.os.Build
+import android.os.Bundle
 import android.os.Environment
+import android.os.Message
 import android.provider.MediaStore
+import android.util.DisplayMetrics
+import android.view.LayoutInflater
 import android.view.View
+import android.view.ViewGroup
 import android.webkit.*
 import android.widget.EditText
+import android.widget.LinearLayout
 import androidx.activity.result.ActivityResult
 import androidx.activity.result.ActivityResultLauncher
 import androidx.core.content.FileProvider
+import androidx.core.view.size
+import androidx.fragment.app.DialogFragment
 import java.io.File
 import java.io.IOException
 import java.text.SimpleDateFormat
 import java.util.*
+
 
 class RustWebChromeClient(appActivity: WryActivity) : WebChromeClient() {
     private interface PermissionListener {
@@ -505,6 +517,51 @@ class RustWebChromeClient(appActivity: WryActivity) : WebChromeClient() {
         title: String
     ) {
         handleReceivedTitle(view, title)
+    }
+
+
+    override fun onCreateWindow(
+        view: WebView?,
+        isDialog: Boolean,
+        isUserGesture: Boolean,
+        resultMsg: Message?
+    ): Boolean {
+        val webView = WebView(activity)
+        webView.webViewClient = object : WebViewClient() {}
+        webView.webChromeClient = object : WebChromeClient() {}
+        @SuppressLint("SetJavaScriptEnabled")
+        webView.settings.javaScriptEnabled = true
+        webView.settings.domStorageEnabled = true
+        webView.settings.setUserAgentString("Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/100.0.4896.127 Safari/537.36")
+
+        webView.settings.useWideViewPort = true
+        webView.settings.loadWithOverviewMode = true
+        webView.settings.setSupportZoom(true)
+        webView.settings.builtInZoomControls = true
+
+        webView.layoutParams = LinearLayout.LayoutParams(
+            (300 * activity.resources.displayMetrics.density).toInt(),
+            (500 * activity.resources.displayMetrics.density).toInt()
+        )
+
+        val builder =
+            AlertDialog.Builder(activity)
+        builder.setView(webView)
+        builder.setNegativeButton("Close") { dialog, which ->
+            webView.destroy()
+            dialog.dismiss()
+        }
+        builder.show()
+        val cookieManager = CookieManager.getInstance()
+        cookieManager.setAcceptCookie(true)
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
+            cookieManager.setAcceptThirdPartyCookies(webView, true)
+        }
+
+        val transport = resultMsg?.obj as WebView.WebViewTransport?
+        transport?.webView = webView
+        resultMsg?.sendToTarget()
+        return true
     }
 
     private external fun handleReceivedTitle(webview: WebView, title: String)

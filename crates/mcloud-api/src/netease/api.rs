@@ -81,6 +81,7 @@ impl MusicApi {
         let client = HttpClient::builder()
             .timeout(Duration::from_secs(TIMEOUT))
             .max_connections(max_cons)
+            .ssl_options(SslOption::DANGER_ACCEPT_INVALID_CERTS)
             .cookies()
             .cookie_jar(cookie_jar)
             .build()

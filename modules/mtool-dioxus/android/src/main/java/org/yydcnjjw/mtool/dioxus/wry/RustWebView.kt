@@ -16,7 +16,8 @@ import androidx.webkit.WebViewFeature
 import kotlin.collections.Map
 
 @SuppressLint("RestrictedApi")
-class RustWebView(context: Context, val initScripts: Array<String>, val id: String): WebView(context) {
+class RustWebView(context: Context, val initScripts: Array<String>, val id: String) :
+    WebView(context) {
     val isDocumentStartScriptEnabled: Boolean
 
     init {
@@ -26,6 +27,7 @@ class RustWebView(context: Context, val initScripts: Array<String>, val id: Stri
         settings.databaseEnabled = true
         settings.mediaPlaybackRequiresUserGesture = false
         settings.javaScriptCanOpenWindowsAutomatically = true
+        settings.setSupportMultipleWindows(true)
 
         if (WebViewFeature.isFeatureSupported(WebViewFeature.DOCUMENT_START_SCRIPT)) {
             isDocumentStartScriptEnabled = true
@@ -33,21 +35,21 @@ class RustWebView(context: Context, val initScripts: Array<String>, val id: Stri
                 WebViewCompat.addDocumentStartJavaScript(this, script, setOf("*"));
             }
         } else {
-          isDocumentStartScriptEnabled = false
+            isDocumentStartScriptEnabled = false
         }
 
-        
+
     }
 
     fun loadUrlMainThread(url: String) {
         post {
-          loadUrl(url)
+            loadUrl(url)
         }
     }
 
     fun loadUrlMainThread(url: String, additionalHttpHeaders: Map<String, String>) {
         post {
-          loadUrl(url, additionalHttpHeaders)
+            loadUrl(url, additionalHttpHeaders)
         }
     }
 
@@ -65,7 +67,7 @@ class RustWebView(context: Context, val initScripts: Array<String>, val id: Stri
 
     fun loadHTMLMainThread(html: String) {
         post {
-          super.loadData(html, "text/html", null)
+            super.loadData(html, "text/html", null)
         }
     }
 
@@ -91,11 +93,11 @@ class RustWebView(context: Context, val initScripts: Array<String>, val id: Stri
 
     fun getCookies(url: String): String {
         val cookieManager = CookieManager.getInstance()
-        return cookieManager.getCookie(url)
+        return cookieManager?.getCookie(url) ?: ""
     }
 
     private external fun shouldOverride(url: String): Boolean
     private external fun onEval(id: Int, result: String)
 
-    
+
 }

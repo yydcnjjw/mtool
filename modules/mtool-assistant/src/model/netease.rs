@@ -5,9 +5,10 @@ use mapp::{
     anyhow::{self, Context},
     futures::{future::try_join_all, TryFutureExt},
     tokio::sync::OnceCell,
-    tracing::debug,
+    tracing::{debug, warn},
 };
-use mcloud_api::netease::{Lyrics, MusicApi, SongInfo};
+use mcloud_api::netease::{CookieBuilder, CookieJar, Lyrics, MusicApi, SongInfo};
+use mtool_dioxus::desktop::window;
 
 use crate::media::{
     MediaItem, MediaMetadata, MediaSource, SubtitleTrack, TimedMetadataSource, TimedMetadataTrack,
@@ -19,9 +20,35 @@ pub struct NeteaseViewModel {
 }
 
 impl NeteaseViewModel {
-    pub fn new() -> Self {
+    pub async fn new() -> Self {
+        let jar = CookieJar::new();
+
+        for cookie in window()
+            .webview
+            .cookies_for_url("https://music.163.com")
+            .unwrap_or_default()
+        {
+            debug!(?cookie);
+
+            let mut builder = CookieBuilder::new(cookie.name(), cookie.value());
+
+            if let Some(domain) = cookie.domain() {
+                builder = builder.domain(domain);
+            }
+
+            if let Some(path) = cookie.path() {
+                builder = builder.path(path);
+            }
+
+            if let Ok(cookie) = builder.build() {
+                if let Err(e) = jar.set(cookie, &("https://music.163.com".try_into().unwrap())) {
+                    warn!("{e:?}");
+                }
+            }
+        }
+
         Self {
-            api: MusicApi::new(5),
+            api: MusicApi::from_cookie_jar(jar, 5),
         }
     }
 
@@ -29,6 +56,7 @@ impl NeteaseViewModel {
         &self,
         song_list_ids: &[u64],
     ) -> Result<Vec<MediaItem>, anyhow::Error> {
+        let songs = self.api.recommend_songs().await?;
         Ok(try_join_all(song_list_ids.iter().cloned().map(|id| {
             self.api
                 .song_list_detail(id)
@@ -37,6 +65,7 @@ impl NeteaseViewModel {
         .await?
         .into_iter()
         .flatten()
+        .chain(songs.into_iter())
         .map(
             |SongInfo {
                  id,

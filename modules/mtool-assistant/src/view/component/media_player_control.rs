@@ -111,6 +111,8 @@ pub fn MediaPlayerControl() -> Element {
 
     let context = MediaPlayerControlContext::get().suspend()?;
 
+    let netease_view_model = use_resource(move || NeteaseViewModel::new()).suspend()?;
+
     init_keybinding(context.into())?;
 
     let online_player_id = use_lww_signal(context().online_player_id.clone());
@@ -124,7 +126,7 @@ pub fn MediaPlayerControl() -> Element {
 
     use_effect(move || {
         if is_online() {
-            try_load_player_and_media(context())
+            try_load_player_and_media(context(), netease_view_model())
                 .unwrap_or_else(|e| warn!("{e:?}"))
                 .spawn()
         }
@@ -213,6 +215,13 @@ pub fn MediaPlayerControl() -> Element {
             }
             div {
                 class: "flex flex-row w-full justify-center items-center shrink-0 mb-2",
+                button {
+                    class: "btn btn-ghost",
+                    onclick: |_| {
+                        document::eval("window.open('https://music.163.com', '_blank', 'popup=true')");
+                    },
+                    "login"
+                }
                 Switch {
                     class: "btn btn-circle btn-ghost swap aria-checked:swap-active",
                     checked: is_online(),
@@ -324,15 +333,16 @@ fn init_keybinding(context: ReadSignal<MediaPlayerControlContext>) -> Result<(),
 
 async fn try_load_player_and_media(
     mut context: MediaPlayerControlContext,
+    netease: NeteaseViewModel,
 ) -> Result<(), anyhow::Error> {
-    let dioxus_context = use_context::<DioxusContext>();
-    let netease = use_context_provider(|| NeteaseViewModel::new());
+    let dioxus_context = consume_context::<DioxusContext>();
 
     if (context.player)().is_none() {
         let player = create_player(dioxus_context.clone()).await?;
 
         let items = netease
-            .load_media_items_from_playlist(&[71385702, 60131, 3001835560])
+            .load_media_items_from_playlist(&[// 71385702, 60131, 3001835560
+            ])
             .await?;
         player.set_media_items(items).await?;
 

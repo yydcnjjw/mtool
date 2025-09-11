@@ -93,9 +93,6 @@ pub struct Lyrics {
 #[allow(unused)]
 pub fn to_lyric(json: String) -> Result<Lyrics> {
     let value = &serde_json::from_str::<Value>(&json)?;
-
-    mapp::tracing::info!("{json}");
-
     let code: i64 = get_val!(value, "code")?;
     if code == 200 {
         let lyric = get_val!(value, "lrc", "lyric")?;
