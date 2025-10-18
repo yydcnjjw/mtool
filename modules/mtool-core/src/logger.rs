@@ -1,8 +1,8 @@
 use std::{env, path::PathBuf, str::FromStr, sync::Arc};
 
-use clap::{arg, ArgMatches};
 use mapp::{
     anyhow,
+    cfg_if::cfg_if,
     serde::Deserialize,
     tracing::info,
     tracing_appender::{self, non_blocking::WorkerGuard},
@@ -15,7 +15,14 @@ use time::{format_description::well_known::Rfc3339, UtcOffset};
 
 use mapp::{define_label, prelude::*};
 
-use crate::{Cmdline, CmdlineStage};
+cfg_if! {
+    if #[cfg(feature = "cmdline")] {
+        use clap::{arg, ArgMatches};
+        use crate::{Cmdline, CmdlineStage};
+    }
+}
+
+use crate::AppStage;
 
 use super::ConfigStore;
 
@@ -65,14 +72,23 @@ impl AppModule for Module {
     }
 
     async fn init(&self, app: &mut AppContext) -> Result<(), anyhow::Error> {
-        app.schedule()
-            .insert_stage(CmdlineStage::Parse, LoggerStage::Init)
-            .add_once_task(CmdlineStage::Setup, setup_cmdline)
-            .add_once_task(LoggerStage::Init, init);
+        cfg_if! {
+            if #[cfg(feature = "cmdline")] {
+                app.schedule()
+                .insert_stage(CmdlineStage::Parse, LoggerStage::Init)
+                .add_once_task(CmdlineStage::Setup, setup_cmdline);
+            } else {
+                app.schedule()
+                .insert_stage(AppStage::Startup, LoggerStage::Init);
+            }
+        }
+
+        app.schedule().add_once_task(LoggerStage::Init, init);
         Ok(())
     }
 }
 
+#[cfg(feature = "cmdline")]
 async fn setup_cmdline(cmdline: Res<Cmdline>) -> Result<(), anyhow::Error> {
     cmdline.setup(|cmdline| {
         Ok(
@@ -91,11 +107,13 @@ async fn init(
     cs: Res<ConfigStore>,
     tracing: Res<Tracing>,
     time: Take<Res<OffsetTime<Rfc3339>>>,
-    args: Res<ArgMatches>,
+    args: Option<Res<clap::ArgMatches>>,
 ) -> Result<(), anyhow::Error> {
-    if args.get_flag("stdout") {
-        info!("Redirecting the logs to the standard output stream.");
-        return Ok(());
+    if let Some(args) = args {
+        if args.get_flag("stdout") {
+            info!("Redirecting the logs to the standard output stream.");
+            return Ok(());
+        }
     }
 
     let cfg = cs.get::<Config>("logger")?;

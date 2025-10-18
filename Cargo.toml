@@ -21,7 +21,8 @@ members = [
   "modules/mtool-cmdpal",
   "modules/mtool-apps",
   "modules/mtool-assistant",
-  "modules/mtool-proxy",  
+  "modules/mtool-proxy",
+  "modules/mtool-emacs",
   # "modules/mtool-pdf",
   
   "mtool",

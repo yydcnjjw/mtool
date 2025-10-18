@@ -52,17 +52,20 @@ impl NotifyReceiver {
             while let Ok(ev) = rx.recv().await {
                 to_owned![receiver];
 
-                debug!("{:?}", ev);
-
-                tokio::spawn(async move {
-                    if let Err(e) = match ev {
-                        SystemEvent::NotificationPosted(notification) => {
-                            Self::handle_notification_posted(receiver.clone(), notification).await
-                        }
-                    } {
-                        warn!("{:?}", e);
+                match ev {
+                    SystemEvent::NotificationPosted(notification) => {
+                        debug!("SystemEvent::NotificationPosted {notification:?}");
+                        tokio::spawn(async move {
+                            if let Err(e) =
+                                Self::handle_notification_posted(receiver.clone(), notification)
+                                    .await
+                            {
+                                warn!("{e:?}");
+                            }
+                        });
                     }
-                });
+                    _ => {}
+                }
             }
         });
 

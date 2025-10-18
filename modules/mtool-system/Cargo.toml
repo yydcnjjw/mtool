@@ -22,3 +22,8 @@ windows-future = { version = "0.2", features = [ "std" ] }
 
 [target.'cfg(target_os = "windows")'.dependencies.windows]
 workspace = true
+features = [
+  "Win32_Foundation",
+  "Win32_UI_WindowsAndMessaging",
+  "Win32_System_LibraryLoader",
+]

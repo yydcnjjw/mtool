@@ -1,7 +1,8 @@
 use std::sync::Arc;
 
 use mapp::{anyhow, define_label, prelude::*, tokio::sync::oneshot};
-use mtool_core::CmdlineStage;
+
+use mtool_core::AppStage;
 
 use crate::{
     builder::DioxusBuilder,
@@ -36,7 +37,7 @@ impl AppModule for Module {
 
         ctx.schedule()
             .insert_stage_vec(
-                CmdlineStage::AfterParse,
+                AppStage::BeforeInit,
                 vec![DioxusStage::Setup, DioxusStage::Launch],
             )
             .add_once_task(DioxusStage::Launch, launch)

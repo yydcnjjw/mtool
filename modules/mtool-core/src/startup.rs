@@ -9,8 +9,8 @@ pub(crate) struct Module;
 
 #[async_trait]
 impl AppModule for Module {
-    async fn init(&self, app: &mut AppContext) -> Result<(), anyhow::Error> {
-        #[cfg(any(target_os = "windows", target_os = "linux"))]
+    async fn init(&self, #[allow(unused)] app: &mut AppContext) -> Result<(), anyhow::Error> {
+        #[cfg(all(feature = "cmdline", any(target_os = "windows", target_os = "linux")))]
         {
             use crate::{Cmdline, CmdlineStage};
             use clap::{arg, ArgMatches};

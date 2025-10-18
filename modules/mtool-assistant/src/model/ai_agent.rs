@@ -28,9 +28,11 @@ impl Agent {
 
     pub async fn client() -> Result<gemini::Client, anyhow::Error> {
         let agent = inject_once(&consume_context::<Injector>(), Agent::new).await??;
-        Ok(gemini::Client::builder(&agent.api_key)
-            .custom_client(reqwest::Client::builder().build()?)
-            .build()?)
+        Ok(gemini::client::ClientBuilder::new_with_client(
+            &agent.api_key,
+            reqwest::Client::builder().build()?,
+        )
+        .build()?)
     }
 
     pub async fn chat(

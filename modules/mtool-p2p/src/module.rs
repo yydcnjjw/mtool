@@ -5,7 +5,7 @@ use mapp::{
     prelude::*,
     tokio::{self, sync::oneshot, task::JoinHandle},
 };
-use mtool_core::{AppStage, CmdlineStage, ConfigStore};
+use mtool_core::{AppStage, ConfigStore};
 
 use crate::{network, Config, Peer};
 
@@ -32,10 +32,7 @@ impl AppModule for Module {
         let peer_tx = ctx.injector().construct_oneshot();
 
         ctx.schedule()
-            .insert_stage_vec(
-                CmdlineStage::AfterParse,
-                vec![P2pStage::Setup, P2pStage::Init],
-            )
+            .insert_stage_vec(AppStage::BeforeInit, vec![P2pStage::Setup, P2pStage::Init])
             .add_once_task(P2pStage::Init, move |cs, injector, exit_signal| {
                 init(cs, injector, exit_signal, peer_tx)
             })
@@ -53,7 +50,7 @@ async fn init(
     peer_tx: oneshot::Sender<Res<Peer>>,
 ) -> Result<(), anyhow::Error> {
     let cfg = cs.get_optional::<Config>("p2p").unwrap_or_default();
-    
+
     let (peer, event_loop) = network::new(cfg)?;
 
     let worker = tokio::spawn(event_loop.run());

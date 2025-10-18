@@ -7,23 +7,16 @@ use mapp::{
     tokio::{self, sync::broadcast},
     tracing::warn,
 };
+use mtool_core::ConfigStore;
 
 use crate::{
+    config::Config,
     p2p::{RemoteSystemEvent, RemoteSystemEventSource},
     platform, SystemEvent,
 };
 
-// trait SystemEventSource {
-//     fn subscribe(&self) -> broadcast::Receiver<SystemEvent>;
-
-//     fn publish(&self) -> broadcast::Sender<SystemEvent>;
-
-//     fn stream(&self) -> BroadcastStream<SystemEvent> {
-//         BroadcastStream::new(self.subscribe())
-//     }
-// }
-
 pub struct SystemEventSource {
+    config: Config,
     pub(crate) inner: platform::SystemEventSource,
 }
 
@@ -31,12 +24,14 @@ impl SystemEventSource {
     pub async fn construct(
         remote_source: Res<RemoteSystemEventSource>,
         injector: Injector,
+        cs: Res<ConfigStore>,
     ) -> Result<Res<SystemEventSource>, anyhow::Error> {
         let source = SystemEventSource {
             inner: inject_once(&injector, platform::SystemEventSource::new).await??,
+            config: cs.get_optional("system").unwrap_or_default(),
         };
 
-        tokio::spawn(Self::broadcast_remote(source.subscribe(), remote_source));
+        tokio::spawn(Self::broadcast_to_remote(source.subscribe(), remote_source));
 
         Ok(Res::new(source))
     }
@@ -49,21 +44,37 @@ impl SystemEventSource {
         self.inner.sender()
     }
 
-    async fn broadcast_remote(
+    async fn broadcast_to_remote(
         mut rx: broadcast::Receiver<SystemEvent>,
         remote_source: Res<RemoteSystemEventSource>,
     ) {
         while let Ok(event) = rx.recv().await {
-            let remote_source = remote_source.clone();
-            tokio::spawn(async move {
-                remote_source
-                    .publish(&RemoteSystemEvent {
-                        source: OS.to_owned(),
-                        event,
-                    })
-                    .inspect_err(|e| warn!("{e:?}"))
-                    .await
-            });
+            match event {
+                // TODO: filter based on config
+                SystemEvent::NotificationPosted(_) => {
+                    let remote_source = remote_source.clone();
+                    tokio::spawn(async move {
+                        remote_source
+                            .publish(&RemoteSystemEvent {
+                                source: OS.to_owned(),
+                                event,
+                            })
+                            .inspect_err(|e| warn!("{e:?}"))
+                            .await
+                    });
+                }
+                _ => {}
+            }
         }
     }
 }
+
+// trait SystemEventSource {
+//     fn subscribe(&self) -> broadcast::Receiver<SystemEvent>;
+
+//     fn publish(&self) -> broadcast::Sender<SystemEvent>;
+
+//     fn stream(&self) -> BroadcastStream<SystemEvent> {
+//         BroadcastStream::new(self.subscribe())
+//     }
+// }
