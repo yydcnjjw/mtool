@@ -47,7 +47,7 @@ build:
     dx_windows_out_dir={{dx_out_dir}}/windows
     dx_windows_app_dir=$dx_windows_out_dir/app
 
-    dx build --target x86_64-pc-windows-msvc -p mtool --platform windows --desktop --no-default-features
+    dx build --target x86_64-pc-windows-msvc -p mtool --windows --no-default-features
 
     uv build --all-packages --wheel
     uv pip install dist/*.whl --target $dx_windows_app_dir/site-packages --compile-bytecode
@@ -58,7 +58,7 @@ serve:
     export PATH=$PYTHONPATH:$PATH
     export WSLENV=PYTHONPATH/wpl:${WSLENV}
 
-    dx serve --target x86_64-pc-windows-msvc -p mtool --platform windows --desktop --no-default-features --addr 127.0.0.1
+    dx serve --target x86_64-pc-windows-msvc -p mtool --windows --no-default-features --addr 127.0.0.1
 
 run: build
     #!/usr/bin/env zsh
@@ -83,7 +83,15 @@ serve-bevy:
     dx serve --target x86_64-pc-windows-msvc -p mtool --platform windows --addr 127.0.0.1 --features 'desktop,bevy,bevy_dynamic_linking'
 
 package:
-    dx bundle -p mtool --platform windows --package-types msi --verbose
+    dx bundle -p mtool --windows --package-types nsis --verbose --target x86_64-pc-windows-msvc --release
+    
+build-emacs:
+    #!/usr/bin/env zsh
+    set -euo pipefail
+    cargo build --target x86_64-unknown-linux-gnu -p mtool-emacs --no-default-features
+    cd target/x86_64-unknown-linux-gnu/debug/
+    rm mtool.so
+    ln -s libmtool_emacs.so mtool.so
 
 alias wt := watch-tailwindcss
 

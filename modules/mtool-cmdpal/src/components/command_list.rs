@@ -2,7 +2,13 @@ use std::{ops::Deref, rc::Rc, sync::Arc};
 
 use dioxus::{core::use_hook_with_cleanup, prelude::*};
 use fuzzy_matcher::{skim::SkimMatcherV2, FuzzyMatcher};
-use mapp::{anyhow, itertools::Itertools, prelude::Res, rand::random, tracing::warn};
+use mapp::{
+    anyhow::{self, anyhow},
+    itertools::Itertools,
+    prelude::*,
+    rand::random,
+    tracing::warn,
+};
 use mtool_dioxus::{generate_keymap, local_action, prelude::*};
 use mtool_storage::kv;
 
@@ -28,10 +34,10 @@ impl CommandListCtx {
         &self,
         item_id: String,
         item: Rc<MountedData>,
-    ) -> Result<(), RenderError> {
+    ) -> Result<(), anyhow::Error> {
         if let Some(parent) = (self.node_ref)() {
-            let parent_rect = parent.get_client_rect().await?;
-            let child_rect = item.get_client_rect().await?;
+            let parent_rect = parent.get_client_rect().await.map_err(|e| anyhow!("{e}"))?;
+            let child_rect = item.get_client_rect().await.map_err(|e| anyhow!("{e}"))?;
 
             if child_rect.min_y() >= parent_rect.max_y()
                 || child_rect.max_y() <= parent_rect.min_y()
@@ -94,7 +100,8 @@ pub fn CommandList(items: ReadSignal<Vec<CommandItem>>) -> Element {
         kvstore()
             .bucket::<String, String>(Some("cmdpal.command_history"))
             .context("cmdpal.command_history")
-    })?;
+            .unwrap()
+    });
 
     use_effect({
         to_owned![command_history];

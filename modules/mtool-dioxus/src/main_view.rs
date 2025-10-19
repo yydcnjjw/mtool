@@ -49,7 +49,7 @@ fn init_tray() {
 }
 
 pub fn main_view() -> Element {
-    init_global_hotkey().map_err(|e| RenderError::Aborted(CapturedError::from_display(e)))?;
+    init_global_hotkey().map_err(|e| RenderError::Error(CapturedError::from_display(e)))?;
 
     use_window_factory();
 

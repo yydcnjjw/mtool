@@ -1,6 +1,6 @@
 use mapp::{anyhow, prelude::*};
 
-use mtool_core::{AppStage, CmdlineStage};
+use mtool_core::AppStage;
 
 use crate::{crdt::CrdtStore, create_kvstore, lww::LwwStore, DBMigrationStage};
 
@@ -16,7 +16,7 @@ impl AppModule for Module {
 
         app.schedule()
             .insert_stage(AppStage::Startup, DBMigrationStage::Register)
-            .insert_stage(CmdlineStage::AfterParse, DBMigrationStage::Migrate);
+            .insert_stage(AppStage::Init, DBMigrationStage::Migrate);
         Ok(())
     }
 }

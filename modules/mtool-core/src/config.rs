@@ -13,10 +13,10 @@ pub(crate) struct Module;
 
 #[async_trait]
 impl AppModule for Module {
-    async fn init(&self, app: &mut AppContext) -> Result<(), anyhow::Error> {
-        #[cfg(any(target_os = "windows", target_os = "linux"))]
+    async fn init(&self, #[allow(unused)] app: &mut AppContext) -> Result<(), anyhow::Error> {
+        #[cfg(all(feature = "cmdline", any(target_os = "windows", target_os = "linux")))]
         {
-            use crate::{CmdlineStage, Cmdline};
+            use crate::{Cmdline, CmdlineStage};
             use clap::{arg, value_parser, ArgMatches};
 
             async fn setup_cmdline(cmdline: Res<Cmdline>) -> Result<(), anyhow::Error> {
@@ -45,9 +45,7 @@ impl AppModule for Module {
                     .get_one::<PathBuf>("config")
                     .ok_or(anyhow::anyhow!("missing config"))?;
 
-                Ok(Res::new(ConfigStore {
-                    inner: RwLock::new(ConfigInner::new(config_dir).await?),
-                }))
+                Ok(Res::new(ConfigStore::new(config_dir).await?))
             }
             app.injector().construct_once(config_store);
         }
@@ -63,9 +61,7 @@ impl AppModule for Module {
                     .context("missing external data path")?
                     .join("config");
 
-                Ok(Res::new(ConfigStore {
-                    inner: RwLock::new(ConfigInner::new(config_dir).await?),
-                }))
+                Ok(Res::new(ConfigStore::new(config_dir).await?))
             }
             app.injector().construct_once(config_store);
         }
@@ -145,6 +141,15 @@ pub struct ConfigStore {
 }
 
 impl ConfigStore {
+    pub async fn new<T>(path: T) -> Result<Self, anyhow::Error>
+    where
+        T: Into<PathBuf>,
+    {
+        Ok(Self {
+            inner: RwLock::new(ConfigInner::new(path).await?),
+        })
+    }
+
     pub fn root_path(&self) -> PathBuf {
         self.inner.read().root_path().to_owned()
     }

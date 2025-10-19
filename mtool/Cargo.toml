@@ -13,6 +13,7 @@ graphic = [
   "mtool-core/python",
   "dep:mtool-dioxus",
   "dep:mtool-system",
+  "mtool-emacs/graphic",
 ]
 
 mobile = [
@@ -49,6 +50,8 @@ mtool-storage = { path = "../modules/mtool-storage" }
 
 mtool-dioxus = { path = "../modules/mtool-dioxus", optional = true }
 mtool-system = { path = "../modules/mtool-system", optional = true }
+mtool-emacs = { path = "../modules/mtool-emacs", optional = true }
+
 mtool-cmdpal = { path = "../modules/mtool-cmdpal", optional = true }
 mtool-assistant = { path = "../modules/mtool-assistant", optional = true }
 mtool-proxy = { path = "../modules/mtool-proxy", optional = true }

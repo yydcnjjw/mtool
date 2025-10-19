@@ -15,7 +15,8 @@ fn run(mut builder: mapp::AppBuilder) {
     #[cfg(feature = "graphic")]
     builder
         .add_module(mtool_dioxus::module())
-        .add_module(mtool_system::module());
+        .add_module(mtool_system::module())
+        .add_module(mtool_emacs::module());
 
     #[cfg(any(feature = "mobile", feature = "desktop"))]
     builder.add_module(mtool_assistant::module());
