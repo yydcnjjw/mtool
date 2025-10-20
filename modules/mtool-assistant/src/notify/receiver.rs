@@ -4,9 +4,13 @@ use mapp::{
     prelude::*,
     rand::{seq::SliceRandom, thread_rng},
     tokio::{self},
+    tokio_stream::StreamExt,
     tracing::{debug, warn},
 };
-use mtool_system::{Notification, SystemEvent, SystemEventSource};
+use mtool_p2p::SubjectMessage;
+#[cfg(feature = "desktop")]
+use mtool_system::NotificationContent;
+use mtool_system::{Notification, RemoteSystemEventSource, SystemEvent};
 use std::{
     io::{BufReader, Cursor},
     sync::atomic::{AtomicBool, Ordering},
@@ -39,32 +43,51 @@ impl NotifyReceiver {
     ) -> Result<(), anyhow::Error> {
         match notification {
             Notification::Im { app: _ } => Self::handle_im_notification(receiver).await,
+            #[cfg(feature = "desktop")]
+            Notification::Agenda {
+                app,
+                content: NotificationContent { message, title, .. },
+            } => {
+                use notify_rust::{Notification, Timeout};
+                Notification::new()
+                    .appname(&app.id)
+                    .summary(&title.unwrap_or_default())
+                    .body(&message)
+                    .timeout(Timeout::Never)
+                    .show()
+                    .context("send notification failed")
+            }
             _ => Ok(()),
         }
     }
 
     pub async fn listen_system(
         receiver: Res<Self>,
-        source: Res<SystemEventSource>,
+        source: Res<RemoteSystemEventSource>,
     ) -> Result<(), anyhow::Error> {
         tokio::spawn(async move {
-            let mut rx = source.subscribe();
-            while let Ok(ev) = rx.recv().await {
+            let mut stream = source.stream();
+            while let Some(msg) = stream.next().await {
                 to_owned![receiver];
-
-                match ev {
-                    SystemEvent::NotificationPosted(notification) => {
-                        debug!("SystemEvent::NotificationPosted {notification:?}");
-                        tokio::spawn(async move {
-                            if let Err(e) =
-                                Self::handle_notification_posted(receiver.clone(), notification)
-                                    .await
-                            {
-                                warn!("{e:?}");
-                            }
-                        });
+                match msg {
+                    Ok(SubjectMessage { data, .. }) => match data.event {
+                        SystemEvent::NotificationPosted(notification) => {
+                            debug!("SystemEvent::NotificationPosted {notification:?}");
+                            tokio::spawn(async move {
+                                if let Err(e) =
+                                    Self::handle_notification_posted(receiver.clone(), notification)
+                                        .await
+                                {
+                                    warn!("{e:?}");
+                                }
+                            });
+                        }
+                        _ => {}
+                    },
+                    Err(e) => {
+                        warn!("{e:?}");
+                        break;
                     }
-                    _ => {}
                 }
             }
         });

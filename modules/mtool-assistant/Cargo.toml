@@ -62,3 +62,7 @@ features = [
   "Media_Control",
   "Media_Playback",
 ]
+
+# for desktop
+[target.'cfg(any(target_os = "windows", target_os = "macos", target_os = "linux"))'.dependencies]
+notify-rust = "*"

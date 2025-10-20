@@ -22,15 +22,33 @@ pub struct Keyboard {
 #[serde(crate = "mapp::serde")]
 #[serde(tag = "type")]
 pub enum Notification {
-    Generic { app: AppInfo },
-    Im { app: AppInfo },
+    Generic {
+        app: AppInfo,
+        content: NotificationContent,
+    },
+    Im {
+        app: AppInfo,
+    },
     Media(MediaNotification),
+    Agenda {
+        app: AppInfo,
+        content: NotificationContent,
+    },
 }
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
 #[serde(crate = "mapp::serde")]
 pub struct AppInfo {
     pub id: String,
+}
+
+#[derive(Clone, Debug, Serialize, Deserialize)]
+#[serde(crate = "mapp::serde")]
+pub struct NotificationContent {
+    pub message: String,
+    pub title: Option<String>,
+    pub icon: Option<String>,
+    pub id: Option<String>,
 }
 
 #[derive(Clone, Debug, Serialize, Deserialize)]

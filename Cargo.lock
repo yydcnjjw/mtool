@@ -8939,6 +8939,7 @@ dependencies = [
  "mtool-p2p",
  "mtool-storage",
  "mtool-system",
+ "notify-rust",
  "open",
  "pyo3",
  "rodio",

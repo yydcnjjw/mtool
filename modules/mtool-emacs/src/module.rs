@@ -1,5 +1,10 @@
 use emacs::Env;
-use mapp::{anyhow, prelude::*, sync::Mutex, tokio::sync::oneshot};
+use mapp::{
+    anyhow,
+    prelude::*,
+    sync::Mutex,
+    tokio::{self, sync::oneshot},
+};
 use mtool_core::ConfigStore;
 
 use crate::{context::EmacsContext, user_idle};
@@ -32,9 +37,10 @@ impl AppModule for EmacsModule {
     async fn init(&self, ctx: &mut AppContext) -> Result<(), anyhow::Error> {
         {
             let injector = ctx.injector().clone();
+            let rt = tokio::runtime::Handle::current();
             _ = self.tx.lock().take().unwrap().send(Box::new(
                 move |_env| -> Result<EmacsContext, anyhow::Error> {
-                    Ok(EmacsContext { injector })
+                    Ok(EmacsContext { injector, rt })
                 },
             ));
         }

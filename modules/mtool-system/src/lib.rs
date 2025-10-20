@@ -7,4 +7,5 @@ mod platform;
 
 pub use event::*;
 pub use event_source::*;
+pub use p2p::*;
 pub use module::module;

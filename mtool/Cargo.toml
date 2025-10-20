@@ -12,7 +12,7 @@ default = [ "desktop" ]
 graphic = [
   "mtool-core/python",
   "dep:mtool-dioxus",
-  "dep:mtool-system",
+  "mtool-system/graphic",
   "mtool-emacs/graphic",
 ]
 
