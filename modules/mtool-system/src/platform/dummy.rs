@@ -1,28 +1,23 @@
-use mapp::{
-    anyhow,
-    prelude::*,
-    tokio::sync::broadcast,
-};
-use mtool_dioxus::prelude::*;
+use mapp::{anyhow, prelude::*, tokio::sync::broadcast};
 
-use crate::SystenEvent;
+use crate::SystemEvent;
 
 pub struct SystemEventSource {
-    source: broadcast::Sender<SystenEvent>,
+    source: broadcast::Sender<SystemEvent>,
 }
 
 impl SystemEventSource {
-    pub async fn new(context: Res<DioxusContext>) -> Result<SystemEventSource, anyhow::Error> {
+    pub async fn new() -> Result<SystemEventSource, anyhow::Error> {
         let (source, _) = broadcast::channel(64);
 
         Ok(SystemEventSource { source })
     }
 
-    pub fn subscribe(&self) -> broadcast::Receiver<SystenEvent> {
+    pub fn subscribe(&self) -> broadcast::Receiver<SystemEvent> {
         self.source.subscribe()
     }
 
-    pub fn sender(&self) -> broadcast::Sender<SystenEvent> {
+    pub fn sender(&self) -> broadcast::Sender<SystemEvent> {
         self.source.clone()
     }
 }

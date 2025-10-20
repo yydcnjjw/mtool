@@ -15,6 +15,14 @@ use std::{sync::LazyLock, time::Duration};
 
 use crate::context::EmacsContext;
 
+#[defun(mod_in_name = false)]
+fn user_idle(_env: &Env, _ctx: &EmacsContext) -> Result<u64, emacs::Error> {
+    Ok(USER_IDLE
+        .get_or_init(|| RwLock::new(UserIdle::new()))
+        .read()
+        .idle_time)
+}
+
 pub(crate) struct EmacsModule;
 
 #[async_trait]
@@ -87,14 +95,6 @@ async fn subscribe_user_idle(peer: Res<p2p::Peer>) -> Result<(), anyhow::Error> 
     });
 
     Ok(())
-}
-
-#[defun(mod_in_name = false)]
-fn user_idle(_env: &Env, _ctx: &EmacsContext) -> Result<u64, emacs::Error> {
-    Ok(USER_IDLE
-        .get_or_init(|| RwLock::new(UserIdle::new()))
-        .read()
-        .idle_time)
 }
 
 #[cfg(feature = "graphic")]

@@ -20,8 +20,9 @@ fn start(env: &Env) -> Result<EmacsContext, emacs::Error> {
         builder
             .add_module(emacs)
             .add_module(mtool_core::module())
-            .add_module(mtool_p2p::module())
             .add_module(mtool_storage::module())
+            .add_module(mtool_p2p::module())
+            .add_module(mtool_system::module())
             .add_module(user_idle::EmacsModule);
 
         builder.build().run();

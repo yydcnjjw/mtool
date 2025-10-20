@@ -10,14 +10,16 @@ edition.workspace = true
 crate-type = [ "cdylib", "rlib" ]
 
 [features]
-graphic = [ "dep:mtool-system" ]
+graphic = [ "mtool-system/graphic" ]
 
 [dependencies]
 mapp = { path = "../../crates/mapp" }
+
 mtool-core = { path = "../mtool-core" }
 mtool-p2p = { path = "../mtool-p2p" }
 mtool-storage = { path = "../mtool-storage" }
+mtool-system = { path = "../mtool-system" }
 
 emacs = "*"
 
-mtool-system = { path = "../mtool-system", optional = true }
+
