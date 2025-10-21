@@ -7,6 +7,16 @@ edition.workspace = true
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [features]
+native = [
+  "dioxus/native",
+  "dep:dioxus-native",
+]
+
+webview = [
+  "dioxus/desktop",
+  "dep:dioxus-desktop",
+]
+
 bevy = [ "dep:bevy" ]
 bevy_dynamic_linking = [ "bevy?/dynamic_linking" ]
 
@@ -17,6 +27,7 @@ mkeybinding = { path = "../../crates/mkeybinding" }
 mtool-core = { path = "../mtool-core" }
 mtool-storage = { path = "../mtool-storage" }
 
+winit = "*"
 dioxus = { workspace = true, features = ["router"] }
 dioxus-primitives = { git = "https://github.com/DioxusLabs/components" }
 blake3 = { version = "1.5", features = ["pure"] } # use pure for fix compile error
@@ -37,3 +48,8 @@ features = [
 
 [dependencies.dioxus-desktop]
 workspace = true
+optional = true
+
+[dependencies.dioxus-native]
+workspace = true
+optional = true

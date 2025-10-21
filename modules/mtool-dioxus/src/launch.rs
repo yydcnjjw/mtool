@@ -1,6 +1,6 @@
 use std::{any::type_name_of_val, sync::Arc};
 
-use dioxus_desktop::{winit::event::Event as WinitEvent, UserWindowEvent, WindowAttributes};
+use dioxus_desktop::{UserWindowEvent, WindowAttributes};
 use mapp::{
     anyhow,
     prelude::*,
@@ -16,8 +16,9 @@ use crate::{
 
 type MainLoopRunner = Box<dyn FnOnce() -> Result<(), anyhow::Error> + Send>;
 
+
 #[cfg(target_os = "android")]
-use dioxus_desktop::winit::platform::android::activity::AndroidApp;
+use crate::winit::{event::Event as WinitEvent, platform::android::activity::AndroidApp};
 
 pub(crate) async fn launch(
     injector: Injector,
@@ -136,27 +137,3 @@ pub(crate) fn main_loop(runner: oneshot::Receiver<MainLoopRunner>) -> Result<(),
     runner.blocking_recv()?()
 }
 
-#[cfg(target_os = "android")]
-use dioxus_desktop::wry::{android_setup, prelude::*};
-
-#[cfg(target_os = "android")]
-android_fn![
-    org_yydcnjjw_mtool_dioxus,
-    wry,
-    WryActivity,
-    onCreate,
-    [JObject]
-];
-
-#[cfg(target_os = "android")]
-#[allow(non_snake_case)]
-pub unsafe fn onCreate(jenv: JNIEnv, _: JClass, activity: JObject) {
-    let activity = jenv.new_global_ref(activity).unwrap();
-
-    android_setup(
-        "org/yydcnjjw/mtool/dioxus/wry",
-        jenv,
-        &ndk::looper::ThreadLooper::for_thread().unwrap(),
-        activity,
-    );
-}

@@ -7,14 +7,7 @@ edition.workspace = true
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [features]
-default = [ "desktop" ]
-
-graphic = [
-  "mtool-core/python",
-  "dep:mtool-dioxus",
-  "mtool-system/graphic",
-  "mtool-emacs/graphic",
-]
+default = [ "desktop", "renderer-native" ]
 
 mobile = [
   "graphic",
@@ -28,7 +21,7 @@ desktop = [
   "dep:mtool-assistant",
   "mtool-assistant/desktop",
   "dep:mtool-proxy",
-  "dep:mtool-apps",
+  # "dep:mtool-apps",
 ]
 
 server = [
@@ -36,10 +29,26 @@ server = [
   "mtool-storage/server",
 ]
 
+graphic = [
+  "mtool-core/python",
+  "dep:mtool-dioxus",
+  "mtool-system/graphic",
+  "mtool-emacs/graphic",
+]
+
+renderer-native = [
+  "mtool-dioxus/native"
+]
+
+renderer-webview = [
+  "mtool-dioxus/webview"
+]
+
 bevy = [
   "mtool-dioxus/bevy",
   "mtool-assistant/bevy"
 ]
+
 bevy_dynamic_linking = [ "mtool-dioxus/bevy_dynamic_linking" ]
 
 [dependencies]

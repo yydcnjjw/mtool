@@ -12,6 +12,7 @@ mod message;
 mod module;
 mod router;
 mod window;
+mod platform;
 
 pub mod prelude {
     pub use crate::{
@@ -27,6 +28,13 @@ pub mod prelude {
 
 pub use module::module;
 
-pub use dioxus_desktop as desktop;
+pub use winit;
 pub use dioxus_free_icons as free_icons;
 pub use dioxus_primitives as primitives;
+
+
+#[cfg(feature = "native")]
+pub use dioxus_native as platform;
+
+#[cfg(feature = "webview")]
+pub use dioxus_desktop as platform;

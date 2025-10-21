@@ -3,6 +3,8 @@ use std::{collections::HashMap, mem, ops::DerefMut, sync::Arc};
 use dioxus::prelude::*;
 use mapp::{anyhow, sync::Mutex};
 
+use crate::platform;
+
 pub type GlobalHotkeys =
     Arc<HashMap<String, Arc<dyn Fn() -> Result<(), anyhow::Error> + Send + Sync>>>;
 
@@ -10,15 +12,15 @@ struct DioxusBuilderInner {
     dioxus_hooks: Vec<
         Box<
             dyn FnOnce(
-                    dioxus_desktop::Config,
+                    platform::Config,
                     LaunchBuilder,
-                ) -> (dioxus_desktop::Config, LaunchBuilder)
+                ) -> (platform::Config, LaunchBuilder)
                 + Send,
         >,
     >,
     launch_builder_hooks: Vec<Box<dyn FnOnce(LaunchBuilder) -> LaunchBuilder + Send>>,
     config_builder_hooks:
-        Vec<Box<dyn FnOnce(dioxus_desktop::Config) -> dioxus_desktop::Config + Send>>,
+        Vec<Box<dyn FnOnce(platform::Config) -> platform::Config + Send>>,
     global_hotkeys: HashMap<String, Arc<dyn Fn() -> Result<(), anyhow::Error> + Send + Sync>>,
     launcher: LaunchFn,
 }
@@ -30,7 +32,7 @@ impl DioxusBuilderInner {
             launch_builder_hooks: Vec::new(),
             config_builder_hooks: Vec::new(),
             global_hotkeys: HashMap::new(),
-            launcher: dioxus_desktop::launch::launch,
+            launcher: platform::launch_cfg,
         }
     }
 
@@ -114,9 +116,10 @@ impl DioxusBuilder {
         self
     }
 
+    #[cfg(not(feature = "native"))]
     pub fn with_dioxus<F>(&self, f: F) -> &Self
     where
-        F: FnOnce(dioxus_desktop::Config, LaunchBuilder) -> (dioxus_desktop::Config, LaunchBuilder)
+        F: FnOnce(platform::Config, LaunchBuilder) -> (platform::Config, LaunchBuilder)
             + Send
             + 'static,
     {
@@ -134,7 +137,7 @@ impl DioxusBuilder {
 
     pub fn with_config_builder<F>(&self, f: F) -> &Self
     where
-        F: FnOnce(dioxus_desktop::Config) -> dioxus_desktop::Config + Send + 'static,
+        F: FnOnce(platform::Config) -> platform::Config + Send + 'static,
     {
         self.inner.lock().with_config_builder(f);
         self

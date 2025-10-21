@@ -19,7 +19,7 @@ dioxus = { workspace = true }
 base64 = "*"
 open = "*"
 walkdir = "*"
-image = "*"
+image = "=0.25.6"
 pinyin = "*"
 notify = "*"
 

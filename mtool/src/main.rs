@@ -25,7 +25,8 @@ fn run(mut builder: mapp::AppBuilder) {
     builder
         .add_module(mtool_cmdpal::module())
         .add_module(mtool_proxy::module())
-        .add_module(mtool_apps::module());
+        // .add_module(mtool_apps::module())
+        ;
 
     builder.build().run();
 }
