@@ -47,13 +47,18 @@ impl NotifyReceiver {
             Notification::Agenda {
                 app,
                 content: NotificationContent { message, title, .. },
+            }
+            | Notification::Generic {
+                app,
+                content: NotificationContent { message, title, .. },
             } => {
                 use notify_rust::{Notification, Timeout};
                 Notification::new()
+                    .app_id("com.yydcnjjw")
                     .appname(&app.id)
                     .summary(&title.unwrap_or_default())
                     .body(&message)
-                    .timeout(Timeout::Never)
+                    .timeout(Timeout::Default)
                     .show()
                     .context("send notification failed")
             }

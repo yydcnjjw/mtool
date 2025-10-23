@@ -25,7 +25,7 @@ fn alert(
         id,
     };
     let notification = match category {
-        Some(category) if category == "org-alert" => Notification::Agenda { app, content },
+        Some(category) if category == "agenda" => Notification::Agenda { app, content },
         _ => Notification::Generic { app, content },
     };
 
