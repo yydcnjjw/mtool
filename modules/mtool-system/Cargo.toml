@@ -7,12 +7,10 @@ edition.workspace = true
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [features]
-graphic = [ "dep:mtool-dioxus" ]
 
 [dependencies]
 mapp = { path = "../../crates/mapp" }
 mtool-core = { path = "../mtool-core" }
-mtool-dioxus = { path = "../mtool-dioxus", optional = true }
 mtool-p2p = { path = "../mtool-p2p" }
 
 [target.'cfg(target_os = "windows")'.dependencies]
@@ -25,3 +23,19 @@ features = [
   "Win32_UI_WindowsAndMessaging",
   "Win32_System_LibraryLoader",
 ]
+
+[target.'cfg(target_os = "linux")'.dependencies]
+wayland-client = "*"
+wayland-protocols-wlr = { version = "*", features = ["client"] }
+
+[target.'cfg(target_os = "linux")'.dependencies.x11rb-async]
+version = "*"
+features = [
+  "allow-unsafe-code",
+  "extra-traits",
+  "record",
+  "xkb",
+]
+
+[target.'cfg(target_os = "android")'.dependencies]
+mtool-dioxus = { path = "../mtool-dioxus" }

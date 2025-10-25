@@ -51,7 +51,6 @@ impl AppModule for EmacsModule {
     }
 }
 
-#[cfg(feature = "graphic")]
 pub fn module() -> ModuleGroup {
     let mut group = ModuleGroup::new("emacs");
 

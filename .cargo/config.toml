@@ -161,3 +161,5 @@ bevy_core_pipeline = { git = "https://github.com/yydcnjjw/bevy.git", branch = "d
 # wgpu-types = { path = "/home/yydcnjjw/workspace/project/wgpu/wgpu-types" }
 # wgpu-hal = { path = "/home/yydcnjjw/workspace/project/wgpu/wgpu-hal" }
 # naga = { path = "/home/yydcnjjw/workspace/project/wgpu/naga" }
+
+x11rb-async = { git = "https://github.com/yydcnjjw/x11rb.git", branch = "mtool" }

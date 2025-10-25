@@ -9,11 +9,14 @@ edition.workspace = true
 [features]
 default = [ "desktop" ]
 
-graphic = [
+system = [
   "mtool-core/python",
+  "dep:mtool-system"
+]
+
+graphic = [
+  "system",
   "dep:mtool-dioxus",
-  "mtool-system/graphic",
-  "mtool-emacs/graphic",
 ]
 
 mobile = [
@@ -36,10 +39,17 @@ server = [
   "mtool-storage/server",
 ]
 
+emacs = [
+   "system",
+   "dep:mtool-emacs",
+   "dep:mtool-proxy",
+]
+
 bevy = [
   "mtool-dioxus/bevy",
   "mtool-assistant/bevy"
 ]
+
 bevy_dynamic_linking = [ "mtool-dioxus/bevy_dynamic_linking" ]
 
 [dependencies]

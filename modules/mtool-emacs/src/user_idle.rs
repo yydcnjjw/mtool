@@ -1,66 +1,90 @@
 use emacs::{defun, Env};
 use mapp::{
     anyhow,
-    once_cell::sync::OnceCell,
+    futures::future,
     prelude::*,
     serde::{Deserialize, Serialize},
-    sync::RwLock,
     tokio,
     tokio_stream::StreamExt,
-    tracing::warn,
+    tracing::{info, warn},
+    CreateOnceTaskDescriptor,
 };
-use mtool_core::AppStage;
+use mtool_core::{AppStage, ConfigStore};
 use mtool_p2p::{self as p2p, gossipsub::IdentTopic, SubjectMessage};
-use std::{sync::LazyLock, time::Duration};
+use mtool_system::{SystemEvent, SystemEventSource};
+use std::{
+    sync::{
+        atomic::{AtomicU64, Ordering},
+        LazyLock,
+    },
+    time::Duration,
+};
 
 use crate::context::EmacsContext;
 
 #[defun(mod_in_name = false)]
 fn user_idle(_env: &Env, _ctx: &EmacsContext) -> Result<u64, emacs::Error> {
-    Ok(USER_IDLE
-        .get_or_init(|| RwLock::new(UserIdle::new()))
-        .read()
-        .idle_time)
+    Ok(USER_IDLE.idle_time.load(Ordering::Relaxed))
 }
 
-pub(crate) struct EmacsModule;
+pub(crate) struct Module;
 
 #[async_trait]
-impl AppModule for EmacsModule {
+impl AppModule for Module {
     async fn init(&self, ctx: &mut AppContext) -> Result<(), anyhow::Error> {
         ctx.schedule()
-            .add_once_task(AppStage::Run, subscribe_user_idle);
+            .add_once_task(AppStage::Run, subscribe_user_idle)
+            .add_once_task(
+                AppStage::Run,
+                broadcast_user_idle.cond(|cs: Res<ConfigStore>| {
+                    future::ok(cs.get_optional("emacs.user_idle.broadcast").unwrap_or(true))
+                }),
+            );
         Ok(())
     }
 }
 
 static IDLE_TIME_TOPIC: LazyLock<IdentTopic> = LazyLock::new(|| IdentTopic::new("IDLE_TIME"));
+static USER_IDLE: LazyLock<UserIdle> = LazyLock::new(|| UserIdle::new());
 
 #[derive(Serialize, Deserialize, Debug)]
 #[serde(crate = "mapp::serde")]
 struct UserIdle {
-    idle_time: u64,
+    idle_time: AtomicU64,
+}
+
+impl Clone for UserIdle {
+    fn clone(&self) -> Self {
+        Self {
+            idle_time: AtomicU64::new(self.idle_time.load(Ordering::Relaxed)),
+        }
+    }
 }
 
 impl UserIdle {
     fn new() -> Self {
-        Self { idle_time: 0 }
-    }
-
-    fn add(&mut self, time: u64) -> UserIdle {
-        self.idle_time += time;
-        UserIdle {
-            idle_time: self.idle_time,
+        Self {
+            idle_time: AtomicU64::new(0),
         }
     }
 
-    fn is_active(&self) -> bool {
-        self.idle_time == 0
+    fn add(&self, time: u64) -> Self {
+        self.idle_time.fetch_add(time, Ordering::Relaxed);
+        self.to_owned()
     }
 
-    fn active(&mut self) -> UserIdle {
-        self.idle_time = 0;
-        UserIdle { idle_time: 0 }
+    fn is_active(&self) -> bool {
+        self.idle_time.load(Ordering::Relaxed) == 0
+    }
+
+    fn active(&self) -> Self {
+        self.idle_time.store(0, Ordering::Relaxed);
+        self.to_owned()
+    }
+
+    fn update(&self, rhs: &Self) {
+        self.idle_time
+            .store(rhs.idle_time.load(Ordering::Relaxed), Ordering::Relaxed);
     }
 }
 
@@ -69,8 +93,6 @@ impl UserIdle {
 enum Message {
     Update(UserIdle),
 }
-
-static USER_IDLE: OnceCell<RwLock<UserIdle>> = OnceCell::new();
 
 async fn subscribe_user_idle(peer: Res<p2p::Peer>) -> Result<(), anyhow::Error> {
     let subject = peer.subscribe::<Message>(&IDLE_TIME_TOPIC).await?;
@@ -81,9 +103,7 @@ async fn subscribe_user_idle(peer: Res<p2p::Peer>) -> Result<(), anyhow::Error> 
             match item {
                 Ok(SubjectMessage { data, .. }) => match data {
                     Message::Update(update) => {
-                        if let Some(user_idle) = USER_IDLE.get() {
-                            *user_idle.write() = update;
-                        }
+                        USER_IDLE.update(&update);
                     }
                 },
                 Err(e) => {
@@ -97,50 +117,34 @@ async fn subscribe_user_idle(peer: Res<p2p::Peer>) -> Result<(), anyhow::Error> 
     Ok(())
 }
 
-#[cfg(feature = "graphic")]
-pub(crate) struct Module;
+async fn broadcast_user_idle(
+    peer: Res<p2p::Peer>,
+    source: Res<SystemEventSource>,
+) -> Result<(), anyhow::Error> {
+    tokio::spawn(async move {
+        let mut rx = source.subscribe();
 
-#[cfg(feature = "graphic")]
-#[async_trait]
-impl AppModule for Module {
-    async fn init(&self, ctx: &mut AppContext) -> Result<(), anyhow::Error> {
-        ctx.schedule()
-            .add_once_task(AppStage::Run, broadcast_user_idle);
+        let check_idle_interval = 5; // s
+        let mut timer = tokio::time::interval(Duration::from_secs(check_idle_interval));
 
-        use mtool_system::{SystemEvent, SystemEventSource};
-
-        async fn broadcast_user_idle(
-            peer: Res<p2p::Peer>,
-            source: Res<SystemEventSource>,
-        ) -> Result<(), anyhow::Error> {
-            tokio::spawn(async move {
-                let mut rx = source.subscribe();
-                let mut user_idle = UserIdle::new();
-
-                let check_idle_interval = 5; // s
-                let mut timer = tokio::time::interval(Duration::from_secs(check_idle_interval));
-
-                loop {
-                    if let Err(e) = tokio::select! {
-                        Ok(SystemEvent::Keyboard(_)) = rx.recv() => {
-                            if !user_idle.is_active() {
-                                peer.publish(&IDLE_TIME_TOPIC, &Message::Update(user_idle.active())).await
-                            } else {
-                                Ok(())
-                            }
-                        }
-                        _ = timer.tick() => {
-                            peer.publish(&IDLE_TIME_TOPIC, &Message::Update(user_idle.add(check_idle_interval))).await
-                        }
-                    } {
-                        warn!("{e:?}");
+        loop {
+            if let Err(e) = tokio::select! {
+                Ok(SystemEvent::Keyboard(keyboard)) = rx.recv() => {
+                    info!("{keyboard:?}");
+                    if !USER_IDLE.is_active() {
+                        peer.publish(&IDLE_TIME_TOPIC, &Message::Update(USER_IDLE.active())).await
+                    } else {
+                        Ok(())
                     }
                 }
-            });
-
-            Ok(())
+                _ = timer.tick() => {
+                    peer.publish(&IDLE_TIME_TOPIC, &Message::Update(USER_IDLE.add(check_idle_interval))).await
+                }
+            } {
+                warn!("{e:?}");
+            }
         }
+    });
 
-        Ok(())
-    }
+    Ok(())
 }

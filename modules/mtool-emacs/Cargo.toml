@@ -9,9 +9,6 @@ edition.workspace = true
 [lib]
 crate-type = [ "cdylib", "rlib" ]
 
-[features]
-graphic = [ "mtool-system/graphic" ]
-
 [dependencies]
 mapp = { path = "../../crates/mapp" }
 
