@@ -6,7 +6,7 @@ use mapp::{
     serde::{Deserialize, Serialize},
     tokio,
     tokio_stream::StreamExt,
-    tracing::{info, warn},
+    tracing::warn,
     CreateOnceTaskDescriptor,
 };
 use mtool_core::{AppStage, ConfigStore};
@@ -130,7 +130,6 @@ async fn broadcast_user_idle(
         loop {
             if let Err(e) = tokio::select! {
                 Ok(SystemEvent::Keyboard(keyboard)) = rx.recv() => {
-                    info!("{keyboard:?}");
                     if !USER_IDLE.is_active() {
                         peer.publish(&IDLE_TIME_TOPIC, &Message::Update(USER_IDLE.active())).await
                     } else {
