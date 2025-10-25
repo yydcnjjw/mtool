@@ -22,14 +22,12 @@ graphic = [
 
 mobile = [
   "graphic",
-  "dep:mtool-assistant",
   "mtool-assistant/mobile",
 ]
 
 desktop = [
   "graphic",
   "dep:mtool-cmdpal",
-  "dep:mtool-assistant",
   "mtool-assistant/desktop",
   "dep:mtool-proxy",
   "dep:mtool-apps",

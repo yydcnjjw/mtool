@@ -21,7 +21,7 @@ build-android:
     export PYO3_CROSS_PYTHON_VERSION={{python_version}}
     export PYO3_CROSS_LIB_DIR=/home/yydcnjjw/workspace/project/cross-libs/aarch64-linux-android/python-{{python_version}}
 
-    dx build --target aarch64-linux-android -p mtool --platform android --android --no-default-features
+    dx build --target aarch64-linux-android -p mtool --android --features 'mobile' --no-default-features
     cp $PYO3_CROSS_LIB_DIR/libpython*.so $PYO3_CROSS_LIB_DIR/lib*_python.so $dx_android_jnilibs_dir
 
     llvm-strip $dx_android_libs

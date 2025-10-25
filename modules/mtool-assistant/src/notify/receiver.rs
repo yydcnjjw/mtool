@@ -10,7 +10,7 @@ use mapp::{
 use mtool_p2p::SubjectMessage;
 #[cfg(feature = "desktop")]
 use mtool_system::NotificationContent;
-use mtool_system::{Notification, RemoteSystemEventSource, SystemEvent};
+use mtool_system::{Notification, NotificationContent, RemoteSystemEventSource, SystemEvent};
 use std::{
     io::{BufReader, Cursor},
     sync::atomic::{AtomicBool, Ordering},
@@ -43,7 +43,7 @@ impl NotifyReceiver {
     ) -> Result<(), anyhow::Error> {
         match notification {
             Notification::Im { app: _ } => Self::handle_im_notification(receiver).await,
-            #[cfg(feature = "desktop")]
+            #[allow(unused)]
             Notification::Agenda {
                 app,
                 content: NotificationContent { message, title, .. },
@@ -52,16 +52,22 @@ impl NotifyReceiver {
                 app,
                 content: NotificationContent { message, title, .. },
             } => {
-                use notify_rust::{Notification, Timeout};
-                Notification::new()
-                    .app_id("com.yydcnjjw")
-                    .appname(&app.id)
-                    .summary(&title.unwrap_or_default())
-                    .body(&message)
-                    .timeout(Timeout::Default)
-                    .show()
-                    .context("send notification failed")
+                #[cfg(feature = "desktop")]
+                {
+                    use notify_rust::{Notification, Timeout};
+                    Notification::new()
+                        .app_id("com.yydcnjjw")
+                        .appname(&app.id)
+                        .summary(&title.unwrap_or_default())
+                        .body(&message)
+                        .timeout(Timeout::Default)
+                        .show()
+                        .context("send notification failed")
+                }
+                #[cfg(not(feature = "desktop"))]
+                Ok(())
             }
+
             _ => Ok(()),
         }
     }
