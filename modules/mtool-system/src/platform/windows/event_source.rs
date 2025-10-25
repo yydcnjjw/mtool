@@ -13,7 +13,6 @@ use mapp::{
     tokio::sync::broadcast,
     tracing::warn,
 };
-use mtool_dioxus::prelude::*;
 use windows::Win32::{
     Foundation::*, System::Threading::GetCurrentThreadId, UI::WindowsAndMessaging::*,
 };
@@ -41,7 +40,7 @@ impl Drop for SystemEventSource {
 }
 
 impl SystemEventSource {
-    pub async fn new(_context: Res<DioxusContext>) -> Result<SystemEventSource, anyhow::Error> {
+    pub async fn new() -> Result<SystemEventSource, anyhow::Error> {
         let (source, _) = broadcast::channel(64);
         let loop_thread_id = Arc::new(AtomicU32::new(0));
 
@@ -107,27 +106,5 @@ impl SystemEventSource {
 
     pub fn sender(&self) -> broadcast::Sender<SystemEvent> {
         self.source.clone()
-    }
-}
-
-pub fn update_modifier_state(code: &Code, state: &KeyState) -> Modifiers {
-    static mut MODIFIERS: Modifiers = Modifiers::empty();
-
-    let modifer = match code {
-        Code::ShiftLeft | Code::ShiftRight => Modifiers::SHIFT,
-        Code::CapsLock => Modifiers::CAPS_LOCK,
-        Code::ControlLeft | Code::ControlRight => Modifiers::CONTROL,
-        Code::AltLeft | Code::AltRight => Modifiers::ALT,
-        Code::NumLock => Modifiers::NUM_LOCK,
-        Code::Super => Modifiers::SUPER,
-        _ => Modifiers::empty(),
-    };
-
-    unsafe {
-        match state {
-            KeyState::Down => MODIFIERS |= modifer,
-            KeyState::Up => MODIFIERS -= modifer,
-        };
-        MODIFIERS
     }
 }

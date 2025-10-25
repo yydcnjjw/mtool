@@ -9,6 +9,10 @@ cfg_if! {
         mod windows;
 
         pub use windows::*;
+    } else if #[cfg(target_os = "linux")] {
+        mod linux;
+        
+        pub use linux::*;
     } else {
         mod dummy;
 

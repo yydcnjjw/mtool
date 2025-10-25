@@ -1,7 +1,10 @@
 use emacs::{defun, Env};
 use std::thread;
 
-use crate::{context::EmacsContext, module::EmacsModule, user_idle};
+use crate::{
+    context::EmacsContext,
+    module::{module, EmacsModule},
+};
 
 emacs::plugin_is_GPL_compatible!();
 
@@ -23,7 +26,7 @@ fn start(env: &Env) -> Result<EmacsContext, emacs::Error> {
             .add_module(mtool_storage::module())
             .add_module(mtool_p2p::module())
             .add_module(mtool_system::module())
-            .add_module(user_idle::EmacsModule);
+            .add_module(module());
 
         builder.build().run();
     });

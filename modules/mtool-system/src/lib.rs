@@ -4,6 +4,7 @@ mod event_source;
 mod module;
 mod p2p;
 mod platform;
+mod keyboard;
 
 pub use event::*;
 pub use event_source::*;

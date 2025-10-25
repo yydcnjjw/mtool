@@ -90,7 +90,7 @@ build-emacs:
     set -euo pipefail
     cargo build --target x86_64-unknown-linux-gnu -p mtool-emacs --no-default-features
     cd target/x86_64-unknown-linux-gnu/debug/
-    rm mtool.so
+    [ -f mtool.so ] && rm mtool.so
     ln -s libmtool_emacs.so mtool.so
 
 alias wt := watch-tailwindcss

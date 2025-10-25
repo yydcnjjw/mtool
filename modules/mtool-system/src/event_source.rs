@@ -16,6 +16,7 @@ use crate::{
 };
 
 pub struct SystemEventSource {
+    #[allow(unused)]
     config: Config,
     pub(crate) inner: platform::SystemEventSource,
 }
