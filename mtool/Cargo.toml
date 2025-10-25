@@ -11,7 +11,8 @@ default = [ "desktop" ]
 
 system = [
   "mtool-core/python",
-  "dep:mtool-system"
+  "dep:mtool-system",
+  "dep:mtool-emacs",
 ]
 
 graphic = [

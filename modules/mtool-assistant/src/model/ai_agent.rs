@@ -17,22 +17,27 @@ use mtool_core::ConfigStore;
 #[derive(Clone)]
 pub struct Agent {
     api_key: String,
+    model: String,
 }
 
 impl Agent {
     async fn new(cs: Res<ConfigStore>) -> Result<Self, anyhow::Error> {
         Ok(Self {
             api_key: cs.get("ai.gemini.api_key")?,
+            model: cs.get("ai.gemini.model")?,
         })
     }
 
-    pub async fn client() -> Result<gemini::Client, anyhow::Error> {
+    pub async fn client() -> Result<(gemini::Client, String), anyhow::Error> {
         let agent = inject_once(&consume_context::<Injector>(), Agent::new).await??;
-        Ok(gemini::client::ClientBuilder::new_with_client(
-            &agent.api_key,
-            reqwest::Client::builder().build()?,
-        )
-        .build()?)
+        Ok((
+            gemini::client::ClientBuilder::new_with_client(
+                &agent.api_key,
+                reqwest::Client::builder().build()?,
+            )
+            .build()?,
+            agent.model.to_owned(),
+        ))
     }
 
     pub async fn chat(
@@ -41,10 +46,10 @@ impl Agent {
         StreamingCompletionResponse<gemini::streaming::StreamingCompletionResponse>,
         anyhow::Error,
     > {
-        let client = Agent::client().await?;
+        let (client, model) = Agent::client().await?;
 
         let chat = client
-            .agent("gemini-2.5-flash-lite")
+            .agent(&model)
             .temperature(1.)
             .additional_params(serde_json::to_value(prompt.additional_parameters())?)
             .build();

@@ -1,3 +1,4 @@
+use mapp::{anyhow, keyboard_types::KeyState, tokio::sync::broadcast, tracing::warn};
 use std::{
     sync::{
         atomic::{AtomicU32, Ordering},
@@ -5,19 +6,14 @@ use std::{
     },
     thread,
 };
-
-use mapp::{
-    anyhow,
-    keyboard_types::{Code, KeyState, Modifiers},
-    prelude::*,
-    tokio::sync::broadcast,
-    tracing::warn,
-};
 use windows::Win32::{
     Foundation::*, System::Threading::GetCurrentThreadId, UI::WindowsAndMessaging::*,
 };
 
-use crate::{platform::windows::keyboard::scancode_to_physicalkey, Keyboard, SystemEvent};
+use crate::{
+    keyboard::update_modifier_state, platform::windows::keyboard::scancode_to_physicalkey,
+    Keyboard, SystemEvent,
+};
 
 use super::hook::{Hook, LowLevelKeyboardEvent};
 

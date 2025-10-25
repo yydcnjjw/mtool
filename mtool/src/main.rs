@@ -12,20 +12,22 @@ fn run(mut builder: mapp::AppBuilder) {
         .add_module(mtool_p2p::module())
         .add_module(mtool_storage::module());
 
-    #[cfg(feature = "graphic")]
+    #[cfg(feature = "system")]
     builder
-        .add_module(mtool_dioxus::module())
         .add_module(mtool_system::module())
         .add_module(mtool_emacs::module());
 
-    #[cfg(any(feature = "mobile", feature = "desktop"))]
-    builder.add_module(mtool_assistant::module());
+    #[cfg(feature = "graphic")]
+    builder.add_module(mtool_dioxus::module());
 
     #[cfg(feature = "desktop")]
     builder
         .add_module(mtool_cmdpal::module())
         .add_module(mtool_proxy::module())
         .add_module(mtool_apps::module());
+
+    #[cfg(any(feature = "mobile", feature = "desktop"))]
+    builder.add_module(mtool_assistant::module());
 
     builder.build().run();
 }
