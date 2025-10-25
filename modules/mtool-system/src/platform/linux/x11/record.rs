@@ -7,24 +7,17 @@ use mapp::{
     },
     keyboard_types::KeyState,
     tokio,
-    tracing::{debug, info},
+    tracing::debug,
 };
-use std::{
-    ops::Deref,
-    sync::atomic::{AtomicI64, Ordering},
-    u8,
-};
+use std::sync::atomic::{AtomicI64, Ordering};
 use x11rb_async::{
-    blocking::BlockingConnection,
     connection::{Connection, RequestConnection},
     protocol::{
         record::{self, ConnectionExt as _},
-        xkb::{self, ConnectionExt as _},
         xproto,
     },
     rust_connection::RustConnection,
     x11_utils::TryParse,
-    XCBConnection,
 };
 
 use crate::{
@@ -81,6 +74,7 @@ impl RecordSession {
 }
 
 impl RecordSession {
+    #[allow(unused)]
     pub async fn close(&self) -> Result<(), anyhow::Error> {
         let id = self.id.load(Ordering::Relaxed);
         if id != -1 {

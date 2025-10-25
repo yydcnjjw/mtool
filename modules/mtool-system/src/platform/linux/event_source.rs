@@ -2,7 +2,7 @@ use mapp::{
     anyhow,
     futures::{StreamExt, TryFutureExt},
     tokio::{self, sync::broadcast},
-    tracing::{info, warn},
+    tracing::warn,
 };
 use std::sync::Arc;
 
@@ -12,13 +12,8 @@ use super::x11;
 
 pub struct SystemEventSource {
     source: broadcast::Sender<SystemEvent>,
-    session: Arc<x11::RecordSession>,
+    _session: Arc<x11::RecordSession>,
 }
-
-// TODO:
-// impl Drop for SystemEventSource {
-//     fn drop(&mut self) {}
-// }
 
 impl SystemEventSource {
     pub async fn new() -> Result<SystemEventSource, anyhow::Error> {
@@ -49,7 +44,10 @@ impl SystemEventSource {
             );
         }
 
-        Ok(SystemEventSource { source, session })
+        Ok(SystemEventSource {
+            source,
+            _session: session,
+        })
     }
 
     pub fn subscribe(&self) -> broadcast::Receiver<SystemEvent> {

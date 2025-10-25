@@ -129,7 +129,7 @@ async fn broadcast_user_idle(
 
         loop {
             if let Err(e) = tokio::select! {
-                Ok(SystemEvent::Keyboard(keyboard)) = rx.recv() => {
+                Ok(SystemEvent::Keyboard(_keyboard)) = rx.recv() => {
                     if !USER_IDLE.is_active() {
                         peer.publish(&IDLE_TIME_TOPIC, &Message::Update(USER_IDLE.active())).await
                     } else {
