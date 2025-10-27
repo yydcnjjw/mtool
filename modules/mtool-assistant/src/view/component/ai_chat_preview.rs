@@ -74,7 +74,8 @@ pub fn AiChatPreview(prompt: ReadSignal<ChatPrompt>) -> Element {
                             reasoning
                                 .first()
                                 .and_then(|text| {
-                                    text.split_once("\n\n").map(|(title, _)| title.to_owned())
+                                    text.split_once("\n\n")
+                                        .map(|(title, _)| title.trim_matches('*').to_owned())
                                 })
                                 .unwrap_or_default(),
                         );
