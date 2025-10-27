@@ -35,7 +35,7 @@ pub fn AiChatPreview(prompt: ReadSignal<ChatPrompt>) -> Element {
     let mut reasoning_title = use_signal(|| String::new());
     let mut text_content = use_signal(|| String::new());
 
-    let mut chat = use_future(move || {
+    let mut chat = use_resource(move || {
         let prompt = prompt();
 
         reasoning_title.set("".into());
