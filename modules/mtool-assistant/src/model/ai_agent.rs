@@ -18,6 +18,7 @@ use mtool_core::ConfigStore;
 pub struct Agent {
     api_key: String,
     model: String,
+    https_proxy: Option<String>,
 }
 
 impl Agent {
@@ -25,19 +26,21 @@ impl Agent {
         Ok(Self {
             api_key: cs.get("ai.gemini.api_key")?,
             model: cs.get("ai.gemini.model")?,
+            https_proxy: cs.get_optional("ai.https_proxy"),
         })
     }
 
     pub async fn client() -> Result<(gemini::Client, String), anyhow::Error> {
         let agent = inject_once(&consume_context::<Injector>(), Agent::new).await??;
+        let mut client = reqwest::Client::builder();
+
+        if let Some(https_proxy) = agent.https_proxy {
+            client = client.proxy(Proxy::https(https_proxy)?);
+        }
+
         Ok((
-            gemini::client::ClientBuilder::new_with_client(
-                &agent.api_key,
-                reqwest::Client::builder()
-                    .proxy(Proxy::https("http://127.0.0.1:8188")?)
-                    .build()?,
-            )
-            .build()?,
+            gemini::client::ClientBuilder::new_with_client(&agent.api_key, client.build()?)
+                .build()?,
             agent.model.to_owned(),
         ))
     }
