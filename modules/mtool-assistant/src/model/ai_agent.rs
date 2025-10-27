@@ -3,7 +3,7 @@ use mapp::{
     anyhow,
     itertools::Itertools,
     prelude::*,
-    reqwest,
+    reqwest::{self, Proxy},
     rig::{
         client::CompletionClient,
         message::Message,
@@ -33,7 +33,9 @@ impl Agent {
         Ok((
             gemini::client::ClientBuilder::new_with_client(
                 &agent.api_key,
-                reqwest::Client::builder().build()?,
+                reqwest::Client::builder()
+                    .proxy(Proxy::https("http://127.0.0.1:8188")?)
+                    .build()?,
             )
             .build()?,
             agent.model.to_owned(),
