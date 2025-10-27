@@ -8,8 +8,6 @@ use mapp::{
     tracing::{debug, warn},
 };
 use mtool_p2p::SubjectMessage;
-#[cfg(feature = "desktop")]
-use mtool_system::NotificationContent;
 use mtool_system::{Notification, NotificationContent, RemoteSystemEventSource, SystemEvent};
 use std::{
     io::{BufReader, Cursor},
