@@ -23,7 +23,9 @@ use mtool_storage::lww;
 use std::{any::type_name, sync::Arc};
 
 use crate::{
-    media::{MediaMetadata, MediaPlayer, PlaybackState, Player, PlayerEvent, TimedCue},
+    media::{
+        MediaMetadata, MediaPlayer, PlaybackState, Player, PlayerEvent, TimedCue, TimedCueData,
+    },
     model::{ChatPrompt, ChatQuery, NeteaseViewModel},
     view::component::AiChatPreview,
 };
@@ -347,18 +349,14 @@ async fn try_load_player_and_media(
         player.set_media_items(items).await?;
 
         {
-            to_owned![player];
+            to_owned![player, context];
             let mut online_player_id = context.online_player_id.subscribe();
 
             let mut stream = player.listen().await?;
-            tokio::spawn(async move {
+            spawn(async move {
                 loop {
                     tokio::select! {
-                        Some(Ok(ev)) = stream.next() => match ev {
-                            PlayerEvent::MediaMetadataChanged{ metadata } => { context.media_metadata.set(metadata) }
-                            PlayerEvent::TimedCuesChanged{ track_id, cue}=>{ context.current_timed_cue.set((track_id,cue)) }
-                            PlayerEvent::PlaybackStateChanged { state } => { context.playback_state.set(state) },
-                        },
+                        Some(Ok(ev)) = stream.next() => handle_player_event(&context, ev),
                         Ok(()) = online_player_id.changed() => {
                             if online_player_id.borrow_and_update().as_ref() != Some(&context.id) {
                                 player.pause().await.unwrap_or_else(|e| warn!("{e:?}"));
@@ -374,6 +372,27 @@ async fn try_load_player_and_media(
     }
 
     Ok(())
+}
+
+fn handle_player_event(context: &MediaPlayerControlContext, ev: PlayerEvent) {
+    match ev {
+        PlayerEvent::MediaMetadataChanged { metadata } => {
+            context.current_timed_cue.set((
+                "".into(),
+                TimedCue {
+                    data: TimedCueData::Text(metadata.title.clone()),
+                    ..Default::default()
+                },
+            ));
+            context.media_metadata.set(metadata);
+        }
+        PlayerEvent::TimedCuesChanged { track_id, cue } => {
+            context.current_timed_cue.set((track_id, cue));
+        }
+        PlayerEvent::PlaybackStateChanged { state } => {
+            context.playback_state.set(state);
+        }
+    }
 }
 
 async fn create_player(dioxus_context: DioxusContext) -> Result<Arc<MediaPlayer>, anyhow::Error> {
