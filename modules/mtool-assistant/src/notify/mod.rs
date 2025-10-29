@@ -11,7 +11,8 @@ impl AppModule for Module {
     async fn init(&self, ctx: &mut AppContext) -> Result<(), anyhow::Error> {
         ctx.injector().construct_once(NotifyReceiver::construct);
         ctx.schedule()
-            .add_once_task(AppStage::Run, NotifyReceiver::listen_system);
+            .add_once_task(AppStage::Run, NotifyReceiver::listen_remote_system_event)
+            .add_once_task(AppStage::Run, NotifyReceiver::listen_system_event);
         Ok(())
     }
 }
