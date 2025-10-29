@@ -38,8 +38,8 @@ pub struct MediaPlayerControlContext {
     pub current_timed_cue: lww::State<(String, TimedCue)>,
     pub playback_state: lww::State<PlaybackState>,
 
-    pub player: Signal<Option<Arc<MediaPlayer>>>,
-    pub volume: Signal<f64>,
+    pub player: SyncSignal<Option<Arc<MediaPlayer>>>,
+    pub volume: SyncSignal<f64>,
 }
 
 impl MediaPlayerControlContext {
@@ -70,8 +70,8 @@ impl MediaPlayerControlContext {
                             "assistant.player.playback_state",
                         )
                         .await?,
-                        player: Signal::new_in_scope(None, ScopeId::ROOT),
-                        volume: Signal::new_in_scope(0., ScopeId::ROOT),
+                        player: SyncSignal::new_maybe_sync_in_scope(None, ScopeId::ROOT),
+                        volume: SyncSignal::new_maybe_sync_in_scope(0., ScopeId::ROOT),
                     }),
                 };
 
@@ -353,7 +353,7 @@ async fn try_load_player_and_media(
             let mut online_player_id = context.online_player_id.subscribe();
 
             let mut stream = player.listen().await?;
-            spawn(async move {
+            tokio::spawn(async move {
                 loop {
                     tokio::select! {
                         Some(Ok(ev)) = stream.next() => handle_player_event(&context, ev),
