@@ -58,17 +58,17 @@ pub fn P2pDashboard() -> Element {
                         }
                     }
                 }
-                ul {
-                    class: "list rounded-box shadow-md",
-                    li {
-                        class: "p-4 pb-2 text-xs opacity-60",
-                        "Gossipsub all peers",
-                        span {
-                            class: "badge mx-2",
-                            "{gossipsub.all_peers.len()}"
-                        }
+                div {
+                    class: "p-4 pb-2 text-xs opacity-60",
+                    "Gossipsub all peers",
+                    span {
+                        class: "badge mx-2",
+                        "{gossipsub.all_peers.len()}"
                     }
+                }
 
+                ul {
+                    class: "list rounded-box shadow-md overflow-scroll",
                     for (peer_id, topics) in gossipsub.all_peers.iter() {
                         li {
                             class: "list-row",
