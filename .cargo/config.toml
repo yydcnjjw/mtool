@@ -163,3 +163,8 @@ bevy_core_pipeline = { git = "https://github.com/yydcnjjw/bevy.git", branch = "d
 # naga = { path = "/home/yydcnjjw/workspace/project/wgpu/naga" }
 
 x11rb-async = { git = "https://github.com/yydcnjjw/x11rb.git", branch = "mtool" }
+
+[target.x86_64-pc-windows-msvc]
+# dioxus will randomly add flags causing some libraries such as
+# (if-watch needs to build DLL) build failure
+rustflags = [ "-Clink-arg=/SUBSYSTEM:CONSOLE" ]

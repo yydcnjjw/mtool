@@ -35,9 +35,9 @@ edition = "2021"
 
 [workspace.dependencies]
 # TODO: macro re-export support
-dioxus = { version = "0.7.0-rc.0" }
-dioxus-desktop = { version = "0.7.0-rc.0" }
-dioxus-asset-resolver = { version = "0.7.0-rc.0" }
+dioxus = { version = "0.7" }
+dioxus-desktop = { version = "0.7" }
+dioxus-asset-resolver = { version = "0.7" }
 
 bevy = { version = "0.16.1" }
 ouroboros = "*"

@@ -26,5 +26,5 @@ isahc = { version = "^1", features = [ "cookies" ] }
 urlqstring = "*"
 
 [dev-dependencies]
-test-log = { version = "*", features = ["trace"] }
+test-log = { version = "*", features = [ "trace" ] }
 env_logger = "*"

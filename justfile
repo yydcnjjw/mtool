@@ -46,8 +46,9 @@ build:
     set -euo pipefail
     dx_windows_out_dir={{dx_out_dir}}/windows
     dx_windows_app_dir=$dx_windows_out_dir/app
+    export AWS_LC_SYS_INCLUDES="/home/yydcnjjw/.xwin-cache/splat/sdk/include/ucrt:/home/yydcnjjw/.xwin-cache/splat/crt/include"
 
-    dx build --target x86_64-pc-windows-msvc -p mtool --windows --no-default-features
+    dx build --target x86_64-pc-windows-msvc -p mtool --windows --no-default-features --windows-subsystem console
 
     uv build --all-packages --wheel
     uv pip install dist/*.whl --target $dx_windows_app_dir/site-packages --compile-bytecode
