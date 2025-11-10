@@ -1,4 +1,5 @@
 use mapp::{
+    dpi::PhysicalPosition,
     keyboard_types::{Code, KeyState, Modifiers},
     serde::{Deserialize, Serialize},
 };
@@ -8,6 +9,39 @@ use mapp::{
 pub enum SystemEvent {
     NotificationPosted(Notification),
     Keyboard(Keyboard),
+    Mouse(MouseEvent),
+}
+
+pub type ButtonId = u32;
+
+#[derive(Debug, Hash, PartialEq, Eq, Clone, Copy, Serialize, Deserialize)]
+#[serde(crate = "mapp::serde")]
+pub enum ElementState {
+    Pressed,
+    Released,
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Serialize, Deserialize)]
+#[serde(crate = "mapp::serde")]
+pub enum MouseScrollDelta {
+    LineDelta(f32, f32),
+    PixelDelta(PhysicalPosition<f64>),
+}
+
+#[derive(Clone, Debug, Serialize, Deserialize)]
+#[serde(crate = "mapp::serde")]
+pub enum MouseEvent {
+    Motion {
+        position: PhysicalPosition<i64>,
+    },
+    Wheel {
+        position: PhysicalPosition<i64>,
+        delta: MouseScrollDelta,
+    },
+    Button {
+        position: PhysicalPosition<i64>,
+        state: ElementState,
+    },
 }
 
 #[derive(Clone, Debug, Serialize, Deserialize)]

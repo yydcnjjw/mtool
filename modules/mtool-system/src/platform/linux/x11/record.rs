@@ -1,5 +1,6 @@
 use mapp::{
     anyhow::{self, anyhow, bail},
+    dpi::PhysicalPosition,
     futures::{
         future,
         stream::{self, BoxStream},
@@ -22,7 +23,7 @@ use x11rb_async::{
 
 use crate::{
     keyboard::update_modifier_state, platform::linux::x11::keyboard::scancode_to_physicalkey,
-    Keyboard, SystemEvent,
+    ElementState, Keyboard, MouseEvent, SystemEvent,
 };
 
 pub type EventStream<'a> = BoxStream<'a, Result<SystemEvent, anyhow::Error>>;
@@ -157,10 +158,11 @@ fn try_parse<'a, 'b>(data: &'b [u8]) -> Result<(Option<SystemEvent>, &'b [u8]), 
     let ev = data[0];
     match ev {
         xproto::KEY_PRESS_EVENT | xproto::KEY_RELEASE_EVENT => {
-            let ((event, remaining), state) = if ev == xproto::KEY_PRESS_EVENT {
-                (xproto::KeyPressEvent::try_parse(data)?, KeyState::Down)
+            let (event, remaining) = xproto::KeyPressEvent::try_parse(data)?;
+            let state = if ev == xproto::KEY_PRESS_EVENT {
+                KeyState::Down
             } else {
-                (xproto::KeyReleaseEvent::try_parse(data)?, KeyState::Up)
+                KeyState::Up
             };
 
             let event =
@@ -174,17 +176,26 @@ fn try_parse<'a, 'b>(data: &'b [u8]) -> Result<(Option<SystemEvent>, &'b [u8]), 
 
             Ok((event, remaining))
         }
-        xproto::BUTTON_PRESS_EVENT => {
-            let (_event, remaining) = xproto::ButtonPressEvent::try_parse(data)?;
-            Ok((None, remaining))
-        }
-        xproto::BUTTON_RELEASE_EVENT => {
-            let (_event, remaining) = xproto::ButtonReleaseEvent::try_parse(data)?;
-            Ok((None, remaining))
+        xproto::BUTTON_PRESS_EVENT | xproto::BUTTON_RELEASE_EVENT => {
+            let (event, remaining) = xproto::ButtonPressEvent::try_parse(data)?;
+            let position = PhysicalPosition::new(event.root_x as i64, event.root_y as i64);
+            let state = if ev == xproto::BUTTON_PRESS_EVENT {
+                ElementState::Pressed
+            } else {
+                ElementState::Released
+            };
+            Ok((
+                Some(SystemEvent::Mouse(MouseEvent::Button { position, state })),
+                remaining,
+            ))
         }
         xproto::MOTION_NOTIFY_EVENT => {
-            let (_event, remaining) = xproto::MotionNotifyEvent::try_parse(data)?;
-            Ok((None, remaining))
+            let (event, remaining) = xproto::MotionNotifyEvent::try_parse(data)?;
+            let position = PhysicalPosition::new(event.root_x as i64, event.root_y as i64);
+            Ok((
+                Some(SystemEvent::Mouse(MouseEvent::Motion { position })),
+                remaining,
+            ))
         }
         0 => {
             // This is a reply, we compute its length as follows
