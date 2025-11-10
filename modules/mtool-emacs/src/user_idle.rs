@@ -129,12 +129,20 @@ async fn broadcast_user_idle(
 
         loop {
             if let Err(e) = tokio::select! {
-                Ok(SystemEvent::Keyboard(_keyboard)) = rx.recv() => {
-                    if !USER_IDLE.is_active() {
-                        peer.publish(&IDLE_TIME_TOPIC, &Message::Update(USER_IDLE.active())).await
-                    } else {
-                        Ok(())
+                Ok(ev) = rx.recv() => {
+                    match ev {
+                        SystemEvent::Keyboard(_) | SystemEvent::Mouse(_) => {
+                            if !USER_IDLE.is_active() {
+                                peer.publish(&IDLE_TIME_TOPIC, &Message::Update(USER_IDLE.active())).await
+                            } else {
+                                Ok(())
+                            }
+                        }
+                        _ => {
+                            Ok(())
+                        }
                     }
+
                 }
                 _ = timer.tick() => {
                     peer.publish(&IDLE_TIME_TOPIC, &Message::Update(USER_IDLE.add(check_idle_interval))).await

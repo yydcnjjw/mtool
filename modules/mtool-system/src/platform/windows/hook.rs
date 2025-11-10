@@ -22,7 +22,12 @@ pub struct HookData<Callback> {
 type LowLevelKeybarodCallback = Box<dyn for<'a> Fn(LowLevelKeyboardEvent<'a>) + Send + Sync>;
 type LowLevelKeyboardHookData = HookData<LowLevelKeybarodCallback>;
 
+type LowLevelMouseCallback = Box<dyn for<'a> Fn(LowLevelMouseEvent<'a>) + Send + Sync>;
+type LowLevelMouseHookData = HookData<LowLevelMouseCallback>;
+
 static LLKB_HOOK: OnceCell<RwLock<LowLevelKeyboardHookData>> = OnceCell::new();
+
+static LLMS_HOOK: OnceCell<RwLock<LowLevelMouseHookData>> = OnceCell::new();
 
 impl Hook {
     pub fn global_low_level_keyboard_hook<Callback>(
@@ -54,6 +59,34 @@ impl Hook {
 
         Ok(Hook { handle })
     }
+
+    pub fn global_low_level_mouse_hook<Callback>(callback: Callback) -> Result<Hook, anyhow::Error>
+    where
+        Callback: for<'a> Fn(LowLevelMouseEvent<'a>) + Send + Sync + 'static,
+    {
+        info!("global low level mouse hook");
+        let handle = unsafe {
+            SetWindowsHookExW(
+                WH_MOUSE_LL,
+                Some(low_level_mouse_hook),
+                Some(GetModuleHandleW(None)?.into()),
+                0,
+            )?
+        };
+
+        let hook_data = HookData {
+            handle: handle.0 as u64,
+            callback: Box::new(callback) as LowLevelMouseCallback,
+        };
+
+        if let Some(data) = LLMS_HOOK.get() {
+            *data.write() = hook_data;
+        } else {
+            _ = LLMS_HOOK.set(RwLock::new(hook_data));
+        }
+
+        Ok(Hook { handle })
+    }
 }
 
 impl Drop for Hook {
@@ -77,6 +110,30 @@ extern "system" fn low_level_keyboard_hook(code: i32, wparam: WPARAM, lparam: LP
         if code as u32 == HC_ACTION {
             (hook.callback)(LowLevelKeyboardEvent {
                 lparam: unsafe { (lparam.0 as *mut KBDLLHOOKSTRUCT).as_mut().unwrap() },
+                wparam,
+            })
+        }
+
+        Some(HHOOK(hook.handle as *mut c_void))
+    } else {
+        None
+    };
+
+    unsafe { CallNextHookEx(handle, code, wparam, lparam) }
+}
+
+pub struct LowLevelMouseEvent<'a> {
+    pub lparam: &'a MSLLHOOKSTRUCT,
+    pub wparam: WPARAM,
+}
+
+extern "system" fn low_level_mouse_hook(code: i32, wparam: WPARAM, lparam: LPARAM) -> LRESULT {
+    let handle = if let Some(hook_data) = LLMS_HOOK.get() {
+        let hook = hook_data.read();
+
+        if code as u32 == HC_ACTION {
+            (hook.callback)(LowLevelMouseEvent {
+                lparam: unsafe { (lparam.0 as *mut MSLLHOOKSTRUCT).as_mut().unwrap() },
                 wparam,
             })
         }

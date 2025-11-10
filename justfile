@@ -47,8 +47,11 @@ build:
     dx_windows_out_dir={{dx_out_dir}}/windows
     dx_windows_app_dir=$dx_windows_out_dir/app
     export AWS_LC_SYS_INCLUDES="/home/yydcnjjw/.xwin-cache/splat/sdk/include/ucrt:/home/yydcnjjw/.xwin-cache/splat/crt/include"
+    # NOTE: dioxus will randomly add flags causing some libraries such as
+    # (if-watch needs to build DLL) build failure
+    export RUSTFLAGS="-Clink-arg=/SUBSYSTEM:CONSOLE"
 
-    dx build --target x86_64-pc-windows-msvc -p mtool --windows --no-default-features --windows-subsystem console
+    dx build --target x86_64-pc-windows-msvc -p mtool --windows --no-default-features
 
     uv build --all-packages --wheel
     uv pip install dist/*.whl --target $dx_windows_app_dir/site-packages --compile-bytecode
@@ -84,8 +87,11 @@ serve-bevy:
     dx serve --target x86_64-pc-windows-msvc -p mtool --platform windows --addr 127.0.0.1 --features 'desktop,bevy,bevy_dynamic_linking'
 
 package:
-    dx bundle -p mtool --windows --package-types nsis --verbose --target x86_64-pc-windows-msvc --release
-    
+    #!/usr/bin/env zsh
+    export AWS_LC_SYS_INCLUDES="/home/yydcnjjw/.xwin-cache/splat/sdk/include/ucrt:/home/yydcnjjw/.xwin-cache/splat/crt/include"
+    export RUSTFLAGS="-Clink-arg=/SUBSYSTEM:WINDOWS"
+    dx bundle -p mtool --windows --package-types nsis --verbose --target x86_64-pc-windows-msvc --release --no-default-features
+
 build-emacs:
     #!/usr/bin/env zsh
     set -euo pipefail

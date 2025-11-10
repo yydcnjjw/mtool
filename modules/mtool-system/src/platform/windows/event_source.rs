@@ -1,4 +1,6 @@
-use mapp::{anyhow, keyboard_types::KeyState, tokio::sync::broadcast, tracing::warn};
+use mapp::{
+    anyhow, dpi::PhysicalPosition, keyboard_types::KeyState, tokio::sync::broadcast, tracing::warn,
+};
 use std::{
     sync::{
         atomic::{AtomicU32, Ordering},
@@ -12,10 +14,10 @@ use windows::Win32::{
 
 use crate::{
     keyboard::update_modifier_state, platform::windows::keyboard::scancode_to_physicalkey,
-    Keyboard, SystemEvent,
+    ElementState, Keyboard, MouseEvent, MouseScrollDelta, SystemEvent,
 };
 
-use super::hook::{Hook, LowLevelKeyboardEvent};
+use super::hook::{Hook, LowLevelKeyboardEvent, LowLevelMouseEvent};
 
 pub struct SystemEventSource {
     source: broadcast::Sender<SystemEvent>,
@@ -58,9 +60,19 @@ impl SystemEventSource {
     }
 
     fn system_event_loop(sender: broadcast::Sender<SystemEvent>) -> Result<(), anyhow::Error> {
-        let _llkbh = Hook::global_low_level_keyboard_hook(move |ev| {
-            Self::handle_llkb_event(&sender, ev);
-        })?;
+        let _llkbh = {
+            let sender = sender.clone();
+            Hook::global_low_level_keyboard_hook(move |ev| {
+                Self::handle_llkb_event(&sender, ev);
+            })?
+        };
+
+        let _llmsh = {
+            let sender = sender.clone();
+            Hook::global_low_level_mouse_hook(move |ev| {
+                Self::handle_llms_event(&sender, ev);
+            })?
+        };
 
         let mut msg = MSG::default();
         unsafe {
@@ -93,6 +105,37 @@ impl SystemEventSource {
             })) {
                 warn!("{e:?}");
             }
+        }
+    }
+
+    fn handle_llms_event(
+        sender: &broadcast::Sender<SystemEvent>,
+        LowLevelMouseEvent { lparam, wparam }: LowLevelMouseEvent,
+    ) {
+        let position = PhysicalPosition::new(lparam.pt.x as i64, lparam.pt.y as i64);
+        let ev = match wparam.0 as u32 {
+            WM_MOUSEWHEEL => {
+                let value = (lparam.mouseData >> 16) as i16;
+                let value = value as f32 / WHEEL_DELTA as f32;
+                MouseEvent::Wheel {
+                    position,
+                    delta: MouseScrollDelta::LineDelta(0.0, value),
+                }
+            }
+            WM_MOUSEMOVE => MouseEvent::Motion { position },
+            WM_LBUTTONDOWN | WM_RBUTTONDOWN => MouseEvent::Button {
+                position,
+                state: ElementState::Pressed,
+            },
+            WM_LBUTTONUP | WM_RBUTTONUP => MouseEvent::Button {
+                position,
+                state: ElementState::Released,
+            },
+            _ => return,
+        };
+
+        if let Err(e) = sender.send(SystemEvent::Mouse(ev)) {
+            warn!("{e:?}");
         }
     }
 
