@@ -1,4 +1,8 @@
 use dioxus::prelude::*;
+use dioxus_desktop::{
+    use_wry_event_handler,
+    winit::event::{DeviceEvent::Key, Event::DeviceEvent},
+};
 use dioxus_primitives::toast::ToastProvider;
 
 use crate::keybinding::Keybinding;
@@ -10,16 +14,18 @@ pub fn WindowView(
 ) -> Element {
     let keybinding = use_context_provider(provide_keybinding);
 
-    let onkeydown = move |e| {
-        keybinding.handle_web_key_down(e);
-    };
+    use_wry_event_handler(move |ev, _event_loop| match ev {
+        DeviceEvent {
+            event: Key(event), ..
+        } => keybinding.handle_device_event(event),
+        _ => (),
+    });
 
     rsx! {
         document::Stylesheet {
             href: asset!("/assets/tailwind.css")
         },
         div {
-            onkeydown,
             ..attributes,
             ToastProvider {
                 children

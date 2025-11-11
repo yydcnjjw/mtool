@@ -2,16 +2,15 @@ use std::{future::Future, sync::Arc};
 
 use dioxus::prelude::*;
 use dioxus_desktop::winit::{
-    event::{ElementState, KeyEvent, Modifiers as WinitModifiers},
+    event::{ElementState, RawKeyEvent},
     keyboard::{KeyCode as WinitKeyCode, PhysicalKey as WinitPhysicalKey},
-    window::WindowId,
 };
 use mapp::{
     anyhow,
-    keyboard_types::{Code as KeyCode, Modifiers},
+    keyboard_types::{Code as KeyCode, KeyState, Modifiers},
     prelude::*,
     send_wrapper::SendWrapper,
-    sync::{Mutex, RwLock},
+    sync::Mutex,
     tokio,
     tracing::{debug, warn},
 };
@@ -71,7 +70,6 @@ type Dispatcher = KeyDispatcher<Action>;
 #[derive(Clone)]
 pub struct Keybinding {
     dispatcher: Arc<Mutex<Dispatcher>>,
-    modifiers: Arc<RwLock<Modifiers>>,
 }
 
 impl PartialEq for Keybinding {
@@ -151,7 +149,6 @@ impl Keybinding {
     pub fn new() -> Self {
         Self {
             dispatcher: Arc::new(Mutex::new(KeyDispatcher::new())),
-            modifiers: Arc::new(RwLock::new(Modifiers::empty())),
         }
     }
 
@@ -185,39 +182,49 @@ impl Keybinding {
         self.dispatcher.lock().dispatch(KeyCombine { code, mods });
     }
 
-    pub fn handle_key_event(&self, _: &WindowId, key: &KeyEvent) {
-        if let ElementState::Released = key.state {
+    pub fn handle_device_event(&self, ev: &RawKeyEvent) {
+        let key = from_winit_physical_key(&ev.physical_key);
+        let state = match ev.state {
+            ElementState::Pressed => KeyState::Down,
+            ElementState::Released => KeyState::Up,
+        };
+
+        let kc = if let Some(code) = key {
+            KeyCombine {
+                code,
+                mods: Self::update_modifier_state(&code, &state),
+            }
+        } else {
+            return;
+        };
+
+        if let KeyState::Up = state {
             return;
         }
 
-        let key = from_winit_physical_key(&key.physical_key);
-        if let Some(key) = key {
-            self.dispatcher.lock().dispatch(KeyCombine {
-                code: key,
-                mods: *self.modifiers.read(),
-            });
-        }
+        self.dispatcher.lock().dispatch(kc);
     }
 
-    pub fn handle_modifiers_changed(&self, _: &WindowId, winit_mods: &WinitModifiers) {
-        let mut modifiers = Modifiers::empty();
-        if winit_mods.state().super_key() {
-            modifiers |= Modifiers::SUPER
-        }
+    fn update_modifier_state(code: &Code, state: &KeyState) -> Modifiers {
+        static mut MODIFIERS: Modifiers = Modifiers::empty();
 
-        if winit_mods.state().alt_key() {
-            modifiers |= Modifiers::ALT
-        }
+        let modifer = match code {
+            Code::ShiftLeft | Code::ShiftRight => Modifiers::SHIFT,
+            Code::CapsLock => Modifiers::CAPS_LOCK,
+            Code::ControlLeft | Code::ControlRight => Modifiers::CONTROL,
+            Code::AltLeft | Code::AltRight => Modifiers::ALT,
+            Code::NumLock => Modifiers::NUM_LOCK,
+            Code::Super => Modifiers::SUPER,
+            _ => Modifiers::empty(),
+        };
 
-        if winit_mods.state().shift_key() {
-            modifiers |= Modifiers::SHIFT
+        unsafe {
+            match state {
+                KeyState::Down => MODIFIERS |= modifer,
+                KeyState::Up => MODIFIERS -= modifer,
+            };
+            MODIFIERS
         }
-
-        if winit_mods.state().control_key() {
-            modifiers |= Modifiers::CONTROL
-        }
-
-        *self.modifiers.write() = modifiers;
     }
 
     pub fn push_keymap(&self, id: &str, km: KeyMap<Action>) {
