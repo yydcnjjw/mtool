@@ -11,7 +11,7 @@ use mapp::{
     prelude::*,
     send_wrapper::SendWrapper,
     sync::Mutex,
-    tokio,
+    tokio::{self, sync::RwLock},
     tracing::{debug, warn},
 };
 pub use mkeybinding::*;
@@ -70,6 +70,7 @@ type Dispatcher = KeyDispatcher<Action>;
 #[derive(Clone)]
 pub struct Keybinding {
     dispatcher: Arc<Mutex<Dispatcher>>,
+    modifiers: Arc<Mutex<Modifiers>>,
 }
 
 impl PartialEq for Keybinding {
@@ -149,6 +150,7 @@ impl Keybinding {
     pub fn new() -> Self {
         Self {
             dispatcher: Arc::new(Mutex::new(KeyDispatcher::new())),
+            modifiers: Arc::new(Mutex::new(Modifiers::empty())),
         }
     }
 
@@ -192,7 +194,7 @@ impl Keybinding {
         let kc = if let Some(code) = key {
             KeyCombine {
                 code,
-                mods: Self::update_modifier_state(&code, &state),
+                mods: self.update_modifier_state(&code, &state),
             }
         } else {
             return;
@@ -205,9 +207,7 @@ impl Keybinding {
         self.dispatcher.lock().dispatch(kc);
     }
 
-    fn update_modifier_state(code: &Code, state: &KeyState) -> Modifiers {
-        static mut MODIFIERS: Modifiers = Modifiers::empty();
-
+    fn update_modifier_state(&self, code: &Code, state: &KeyState) -> Modifiers {
         let modifer = match code {
             Code::ShiftLeft | Code::ShiftRight => Modifiers::SHIFT,
             Code::CapsLock => Modifiers::CAPS_LOCK,
@@ -218,13 +218,12 @@ impl Keybinding {
             _ => Modifiers::empty(),
         };
 
-        unsafe {
-            match state {
-                KeyState::Down => MODIFIERS |= modifer,
-                KeyState::Up => MODIFIERS -= modifer,
-            };
-            MODIFIERS
-        }
+        let mut modifiers = self.modifiers.lock();
+        match state {
+            KeyState::Down => *modifiers |= modifer,
+            KeyState::Up => *modifiers -= modifer,
+        };
+        *modifiers
     }
 
     pub fn push_keymap(&self, id: &str, km: KeyMap<Action>) {
