@@ -7,13 +7,11 @@ use crate::KeySequence;
 pub enum Error {
     #[error("Key sequence not found {0}")]
     KeySequenceNotFound(KeySequence),
-    #[error("Key sequence {key} starts with non-prefix key {prefix}")]
+    #[error("Key sequence {kseq} starts with non-prefix key {prefix}")]
     KeySequenceExisted {
-        key: KeySequence,
+        kseq: KeySequence,
         prefix: KeySequence,
     },
     #[error(transparent)]
     Other(#[from] anyhow::Error),
 }
-
-pub(crate) type Result<T> = std::result::Result<T, Error>;

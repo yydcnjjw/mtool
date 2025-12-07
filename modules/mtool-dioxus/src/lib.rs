@@ -12,6 +12,7 @@ mod message;
 mod module;
 mod router;
 mod window;
+mod action;
 
 pub mod prelude {
     pub use crate::{

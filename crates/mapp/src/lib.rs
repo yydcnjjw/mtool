@@ -67,6 +67,7 @@ pub use tracing_appender;
 pub use tracing_subscriber;
 pub use url;
 pub use base64;
+pub use petgraph;
 
 #[cfg(feature = "ai")]
 pub use rig;

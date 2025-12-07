@@ -41,7 +41,7 @@ tracing-appender = "*"
 once_cell = "*"
 itertools = "*"
 regex = "*"
-nom = "7"
+nom = "*"
 pin-project = "*"
 pin-project-lite = "*"
 send_wrapper = "*"
@@ -51,11 +51,10 @@ wasm-bindgen = { version = "*", optional = true }
 js-sys = { version = "*", optional = true }
 serde-wasm-bindgen = { version = "*", optional = true }
 wasm-bindgen-futures = { version = "*", optional = true }
-petgraph = "0.6"
-ringbuf = "0.3"
+petgraph = "*"
 rand = "0.8"
 time = { version = "0.3.20", features = ["formatting"] }
-keyboard-types = "0.7"
+keyboard-types = "0.8"
 scopeguard = "*"
 rustls = "*"
 url = "*"

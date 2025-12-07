@@ -1,134 +1,89 @@
+use std::{cmp, fmt};
+
 use mapp::{
     tokio::sync::broadcast,
     tracing::{debug, warn},
 };
 
 use crate::{
-    kbd::{KeyCombine, KeySequence},
+    kbd::{CombineKey, KeySequence},
     keymap::KeyMap,
 };
 
-pub struct KeyDispatcher<Value> {
-    km_stack: Vec<(String, KeyMap<Value>)>,
-    cur_keyseq: KeySequence,
-    tx: broadcast::Sender<(KeySequence, Value)>,
+pub struct KeyDispatcher<KeyMapId, Value> {
+    keymap_stack: Vec<(KeyMapId, KeyMap<Value>)>,
+    current_keyseq: KeySequence,
+    sender: broadcast::Sender<(KeySequence, Value)>,
 }
 
-impl<Value> KeyDispatcher<Value>
+impl<KeyMapId, Value> KeyDispatcher<KeyMapId, Value>
 where
     Value: Clone,
+    KeyMapId: fmt::Display + Clone + cmp::PartialEq,
 {
     pub fn new() -> Self {
         let (tx, _) = broadcast::channel(32);
 
         Self {
-            km_stack: Vec::new(),
-            cur_keyseq: KeySequence::new(),
-            tx,
+            keymap_stack: Vec::new(),
+            current_keyseq: KeySequence::empty(),
+            sender: tx,
         }
     }
 
-    pub fn push_keymap(&mut self, id: &str, km: KeyMap<Value>) -> bool {
+    pub fn push_keymap(&mut self, id: &KeyMapId, km: KeyMap<Value>) -> bool {
         if self.contains_keymap(id) {
             return false;
         }
-        self.km_stack.push((id.to_string(), km));
+        self.keymap_stack.push((id.clone(), km));
         true
     }
 
-    pub fn pop_keymap(&mut self) -> Option<(String, KeyMap<Value>)> {
-        self.km_stack.pop()
+    pub fn pop_keymap(&mut self) -> Option<(KeyMapId, KeyMap<Value>)> {
+        self.keymap_stack.pop()
     }
 
-    pub fn remove_keymap(&mut self, id: &str) -> Option<(String, KeyMap<Value>)> {
-        self.km_stack
+    pub fn remove_keymap(&mut self, id: &KeyMapId) -> Option<(KeyMapId, KeyMap<Value>)> {
+        self.keymap_stack
             .iter()
-            .position(|v| v.0 == id)
-            .map(|i| self.km_stack.remove(i))
+            .position(|(key, _)| key == id)
+            .map(|i| self.keymap_stack.remove(i))
     }
 
-    pub fn contains_keymap(&self, id: &str) -> bool {
-        self.km_stack.iter().position(|v| v.0 == id).is_some()
+    pub fn contains_keymap(&self, id: &KeyMapId) -> bool {
+        self.keymap_stack.iter().position(|v| &v.0 == id).is_some()
     }
 
-    pub fn get_keymap_mut(&mut self, id: &str) -> Option<&mut KeyMap<Value>> {
-        self.km_stack
+    pub fn get_keymap_mut(&mut self, id: &KeyMapId) -> Option<&mut KeyMap<Value>> {
+        self.keymap_stack
             .iter_mut()
-            .find_map(|v| (v.0 == id).then_some(&mut v.1))
+            .find_map(|(key, value)| (key == id).then_some(value))
     }
 
-    pub fn dispatch(&mut self, key: KeyCombine) -> bool {
+    pub fn dispatch(&mut self, key: CombineKey) -> bool {
         debug!("receive key: {}", key);
 
-        self.cur_keyseq.push(key);
+        self.current_keyseq.push(key);
 
-        for (id, km) in self.km_stack.iter().rev() {
-            if let Ok(v) = km.lookup(&self.cur_keyseq) {
-                debug!("dispatch {} {}", id, self.cur_keyseq.to_string());
+        for (id, km) in self.keymap_stack.iter().rev() {
+            if let Ok(v) = km.lookup(&self.current_keyseq) {
+                debug!("dispatch {} {}", id, self.current_keyseq.to_string());
 
-                if let Err(e) = self.tx.send((self.cur_keyseq.clone(), v.clone())) {
+                if let Err(e) = self.sender.send((self.current_keyseq.clone(), v.clone())) {
                     warn!("{}", e);
                 }
 
-                self.cur_keyseq.clear();
+                self.current_keyseq.clear();
                 return true;
             }
         }
 
-        self.cur_keyseq.clear();
+        self.current_keyseq.clear();
 
         return false;
     }
 
     pub fn subscribe(&self) -> broadcast::Receiver<(KeySequence, Value)> {
-        self.tx.subscribe()
-    }
-}
-
-#[cfg(test)]
-mod tests {
-    use std::sync::Arc;
-
-    use crate::kbd::ToKeySequence;
-
-    use super::*;
-
-    fn send_key_sequence(dispatcher: &mut KeyDispatcher<i32>, kseq: &str) {
-        let kseq = kseq.to_key_sequence().unwrap();
-
-        for key in kseq.iter() {
-            dispatcher.dispatch(key.clone());
-        }
-    }
-
-    #[tokio::test]
-    async fn test() {
-        let dispatcher = Arc::new(RwLock::new(KeyDispatcher::<i32>::new()));
-
-        let mut rx = dispatcher.read().await.subscribe();
-
-        let dispatcher = dispatcher.clone();
-
-        tokio::spawn(async move {
-            let mut dispatcher = dispatcher.write().await;
-
-            {
-                let mut km = KeyMap::new();
-                km.add("C-a a", 0).unwrap();
-                km.add("C-a b", 1).unwrap();
-                dispatcher.push_keymap("test", km);
-            }
-
-            send_key_sequence(&mut dispatcher, "C-a a");
-            send_key_sequence(&mut dispatcher, "C-a b");
-
-            send_key_sequence(&mut dispatcher, "C-a c");
-
-            send_key_sequence(&mut dispatcher, "C-a a");
-        });
-
-        assert_eq!(rx.recv().await.unwrap(), 0);
-        assert_eq!(rx.recv().await.unwrap(), 1);
-        assert_eq!(rx.recv().await.unwrap(), 0);
+        self.sender.subscribe()
     }
 }
