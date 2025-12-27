@@ -39,7 +39,9 @@ impl Agent {
         }
 
         Ok((
-            gemini::client::ClientBuilder::new_with_client(&agent.api_key, client.build()?)
+            gemini::Client::<reqwest::Client>::builder()
+                .api_key(agent.api_key)
+                .http_client(client.build()?)
                 .build()?,
             agent.model.to_owned(),
         ))
