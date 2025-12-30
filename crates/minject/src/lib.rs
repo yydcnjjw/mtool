@@ -1,72 +1,72 @@
-mod container;
+// mod container;
 mod injectable;
 mod provider;
 
-pub use container::*;
+// pub use container::*;
 pub use injectable::*;
 pub use provider::*;
 
-pub use minject_macro::*;
+// pub use minject_macro::*;
 
-use std::{any::type_name, future::Future};
+// use std::{any::type_name, future::Future};
 
-use anyhow::Context;
+// use anyhow::Context;
 
-pub async fn inject<Func, Args, Output, C>(c: &C, f: &Func) -> Result<Output, anyhow::Error>
-where
-    Func: Inject<Args>,
-    Func::Output: Future<Output = Output>,
-    Args: Provide<C>,
-{
-    Ok(f.inject(
-        Args::provide(c)
-            .await
-            .context(format!("Failed to inject {}", type_name::<Args>()))?,
-    )
-    .await)
-}
+// pub async fn inject<Func, Args, Output, C>(c: &C, f: &Func) -> Result<Output, anyhow::Error>
+// where
+//     Func: Inject<Args>,
+//     Func::Output: Future<Output = Output>,
+//     Args: Provide<C>,
+// {
+//     Ok(f.inject(
+//         Args::provide(c)
+//             .await
+//             .context(format!("Failed to inject {}", type_name::<Args>()))?,
+//     )
+//     .await)
+// }
 
-pub async fn inject_once<Func, Args, Output, C>(c: &C, f: Func) -> Result<Output, anyhow::Error>
-where
-    Func: InjectOnce<Args>,
-    Func::Output: Future<Output = Output>,
-    Args: Provide<C>,
-{
-    Ok(f.inject_once(
-        Args::provide(c)
-            .await
-            .context(format!("Failed to inject once {}", type_name::<Args>()))?,
-    )
-    .await)
-}
+// pub async fn inject_once<Func, Args, Output, C>(c: &C, f: Func) -> Result<Output, anyhow::Error>
+// where
+//     Func: InjectOnce<Args>,
+//     Func::Output: Future<Output = Output>,
+//     Args: Provide<C>,
+// {
+//     Ok(f.inject_once(
+//         Args::provide(c)
+//             .await
+//             .context(format!("Failed to inject once {}", type_name::<Args>()))?,
+//     )
+//     .await)
+// }
 
-pub async fn local_inject<Func, Args, Output, C>(c: &C, f: &Func) -> Result<Output, anyhow::Error>
-where
-    Func: Inject<Args>,
-    Func::Output: Future<Output = Output>,
-    Args: LocalProvide<C>,
-{
-    Ok(f.inject(
-        Args::local_provide(c)
-            .await
-            .context(format!("Failed to inject {}", type_name::<Args>()))?,
-    )
-    .await)
-}
+// pub async fn local_inject<Func, Args, Output, C>(c: &C, f: &Func) -> Result<Output, anyhow::Error>
+// where
+//     Func: Inject<Args>,
+//     Func::Output: Future<Output = Output>,
+//     Args: LocalProvide<C>,
+// {
+//     Ok(f.inject(
+//         Args::local_provide(c)
+//             .await
+//             .context(format!("Failed to inject {}", type_name::<Args>()))?,
+//     )
+//     .await)
+// }
 
-pub async fn local_inject_once<Func, Args, Output, C>(
-    c: &C,
-    f: Func,
-) -> Result<Output, anyhow::Error>
-where
-    Func: InjectOnce<Args>,
-    Func::Output: Future<Output = Output>,
-    Args: LocalProvide<C>,
-{
-    Ok(f.inject_once(
-        Args::local_provide(c)
-            .await
-            .context(format!("Failed to inject once {}", type_name::<Args>()))?,
-    )
-    .await)
-}
+// pub async fn local_inject_once<Func, Args, Output, C>(
+//     c: &C,
+//     f: Func,
+// ) -> Result<Output, anyhow::Error>
+// where
+//     Func: InjectOnce<Args>,
+//     Func::Output: Future<Output = Output>,
+//     Args: LocalProvide<C>,
+// {
+//     Ok(f.inject_once(
+//         Args::local_provide(c)
+//             .await
+//             .context(format!("Failed to inject once {}", type_name::<Args>()))?,
+//     )
+//     .await)
+// }

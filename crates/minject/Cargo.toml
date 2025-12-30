@@ -9,12 +9,8 @@ edition.workspace = true
 [dependencies]
 minject-macro = { path = "./macro" }
 
-thiserror = "*"
-anyhow = "*"
-tokio = "*"
-async-trait = "*"
-tracing = "*"
-dashmap = "*"
+futures = "*"
 
 [dev-dependencies]
-
+tokio = { version = "*", features = ["rt", "macros"] }
+anyhow = "*"

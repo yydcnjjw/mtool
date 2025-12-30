@@ -128,3 +128,7 @@ bevy_core_pipeline = { git = "https://github.com/yydcnjjw/bevy.git", branch = "d
 # naga = { path = "/home/yydcnjjw/workspace/project/wgpu/naga" }
 
 x11rb-async = { git = "https://github.com/yydcnjjw/x11rb.git", branch = "mtool" }
+
+
+[target.x86_64-pc-windows-msvc.aws-lc-sys]
+rustc-env.AWS_LC_SYS_INCLUDES = "/home/yydcnjjw/.xwin-cache/splat/sdk/include/ucrt:/home/yydcnjjw/.xwin-cache/splat/crt/include"

@@ -8824,12 +8824,9 @@ name = "minject"
 version = "0.0.0"
 dependencies = [
  "anyhow",
- "async-trait",
- "dashmap",
+ "futures",
  "minject-macro",
- "thiserror 2.0.17",
  "tokio",
- "tracing",
 ]
 
 [[package]]

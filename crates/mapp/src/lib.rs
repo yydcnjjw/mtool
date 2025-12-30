@@ -11,6 +11,7 @@ pub mod provider;
 mod schedule;
 mod trace;
 mod utils;
+mod coroutine;
 
 pub mod prelude {
     pub use crate::{
