@@ -1,140 +1,68 @@
-use futures::{
-    future::{BoxFuture, LocalBoxFuture},
-    FutureExt,
-};
-use minject_macro::{enum_params, repeat};
+use futures::future::{BoxFuture, LocalBoxFuture};
 
-// #[async_trait]
-// pub trait Provide<C>: Sized {
-//     async fn provide(c: &C) -> Result<Self, anyhow::Error>;
-// }
-
-// macro_rules! impl_provider_for_tuple_with_container {
-//     ($($param: ident),*) => {
-//         #[async_trait]
-//         impl<C, $($param,)*> Provide<C> for ($($param,)*)
-//         where
-//             $($param: Provide<C> + Send,)*
-//             C: Send + Sync + 'static,
-//         {
-//             #[allow(unused_variables)]
-//             async fn provide(c: &C) -> Result<Self, anyhow::Error> {
-//                 Ok(($($param::provide(c).await?,)*))
-//             }
-//         }
-//     };
-// }
-
-// repeat!(9, enum_params, impl_provider_for_tuple_with_container, P);
-
-// #[async_trait(?Send)]
-// pub trait LocalProvide<C>: Sized {
-//     async fn local_provide(c: &C) -> Result<Self, anyhow::Error>;
-// }
-
-// macro_rules! impl_local_provider_for_tuple_with_container {
-//     ($($param: ident),*) => {
-//         #[async_trait(?Send)]
-//         impl<C, $($param,)*> LocalProvide<C> for ($($param,)*)
-//         where
-//             $($param: LocalProvide<C>,)*
-//         {
-//             #[allow(unused_variables)]
-//             async fn local_provide(c: &C) -> Result<Self, anyhow::Error> {
-//                 Ok(($($param::local_provide(c).await?,)*))
-//             }
-//         }
-//     };
-// }
-
-// repeat!(
-//     9,
-//     enum_params,
-//     impl_local_provider_for_tuple_with_container,
-//     P
-// );
-
-pub trait LocalProvide<E, O> {
-    fn local_provide(&'_ self) -> LocalBoxFuture<'_, Result<O, E>>;
+pub trait LocalProvide<O> {
+    type Error;
+    fn local_provide(&'_ self) -> LocalBoxFuture<'_, Result<O, Self::Error>>;
 }
 
-// pub trait Provide<O, E> {
-//     fn provide(&'_ self) -> BoxFuture<'_, Result<O, E>>;
-// }
+pub trait Provide<O> {
+    type Error;
+    fn provide(&'_ self) -> BoxFuture<'_, Result<O, Self::Error>>;
+}
 
+#[macro_export]
 macro_rules! impl_local_provider_for_tuple {
-    ($($param: ident),*) => {
-        impl<C, E, $($param,)*> LocalProvide<E, ($($param,)*)> for C
+    ($err: path, $($param: ident),*) => {
+        impl<C, $($param,)*> LocalProvide<($($param,)*)> for C
         where
-        $(C: LocalProvide<E, $param>,)*
+        $(C: LocalProvide<$param, Error = $err>,)*
         {
+            type Error = $err;
             #[allow(unused_variables)]
-            fn local_provide(&'_ self) -> LocalBoxFuture<'_, Result<($($param,)*), E>> {
-                async {
-                    Ok(($(LocalProvide::<E, $param>::local_provide(self).await?,)*))
-                }.boxed_local()
+            fn local_provide(&'_ self) -> LocalBoxFuture<'_, Result<($($param,)*), Self::Error>> {
+                Box::pin(async {
+                    Ok(($(LocalProvide::<$param>::local_provide(self.c).await?,)*))
+                })
             }
         }
     };
 }
 
-repeat!(9, enum_params, impl_local_provider_for_tuple, P);
+#[macro_export]
+macro_rules! impl_local_provider {
+    ($err: path) => {
+        $crate::repeat!(
+            9,
+            $crate::enum_params,
+            impl_local_provider_for_tuple,
+            ($err),
+            (P)
+        );
+    };
+}
 
-#[cfg(test)]
-mod tests {
-    use std::future::Future;
-
-    use futures::{future::LocalBoxFuture, FutureExt};
-
-    use crate::InjectOnce;
-
-    use super::LocalProvide;
-
-    struct Container {}
-
-    type BoxError = Box<dyn std::error::Error>;
-
-    impl Container {
-        pub async fn local_inject_once<Func, Args, Output>(
-            &self,
-            f: Func,
-        ) -> Result<Output, BoxError>
+#[macro_export]
+macro_rules! impl_provider_for_tuple {
+    ($err: path, $($param: ident),*) => {
+        impl<C, $($param,)*> Provide<($($param,)*)> for C
         where
-            Func: InjectOnce<Args>,
-            Func::Output: Future<Output = Output>,
-            Self: LocalProvide<BoxError, Args>,
+        $($param: Send + Sync,)*
+        $(C: Provide<$param, Error = $err> + Send + Sync,)*
         {
-            Ok(InjectOnce::<Args>::inject_once(
-                f,
-                LocalProvide::<BoxError, Args>::local_provide(self).await?,
-            )
-            .await)
+            type Error = $err;
+            #[allow(unused_variables)]
+            fn provide(&'_ self) -> BoxFuture<'_, Result<($($param,)*), Self::Error>> {
+                Box::pin(async {
+                    Ok(($(Provide::<$param>::provide(self.c).await?,)*))
+                })
+            }
         }
-    }
+    };
+}
 
-    struct Res<T>(T);
-
-    impl<T> LocalProvide<Box<dyn std::error::Error>, Res<T>> for Container
-    where
-        T: Default,
-    {
-        fn local_provide(
-            &'_ self,
-        ) -> LocalBoxFuture<'_, Result<Res<T>, Box<dyn std::error::Error>>> {
-            async { Ok(Res(T::default())) }.boxed_local()
-        }
-    }
-
-    #[tokio::test]
-    async fn test_local_provider() {
-        let c = Container {};
-
-        c.local_inject_once(|a: Res<i32>, b: Res<i32>| async move {})
-            .await
-            .unwrap();
-
-        c.local_inject_once(|a: Res<i32>| async move {})
-            .await
-            .unwrap();
-    }
+#[macro_export]
+macro_rules! impl_provider {
+    ($err: path) => {
+        $crate::repeat!(9, $crate::enum_params, impl_provider_for_tuple, ($err), (P));
+    };
 }

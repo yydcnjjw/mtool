@@ -1,72 +1,190 @@
-// mod container;
 mod injectable;
 mod provider;
 
-// pub use container::*;
-pub use injectable::*;
-pub use provider::*;
+pub use injectable::{Inject, InjectOnce};
+pub use minject_macro::*;
+pub use provider::{LocalProvide, Provide};
 
-// pub use minject_macro::*;
+use std::future::Future;
 
-// use std::{any::type_name, future::Future};
+pub async fn inject<'a, Func, Args, Output, C, E>(c: &'a C, f: &Func) -> Result<Output, E>
+where
+    Func: Inject<Args>,
+    Func::Output: Future<Output = Output>,
+    C: Provide<Args, Error = E>,
+{
+    Ok(f.inject(c.provide().await?).await)
+}
 
-// use anyhow::Context;
+pub async fn inject_blocking<'a, Func, Args, Output, C, E>(c: &'a C, f: &Func) -> Result<Output, E>
+where
+    Func: Inject<Args, Output = Output>,
+    C: Provide<Args, Error = E>,
+{
+    Ok(f.inject(c.provide().await?))
+}
 
-// pub async fn inject<Func, Args, Output, C>(c: &C, f: &Func) -> Result<Output, anyhow::Error>
-// where
-//     Func: Inject<Args>,
-//     Func::Output: Future<Output = Output>,
-//     Args: Provide<C>,
-// {
-//     Ok(f.inject(
-//         Args::provide(c)
-//             .await
-//             .context(format!("Failed to inject {}", type_name::<Args>()))?,
-//     )
-//     .await)
-// }
+pub async fn inject_once<'a, Func, Args, Output, C, E>(c: &'a C, f: Func) -> Result<Output, E>
+where
+    Func: InjectOnce<Args>,
+    Func::Output: Future<Output = Output>,
+    C: Provide<Args, Error = E>,
+{
+    Ok(f.inject_once(c.provide().await?).await)
+}
 
-// pub async fn inject_once<Func, Args, Output, C>(c: &C, f: Func) -> Result<Output, anyhow::Error>
-// where
-//     Func: InjectOnce<Args>,
-//     Func::Output: Future<Output = Output>,
-//     Args: Provide<C>,
-// {
-//     Ok(f.inject_once(
-//         Args::provide(c)
-//             .await
-//             .context(format!("Failed to inject once {}", type_name::<Args>()))?,
-//     )
-//     .await)
-// }
+pub async fn inject_once_blocking<'a, Func, Args, Output, C, E>(
+    c: &'a C,
+    f: Func,
+) -> Result<Output, E>
+where
+    Func: InjectOnce<Args, Output = Output>,
+    C: Provide<Args, Error = E>,
+{
+    Ok(f.inject_once(c.provide().await?))
+}
 
-// pub async fn local_inject<Func, Args, Output, C>(c: &C, f: &Func) -> Result<Output, anyhow::Error>
-// where
-//     Func: Inject<Args>,
-//     Func::Output: Future<Output = Output>,
-//     Args: LocalProvide<C>,
-// {
-//     Ok(f.inject(
-//         Args::local_provide(c)
-//             .await
-//             .context(format!("Failed to inject {}", type_name::<Args>()))?,
-//     )
-//     .await)
-// }
+pub async fn local_inject<'a, Func, Args, Output, C, E>(c: &'a C, f: &Func) -> Result<Output, E>
+where
+    Func: Inject<Args>,
+    Func::Output: Future<Output = Output>,
+    C: LocalProvide<Args, Error = E>,
+{
+    Ok(f.inject(c.local_provide().await?).await)
+}
 
-// pub async fn local_inject_once<Func, Args, Output, C>(
-//     c: &C,
-//     f: Func,
-// ) -> Result<Output, anyhow::Error>
-// where
-//     Func: InjectOnce<Args>,
-//     Func::Output: Future<Output = Output>,
-//     Args: LocalProvide<C>,
-// {
-//     Ok(f.inject_once(
-//         Args::local_provide(c)
-//             .await
-//             .context(format!("Failed to inject once {}", type_name::<Args>()))?,
-//     )
-//     .await)
-// }
+pub async fn local_inject_blocking<'a, Func, Args, Output, C, E>(
+    c: &'a C,
+    f: &Func,
+) -> Result<Output, E>
+where
+    Func: Inject<Args, Output = Output>,
+    C: LocalProvide<Args, Error = E>,
+{
+    Ok(f.inject(c.local_provide().await?))
+}
+
+pub async fn local_inject_once<'a, Func, Args, Output, C, E>(c: &'a C, f: Func) -> Result<Output, E>
+where
+    Func: InjectOnce<Args>,
+    Func::Output: Future<Output = Output>,
+    C: LocalProvide<Args, Error = E>,
+{
+    Ok(f.inject_once(c.local_provide().await?).await)
+}
+
+pub async fn local_inject_once_blocking<'a, Func, Args, Output, C, E>(
+    c: &'a C,
+    f: Func,
+) -> Result<Output, E>
+where
+    Func: InjectOnce<Args, Output = Output>,
+    C: LocalProvide<Args, Error = E>,
+{
+    Ok(f.inject_once(c.local_provide().await?))
+}
+
+impl_local_provider!(anyhow::Error);
+impl_provider!(anyhow::Error);
+
+#[cfg(test)]
+mod tests {
+    use futures::future::{BoxFuture, LocalBoxFuture};
+
+    use crate::{
+        LocalProvide, Provide, impl_local_provider, impl_provider, inject, inject_blocking,
+        inject_once, inject_once_blocking, local_inject, local_inject_blocking, local_inject_once,
+        local_inject_once_blocking,
+    };
+
+    struct Container {}
+
+    struct Res<T>(T);
+
+    impl<T> LocalProvide<Res<T>> for Container
+    where
+        T: Default,
+    {
+        type Error = anyhow::Error;
+        fn local_provide(&'_ self) -> LocalBoxFuture<'_, Result<Res<T>, anyhow::Error>> {
+            Box::pin(async { Ok(Res(T::default())) })
+        }
+    }
+
+    impl<T> Provide<Res<T>> for Container
+    where
+        T: Default,
+    {
+        type Error = anyhow::Error;
+        fn provide(&'_ self) -> BoxFuture<'_, Result<Res<T>, anyhow::Error>> {
+            Box::pin(async { Ok(Res(T::default())) })
+        }
+    }
+
+    impl_local_provider!(anyhow::Error);
+    impl_provider!(anyhow::Error);
+
+    #[tokio::test]
+    async fn provider() {
+        let c = Container {};
+
+        local_inject(&c, &|_: Res<i32>, _: Res<i32>| async move {})
+            .await
+            .unwrap();
+
+        local_inject(&c, &|_: Res<i32>| async move {})
+            .await
+            .unwrap();
+
+        inject(&c, &|_: Res<i32>, _: Res<i32>| async move {})
+            .await
+            .unwrap();
+
+        inject(&c, &|_: Res<i32>| async move {}).await.unwrap();
+
+        local_inject_once(&c, |_: Res<i32>, _: Res<i32>| async move {})
+            .await
+            .unwrap();
+
+        local_inject_once(&c, |_: Res<i32>| async move {})
+            .await
+            .unwrap();
+
+        inject_once(&c, |_: Res<i32>, _: Res<i32>| async move {})
+            .await
+            .unwrap();
+
+        inject_once(&c, |_: Res<i32>| async move {}).await.unwrap();
+    }
+
+    #[tokio::test]
+    async fn provider_blocking() {
+        let c = Container {};
+
+        local_inject_blocking(&c, &|_: Res<i32>, _: Res<i32>| {})
+            .await
+            .unwrap();
+
+        local_inject_blocking(&c, &|_: Res<i32>| {}).await.unwrap();
+
+        inject_blocking(&c, &|_: Res<i32>, _: Res<i32>| {})
+            .await
+            .unwrap();
+
+        inject_blocking(&c, &|_: Res<i32>| {}).await.unwrap();
+
+        local_inject_once_blocking(&c, |_: Res<i32>, _: Res<i32>| {})
+            .await
+            .unwrap();
+
+        local_inject_once_blocking(&c, |_: Res<i32>| {})
+            .await
+            .unwrap();
+
+        inject_once_blocking(&c, |_: Res<i32>, _: Res<i32>| {})
+            .await
+            .unwrap();
+
+        inject_once_blocking(&c, |_: Res<i32>| {}).await.unwrap();
+    }
+}

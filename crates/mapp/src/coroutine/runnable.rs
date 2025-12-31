@@ -1,20 +1,29 @@
-use std::task::Context;
+use futures::{FutureExt, future::LocalBoxFuture};
+use minject::{ContainerWrapper, InjectOnce, LocalProvide, local_inject_once};
 
-use async_trait::async_trait;
+use crate::context::Context;
 
-#[async_trait(?Send)]
-trait Runnable {
+use super::wrapper::FuncWrapper;
+
+pub trait Runnable {
     type Error;
-    async fn run(self: Box<Self>) -> Result<(), Self::Error>;
+    fn run<'a>(self: Box<Self>, ctx: &'a Context) -> LocalBoxFuture<'a, Result<(), Self::Error>>
+    where
+        Self: 'a;
 }
 
-#[async_trait(?Send)]
-impl<Func> Runnable for Func
+impl<Func, Args> Runnable for FuncWrapper<Func, Args>
 where
-    Func: FnOnce() -> Result<(), anyhow::Error>,
+    Func: InjectOnce<Args>,
+    Func::Output: Future<Output = Result<(), anyhow::Error>>,
+    for<'a> ContainerWrapper<'a, Context, anyhow::Error>: LocalProvide<Args, Error = anyhow::Error>,
 {
     type Error = anyhow::Error;
-    async fn run(self: Box<Self>) -> Result<(), Self::Error> {
-        self()
+
+    fn run<'a>(self: Box<Self>, ctx: &'a Context) -> LocalBoxFuture<'a, Result<(), Self::Error>>
+    where
+        Self: 'a,
+    {
+        async { local_inject_once(ctx, (*self).func).await? }.boxed_local()
     }
 }

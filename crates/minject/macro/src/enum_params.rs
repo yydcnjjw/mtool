@@ -1,26 +1,28 @@
 use proc_macro2::TokenStream as TokenStream2;
-use quote::{format_ident, quote, ToTokens};
+use quote::{ToTokens, format_ident, quote};
 use syn::{
+    Ident, LitInt, Path, Token, parenthesized,
     parse::{Parse, ParseStream},
     punctuated::Punctuated,
-    token::Comma,
-    Ident, LitInt, Token,
+    token::{Comma, Paren},
 };
 
 pub struct EnumParams {
     count: usize,
     r#macro: Ident,
+    types: Punctuated<Path, Token![,]>,
     idents: Punctuated<Ident, Token![,]>,
 }
 
 impl EnumParams {
     fn r#gen(&self) -> TokenStream2 {
         let r#macro = &self.r#macro;
+        let types = self.types.iter().map(|ty| quote! { #ty });
         let enum_idents = self.idents.iter().map(|ident| {
             let idents = (0..self.count).map(|v| format_ident!("{}{}", ident, v));
             quote! {#(#idents),*}
         });
-        quote! { #r#macro!(#( #enum_idents ),*); }
+        quote! { #r#macro!(#( #types ),* #( #enum_idents ),*); }
     }
 }
 
@@ -32,10 +34,25 @@ impl Parse for EnumParams {
         let r#macro = input.parse::<Ident>()?;
         input.parse::<Comma>()?;
 
+        let types = {
+            let content;
+            parenthesized!(content in input);
+            content.parse_terminated(Path::parse)?
+        };
+
+        input.parse::<Comma>()?;
+
+        let idents = {
+            let content;
+            parenthesized!(content in input);
+            content.parse_terminated(Ident::parse)?
+        };
+
         Ok(Self {
-            r#macro,
             count,
-            idents: input.parse_terminated(Ident::parse)?,
+            r#macro,
+            types,
+            idents,
         })
     }
 }
@@ -46,18 +63,22 @@ impl ToTokens for EnumParams {
     }
 }
 
-
-
 pub struct EnumParamsWithIndex(EnumParams);
 
 impl EnumParamsWithIndex {
     fn r#gen(&self) -> TokenStream2 {
-        let EnumParams { count, r#macro, idents } = &self.0;
+        let EnumParams {
+            count,
+            r#macro,
+            types,
+            idents,
+        } = &self.0;
+        let types = types.iter().map(|ty| quote! { #ty });
         let params = (0..*count).map(|i| {
             let idents = idents.iter().map(|ident| format_ident!("{}{}", ident, i));
             quote! { ((#(#idents),*), #i) }
         });
-        quote! { #r#macro!(#( #params ),*); }
+        quote! { #r#macro!(#( #types ),* #( #params ),*); }
     }
 }
 

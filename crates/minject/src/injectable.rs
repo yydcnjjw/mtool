@@ -21,12 +21,11 @@ macro_rules! impl_inject_for_fn {
     }
 }
 
-repeat!(9, enum_params, impl_inject_for_fn, Arg);
+repeat!(9, enum_params, impl_inject_for_fn, (), (Arg));
 
 pub trait InjectOnce<Args> {
     type Output;
     fn inject_once(self, args: Args) -> Self::Output;
-    // fn inject_once_boxed(self: Box<Self>, args: Args) -> Self::Output;
 }
 
 // impl<Args, Output> InjectOnce<Args> for Box<dyn InjectOnce<Args, Output = Output>> {
@@ -53,16 +52,11 @@ macro_rules! impl_inject_once_for_fn_once {
             fn inject_once(self, ($($arg,)*): ($($arg,)*)) -> Self::Output {
                 (self)($($arg,)*)
             }
-
-            // #[allow(non_snake_case)]
-            // fn inject_once_boxed(self: Box<Self>, ($($arg,)*): ($($arg,)*)) -> Self::Output {
-            //     (self)($($arg,)*)
-            // }
         }
     }
 }
 
-repeat!(9, enum_params, impl_inject_once_for_fn_once, Arg);
+repeat!(9, enum_params, impl_inject_once_for_fn_once, (), (Arg));
 
 #[cfg(test)]
 mod tests {
@@ -71,28 +65,33 @@ mod tests {
     use super::*;
 
     #[test]
-    fn test_inject() {
+    fn inject() {
         assert!(|| -> bool { true }.inject(()));
         assert!(|_: i32| -> bool { true }.inject((1i32,)));
-        assert!(|_: String| -> bool { true }.inject((String::new(),)));
+        assert!(|_: String, _: i32| -> bool { true }.inject((String::new(), 0)));
         assert!(|_: Arc<i32>| -> bool { true }.inject((Arc::new(1i32),)));
     }
 
     #[test]
-    fn test_inject_once() {
+    fn inject_once() {
         assert!(|| -> bool { true }.inject_once(()));
         assert!(|_: i32| -> bool { true }.inject_once((1i32,)));
-        assert!(|_: String| -> bool { true }.inject_once((String::new(),)));
+        assert!(|_: String, _: i32| -> bool { true }.inject_once((String::new(), 0)));
         assert!(|_: Arc<i32>| -> bool { true }.inject_once((Arc::new(1i32),)));
     }
 
+    #[test]
+    fn inject_boxed() {
+        assert!(Box::new(|| -> bool { true }).inject_once(()));
+    }
+
     #[tokio::test]
-    async fn test_inject_with_async_fn() {
+    async fn async_inject() {
         assert!((|| async move { true }).inject(()).await);
         assert!((|_: i32| async move { true }).inject((1i32,)).await);
         assert!(
-            (|_: String| async move { true })
-                .inject((String::new(),))
+            (|_: String, _: i32| async move { true })
+                .inject((String::new(), 0))
                 .await
         );
         assert!(
@@ -103,12 +102,12 @@ mod tests {
     }
 
     #[tokio::test]
-    async fn test_inject_once_with_async_fn_once() {
+    async fn async_inject_once() {
         assert!((|| async move { true }).inject_once(()).await);
         assert!((|_: i32| async move { true }).inject_once((1i32,)).await);
         assert!(
-            (|_: String| async move { true })
-                .inject_once((String::new(),))
+            (|_: String, _: i32| async move { true })
+                .inject_once((String::new(), 0))
                 .await
         );
         assert!(

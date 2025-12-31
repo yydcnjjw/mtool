@@ -38,7 +38,6 @@ tokio-util = { version = "*", features = ["compat"] }
 async-recursion = "*"
 dashmap = "*"
 tracing-appender = "*"
-once_cell = "*"
 itertools = "*"
 regex = "*"
 nom = "7"
