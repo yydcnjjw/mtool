@@ -10,19 +10,17 @@ use syn::{
 pub struct EnumParams {
     count: usize,
     r#macro: Ident,
-    types: Punctuated<Path, Token![,]>,
     idents: Punctuated<Ident, Token![,]>,
 }
 
 impl EnumParams {
     fn r#gen(&self) -> TokenStream2 {
         let r#macro = &self.r#macro;
-        let types = self.types.iter().map(|ty| quote! { #ty });
         let enum_idents = self.idents.iter().map(|ident| {
             let idents = (0..self.count).map(|v| format_ident!("{}{}", ident, v));
             quote! {#(#idents),*}
         });
-        quote! { #r#macro!(#( #types ),* #( #enum_idents ),*); }
+        quote! { #r#macro!(#( #enum_idents ),*); }
     }
 }
 
@@ -34,25 +32,10 @@ impl Parse for EnumParams {
         let r#macro = input.parse::<Ident>()?;
         input.parse::<Comma>()?;
 
-        let types = {
-            let content;
-            parenthesized!(content in input);
-            content.parse_terminated(Path::parse)?
-        };
-
-        input.parse::<Comma>()?;
-
-        let idents = {
-            let content;
-            parenthesized!(content in input);
-            content.parse_terminated(Ident::parse)?
-        };
-
         Ok(Self {
             count,
             r#macro,
-            types,
-            idents,
+            idents: input.parse_terminated(Ident::parse)?,
         })
     }
 }
@@ -70,15 +53,13 @@ impl EnumParamsWithIndex {
         let EnumParams {
             count,
             r#macro,
-            types,
             idents,
         } = &self.0;
-        let types = types.iter().map(|ty| quote! { #ty });
         let params = (0..*count).map(|i| {
             let idents = idents.iter().map(|ident| format_ident!("{}{}", ident, i));
             quote! { ((#(#idents),*), #i) }
         });
-        quote! { #r#macro!(#( #types ),* #( #params ),*); }
+        quote! { #r#macro!(#( #params ),*); }
     }
 }
 

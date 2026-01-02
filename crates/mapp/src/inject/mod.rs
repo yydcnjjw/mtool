@@ -3,7 +3,7 @@ mod res;
 // mod constructor;
 // mod injector;
 // mod option;
-// mod take;
+mod take;
 
 pub use container::LocalContainer;
 // pub use constructor::*;
@@ -11,4 +11,4 @@ pub use container::LocalContainer;
 // #[allow(unused)]
 // pub use option::*;
 pub use res::Res;
-// pub use take::*;
+pub use take::{Take, TakeOpt};

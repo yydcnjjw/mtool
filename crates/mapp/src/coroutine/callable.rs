@@ -1,29 +1,37 @@
-use async_trait::async_trait;
-use futures::{FutureExt, future::LocalBoxFuture};
-use minject::{InjectOnce, inject_once};
+use futures::future::LocalBoxFuture;
+use minject::{InjectOnce, LocalProvide, local_inject_once};
 
 use crate::context::Context;
+
+use super::wrapper::FuncWrapper;
 
 pub trait Callable {
     type Output;
     type Error;
-    fn call(
+    fn call<'a>(
         self: Box<Self>,
-        ctx: &Context,
-    ) -> LocalBoxFuture<'static, Result<Self::Output, Self::Error>>;
+        ctx: &'a Context,
+    ) -> LocalBoxFuture<'a, Result<Self::Output, Self::Error>>
+    where
+        Self: 'a;
 }
 
-impl<Func, Args, Output> Callable for FuncWrapper<Func, (Args, Output)>
+impl<Func, Args, Output, E> Callable for FuncWrapper<Func, (Args, Output)>
 where
-    Func: InjectOnce<Args, Output = Output>,
+    Func: InjectOnce<Args>,
+    Func::Output: Future<Output = Result<Output, E>>,
+    Context: LocalProvide<Args, Error = E>,
 {
     type Output = Output;
-    type Error = anyhow::Error;
+    type Error = E;
 
-    fn call(
+    fn call<'a>(
         self: Box<Self>,
-        ctx: &Context,
-    ) -> LocalBoxFuture<'static, Result<Self::Output, Self::Error>> {
-        inject_once(ctx, *self).boxed_local()
+        ctx: &'a Context,
+    ) -> LocalBoxFuture<'a, Result<Self::Output, Self::Error>>
+    where
+        Self: 'a,
+    {
+        Box::pin(async { local_inject_once(ctx, self.func).await? })
     }
 }

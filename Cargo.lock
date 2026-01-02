@@ -8825,6 +8825,7 @@ dependencies = [
  "anyhow",
  "futures",
  "minject-macro",
+ "thiserror 1.0.69",
  "tokio",
 ]
 

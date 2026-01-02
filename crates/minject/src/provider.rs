@@ -1,4 +1,5 @@
 use futures::future::{BoxFuture, LocalBoxFuture};
+use minject_macro::{enum_params, repeat};
 
 pub trait LocalProvide<O> {
     type Error;
@@ -12,57 +13,41 @@ pub trait Provide<O> {
 
 #[macro_export]
 macro_rules! impl_local_provider_for_tuple {
-    ($err: path, $($param: ident),*) => {
-        impl<C, $($param,)*> LocalProvide<($($param,)*)> for C
+    ($($param: ident),*) => {
+        impl<C, E, $($param,)*> LocalProvide<($($param,)*)> for C
         where
-        $(C: LocalProvide<$param, Error = $err>,)*
+        $(C: LocalProvide<$param, Error = E>,)*
         {
-            type Error = $err;
+            type Error = E;
             #[allow(unused_variables)]
             fn local_provide(&'_ self) -> LocalBoxFuture<'_, Result<($($param,)*), Self::Error>> {
                 Box::pin(async {
-                    Ok(($(LocalProvide::<$param>::local_provide(self.c).await?,)*))
+                    Ok(($(LocalProvide::<$param>::local_provide(self).await?,)*))
                 })
             }
         }
     };
 }
 
-#[macro_export]
-macro_rules! impl_local_provider {
-    ($err: path) => {
-        $crate::repeat!(
-            9,
-            $crate::enum_params,
-            impl_local_provider_for_tuple,
-            ($err),
-            (P)
-        );
-    };
-}
+repeat!(1, 9, enum_params, impl_local_provider_for_tuple, P);
 
-#[macro_export]
 macro_rules! impl_provider_for_tuple {
-    ($err: path, $($param: ident),*) => {
-        impl<C, $($param,)*> Provide<($($param,)*)> for C
+    ($($param: ident),*) => {
+        impl<C, E, $($param,)*> Provide<($($param,)*)> for C
         where
+        E: Send + Sync,
         $($param: Send + Sync,)*
-        $(C: Provide<$param, Error = $err> + Send + Sync,)*
+        $(C: Provide<$param, Error = E> + Send + Sync,)*
         {
-            type Error = $err;
+            type Error = E;
             #[allow(unused_variables)]
             fn provide(&'_ self) -> BoxFuture<'_, Result<($($param,)*), Self::Error>> {
                 Box::pin(async {
-                    Ok(($(Provide::<$param>::provide(self.c).await?,)*))
+                    Ok(($(Provide::<$param>::provide(self).await?,)*))
                 })
             }
         }
     };
 }
 
-#[macro_export]
-macro_rules! impl_provider {
-    ($err: path) => {
-        $crate::repeat!(9, $crate::enum_params, impl_provider_for_tuple, ($err), (P));
-    };
-}
+repeat!(1, 9, enum_params, impl_provider_for_tuple, P);

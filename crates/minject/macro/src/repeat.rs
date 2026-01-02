@@ -1,26 +1,25 @@
 use proc_macro2::TokenStream as TokenStream2;
 use quote::{ToTokens, quote};
 use syn::{
-    Expr, Ident, LitInt, Token, Type,
+    LitInt, Type,
     parse::{Parse, ParseStream},
-    punctuated::Punctuated,
     token::Comma,
 };
 
 pub struct Repeat {
-    count: usize,
+    start: usize,
+    end: usize,
     r#macro: Type,
     rest: TokenStream2,
 }
 
 impl Repeat {
     fn r#gen(&self) -> TokenStream2 {
-        let items = (0..self.count).// map(|v| v + 1).
-            map(|v| {
+        let items = (self.start..self.end).map(|i| {
             let r#macro = &self.r#macro;
-            let rest = &self.rest;                
+            let rest = &self.rest;
             quote! {
-                #r#macro!(#v, #rest);
+                #r#macro!(#i, #rest);
             }
         });
         quote! { #( #items )* }
@@ -29,14 +28,18 @@ impl Repeat {
 
 impl Parse for Repeat {
     fn parse(input: ParseStream) -> syn::Result<Self> {
-        let count = input.parse::<LitInt>()?.base10_parse()?;
+        let start = input.parse::<LitInt>()?.base10_parse()?;
+        input.parse::<Comma>()?;
+
+        let end = input.parse::<LitInt>()?.base10_parse()?;
         input.parse::<Comma>()?;
 
         let r#macro = input.parse::<Type>()?;
         input.parse::<Comma>()?;
 
         Ok(Self {
-            count,
+            start,
+            end,
             r#macro,
             rest: input.parse()?,
         })

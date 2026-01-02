@@ -1,5 +1,5 @@
-use futures::{FutureExt, future::LocalBoxFuture};
-use minject::{ContainerWrapper, InjectOnce, LocalProvide, local_inject_once};
+use futures::future::LocalBoxFuture;
+use minject::{InjectOnce, LocalProvide, local_inject_once};
 
 use crate::context::Context;
 
@@ -12,18 +12,18 @@ pub trait Runnable {
         Self: 'a;
 }
 
-impl<Func, Args> Runnable for FuncWrapper<Func, Args>
+impl<Func, Args, E> Runnable for FuncWrapper<Func, Args>
 where
     Func: InjectOnce<Args>,
-    Func::Output: Future<Output = Result<(), anyhow::Error>>,
-    for<'a> ContainerWrapper<'a, Context, anyhow::Error>: LocalProvide<Args, Error = anyhow::Error>,
+    Func::Output: Future<Output = Result<(), E>>,
+    Context: LocalProvide<Args, Error = E>,
 {
-    type Error = anyhow::Error;
+    type Error = E;
 
     fn run<'a>(self: Box<Self>, ctx: &'a Context) -> LocalBoxFuture<'a, Result<(), Self::Error>>
     where
         Self: 'a,
     {
-        async { local_inject_once(ctx, (*self).func).await? }.boxed_local()
+        Box::pin(async { local_inject_once(ctx, self.func).await? })
     }
 }

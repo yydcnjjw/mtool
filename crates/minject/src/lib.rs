@@ -1,3 +1,4 @@
+mod error;
 mod injectable;
 mod provider;
 
@@ -84,17 +85,13 @@ where
     Ok(f.inject_once(c.local_provide().await?))
 }
 
-impl_local_provider!(anyhow::Error);
-impl_provider!(anyhow::Error);
-
 #[cfg(test)]
 mod tests {
     use futures::future::{BoxFuture, LocalBoxFuture};
 
     use crate::{
-        LocalProvide, Provide, impl_local_provider, impl_provider, inject, inject_blocking,
-        inject_once, inject_once_blocking, local_inject, local_inject_blocking, local_inject_once,
-        local_inject_once_blocking,
+        LocalProvide, Provide, inject, inject_blocking, inject_once, inject_once_blocking,
+        local_inject, local_inject_blocking, local_inject_once, local_inject_once_blocking,
     };
 
     struct Container {}
@@ -120,9 +117,6 @@ mod tests {
             Box::pin(async { Ok(Res(T::default())) })
         }
     }
-
-    impl_local_provider!(anyhow::Error);
-    impl_provider!(anyhow::Error);
 
     #[tokio::test]
     async fn provider() {

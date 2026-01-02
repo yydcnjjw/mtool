@@ -21,7 +21,7 @@ macro_rules! impl_inject_for_fn {
     }
 }
 
-repeat!(9, enum_params, impl_inject_for_fn, (), (Arg));
+repeat!(0, 9, enum_params, impl_inject_for_fn, Arg);
 
 pub trait InjectOnce<Args> {
     type Output;
@@ -56,7 +56,7 @@ macro_rules! impl_inject_once_for_fn_once {
     }
 }
 
-repeat!(9, enum_params, impl_inject_once_for_fn_once, (), (Arg));
+repeat!(0, 9, enum_params, impl_inject_once_for_fn_once, Arg);
 
 #[cfg(test)]
 mod tests {

@@ -1,3 +1,12 @@
+[build]
+# Resolve minject trait recursion problem
+# Depend on nightly compiler
+# Like error[E0275]: overflow evaluating the requirement `C: LocalProvide<(_,)>`
+rustflags = ["-Znext-solver"]
+
+[target.x86_64-unknown-linux-gnu]
+rustflags = ["-Znext-solver", "-C", "link-arg=-fuse-ld=lld"]
+
 [patch.crates-io]
 dioxus = { path = "/home/yydcnjjw/workspace/project/dioxus/packages/dioxus" }
 dioxus-desktop = { path = "/home/yydcnjjw/workspace/project/dioxus/packages/desktop" }
