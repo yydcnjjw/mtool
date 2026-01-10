@@ -27,6 +27,7 @@ cfg-if = "*"
 async-trait = "*"
 futures = "*"
 parking_lot = "*"
+snafu = "*"
 thiserror = "*"
 anyhow = "*"
 serde = { version = "*", features = ["derive"] }

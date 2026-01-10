@@ -15,26 +15,26 @@ mod coroutine;
 mod lazy;
 mod context;
 
-// pub mod prelude {
-//     pub use crate::{
-//         app::{AppContext, LocalAppContext},
-//         error::Error as AppError,
-//         label::Label,
-//         module::{
-//             LocalModule as AppLocalModule, LocalModuleGroup, Module as AppModule, ModuleGroup,
-//         },
-//         // provider::{Injector, LocalInjector, Res, Take, TakeOpt},
-//         schedule::{ExitSignal, ScheduleGraph},
-//         trace::Tracing,
-//         utils::rand_string,
-//     };
+pub mod prelude {
+    // pub use crate::{
+    //     app::{AppContext, LocalAppContext},
+    //     error::Error as AppError,
+    //     label::Label,
+    //     module::{
+    //         LocalModule as AppLocalModule, LocalModuleGroup, Module as AppModule, ModuleGroup,
+    //     },
+    //     // provider::{Injector, LocalInjector, Res, Take, TakeOpt},
+    //     schedule::{ExitSignal, ScheduleGraph},
+    //     trace::Tracing,
+    //     utils::rand_string,
+    // };
 
-//     pub use async_trait::*;
-//     pub use minject::*;
-// }
+    pub use crate::inject::*;
+    pub use minject::*;
+}
 
 // pub use app::{AppBuilder, LocalAppBuilder};
-// pub use label::Label;
+// pub use schedule::Label;
 // #[allow(unused)]
 // pub use platform::*;
 // pub use schedule::{CreateLocalOnceTaskDescriptor, CreateOnceTaskDescriptor};

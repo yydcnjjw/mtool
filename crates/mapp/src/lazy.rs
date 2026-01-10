@@ -59,8 +59,6 @@ const fn panic_poisoned() -> ! {
 
 #[cfg(test)]
 mod tests {
-    use super::*;
-
     #[test]
     fn init() {}
 }

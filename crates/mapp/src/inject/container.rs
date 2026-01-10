@@ -63,4 +63,13 @@ impl LocalContainer {
             Value::Value(value) => value.downcast_ref().cloned(),
         }
     }
+
+    pub fn remove<T: 'static>(&mut self) -> Option<T> {
+        match self.inner.remove(&TypeId::of::<T>())? {
+            Value::Lazy(_) => None,
+            Value::Value(value) => value.downcast().map(|v| *v).ok(),
+        }
+    }
 }
+
+
