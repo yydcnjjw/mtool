@@ -1,10 +1,10 @@
 use proc_macro2::TokenStream as TokenStream2;
 use quote::{ToTokens, format_ident, quote};
 use syn::{
-    Ident, LitInt, Path, Token, parenthesized,
+    Ident, LitInt, Token,
     parse::{Parse, ParseStream},
     punctuated::Punctuated,
-    token::{Comma, Paren},
+    token::Comma,
 };
 
 pub struct EnumParams {
