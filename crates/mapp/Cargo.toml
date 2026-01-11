@@ -23,63 +23,62 @@ web = [
 [dependencies]
 minject = { path = "../minject" }
 
-cfg-if = "*"
-async-trait = "*"
+# cfg-if = "*"
+# async-trait = "*"
 futures = "*"
-parking_lot = "*"
+# parking_lot = "*"
 snafu = "*"
-thiserror = "*"
-anyhow = "*"
-serde = { version = "*", features = ["derive"] }
-serde_json = "*"
-serde_with = "*"
-serde-error = "*"
+# thiserror = "*"
+# anyhow = "*"
+# serde = { version = "*", features = ["derive"] }
+# serde_json = "*"
+# serde_with = "*"
+# serde-error = "*"
 tracing = "*"
-tokio-util = { version = "*", features = ["compat"] }
-async-recursion = "*"
-dashmap = "*"
-tracing-appender = "*"
-itertools = "*"
-regex = "*"
-nom = "7"
-pin-project = "*"
-pin-project-lite = "*"
-send_wrapper = "*"
-dpi = { version = "*", features = ["serde"] }
-toml = "*"
+# tokio-util = { version = "*", features = ["compat"] }
+# async-recursion = "*"
+# dashmap = "*"
+# tracing-appender = "*"
+# itertools = "*"
+# regex = "*"
+# nom = "7"
+# pin-project = "*"
+# pin-project-lite = "*"
+# send_wrapper = "*"
+# dpi = { version = "*", features = ["serde"] }
+# toml = "*"
 wasm-bindgen = { version = "*", optional = true }
 js-sys = { version = "*", optional = true }
 serde-wasm-bindgen = { version = "*", optional = true }
 wasm-bindgen-futures = { version = "*", optional = true }
-petgraph = "0.6"
-ringbuf = "0.3"
-rand = "0.8"
-time = { version = "0.3.20", features = ["formatting"] }
-keyboard-types = "0.7"
-scopeguard = "*"
-rustls = "*"
-url = "*"
-base64 = "*"
+# petgraph = "0.6"
+# ringbuf = "0.3"
+# rand = "0.8"
+# time = { version = "0.3.20", features = ["formatting"] }
+# keyboard-types = "0.7"
+# scopeguard = "*"
+# rustls = "*"
+# url = "*"
+# base64 = "*"
 rig-core = { version = "*", optional = true }
 
-[target.'cfg(not(target_family = "wasm"))'.dependencies]
+# [target.'cfg(not(target_family = "wasm"))'.dependencies]
 tokio = { version = "*", features = ["full"] }
-tracing-subscriber = { version = "*", features = ["env-filter", "time", "local-time"] }
-reqwest = { version = "*", default-features = false,  features = [ "charset", "http2", "system-proxy", "blocking", "json", "stream", "cookies" ] }
-tokio-stream = { version = "*", features = ["full"] }
-notify-rust = "*"
+# tracing-subscriber = { version = "*", features = ["env-filter", "time", "local-time"] }
+# reqwest = { version = "*", default-features = false,  features = [ "charset", "http2", "system-proxy", "blocking", "json", "stream", "cookies" ] }
+# tokio-stream = { version = "*", features = ["full"] }
+# notify-rust = "*"
 
-[target.'cfg(target_family = "wasm")'.dependencies]
-tokio = { version = "*", features = ["sync", "rt"] }
-tracing-subscriber = { version = "*", features = ["env-filter"] }
-tracing-web = "0.1"
-getrandom = { version = "0.2", features = ["js"] }
-tokio-stream = "*"
+# [target.'cfg(target_family = "wasm")'.dependencies]
+# tokio = { version = "*", features = ["sync", "rt"] }
+# tracing-subscriber = { version = "*", features = ["env-filter"] }
+# tracing-web = "0.1"
+# getrandom = { version = "0.2", features = ["js"] }
+# tokio-stream = "*"
 
-[target.'cfg(any(target_os = "android"))'.dependencies]
-android-activity = "*"
-android_log-sys = "*"
+# [target.'cfg(any(target_os = "android"))'.dependencies]
+# android-activity = "*"
+# android_log-sys = "*"
 
 [dev-dependencies]
 tokio = { version = "*" }
-tauri-build = "*"

@@ -1,5 +1,6 @@
 use std::{
     any::{Any, TypeId, type_name},
+    cell::RefCell,
     collections::HashMap,
 };
 
@@ -14,51 +15,56 @@ enum Value {
     Value(LocalBoxAny),
 }
 
-pub struct LocalContainer {
-    inner: HashMap<TypeId, Value>,
+pub struct LocalTypedMap {
+    inner: RefCell<HashMap<TypeId, Value>>,
 }
 
-impl Default for LocalContainer {
+impl Default for LocalTypedMap {
     fn default() -> Self {
         Self::new()
     }
 }
 
-impl LocalContainer {
+impl LocalTypedMap {
     pub fn new() -> Self {
         Self {
-            inner: HashMap::new(),
+            inner: RefCell::new(HashMap::new()),
         }
     }
 
-    pub fn lazy_provide<T>(&mut self, value: LazyCell<LocalBoxAny>)
+    pub fn insert_lazy<F, Fut, T>(&self, f: F)
     where
+        F: FnOnce() -> Fut + 'static,
+        Fut: Future<Output = T> + 'static,
         T: 'static,
     {
-        self.provide_value::<T>(Value::Lazy(value));
+        self.insert_value::<T>(Value::Lazy(LazyCell::new(move || {
+            Box::pin(async move { Box::new(f().await) as LocalBoxAny })
+        })));
     }
 
-    pub fn provide<T>(&mut self, value: T)
+    pub fn insert<T>(&self, value: T)
     where
         T: 'static,
     {
-        self.provide_value::<T>(Value::Value(Box::new(value)));
+        self.insert_value::<T>(Value::Value(Box::new(value)));
     }
 
-    fn provide_value<T>(&mut self, value: Value)
+    fn insert_value<T>(&self, value: Value)
     where
         T: 'static,
     {
-        if let Some(_) = self.inner.insert(TypeId::of::<T>(), value) {
+        if let Some(_) = self.inner.borrow_mut().insert(TypeId::of::<T>(), value) {
             warn!("{} is replaced", type_name::<T>())
         }
     }
 
-    pub fn try_consume<T>(&self) -> Option<T>
+    pub fn try_get<T>(&self) -> Option<T>
     where
         T: Clone + 'static,
     {
         self.inner
+            .borrow()
             .get(&TypeId::of::<T>())
             .and_then(|value| match value {
                 Value::Lazy(_) => None,
@@ -66,21 +72,31 @@ impl LocalContainer {
             })
     }
 
-    pub async fn consume<T>(&self) -> Option<T>
+    pub async fn get<T>(&self) -> Option<T>
     where
         T: Clone + 'static,
     {
-        match self.inner.get(&TypeId::of::<T>())? {
-            Value::Lazy(lazy) => LazyCell::force(&lazy).await.downcast_ref().cloned(),
-            Value::Value(value) => value.downcast_ref().cloned(),
+        match self.inner.borrow().get(&TypeId::of::<T>())? {
+            Value::Lazy(lazy) => LazyCell::force(&lazy).await,
+            Value::Value(value) => value,
         }
+        .downcast_ref()
+        .cloned()
     }
 
-    pub fn remove<T: 'static>(&mut self) -> Option<T> {
-        match self.inner.remove(&TypeId::of::<T>())? {
-            Value::Lazy(_) => None,
-            Value::Value(value) => value.downcast().map(|v| *v).ok(),
+    pub async fn take<T: 'static>(&self) -> Option<T> {
+        match self.inner.borrow_mut().remove(&TypeId::of::<T>())? {
+            Value::Lazy(lazy) => {
+                _ = LazyCell::force(&lazy).await;
+                LazyCell::into_inner(lazy)
+                    .map_err(|_| "")
+                    .expect("LazyCell initialized")
+            }
+            Value::Value(value) => value,
         }
+        .downcast()
+        .map(|value| *value)
+        .ok()
     }
 }
 
@@ -89,33 +105,31 @@ mod tests {
     use super::*;
 
     #[tokio::test]
-    async fn test_provide_and_consume() {
+    async fn test_insert_and_get() {
         // Test scenario: Directly provide a value, then attempt to
         // synchronously consume and asynchronously consume that
         // value.
-        let mut container = LocalContainer::new();
-        container.provide::<i32>(42);
+        let container = LocalTypedMap::new();
+        container.insert::<i32>(42);
 
-        assert_eq!(container.try_consume::<i32>(), Some(42));
-        assert_eq!(container.consume::<i32>().await, Some(42));
+        assert_eq!(container.try_get::<i32>(), Some(42));
+        assert_eq!(container.get::<i32>().await, Some(42));
     }
 
     #[tokio::test]
-    async fn test_lazy_provide_and_consume() {
+    async fn test_insert_lazy_and_get() {
         // Test scenario: Provide a lazily initialized value, verify
         // that try_consume cannot obtain it, but consume can obtain
         // it and trigger initialization.
-        let mut container = LocalContainer::new();
+        let container = LocalTypedMap::new();
         let value = 42;
-        container.lazy_provide::<i32>(LazyCell::new(move || {
-            Box::pin(async move { Box::new(value) as LocalBoxAny })
-        }));
+        container.insert_lazy(async move || value);
 
-        assert_eq!(container.try_consume::<i32>(), None);
-        assert_eq!(container.consume::<i32>().await, Some(42));
+        assert_eq!(container.try_get::<i32>(), None);
+        assert_eq!(container.get::<i32>().await, Some(42));
 
         // Again consume, verify value whether maintain consistency
-        assert_eq!(container.consume::<i32>().await, Some(42));
+        assert_eq!(container.get::<i32>().await, Some(42));
     }
 
     #[tokio::test]
@@ -123,39 +137,37 @@ mod tests {
         // Test scenario: Provide a value and then provide another
         // value of the same type, verify that the old value is
         // replaced.
-        let mut container = LocalContainer::new();
-        container.provide::<i32>(10);
-        assert_eq!(container.consume::<i32>().await, Some(10));
+        let container = LocalTypedMap::new();
+        container.insert::<i32>(10);
+        assert_eq!(container.get::<i32>().await, Some(10));
 
-        container.provide::<i32>(20);
-        assert_eq!(container.consume::<i32>().await, Some(20));
+        container.insert::<i32>(20);
+        assert_eq!(container.get::<i32>().await, Some(20));
     }
 
     #[tokio::test]
-    async fn test_remove_value() {
+    async fn test_take_value() {
         // Test scenario: Provide a value then remove it, verify
         // removal success and inability to retrieve again.
-        let mut container = LocalContainer::new();
-        container.provide::<String>("test".to_string());
+        let container = LocalTypedMap::new();
+        container.insert::<String>("test".to_string());
 
-        assert_eq!(container.remove::<String>(), Some("test".to_string()));
-        assert_eq!(container.consume::<String>().await, None);
+        assert_eq!(container.take::<String>().await, Some("test".to_string()));
+        assert_eq!(container.get::<String>().await, None);
     }
 
     #[tokio::test]
-    async fn test_remove_lazy_value() {
+    async fn test_take_lazy_value() {
         // Test scenario: Attempt to remove a lazy value, expected to
         // be unable to remove (return None), but the value is indeed
         // removed from the container.
-        let mut container = LocalContainer::new();
-        container.lazy_provide::<i32>(LazyCell::new(|| {
-            Box::pin(async { Box::new(100) as LocalBoxAny })
-        }));
+        let container = LocalTypedMap::new();
+        container.insert_lazy(async move || 100);
 
         // remove Current implementation for Lazy returns None
-        assert_eq!(container.remove::<i32>(), None);
+        assert_eq!(container.take::<i32>().await, Some(100));
 
         // Verify value has been removed
-        assert_eq!(container.consume::<i32>().await, None);
+        assert_eq!(container.get::<i32>().await, None);
     }
 }

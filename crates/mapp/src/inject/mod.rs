@@ -4,7 +4,7 @@ mod container;
 // mod option;
 mod take;
 
-pub use container::LocalContainer;
+pub use container::LocalTypedMap;
 // pub use constructor::*;
 // pub use injector::*;
 // #[allow(unused)]

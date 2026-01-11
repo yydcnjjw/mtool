@@ -38,6 +38,14 @@ where
             State::Poisoned => panic_poisoned(),
         }
     }
+    
+    pub fn into_inner(this: Self) -> Result<T, F> {
+        match this.state.into_inner() {
+            State::Init(data) => Ok(data),
+            State::Uninit(f) => Err(f),
+            State::Poisoned => panic_poisoned(),
+        }
+    }    
 
     #[cold]
     async unsafe fn really_init(this: &LazyCell<T, F>) -> &T {

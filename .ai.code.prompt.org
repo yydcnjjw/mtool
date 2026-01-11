@@ -1,0 +1,8 @@
+
+
+** [2026-01-10 Sat 14:55]
+添加错误描述 Function: Error Files: @crates/mapp/src/context/error.rs @crates/mapp/src/context/context.rs Stored repository context: - /home/yydcnjjw/workspace/project/mtool/crates/mapp/src/context/error.rs#Error Note: Please make the code change described above.
+
+
+** [2026-01-11 Sun 10:56]
+添加合适的 message
