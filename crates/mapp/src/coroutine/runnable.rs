@@ -14,11 +14,14 @@ pub trait Runnable {
         Self: 'a;
 }
 
-impl<Func, Args, E> Runnable for FuncWrapper<Func, Args>
+pub trait LocalInjectRunnable<Args, E> = InjectOnce<Args>
 where
-    Func: InjectOnce<Args>,
-    Func::Output: Future<Output = Result<(), E>>,
-    Context: LocalProvide<Args, Error = E>,
+    <Self as InjectOnce<Args>>::Output: Future<Output = Result<(), E>>,
+    Context: LocalProvide<Args, Error = E>;
+
+impl<Func, Args, E> Runnable for FuncWrapper<Func, (Args, E)>
+where
+    Func: LocalInjectRunnable<Args, E>,
 {
     type Error = E;
 
@@ -30,13 +33,14 @@ where
     }
 }
 
-pub fn new_runnable<Func, Args, E>(f: Func) -> impl Runnable
+pub fn new_runnable<Func, Args, E>(f: Func) -> Box<dyn Runnable<Error = E>>
 where
-    Func: InjectOnce<Args>,
-    Func::Output: Future<Output = Result<(), E>>,
-    Context: LocalProvide<Args, Error = E>,
+    Func: LocalInjectRunnable<Args, E>,
+    Func: 'static,
+    Args: 'static,
+    E: 'static,
 {
-    FuncWrapper::new(f)
+    Box::new(FuncWrapper::<Func, (Args, E)>::new(f))
 }
 
 #[cfg(test)]
@@ -55,6 +59,21 @@ mod tests {
         }
 
         let runnable = Box::new(FuncWrapper::new(my_func));
+        runnable.run(&ctx).await.unwrap();
+    }
+
+    #[tokio::test]
+    async fn test_custom_runnable() {
+        let ctx = Context::new();
+        ctx.provide_value(Rc::new(42i32));
+
+        async fn my_func(v: Rc<i32>) -> Result<(), crate::context::ContextError> {
+            assert_eq!(*v, 42);
+            Ok(())
+        }
+
+        type CustomRunnable = Box<dyn Runnable<Error = crate::context::ContextError>>;
+        let runnable: CustomRunnable = new_runnable(my_func);
         runnable.run(&ctx).await.unwrap();
     }
 }

@@ -8400,6 +8400,7 @@ dependencies = [
  "futures",
  "js-sys",
  "minject",
+ "rand 0.8.5",
  "rig-core",
  "serde-wasm-bindgen",
  "snafu",

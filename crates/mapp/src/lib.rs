@@ -1,3 +1,5 @@
+#![feature(trait_alias)]
+
 // #![feature(unsize)]
 // #![feature(coerce_unsized)]
 // #![feature(unsized_fn_params)]

@@ -18,11 +18,14 @@ pub trait Callable {
         Self: 'a;
 }
 
-impl<Func, Args, Output, E> Callable for FuncWrapper<Func, (Args, Output)>
+pub trait LocalInjectCallable<Args, Output, E> = InjectOnce<Args>
 where
-    Func: InjectOnce<Args>,
-    Func::Output: Future<Output = Result<Output, E>>,
-    Context: LocalProvide<Args, Error = E>,
+    <Self as InjectOnce<Args>>::Output: Future<Output = Result<Output, E>>,
+    Context: LocalProvide<Args, Error = E>;
+
+impl<Func, Args, Output, E> Callable for FuncWrapper<Func, (Args, Output, E)>
+where
+    Func: LocalInjectCallable<Args, Output, E>,
 {
     type Output = Output;
     type Error = E;
@@ -38,13 +41,15 @@ where
     }
 }
 
-pub fn new_callable<Func, Args, Output, E>(f: Func) -> impl Callable
+pub fn new_callable<Func, Args, Output, E>(f: Func) -> Box<dyn Callable<Output = Output, Error = E>>
 where
-    Func: InjectOnce<Args>,
-    Func::Output: Future<Output = Result<Output, E>>,
-    Context: LocalProvide<Args, Error = E>,
+    Func: LocalInjectCallable<Args, Output, E>,
+    Func: 'static,
+    Args: 'static,
+    Output: 'static,
+    E: 'static,
 {
-    FuncWrapper::new(f)
+    Box::new(FuncWrapper::<Func, (Args, Output, E)>::new(f))
 }
 
 #[cfg(test)]
@@ -61,8 +66,22 @@ mod tests {
             Ok(*v + 1)
         }
 
-        let callable: Box<dyn Callable<Output = i32, Error = crate::context::ContextError>> =
-            Box::new(FuncWrapper::new(my_func));
+        let res = new_callable(my_func).call(&ctx).await.unwrap();
+
+        assert_eq!(res, 43);
+    }
+
+    #[tokio::test]
+    async fn test_custom_callable() {
+        let ctx = Context::new();
+        ctx.provide_value(Rc::new(42i32));
+
+        async fn my_func(v: Rc<i32>) -> Result<i32, crate::context::ContextError> {
+            Ok(*v + 1)
+        }
+
+        type CustomCallable = Box<dyn Callable<Output = i32, Error = crate::context::ContextError>>;
+        let callable: CustomCallable = new_callable(my_func);
         let res = callable.call(&ctx).await.unwrap();
         assert_eq!(res, 43);
     }
