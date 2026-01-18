@@ -1,6 +1,6 @@
-mod runnable;
 mod callable;
+mod runnable;
 mod wrapper;
 
-pub use runnable::Runnable;
-pub use callable::Callable;
+pub use callable::{Callable, LocalInjectCallable};
+pub use runnable::{LocalInjectRunnable, Runnable};

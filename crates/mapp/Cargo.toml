@@ -36,7 +36,7 @@ snafu = "*"
 # serde-error = "*"
 tracing = "*"
 # tokio-util = { version = "*", features = ["compat"] }
-# async-recursion = "*"
+async-recursion = "*"
 # dashmap = "*"
 # tracing-appender = "*"
 # itertools = "*"
@@ -51,7 +51,7 @@ wasm-bindgen = { version = "*", optional = true }
 js-sys = { version = "*", optional = true }
 serde-wasm-bindgen = { version = "*", optional = true }
 wasm-bindgen-futures = { version = "*", optional = true }
-# petgraph = "0.6"
+indextree = "*"
 # ringbuf = "0.3"
 rand = "0.8"
 # time = { version = "0.3.20", features = ["formatting"] }

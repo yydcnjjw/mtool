@@ -4,7 +4,8 @@ mod label;
 // mod cond_load;
 // mod local_schedule;
 // mod once_task;
-// mod schedule;
+mod scheduler;
+mod task;
 
 // pub use cond_load::*;
 // pub use local_schedule::*;

@@ -1,0 +1,81 @@
+use std::collections::{HashMap, LinkedList};
+
+use async_recursion::async_recursion;
+use indextree::{Arena, NodeId};
+
+use crate::{
+    context::{Context, ContextError},
+    coroutine::Callable,
+};
+
+use super::{Label, ScheduleGraph, task::Task};
+
+type Condition = Box<dyn Callable<Output = bool, Error = ContextError>>;
+
+struct Node {
+    task: Option<Task>,
+    condition: Option<Condition>,
+}
+
+impl Node {
+    fn empty() -> Self {
+        Self {
+            task: None,
+            condition: None,
+        }
+    }
+}
+
+pub struct Scheduler {
+    tree: Arena<Node>,
+    nodes: HashMap<Label, NodeId>,
+    root: NodeId,
+}
+
+impl Scheduler {
+    pub fn new() -> Self {
+        let mut tree = Arena::new();
+        let mut nodes = HashMap::new();
+
+        let root = tree.new_node(Node::empty());
+        {
+            nodes.insert(ScheduleGraph::Root.into(), root);
+        }
+
+        Scheduler { tree, nodes, root }
+    }
+
+    pub fn insert_before(&mut self, label: Label, node: Node) {
+        // let node = self.tree.new_node(data);
+    }
+
+    pub fn insert_after(&mut self, label: Label, node: Node) {}
+
+    pub fn add(&mut self, label: Label, node: Node) {}
+
+    pub async fn run(mut self, ctx: &Context) -> Result<(), ContextError> {
+        self.run_node(self.root, ctx).await
+    }
+
+    #[async_recursion(?Send)]
+    pub async fn run_node(&mut self, node_id: NodeId, ctx: &Context) -> Result<(), ContextError> {
+        let node = &mut self.tree[node_id];
+        let node = node.get_mut();
+
+        if let Some(cond) = node.condition.take()
+            && !cond.call(ctx).await?
+        {
+            return Ok(());
+        }
+
+        if let Some(task) = node.task.take() {
+            task.run(ctx).await?;
+        }
+
+        for id in self.root.children(&self.tree) {
+            let node = &self.tree[id];
+        }
+
+        Ok(())
+    }
+}
