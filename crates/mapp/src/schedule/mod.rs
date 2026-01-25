@@ -1,17 +1,12 @@
-use crate::define_label;
-
-mod label;
-// mod cond_load;
-// mod local_schedule;
-// mod once_task;
+mod condition;
+mod config;
+mod graph_info;
+mod set;
+mod schedule_graph;
 mod scheduler;
 mod task;
 
-// pub use cond_load::*;
-// pub use local_schedule::*;
-// pub use once_task::*;
-// pub use schedule::*;
+use crate::hash::NoOpHash;
+use std::{any::TypeId, collections::HashMap};
 
-pub use label::*;
-
-define_label!(pub ScheduleGraph, Root);
+pub(crate) type TypeIdMap<V> = HashMap<TypeId, V, NoOpHash>;

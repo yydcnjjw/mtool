@@ -9,13 +9,16 @@
 // mod label;
 // mod module;
 // mod platform;
-mod inject;
+pub mod inject;
 mod schedule;
 // mod trace;
 // mod utils;
 mod context;
-mod coroutine;
+pub mod coroutine;
 mod lazy;
+mod hash;
+pub mod intern;
+pub mod label;
 
 pub mod prelude {
     // pub use crate::{
@@ -31,15 +34,14 @@ pub mod prelude {
     //     utils::rand_string,
     // };
 
-    pub use crate::context::*;
-    pub use crate::coroutine::*;
-    pub use crate::inject::*;
-    pub use crate::schedule::*;
-    pub use minject::*;
+    // pub use crate::context::*;
+    // pub use crate::coroutine::*;
+    // pub use crate::inject::*;
+    // pub use crate::schedule::*;
 }
 
 // pub use app::{AppBuilder, LocalAppBuilder};
-pub use schedule::Label;
+// pub use schedule::Label;
 // #[allow(unused)]
 // pub use platform::*;
 // pub use schedule::{CreateLocalOnceTaskDescriptor, CreateOnceTaskDescriptor};

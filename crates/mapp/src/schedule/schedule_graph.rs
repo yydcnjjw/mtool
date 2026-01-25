@@ -1,3 +1,41 @@
+use std::collections::HashMap;
+
+use petgraph::prelude::*;
+
+use super::{
+    config::{Chain, Schedulable, ScheduleConfigs},
+    graph_info::GraphInfo,
+};
+
+#[derive(Debug, Clone, PartialEq, Eq, Hash, PartialOrd, Ord)]
+enum NodeData {
+    Task(String),
+    TaskSet(String),
+}
+
+type Dag = DiGraphMap<Node, ()>;
+
+struct Node {
+    index: NodeIndex,
+    data: NodeData,
+}
+
+#[derive(Default)]
+pub struct ScheduleGraph {
+    nodes: HashMap<String, Node>,
+
+    hierarchy: Dag,
+    dependency: Dag,
+}
+
+impl ScheduleGraph {
+    fn process_configs<T>(configs: ScheduleConfigs<T>)
+    where
+        T: Schedulable<Metadata = GraphInfo, GroupMetadata = Chain>,
+    {
+    }
+}
+
 // use std::{collections::HashMap, mem, ops::DerefMut};
 
 // use anyhow::Context;

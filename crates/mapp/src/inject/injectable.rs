@@ -1,11 +1,11 @@
-use minject_macro::{enum_params, repeat};
+use variadics_please::all_tuples;
 
 pub trait Inject<Args> {
     type Output;
     fn inject(&self, args: Args) -> Self::Output;
 }
 
-macro_rules! impl_inject_for_fn {
+macro_rules! impl_inject_in_fn {
     ($($arg: ident),*) =>  {
         impl <Func, Output, $($arg,)*> Inject<($($arg,)*)> for Func
         where
@@ -21,26 +21,14 @@ macro_rules! impl_inject_for_fn {
     }
 }
 
-repeat!(0, 9, enum_params, impl_inject_for_fn, Arg);
+all_tuples!(impl_inject_in_fn, 0, 15, Arg);
 
 pub trait InjectOnce<Args> {
     type Output;
     fn inject_once(self, args: Args) -> Self::Output;
 }
 
-// impl<Args, Output> InjectOnce<Args> for Box<dyn InjectOnce<Args, Output = Output>> {
-//     type Output = Output;
-
-//     fn inject_once(self, args: Args) -> Self::Output {
-//         InjectOnce::inject_once_boxed(self, args)
-//     }
-
-//     fn inject_once_boxed(self: Box<Self>, args: Args) -> Self::Output {
-//         InjectOnce::inject_once_boxed(*self, args)
-//     }
-// }
-
-macro_rules! impl_inject_once_for_fn_once {
+macro_rules! impl_inject_once_in_fn_once {
     ($($arg: ident),*) =>  {
         impl <Func, Output, $($arg,)*> InjectOnce<($($arg,)*)> for Func
         where
@@ -56,7 +44,7 @@ macro_rules! impl_inject_once_for_fn_once {
     }
 }
 
-repeat!(0, 9, enum_params, impl_inject_once_for_fn_once, Arg);
+all_tuples!(impl_inject_once_in_fn_once, 0, 15, Arg);
 
 #[cfg(test)]
 mod tests {

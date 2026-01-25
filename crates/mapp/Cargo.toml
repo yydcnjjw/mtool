@@ -9,20 +9,22 @@ edition.workspace = true
 [features]
 default = []
 
-ai = [
-  "dep:rig-core"
-]
+# ai = [
+#   "dep:rig-core"
+# ]
 
-web = [
-  "dep:wasm-bindgen",
-  "dep:serde-wasm-bindgen",
-  "dep:wasm-bindgen-futures",
-  "dep:js-sys",
-]
+# web = [
+#   "dep:wasm-bindgen",
+#   "dep:serde-wasm-bindgen",
+#   "dep:wasm-bindgen-futures",
+#   "dep:js-sys",
+# ]
 
 [dependencies]
-minject = { path = "../minject" }
+# minject = { path = "../minject" }
 
+foldhash = { version = "*", default-features = false }
+petgraph = "*"
 # cfg-if = "*"
 # async-trait = "*"
 futures = "*"
@@ -47,10 +49,10 @@ async-recursion = "*"
 # send_wrapper = "*"
 # dpi = { version = "*", features = ["serde"] }
 # toml = "*"
-wasm-bindgen = { version = "*", optional = true }
-js-sys = { version = "*", optional = true }
-serde-wasm-bindgen = { version = "*", optional = true }
-wasm-bindgen-futures = { version = "*", optional = true }
+# wasm-bindgen = { version = "*", optional = true }
+# js-sys = { version = "*", optional = true }
+# serde-wasm-bindgen = { version = "*", optional = true }
+# wasm-bindgen-futures = { version = "*", optional = true }
 indextree = "*"
 # ringbuf = "0.3"
 rand = "0.8"
@@ -60,7 +62,9 @@ rand = "0.8"
 # rustls = "*"
 # url = "*"
 # base64 = "*"
-rig-core = { version = "*", optional = true }
+# rig-core = { version = "*", optional = true }
+
+variadics_please = "*"
 
 # [target.'cfg(not(target_family = "wasm"))'.dependencies]
 tokio = { version = "*", features = ["full"] }

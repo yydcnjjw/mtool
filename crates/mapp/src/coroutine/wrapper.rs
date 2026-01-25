@@ -1,11 +1,11 @@
 use std::marker::PhantomData;
 
-pub struct FuncWrapper<Func, T> {
+pub struct FuncWrapper<Func, Marker> {
     pub func: Func,
-    _marker: PhantomData<T>,
+    _marker: PhantomData<Marker>,
 }
 
-impl<Func, T> FuncWrapper<Func, T> {
+impl<Func, Marker> FuncWrapper<Func, Marker> {
     pub fn new(func: Func) -> Self {
         Self {
             func,

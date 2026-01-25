@@ -1,9 +1,11 @@
 use std::future::Future;
 
 use futures::future::LocalBoxFuture;
-use minject::{InjectOnce, LocalProvide, local_inject_once};
 
-use crate::context::Context;
+use crate::{
+    context::Context,
+    inject::{InjectOnce, LocalProvide, local_inject_once},
+};
 
 use super::wrapper::FuncWrapper;
 
@@ -35,8 +37,7 @@ where
 
 pub fn new_runnable<Func, Args, E>(f: Func) -> Box<dyn Runnable<Error = E>>
 where
-    Func: LocalInjectRunnable<Args, E>,
-    Func: 'static,
+    Func: LocalInjectRunnable<Args, E> + 'static,
     Args: 'static,
     E: 'static,
 {
@@ -49,21 +50,33 @@ mod tests {
     use std::rc::Rc;
 
     #[tokio::test]
-    async fn test_runnable() {
+    async fn runnable() {
         let ctx = Context::new();
         ctx.provide_value(Rc::new(42i32));
 
-        async fn my_func(v: Rc<i32>) -> Result<(), crate::context::ContextError> {
-            assert_eq!(*v, 42);
-            Ok(())
+        {
+            async fn my_func(v: Rc<i32>) -> Result<(), crate::context::ContextError> {
+                assert_eq!(*v, 42);
+                Ok(())
+            }
+
+            let runnable = new_runnable(my_func);
+            runnable.run(&ctx).await.unwrap();
         }
 
-        let runnable = Box::new(FuncWrapper::new(my_func));
-        runnable.run(&ctx).await.unwrap();
+        {
+            let runnable = new_runnable(
+                async move |v: Rc<i32>| -> Result<(), crate::context::ContextError> {
+                    assert_eq!(*v, 42);
+                    Ok(())
+                },
+            );
+            runnable.run(&ctx).await.unwrap();
+        }
     }
 
     #[tokio::test]
-    async fn test_custom_runnable() {
+    async fn custom_runnable() {
         let ctx = Context::new();
         ctx.provide_value(Rc::new(42i32));
 

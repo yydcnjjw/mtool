@@ -1,10 +1,9 @@
 use futures::{FutureExt, TryFutureExt, future::LocalBoxFuture};
-use minject::LocalProvide;
 use snafu::ResultExt;
 use std::{any::type_name, rc::Rc, sync::Arc};
 use tokio::sync::oneshot;
 
-use crate::inject::{self, LocalTypedMap, Take};
+use crate::inject::{self, LocalProvide, LocalTypedMap, Take};
 
 use super::{ContextError, ProvideError};
 
@@ -137,6 +136,15 @@ where
 
     fn local_provide(&self) -> LocalBoxFuture<'_, Result<Option<T>, Self::Error>> {
         async { Ok(LocalProvide::<T>::local_provide(self).await.ok()) }.boxed_local()
+    }
+}
+
+// NOTE: Due to **E0207** we must manually implement `LocalProvide<()>`
+impl LocalProvide<()> for Context {
+    type Error = ContextError;
+
+    fn local_provide(&self) -> LocalBoxFuture<'_, Result<(), Self::Error>> {
+        async { Ok(()) }.boxed_local()
     }
 }
 

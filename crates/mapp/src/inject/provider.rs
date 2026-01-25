@@ -1,5 +1,5 @@
 use futures::future::{BoxFuture, LocalBoxFuture};
-use minject_macro::{enum_params, repeat};
+use variadics_please::all_tuples;
 
 pub trait LocalProvide<O> {
     type Error;
@@ -12,7 +12,7 @@ pub trait Provide<O> {
 }
 
 #[macro_export]
-macro_rules! impl_local_provider_for_tuple {
+macro_rules! impl_local_provider_in_tuple {
     ($($param: ident),*) => {
         impl<C, E, $($param,)*> LocalProvide<($($param,)*)> for C
         where
@@ -29,9 +29,9 @@ macro_rules! impl_local_provider_for_tuple {
     };
 }
 
-repeat!(1, 9, enum_params, impl_local_provider_for_tuple, P);
+all_tuples!(impl_local_provider_in_tuple, 1, 15, P);
 
-macro_rules! impl_provider_for_tuple {
+macro_rules! impl_provider_in_tuple {
     ($($param: ident),*) => {
         impl<C, E, $($param,)*> Provide<($($param,)*)> for C
         where
@@ -50,4 +50,4 @@ macro_rules! impl_provider_for_tuple {
     };
 }
 
-repeat!(1, 9, enum_params, impl_provider_for_tuple, P);
+all_tuples!(impl_provider_in_tuple, 1, 15, P);

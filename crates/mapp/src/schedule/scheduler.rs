@@ -1,81 +1,166 @@
-use std::collections::{HashMap, LinkedList};
+// use std::collections::{HashMap, LinkedList};
 
-use async_recursion::async_recursion;
-use indextree::{Arena, NodeId};
+// use async_recursion::async_recursion;
+// use indextree::{Arena, NodeId};
 
-use crate::{
-    context::{Context, ContextError},
-    coroutine::Callable,
-};
+// use crate::{
+//     context::{Context, ContextError},
+//     coroutine::Callable,
+// };
 
-use super::{Label, ScheduleGraph, task::Task};
+// use super::task::ScheduleTask;
 
-type Condition = Box<dyn Callable<Output = bool, Error = ContextError>>;
+// type Condition = Box<dyn Callable<Output = bool, Error = ContextError>>;
 
-struct Node {
-    task: Option<Task>,
-    condition: Option<Condition>,
-}
+// struct Node {
+//     task: Option<ScheduleTask>,
+//     condition: Option<Condition>,
+// }
 
-impl Node {
-    fn empty() -> Self {
-        Self {
-            task: None,
-            condition: None,
-        }
-    }
-}
+// impl Node {
+//     fn empty() -> Self {
+//         Self {
+//             task: None,
+//             condition: None,
+//         }
+//     }
+// }
 
-pub struct Scheduler {
-    tree: Arena<Node>,
-    nodes: HashMap<Label, NodeId>,
-    root: NodeId,
-}
+use super::{config::IntoScheduleConfigs, set::ScheduleLabel, task::ScheduleTask};
+
+#[derive(Debug, Default)]
+pub struct Scheduler {}
 
 impl Scheduler {
-    pub fn new() -> Self {
-        let mut tree = Arena::new();
-        let mut nodes = HashMap::new();
-
-        let root = tree.new_node(Node::empty());
-        {
-            nodes.insert(ScheduleGraph::Root.into(), root);
-        }
-
-        Scheduler { tree, nodes, root }
+    pub fn add_tasks<M>(
+        &mut self,
+        schedule: impl ScheduleLabel,
+        tasks: impl IntoScheduleConfigs<ScheduleTask, M>,
+    ) -> &mut Self {
+        tasks.into_configs();
+        self
     }
+}
 
-    pub fn insert_before(&mut self, label: Label, node: Node) {
-        // let node = self.tree.new_node(data);
-    }
+// impl Scheduler {
+//     pub fn new() -> Self {
+//         let mut tree = Arena::new();
+//         let mut nodes = HashMap::new();
 
-    pub fn insert_after(&mut self, label: Label, node: Node) {}
+//         let root = tree.new_node(Node::empty());
+//         {
+//             nodes.insert(ScheduleGraph::Root.into(), root);
+//         }
 
-    pub fn add(&mut self, label: Label, node: Node) {}
+//         Scheduler { tree, nodes, root }
+//     }
 
-    pub async fn run(mut self, ctx: &Context) -> Result<(), ContextError> {
-        self.run_node(self.root, ctx).await
-    }
+//     pub fn insert_before(&mut self, label: Label, node: Node) {
+//         // let node = self.tree.new_node(data);
+//     }
 
-    #[async_recursion(?Send)]
-    pub async fn run_node(&mut self, node_id: NodeId, ctx: &Context) -> Result<(), ContextError> {
-        let node = &mut self.tree[node_id];
-        let node = node.get_mut();
+//     pub fn insert_after(&mut self, label: Label, node: Node) {}
 
-        if let Some(cond) = node.condition.take()
-            && !cond.call(ctx).await?
-        {
-            return Ok(());
-        }
+//     pub fn add(&mut self, label: Label, node: Node) {}
 
-        if let Some(task) = node.task.take() {
-            task.run(ctx).await?;
-        }
+//     pub async fn run(mut self, ctx: &Context) -> Result<(), ContextError> {
+//         self.run_node(self.root, ctx).await
+//     }
 
-        for id in self.root.children(&self.tree) {
-            let node = &self.tree[id];
-        }
+//     #[async_recursion(?Send)]
+//     pub async fn run_node(&mut self, node_id: NodeId, ctx: &Context) -> Result<(), ContextError> {
+//         let node = &mut self.tree[node_id];
+//         let node = node.get_mut();
 
-        Ok(())
-    }
+//         if let Some(cond) = node.condition.take()
+//             && !cond.call(ctx).await?
+//         {
+//             return Ok(());
+//         }
+
+//         if let Some(task) = node.task.take() {
+//             task.run(ctx).await?;
+//         }
+
+//         for id in self.root.children(&self.tree) {
+//             let node = &self.tree[id];
+//         }
+
+//         Ok(())
+//     }
+// }
+
+#[cfg(test)]
+mod tests {
+    // use minject::InjectOnce;
+
+    // use crate::{
+    //     context::ContextError,
+    //     schedule::set::{ScheduleLabel, TaskSet},
+    // };
+
+    // use super::*;
+
+    // #[derive(Hash, Debug, Clone, PartialEq, Eq)]
+    // struct TestSchedule;
+
+    // impl ScheduleLabel for TestSchedule {
+    //     #[doc = r" Clones this `"]
+    //     #[doc = stringify!(ScheduleLabel)]
+    //     #[doc = r"`."]
+    //     fn dyn_clone(&self) -> ::std::boxed::Box<dyn ScheduleLabel> {
+    //         todo!()
+    //     }
+
+    //     #[doc = r" Casts this value to a form where it can be compared with other type-erased values."]
+    //     fn as_dyn_eq(&self) -> &dyn crate::label::DynEq {
+    //         todo!()
+    //     }
+
+    //     #[doc = r" Feeds this value into the given [`Hasher`]."]
+    //     fn dyn_hash(&self, state: &mut dyn ::std::hash::Hasher) {
+    //         todo!()
+    //     }
+    // }
+
+    // #[derive(Debug, Hash, Clone, PartialEq, Eq)]
+    // enum TestSet {
+    //     First,
+    //     Second,
+    // }
+
+    // impl TaskSet for TestSet {
+    //     #[doc = r" Clones this `"]
+    //     #[doc = stringify!(TaskSet)]
+    //     #[doc = r"`."]
+    //     fn dyn_clone(&self) -> ::std::boxed::Box<dyn TaskSet> {
+    //         todo!()
+    //     }
+
+    //     #[doc = r" Casts this value to a form where it can be compared with other type-erased values."]
+    //     fn as_dyn_eq(&self) -> &dyn crate::label::DynEq {
+    //         todo!()
+    //     }
+
+    //     #[doc = r" Feeds this value into the given [`Hasher`]."]
+    //     fn dyn_hash(&self, state: &mut dyn ::std::hash::Hasher) {
+    //         todo!()
+    //     }
+    // }
+
+    // #[test]
+    // fn tasks() {
+    //     let mut schedules = Scheduler::default();
+
+    //     async fn test() -> Result<(), ContextError> {
+    //         Ok(())
+    //     }
+
+    //     // schedules.add_tasks(
+    //     //     TestSchedule,
+    //     //     (async move || async move { Ok::<_, ContextError>(()) }).in_set(TestSet::First),
+    //     // );
+    //     let configs = test.in_set(TestSet::First);
+    //     // schedules.add_tasks(TestSchedule, test.in_set(TestSet::First));
+    // }
 }

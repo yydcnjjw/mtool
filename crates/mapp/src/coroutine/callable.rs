@@ -1,9 +1,11 @@
 use std::future::Future;
 
 use futures::future::LocalBoxFuture;
-use minject::{InjectOnce, LocalProvide, local_inject_once};
 
-use crate::context::Context;
+use crate::{
+    context::Context,
+    inject::{InjectOnce, LocalProvide, local_inject_once},
+};
 
 use super::wrapper::FuncWrapper;
 
@@ -43,8 +45,7 @@ where
 
 pub fn new_callable<Func, Args, Output, E>(f: Func) -> Box<dyn Callable<Output = Output, Error = E>>
 where
-    Func: LocalInjectCallable<Args, Output, E>,
-    Func: 'static,
+    Func: LocalInjectCallable<Args, Output, E> + 'static,
     Args: 'static,
     Output: 'static,
     E: 'static,
@@ -58,7 +59,7 @@ mod tests {
     use std::rc::Rc;
 
     #[tokio::test]
-    async fn test_callable() {
+    async fn callable() {
         let ctx = Context::new();
         ctx.provide_value(Rc::new(42i32));
 
@@ -72,7 +73,7 @@ mod tests {
     }
 
     #[tokio::test]
-    async fn test_custom_callable() {
+    async fn custom_callable() {
         let ctx = Context::new();
         ctx.provide_value(Rc::new(42i32));
 
