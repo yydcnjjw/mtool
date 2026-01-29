@@ -1,4 +1,4 @@
-use base64::Engine;
+use base64::prelude::*;
 use libp2p::{
     core::ConnectedPoint,
     gossipsub::{self, IdentTopic, Message},
@@ -96,7 +96,7 @@ impl<T> CommandResult<T> {
 pub fn new(cfg: Config) -> Result<(Peer, EventLoop), anyhow::Error> {
     let mut swarm = match &cfg.peer_id {
         Some(peer_id) => libp2p::SwarmBuilder::with_existing_identity(Keypair::ed25519_from_bytes(
-            base64::engine::general_purpose::STANDARD.decode(peer_id)?,
+            BASE64_STANDARD.decode(peer_id)?,
         )?),
         None => libp2p::SwarmBuilder::with_new_identity(),
     }
