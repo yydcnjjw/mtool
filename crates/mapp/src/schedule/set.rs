@@ -2,7 +2,10 @@ use std::hash::Hash;
 use std::{any::TypeId, hash::Hasher, marker::PhantomData};
 use std::{fmt, hash};
 
-use crate::{define_label, intern::Interned, label::DynEq};
+use crate::{define_label, intern::Interned};
+
+pub use crate::label::DynEq;
+pub use mapp_macros::{ScheduleLabel, TaskSet};
 
 define_label!(
     /// A strongly-typed class of labels used to identify a [`Schedule`](crate::schedule::Schedule).
@@ -200,235 +203,198 @@ impl<S: TaskSet> IntoTaskSet<()> for S {
 //     }
 // }
 
-// #[cfg(test)]
-// mod tests {
-//     use crate::{
-//         resource::Resource,
-//         schedule::{tests::ResMut, Schedule},
-//     };
+#[cfg(test)]
+mod tests {
+    use super::*;
 
-//     use super::*;
+    #[test]
+    fn test_derive_schedule_label() {
+        #[derive(ScheduleLabel, Debug, Default, Clone, Copy, PartialEq, Eq, Hash)]
+        struct UnitLabel;
 
-//     #[test]
-//     fn test_schedule_label() {
-//         use crate::world::World;
+        #[derive(ScheduleLabel, Debug, Default, Clone, Copy, PartialEq, Eq, Hash)]
+        struct TupleLabel(u32, u32);
 
-//         #[derive(Resource)]
-//         struct Flag(bool);
+        #[derive(ScheduleLabel, Debug, Default, Clone, Copy, PartialEq, Eq, Hash)]
+        struct StructLabel {
+            a: u32,
+            b: u32,
+        }
 
-//         #[derive(ScheduleLabel, Debug, Default, Clone, Copy, PartialEq, Eq, Hash)]
-//         struct A;
+        #[derive(ScheduleLabel, Debug, Default, Clone, Copy, PartialEq, Eq, Hash)]
+        struct EmptyTupleLabel();
 
-//         #[derive(ScheduleLabel, Debug, Default, Clone, Copy, PartialEq, Eq, Hash)]
-//         struct B;
+        #[derive(ScheduleLabel, Debug, Default, Clone, Copy, PartialEq, Eq, Hash)]
+        struct EmptyStructLabel {}
 
-//         let mut world = World::new();
+        #[derive(ScheduleLabel, Debug, Default, Clone, Copy, PartialEq, Eq, Hash)]
+        enum EnumLabel {
+            #[default]
+            Unit,
+            Tuple(u32, u32),
+            Struct {
+                a: u32,
+                b: u32,
+            },
+        }
 
-//         let mut schedule = Schedule::new(A);
-//         schedule.add_systems(|mut flag: ResMut<Flag>| flag.0 = true);
-//         world.add_schedule(schedule);
+        #[derive(ScheduleLabel, Debug, Default, Clone, Copy, PartialEq, Eq, Hash)]
+        struct GenericLabel<T>(PhantomData<T>);
 
-//         let interned = A.intern();
+        assert_eq!(UnitLabel.intern(), UnitLabel.intern());
+        assert_eq!(EnumLabel::Unit.intern(), EnumLabel::Unit.intern());
+        assert_ne!(UnitLabel.intern(), EnumLabel::Unit.intern());
+        assert_ne!(UnitLabel.intern(), TupleLabel(0, 0).intern());
+        assert_ne!(EnumLabel::Unit.intern(), EnumLabel::Tuple(0, 0).intern());
 
-//         world.insert_resource(Flag(false));
-//         world.run_schedule(interned);
-//         assert!(world.resource::<Flag>().0);
+        assert_eq!(TupleLabel(0, 0).intern(), TupleLabel(0, 0).intern());
+        assert_eq!(
+            EnumLabel::Tuple(0, 0).intern(),
+            EnumLabel::Tuple(0, 0).intern()
+        );
+        assert_ne!(TupleLabel(0, 0).intern(), TupleLabel(0, 1).intern());
+        assert_ne!(
+            EnumLabel::Tuple(0, 0).intern(),
+            EnumLabel::Tuple(0, 1).intern()
+        );
+        assert_ne!(TupleLabel(0, 0).intern(), EnumLabel::Tuple(0, 0).intern());
+        assert_ne!(
+            TupleLabel(0, 0).intern(),
+            StructLabel { a: 0, b: 0 }.intern()
+        );
+        assert_ne!(
+            EnumLabel::Tuple(0, 0).intern(),
+            EnumLabel::Struct { a: 0, b: 0 }.intern()
+        );
 
-//         world.insert_resource(Flag(false));
-//         world.run_schedule(interned);
-//         assert!(world.resource::<Flag>().0);
+        assert_eq!(
+            StructLabel { a: 0, b: 0 }.intern(),
+            StructLabel { a: 0, b: 0 }.intern()
+        );
+        assert_eq!(
+            EnumLabel::Struct { a: 0, b: 0 }.intern(),
+            EnumLabel::Struct { a: 0, b: 0 }.intern()
+        );
+        assert_ne!(
+            StructLabel { a: 0, b: 0 }.intern(),
+            StructLabel { a: 0, b: 1 }.intern()
+        );
+        assert_ne!(
+            EnumLabel::Struct { a: 0, b: 0 }.intern(),
+            EnumLabel::Struct { a: 0, b: 1 }.intern()
+        );
+        assert_ne!(
+            StructLabel { a: 0, b: 0 }.intern(),
+            EnumLabel::Struct { a: 0, b: 0 }.intern()
+        );
+        assert_ne!(
+            StructLabel { a: 0, b: 0 }.intern(),
+            EnumLabel::Struct { a: 0, b: 0 }.intern()
+        );
+        assert_ne!(StructLabel { a: 0, b: 0 }.intern(), UnitLabel.intern(),);
+        assert_ne!(
+            EnumLabel::Struct { a: 0, b: 0 }.intern(),
+            EnumLabel::Unit.intern()
+        );
 
-//         assert_ne!(A.intern(), B.intern());
-//     }
+        assert_eq!(
+            GenericLabel::<u32>(PhantomData).intern(),
+            GenericLabel::<u32>(PhantomData).intern()
+        );
+        assert_ne!(
+            GenericLabel::<u32>(PhantomData).intern(),
+            GenericLabel::<u64>(PhantomData).intern()
+        );
+    }
 
-//     #[test]
-//     fn test_derive_schedule_label() {
-//         #[derive(ScheduleLabel, Debug, Default, Clone, Copy, PartialEq, Eq, Hash)]
-//         struct UnitLabel;
+    #[test]
+    fn test_derive_task_set() {
+        #[derive(TaskSet, Debug, Default, Clone, Copy, PartialEq, Eq, Hash)]
+        struct UnitSet;
 
-//         #[derive(ScheduleLabel, Debug, Default, Clone, Copy, PartialEq, Eq, Hash)]
-//         struct TupleLabel(u32, u32);
+        #[derive(TaskSet, Debug, Default, Clone, Copy, PartialEq, Eq, Hash)]
+        struct TupleSet(u32, u32);
 
-//         #[derive(ScheduleLabel, Debug, Default, Clone, Copy, PartialEq, Eq, Hash)]
-//         struct StructLabel {
-//             a: u32,
-//             b: u32,
-//         }
+        #[derive(TaskSet, Debug, Default, Clone, Copy, PartialEq, Eq, Hash)]
+        struct StructSet {
+            a: u32,
+            b: u32,
+        }
 
-//         #[derive(ScheduleLabel, Debug, Default, Clone, Copy, PartialEq, Eq, Hash)]
-//         struct EmptyTupleLabel();
+        #[derive(TaskSet, Debug, Default, Clone, Copy, PartialEq, Eq, Hash)]
+        struct EmptyTupleSet();
 
-//         #[derive(ScheduleLabel, Debug, Default, Clone, Copy, PartialEq, Eq, Hash)]
-//         struct EmptyStructLabel {}
+        #[derive(TaskSet, Debug, Default, Clone, Copy, PartialEq, Eq, Hash)]
+        struct EmptyStructSet {}
 
-//         #[derive(ScheduleLabel, Debug, Default, Clone, Copy, PartialEq, Eq, Hash)]
-//         enum EnumLabel {
-//             #[default]
-//             Unit,
-//             Tuple(u32, u32),
-//             Struct {
-//                 a: u32,
-//                 b: u32,
-//             },
-//         }
+        #[derive(TaskSet, Debug, Default, Clone, Copy, PartialEq, Eq, Hash)]
+        enum EnumSet {
+            #[default]
+            Unit,
+            Tuple(u32, u32),
+            Struct {
+                a: u32,
+                b: u32,
+            },
+        }
 
-//         #[derive(ScheduleLabel, Debug, Default, Clone, Copy, PartialEq, Eq, Hash)]
-//         struct GenericLabel<T>(PhantomData<T>);
+        #[derive(TaskSet, Debug, Default, Clone, Copy, PartialEq, Eq, Hash)]
+        struct GenericSet<T>(PhantomData<T>);
 
-//         assert_eq!(UnitLabel.intern(), UnitLabel.intern());
-//         assert_eq!(EnumLabel::Unit.intern(), EnumLabel::Unit.intern());
-//         assert_ne!(UnitLabel.intern(), EnumLabel::Unit.intern());
-//         assert_ne!(UnitLabel.intern(), TupleLabel(0, 0).intern());
-//         assert_ne!(EnumLabel::Unit.intern(), EnumLabel::Tuple(0, 0).intern());
+        assert_eq!(UnitSet.intern(), UnitSet.intern());
+        assert_eq!(EnumSet::Unit.intern(), EnumSet::Unit.intern());
+        assert_ne!(UnitSet.intern(), EnumSet::Unit.intern());
+        assert_ne!(UnitSet.intern(), TupleSet(0, 0).intern());
+        assert_ne!(EnumSet::Unit.intern(), EnumSet::Tuple(0, 0).intern());
 
-//         assert_eq!(TupleLabel(0, 0).intern(), TupleLabel(0, 0).intern());
-//         assert_eq!(
-//             EnumLabel::Tuple(0, 0).intern(),
-//             EnumLabel::Tuple(0, 0).intern()
-//         );
-//         assert_ne!(TupleLabel(0, 0).intern(), TupleLabel(0, 1).intern());
-//         assert_ne!(
-//             EnumLabel::Tuple(0, 0).intern(),
-//             EnumLabel::Tuple(0, 1).intern()
-//         );
-//         assert_ne!(TupleLabel(0, 0).intern(), EnumLabel::Tuple(0, 0).intern());
-//         assert_ne!(
-//             TupleLabel(0, 0).intern(),
-//             StructLabel { a: 0, b: 0 }.intern()
-//         );
-//         assert_ne!(
-//             EnumLabel::Tuple(0, 0).intern(),
-//             EnumLabel::Struct { a: 0, b: 0 }.intern()
-//         );
+        assert_eq!(TupleSet(0, 0).intern(), TupleSet(0, 0).intern());
+        assert_eq!(EnumSet::Tuple(0, 0).intern(), EnumSet::Tuple(0, 0).intern());
+        assert_ne!(TupleSet(0, 0).intern(), TupleSet(0, 1).intern());
+        assert_ne!(EnumSet::Tuple(0, 0).intern(), EnumSet::Tuple(0, 1).intern());
+        assert_ne!(TupleSet(0, 0).intern(), EnumSet::Tuple(0, 0).intern());
+        assert_ne!(TupleSet(0, 0).intern(), StructSet { a: 0, b: 0 }.intern());
+        assert_ne!(
+            EnumSet::Tuple(0, 0).intern(),
+            EnumSet::Struct { a: 0, b: 0 }.intern()
+        );
 
-//         assert_eq!(
-//             StructLabel { a: 0, b: 0 }.intern(),
-//             StructLabel { a: 0, b: 0 }.intern()
-//         );
-//         assert_eq!(
-//             EnumLabel::Struct { a: 0, b: 0 }.intern(),
-//             EnumLabel::Struct { a: 0, b: 0 }.intern()
-//         );
-//         assert_ne!(
-//             StructLabel { a: 0, b: 0 }.intern(),
-//             StructLabel { a: 0, b: 1 }.intern()
-//         );
-//         assert_ne!(
-//             EnumLabel::Struct { a: 0, b: 0 }.intern(),
-//             EnumLabel::Struct { a: 0, b: 1 }.intern()
-//         );
-//         assert_ne!(
-//             StructLabel { a: 0, b: 0 }.intern(),
-//             EnumLabel::Struct { a: 0, b: 0 }.intern()
-//         );
-//         assert_ne!(
-//             StructLabel { a: 0, b: 0 }.intern(),
-//             EnumLabel::Struct { a: 0, b: 0 }.intern()
-//         );
-//         assert_ne!(StructLabel { a: 0, b: 0 }.intern(), UnitLabel.intern(),);
-//         assert_ne!(
-//             EnumLabel::Struct { a: 0, b: 0 }.intern(),
-//             EnumLabel::Unit.intern()
-//         );
+        assert_eq!(
+            StructSet { a: 0, b: 0 }.intern(),
+            StructSet { a: 0, b: 0 }.intern()
+        );
+        assert_eq!(
+            EnumSet::Struct { a: 0, b: 0 }.intern(),
+            EnumSet::Struct { a: 0, b: 0 }.intern()
+        );
+        assert_ne!(
+            StructSet { a: 0, b: 0 }.intern(),
+            StructSet { a: 0, b: 1 }.intern()
+        );
+        assert_ne!(
+            EnumSet::Struct { a: 0, b: 0 }.intern(),
+            EnumSet::Struct { a: 0, b: 1 }.intern()
+        );
+        assert_ne!(
+            StructSet { a: 0, b: 0 }.intern(),
+            EnumSet::Struct { a: 0, b: 0 }.intern()
+        );
+        assert_ne!(
+            StructSet { a: 0, b: 0 }.intern(),
+            EnumSet::Struct { a: 0, b: 0 }.intern()
+        );
+        assert_ne!(StructSet { a: 0, b: 0 }.intern(), UnitSet.intern(),);
+        assert_ne!(
+            EnumSet::Struct { a: 0, b: 0 }.intern(),
+            EnumSet::Unit.intern()
+        );
 
-//         assert_eq!(
-//             GenericLabel::<u32>(PhantomData).intern(),
-//             GenericLabel::<u32>(PhantomData).intern()
-//         );
-//         assert_ne!(
-//             GenericLabel::<u32>(PhantomData).intern(),
-//             GenericLabel::<u64>(PhantomData).intern()
-//         );
-//     }
-
-//     #[test]
-//     fn test_derive_system_set() {
-//         #[derive(TaskSet, Debug, Default, Clone, Copy, PartialEq, Eq, Hash)]
-//         struct UnitSet;
-
-//         #[derive(TaskSet, Debug, Default, Clone, Copy, PartialEq, Eq, Hash)]
-//         struct TupleSet(u32, u32);
-
-//         #[derive(TaskSet, Debug, Default, Clone, Copy, PartialEq, Eq, Hash)]
-//         struct StructSet {
-//             a: u32,
-//             b: u32,
-//         }
-
-//         #[derive(TaskSet, Debug, Default, Clone, Copy, PartialEq, Eq, Hash)]
-//         struct EmptyTupleSet();
-
-//         #[derive(TaskSet, Debug, Default, Clone, Copy, PartialEq, Eq, Hash)]
-//         struct EmptyStructSet {}
-
-//         #[derive(TaskSet, Debug, Default, Clone, Copy, PartialEq, Eq, Hash)]
-//         enum EnumSet {
-//             #[default]
-//             Unit,
-//             Tuple(u32, u32),
-//             Struct {
-//                 a: u32,
-//                 b: u32,
-//             },
-//         }
-
-//         #[derive(TaskSet, Debug, Default, Clone, Copy, PartialEq, Eq, Hash)]
-//         struct GenericSet<T>(PhantomData<T>);
-
-//         assert_eq!(UnitSet.intern(), UnitSet.intern());
-//         assert_eq!(EnumSet::Unit.intern(), EnumSet::Unit.intern());
-//         assert_ne!(UnitSet.intern(), EnumSet::Unit.intern());
-//         assert_ne!(UnitSet.intern(), TupleSet(0, 0).intern());
-//         assert_ne!(EnumSet::Unit.intern(), EnumSet::Tuple(0, 0).intern());
-
-//         assert_eq!(TupleSet(0, 0).intern(), TupleSet(0, 0).intern());
-//         assert_eq!(EnumSet::Tuple(0, 0).intern(), EnumSet::Tuple(0, 0).intern());
-//         assert_ne!(TupleSet(0, 0).intern(), TupleSet(0, 1).intern());
-//         assert_ne!(EnumSet::Tuple(0, 0).intern(), EnumSet::Tuple(0, 1).intern());
-//         assert_ne!(TupleSet(0, 0).intern(), EnumSet::Tuple(0, 0).intern());
-//         assert_ne!(TupleSet(0, 0).intern(), StructSet { a: 0, b: 0 }.intern());
-//         assert_ne!(
-//             EnumSet::Tuple(0, 0).intern(),
-//             EnumSet::Struct { a: 0, b: 0 }.intern()
-//         );
-
-//         assert_eq!(
-//             StructSet { a: 0, b: 0 }.intern(),
-//             StructSet { a: 0, b: 0 }.intern()
-//         );
-//         assert_eq!(
-//             EnumSet::Struct { a: 0, b: 0 }.intern(),
-//             EnumSet::Struct { a: 0, b: 0 }.intern()
-//         );
-//         assert_ne!(
-//             StructSet { a: 0, b: 0 }.intern(),
-//             StructSet { a: 0, b: 1 }.intern()
-//         );
-//         assert_ne!(
-//             EnumSet::Struct { a: 0, b: 0 }.intern(),
-//             EnumSet::Struct { a: 0, b: 1 }.intern()
-//         );
-//         assert_ne!(
-//             StructSet { a: 0, b: 0 }.intern(),
-//             EnumSet::Struct { a: 0, b: 0 }.intern()
-//         );
-//         assert_ne!(
-//             StructSet { a: 0, b: 0 }.intern(),
-//             EnumSet::Struct { a: 0, b: 0 }.intern()
-//         );
-//         assert_ne!(StructSet { a: 0, b: 0 }.intern(), UnitSet.intern(),);
-//         assert_ne!(
-//             EnumSet::Struct { a: 0, b: 0 }.intern(),
-//             EnumSet::Unit.intern()
-//         );
-
-//         assert_eq!(
-//             GenericSet::<u32>(PhantomData).intern(),
-//             GenericSet::<u32>(PhantomData).intern()
-//         );
-//         assert_ne!(
-//             GenericSet::<u32>(PhantomData).intern(),
-//             GenericSet::<u64>(PhantomData).intern()
-//         );
-//     }
-// }
+        assert_eq!(
+            GenericSet::<u32>(PhantomData).intern(),
+            GenericSet::<u32>(PhantomData).intern()
+        );
+        assert_ne!(
+            GenericSet::<u32>(PhantomData).intern(),
+            GenericSet::<u64>(PhantomData).intern()
+        );
+    }
+}

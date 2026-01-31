@@ -542,6 +542,8 @@ where
 
 #[cfg(test)]
 mod tests {
+    use crate::define_label;
+
     use super::*;
 
     #[test]

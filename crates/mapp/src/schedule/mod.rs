@@ -10,3 +10,5 @@ use crate::hash::NoOpHash;
 use std::{any::TypeId, collections::HashMap};
 
 pub(crate) type TypeIdMap<V> = HashMap<TypeId, V, NoOpHash>;
+
+pub use self::set::*;

@@ -9,16 +9,20 @@
 // mod label;
 // mod module;
 // mod platform;
-pub mod inject;
-mod schedule;
 // mod trace;
 // mod utils;
-mod context;
+
+pub mod context;
 pub mod coroutine;
-mod lazy;
-mod hash;
+pub mod hash;
+pub mod inject;
 pub mod intern;
 pub mod label;
+pub mod lazy;
+pub mod schedule;
+
+// Required to make proc macros work in bevy itself.
+extern crate self as mapp;
 
 pub mod prelude {
     // pub use crate::{
@@ -34,11 +38,12 @@ pub mod prelude {
     //     utils::rand_string,
     // };
 
-    // pub use crate::context::*;
+    pub use crate::{context::*, label::*, schedule::*};
     // pub use crate::coroutine::*;
     // pub use crate::inject::*;
-    // pub use crate::schedule::*;
 }
+
+pub use self::schedule::{ScheduleLabel, TaskSet};
 
 // pub use app::{AppBuilder, LocalAppBuilder};
 // pub use schedule::Label;

@@ -92,75 +92,37 @@ impl Scheduler {
 
 #[cfg(test)]
 mod tests {
-    // use minject::InjectOnce;
+    use super::*;
+    use crate::prelude::*;
 
-    // use crate::{
-    //     context::ContextError,
-    //     schedule::set::{ScheduleLabel, TaskSet},
-    // };
+    #[derive(ScheduleLabel, Hash, Debug, Clone, PartialEq, Eq)]
+    struct TestSchedule;
 
-    // use super::*;
+    #[derive(TaskSet, Debug, Hash, Clone, PartialEq, Eq)]
+    enum TestSet {
+        Startup,
+        First,
+        After,
+    }
 
-    // #[derive(Hash, Debug, Clone, PartialEq, Eq)]
-    // struct TestSchedule;
+    #[test]
+    fn tasks() {
+        let mut schedules = Scheduler::default();
 
-    // impl ScheduleLabel for TestSchedule {
-    //     #[doc = r" Clones this `"]
-    //     #[doc = stringify!(ScheduleLabel)]
-    //     #[doc = r"`."]
-    //     fn dyn_clone(&self) -> ::std::boxed::Box<dyn ScheduleLabel> {
-    //         todo!()
-    //     }
+        async fn test() -> Result<(), ContextError> {
+            Ok(())
+        }
 
-    //     #[doc = r" Casts this value to a form where it can be compared with other type-erased values."]
-    //     fn as_dyn_eq(&self) -> &dyn crate::label::DynEq {
-    //         todo!()
-    //     }
+        schedules.add_tasks(
+            TestSchedule,
+            (async move || Ok::<_, ContextError>(())).in_set(TestSet::First),
+        );
 
-    //     #[doc = r" Feeds this value into the given [`Hasher`]."]
-    //     fn dyn_hash(&self, state: &mut dyn ::std::hash::Hasher) {
-    //         todo!()
-    //     }
-    // }
-
-    // #[derive(Debug, Hash, Clone, PartialEq, Eq)]
-    // enum TestSet {
-    //     First,
-    //     Second,
-    // }
-
-    // impl TaskSet for TestSet {
-    //     #[doc = r" Clones this `"]
-    //     #[doc = stringify!(TaskSet)]
-    //     #[doc = r"`."]
-    //     fn dyn_clone(&self) -> ::std::boxed::Box<dyn TaskSet> {
-    //         todo!()
-    //     }
-
-    //     #[doc = r" Casts this value to a form where it can be compared with other type-erased values."]
-    //     fn as_dyn_eq(&self) -> &dyn crate::label::DynEq {
-    //         todo!()
-    //     }
-
-    //     #[doc = r" Feeds this value into the given [`Hasher`]."]
-    //     fn dyn_hash(&self, state: &mut dyn ::std::hash::Hasher) {
-    //         todo!()
-    //     }
-    // }
-
-    // #[test]
-    // fn tasks() {
-    //     let mut schedules = Scheduler::default();
-
-    //     async fn test() -> Result<(), ContextError> {
-    //         Ok(())
-    //     }
-
-    //     // schedules.add_tasks(
-    //     //     TestSchedule,
-    //     //     (async move || async move { Ok::<_, ContextError>(()) }).in_set(TestSet::First),
-    //     // );
-    //     let configs = test.in_set(TestSet::First);
-    //     // schedules.add_tasks(TestSchedule, test.in_set(TestSet::First));
-    // }
+        schedules.add_tasks(
+            TestSchedule,
+            test.in_set(TestSet::First)
+                .before(TestSet::After)
+                .after(TestSet::Startup),
+        );
+    }
 }
