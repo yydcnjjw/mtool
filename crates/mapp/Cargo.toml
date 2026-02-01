@@ -24,7 +24,10 @@ default = []
 mapp-macros = { path = "macros" }
 
 foldhash = { version = "0.1.3", default-features = false }
-petgraph = "*"
+petgraph = { version = "0.8.3" }
+disqualified = "1.0.0"
+fixedbitset = "0.5.7"
+
 # cfg-if = "*"
 # async-trait = "*"
 futures = "*"

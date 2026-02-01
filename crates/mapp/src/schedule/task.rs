@@ -1,5 +1,3 @@
-use std::any::TypeId;
-
 use futures::future::LocalBoxFuture;
 
 use crate::{
@@ -17,7 +15,11 @@ impl ScheduleTask {
     pub fn new(runnable: BoxTaskRunnable) -> Self {
         Self { runnable }
     }
-
+    
+    pub fn name(&self) -> &'static str{
+        self.runnable.name()
+    }
+    
     pub fn run(self, ctx: &Context) -> LocalBoxFuture<'_, Result<(), ContextError>> {
         self.runnable.run(ctx)
     }

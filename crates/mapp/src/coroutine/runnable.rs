@@ -1,4 +1,4 @@
-use std::future::Future;
+use std::{any::type_name, future::Future};
 
 use futures::future::LocalBoxFuture;
 
@@ -14,6 +14,10 @@ pub trait Runnable {
     fn run<'a>(self: Box<Self>, ctx: &'a Context) -> LocalBoxFuture<'a, Result<(), Self::Error>>
     where
         Self: 'a;
+
+    fn name(&self) -> &'static str {
+        type_name::<Self>()
+    }
 }
 
 pub trait LocalInjectRunnable<Args, E> = InjectOnce<Args>
@@ -32,6 +36,10 @@ where
         Self: 'a,
     {
         Box::pin(async { local_inject_once(ctx, self.func).await? })
+    }
+
+    fn name(&self) -> &'static str {
+        type_name::<Func>()
     }
 }
 

@@ -1,8 +1,10 @@
-use std::any::Any;
+use std::any::{Any, TypeId};
+
+use variadics_please::all_tuples;
 
 use crate::{
     context::ContextError,
-    coroutine::{LocalInjectRunnable, Runnable, new_runnable},
+    coroutine::{LocalInjectRunnable, new_runnable},
 };
 
 use super::{
@@ -207,15 +209,15 @@ impl<T: Schedulable<Metadata = GraphInfo, GroupMetadata = Chain>> ScheduleConfig
     //     }
     // }
 
-    // fn chain_inner(mut self) -> Self {
-    //     match &mut self {
-    //         Self::ScheduleConfig(_) => { /* no op */ }
-    //         Self::Configs { metadata, .. } => {
-    //             metadata.set_chained();
-    //         }
-    //     };
-    //     self
-    // }
+    fn chain_inner(mut self) -> Self {
+        match &mut self {
+            Self::ScheduleConfig(_) => { /* no op */ }
+            Self::Configs { metadata, .. } => {
+                metadata.set_chained();
+            }
+        };
+        self
+    }
 
     // fn chain_ignore_deferred_inner(mut self) -> Self {
     //     match &mut self {
@@ -276,9 +278,9 @@ pub trait IntoScheduleConfigs<T: Schedulable<Metadata = GraphInfo, GroupMetadata
     //     self.into_configs().ambiguous_with_all()
     // }
 
-    // fn chain(self) -> ScheduleConfigs<T> {
-    //     self.into_configs().chain()
-    // }
+    fn chain(self) -> ScheduleConfigs<T> {
+        self.into_configs().chain()
+    }
 
     // fn chain_ignore_deferred(self) -> ScheduleConfigs<T> {
     //     self.into_configs().chain_ignore_deferred()
@@ -352,9 +354,9 @@ impl<T: Schedulable<Metadata = GraphInfo, GroupMetadata = Chain>> IntoScheduleCo
     //     self
     // }
 
-    // fn chain(self) -> Self {
-    //     self.chain_inner()
-    // }
+    fn chain(self) -> Self {
+        self.chain_inner()
+    }
 
     // fn chain_ignore_deferred(self) -> Self {
     //     self.chain_ignore_deferred_inner()
@@ -497,15 +499,15 @@ impl<T: Schedulable<Metadata = GraphInfo, GroupMetadata = Chain>> IntoScheduleCo
 //         }
 //     }
 
-//     fn chain_inner(mut self) -> Self {
-//         match &mut self {
-//             Self::ScheduleConfig(_) => { /* no op */ }
-//             Self::Configs { metadata, .. } => {
-//                 metadata.set_chained();
-//             }
-//         };
-//         self
-//     }
+// fn chain_inner(mut self) -> Self {
+//     match &mut self {
+//         Self::ScheduleConfig(_) => { /* no op */ }
+//         Self::Configs { metadata, .. } => {
+//             metadata.set_chained();
+//         }
+//     };
+//     self
+// }
 
 //     fn chain_ignore_deferred_inner(mut self) -> Self {
 //         match &mut self {
@@ -520,12 +522,31 @@ impl<T: Schedulable<Metadata = GraphInfo, GroupMetadata = Chain>> IntoScheduleCo
 
 #[derive(Default)]
 pub enum Chain {
-    /// Systems are independent. Nodes are allowed to run in any order.
+    /// Tasks are independent. Nodes are allowed to run in any order.
     #[default]
     Unchained,
-    /// Systems are chained. `before -> after` ordering constraints
+    /// Tasks are chained. `before -> after` ordering constraints
     /// will be added between the successive elements.
     Chained(TypeIdMap<Box<dyn Any>>),
+}
+
+impl Chain {
+    /// Specify that the tasks must be chained.
+    pub fn set_chained(&mut self) {
+        if matches!(self, Chain::Unchained) {
+            *self = Self::Chained(Default::default());
+        };
+    }
+    /// Specify that the tasks must be chained, and add the specified configuration for
+    /// all dependencies created between these tasks.
+    pub fn set_chained_with_config<T: 'static>(&mut self, config: T) {
+        self.set_chained();
+        if let Chain::Chained(config_map) = self {
+            config_map.insert(TypeId::of::<T>(), Box::new(config));
+        } else {
+            unreachable!()
+        };
+    }
 }
 
 impl<F, Args> IntoScheduleConfigs<ScheduleTask, Args> for F
@@ -540,10 +561,42 @@ where
     }
 }
 
+impl<S: TaskSet> IntoScheduleConfigs<InternedTaskSet, ()> for S {
+    fn into_configs(self) -> ScheduleConfigs<InternedTaskSet> {
+        ScheduleConfigs::ScheduleConfig(InternedTaskSet::into_config(self.intern()))
+    }
+}
+
+macro_rules! impl_node_type_collection {
+    ($(($param: ident, $task: ident)),*) => {
+        impl<$($param, $task),*, T: Schedulable<Metadata = GraphInfo, GroupMetadata = Chain>> IntoScheduleConfigs<T, ($($param,)*)> for ($($task,)*)
+        where
+            $($task: IntoScheduleConfigs<T, $param>),*
+        {
+            #[expect(
+                clippy::allow_attributes,
+                reason = "We are inside a macro, and as such, `non_snake_case` is not guaranteed to apply."
+            )]
+            #[allow(
+                non_snake_case,
+                reason = "Variable names are provided by the macro caller, not by us."
+            )]
+            fn into_configs(self) -> ScheduleConfigs<T> {
+                let ($($task,)*) = self;
+                ScheduleConfigs::Configs {
+                    metadata: Default::default(),
+                    configs: vec![$($task.into_configs(),)*],
+                    collective_conditions: Vec::new(),
+                }
+            }
+        }
+    }
+}
+
+all_tuples!(impl_node_type_collection, 1, 20, P, S);
+
 #[cfg(test)]
 mod tests {
-    use crate::define_label;
-
     use super::*;
 
     #[test]

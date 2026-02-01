@@ -5,6 +5,7 @@ mod set;
 mod schedule_graph;
 mod scheduler;
 mod task;
+mod error;
 
 use crate::hash::NoOpHash;
 use std::{any::TypeId, collections::HashMap};
