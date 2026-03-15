@@ -6,6 +6,8 @@ mod schedule_graph;
 mod scheduler;
 mod task;
 mod error;
+mod node;
+mod dag;
 
 use crate::hash::NoOpHash;
 use std::{any::TypeId, collections::HashMap};

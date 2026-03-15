@@ -10,28 +10,19 @@ use super::{
     InternedScheduleLabel, InternedTaskSet,
     condition::BoxCondition,
     config::{Chain, IntoScheduleConfigs, Schedulable, ScheduleConfig, ScheduleConfigs},
+    dag::Dag,
     error::ScheduleBuildError,
     graph_info::{Ambiguity, Dependency, DependencyKind, GraphInfo},
+    node::{NodeId, TaskKey, TaskSetKey, TaskSets, Tasks},
     task::ScheduleTask,
 };
 
 #[derive(Default)]
 pub struct ScheduleGraph {
-    tasks: Vec<TaskNode>,
-
-    task_conditions: Vec<Vec<BoxCondition>>,
-
-    task_sets: Vec<TaskSetNode>,
-
-    task_set_conditions: Vec<Vec<BoxCondition>>,
-
-    task_set_ids: HashMap<InternedTaskSet, NodeId>,
-
-    uninit: Vec<(NodeId, usize)>,
-
-    hierarchy: Dag,
-
-    dependency: Dag,
+    tasks: Tasks,
+    task_sets: TaskSets,
+    hierarchy: Dag<NodeId>,
+    dependency: Dag<NodeId>,
 }
 
 impl ScheduleGraph {
@@ -496,236 +487,236 @@ impl ScheduleGraph {
         dependency_flattened
     }
 
-    /// Build a [`SystemSchedule`] optimized for scheduler access from the [`ScheduleGraph`].
+    /// Builds an execution-optimized [`SystemSchedule`] from the current state
+    /// of the graph. Also returns any warnings that were generated during the
+    /// build process.
     ///
     /// This method also
     /// - checks for dependency or hierarchy cycles
     /// - checks for system access conflicts and reports ambiguities
     pub fn build_schedule(
         &mut self,
-        // ctx: &Context,
-        // schedule_label: InternedScheduleLabel,
+        // world: &mut World,
         // ignored_ambiguities: &BTreeSet<ComponentId>,
-    ) -> Result<(), ScheduleBuildError> {
-        self.hierarchy.topsort = self.topsort_graph(&self.hierarchy.graph)?;
+    ) // -> Result<(SystemSchedule, Vec<ScheduleBuildWarning>), ScheduleBuildError>
+ { // 
+        let mut warnings = Vec::new();
 
-        self.dependency.topsort = self.topsort_graph(&self.dependency.graph)?;
+        // Check system set memberships for cycles.
+        let hierarchy_analysis = self
+            .hierarchy
+            .analyze()
+            .map_err(ScheduleBuildError::HierarchySort)?;
 
-        let (set_systems, set_system_bitsets) =
-            self.map_sets_to_tasks(&self.hierarchy.topsort, &self.hierarchy.graph);
+        // Check for redundant system set memberships, logging warnings or
+        // returning errors as configured.
+        if self.settings.hierarchy_detection != LogLevel::Ignore
+            && let Err(e) = hierarchy_analysis.check_for_redundant_edges()
+        {
+            match self.settings.hierarchy_detection {
+                LogLevel::Error => return Err(ScheduleBuildWarning::HierarchyRedundancy(e).into()),
+                LogLevel::Warn => warnings.push(ScheduleBuildWarning::HierarchyRedundancy(e)),
+                LogLevel::Ignore => unreachable!(),
+            }
+        }
+        // Remove redundant system set memberships.
+        self.hierarchy.remove_redundant_edges(&hierarchy_analysis);
 
-        let mut dependency_flattened = self.get_dependency_flattened(&set_systems);
+        // Check system and system set ordering dependencies for cycles.
+        let dependency_analysis = self
+            .dependency
+            .analyze()
+            .map_err(ScheduleBuildError::DependencySort)?;
 
-        let mut dependency_flattened_dag = Dag {
-            topsort: self.topsort_graph(&dependency_flattened).unwrap(),
-            graph: dependency_flattened,
-        };
+        // System sets that share systems and have an ordering dependency cannot be ordered.
+        dependency_analysis.check_for_cross_dependencies(&hierarchy_analysis)?;
 
-        println!(
-            "{:?}",
-            dependency_flattened_dag
-                .topsort
+        // Group all systems by the system sets they belong to.
+        self.set_systems = self
+            .hierarchy
+            .group_by_key(self.system_sets.len())
+            .map_err(ScheduleBuildError::HierarchySort)?;
+        // Check for system sets that share systems but have an ordering dependency.
+        dependency_analysis.check_for_overlapping_groups(&self.set_systems)?;
+
+        // There can be no edges to system-type sets that have multiple instances.
+        self.system_sets.check_type_set_ambiguity(
+            &self.set_systems,
+            &self.ambiguous_with,
+            &self.dependency,
+        )?;
+
+        // Flatten system ordering dependencies by collapsing system sets. This
+        // means that if a system set has ordering dependencies, those
+        // dependencies are applied to all systems in the set.
+        let mut flat_dependency =
+            self.set_systems
+                .flatten(self.dependency.clone(), |set, systems, flattening, temp| {
+                    for pass in self.passes.values_mut() {
+                        pass.collapse_set(set, systems, flattening, temp);
+                    }
+                });
+
+        // Allow modification of the schedule graph by build passes.
+        let mut passes = core::mem::take(&mut self.passes);
+        for pass in passes.values_mut() {
+            pass.build(world, self, &mut flat_dependency)?;
+        }
+        self.passes = passes;
+
+        // Check system ordering dependencies for cycles after collapsing sets
+        // and applying build passes.
+        let flat_dependency_analysis = flat_dependency
+            .analyze()
+            .map_err(ScheduleBuildError::FlatDependencySort)?;
+        flat_dependency.remove_redundant_edges(&flat_dependency_analysis);
+
+        // Flatten accepted system ordering ambiguities by collapsing system sets.
+        // This means that if a system set is allowed to have ambiguous ordering
+        // with another set, all systems in the first set are allowed to have
+        // ambiguous ordering with all systems in the second set.
+        let flat_ambiguous_with = self.set_systems.flatten_undirected(&self.ambiguous_with);
+
+        // Find all system ordering ambiguities, ignoring those that are accepted.
+        self.conflicting_systems = self.systems.get_conflicting_systems(
+            &flat_dependency_analysis,
+            &flat_ambiguous_with,
+            &self.ambiguous_with_all,
+            ignored_ambiguities,
+        );
+        // If there are any ambiguities, log warnings or return errors as configured.
+        if self.settings.ambiguity_detection != LogLevel::Ignore
+            && let Err(e) = self.conflicting_systems.check_if_not_empty()
+        {
+            match self.settings.ambiguity_detection {
+                LogLevel::Error => return Err(ScheduleBuildWarning::Ambiguity(e).into()),
+                LogLevel::Warn => warnings.push(ScheduleBuildWarning::Ambiguity(e)),
+                LogLevel::Ignore => unreachable!(),
+            }
+        }
+
+        // build the schedule
+        Ok((
+            self.build_schedule_inner(flat_dependency, hierarchy_analysis),
+            warnings,
+        ))
+    }
+
+    fn build_schedule_inner(
+        &self,
+        flat_dependency: Dag<SystemKey>,
+        hierarchy_analysis: DagAnalysis<NodeId>,
+    ) -> SystemSchedule {
+        let dg_system_ids = flat_dependency.get_toposort().unwrap().to_vec();
+        let dg_system_idx_map = dg_system_ids
+            .iter()
+            .cloned()
+            .enumerate()
+            .map(|(i, id)| (id, i))
+            .collect::<HashMap<_, _>>();
+
+        let hierarchy_toposort = self.hierarchy.get_toposort().unwrap();
+        let hg_systems = hierarchy_toposort
+            .iter()
+            .cloned()
+            .enumerate()
+            .filter_map(|(i, id)| Some((i, id.as_system()?)))
+            .collect::<Vec<_>>();
+        let (hg_set_with_conditions_idxs, hg_set_ids): (Vec<_>, Vec<_>) = hierarchy_toposort
+            .iter()
+            .cloned()
+            .enumerate()
+            .filter_map(|(i, id)| {
+                // ignore system sets that have no conditions
+                // ignore system type sets (already covered, they don't have conditions)
+                let key = id.as_set()?;
+                self.system_sets.has_conditions(key).then_some((i, key))
+            })
+            .unzip();
+
+        let sys_count = self.systems.len();
+        let set_with_conditions_count = hg_set_ids.len();
+        let hg_node_count = self.hierarchy.node_count();
+
+        // get the number of dependencies and the immediate dependents of each system
+        // (needed by multi_threaded executor to run systems in the correct order)
+        let mut system_dependencies = Vec::with_capacity(sys_count);
+        let mut system_dependents = Vec::with_capacity(sys_count);
+        for &sys_key in &dg_system_ids {
+            let num_dependencies = flat_dependency
+                .neighbors_directed(sys_key, Incoming)
+                .count();
+
+            let dependents = flat_dependency
+                .neighbors_directed(sys_key, Outgoing)
+                .map(|dep_id| dg_system_idx_map[&dep_id])
+                .collect::<Vec<_>>();
+
+            system_dependencies.push(num_dependencies);
+            system_dependents.push(dependents);
+        }
+
+        // get the rows and columns of the hierarchy graph's reachability matrix
+        // (needed to we can evaluate conditions in the correct order)
+        let mut systems_in_sets_with_conditions =
+            vec![FixedBitSet::with_capacity(sys_count); set_with_conditions_count];
+        for (i, &row) in hg_set_with_conditions_idxs.iter().enumerate() {
+            let bitset = &mut systems_in_sets_with_conditions[i];
+            for &(col, sys_key) in &hg_systems {
+                let idx = dg_system_idx_map[&sys_key];
+                let is_descendant = hierarchy_analysis.reachable()[index(row, col, hg_node_count)];
+                bitset.set(idx, is_descendant);
+            }
+        }
+
+        let mut sets_with_conditions_of_systems =
+            vec![FixedBitSet::with_capacity(set_with_conditions_count); sys_count];
+        for &(col, sys_key) in &hg_systems {
+            let i = dg_system_idx_map[&sys_key];
+            let bitset = &mut sets_with_conditions_of_systems[i];
+            for (idx, &row) in hg_set_with_conditions_idxs
                 .iter()
-                .map(|node| self.get_node_name(node))
-                .collect::<Vec<_>>()
-        );
+                .enumerate()
+                .take_while(|&(_idx, &row)| row < col)
+            {
+                let is_ancestor = hierarchy_analysis.reachable()[index(row, col, hg_node_count)];
+                bitset.set(idx, is_ancestor);
+            }
+        }
 
-        println!(
-            "{:?}",
-            Dot::with_attr_getters(
-                &dependency_flattened_dag.graph,
-                &[],
-                &|g, edge| { r#"label = """#.to_string()  },
-                &|g, node| { format!(r#"label = "{}""#, self.get_node_name(&node.0)) }
-            )
-        );
-        Ok(())
-
-        // // check hierarchy for cycles
-        // self.hierarchy.topsort =
-        //     self.topsort_graph(&self.hierarchy.graph, ReportCycles::Hierarchy)?;
-
-        // let hier_results = check_graph(&self.hierarchy.graph, &self.hierarchy.topsort);
-        // self.optionally_check_hierarchy_conflicts(&hier_results.transitive_edges, schedule_label)?;
-
-        // // remove redundant edges
-        // self.hierarchy.graph = hier_results.transitive_reduction;
-
-        // // check dependencies for cycles
-        // self.dependency.topsort =
-        //     self.topsort_graph(&self.dependency.graph, ReportCycles::Dependency)?;
-
-        // // check for systems or system sets depending on sets they belong to
-        // let dep_results = check_graph(&self.dependency.graph, &self.dependency.topsort);
-        // self.check_for_cross_dependencies(&dep_results, &hier_results.connected)?;
-
-        // // map all system sets to their systems
-        // // go in reverse topological order (bottom-up) for efficiency
-        // let (set_systems, set_system_bitsets) =
-        //     self.map_sets_to_systems(&self.hierarchy.topsort, &self.hierarchy.graph);
-        // self.check_order_but_intersect(&dep_results.connected, &set_system_bitsets)?;
-
-        // // check that there are no edges to system-type sets that have multiple instances
-        // self.check_system_type_set_ambiguity(&set_systems)?;
-
-        // let mut dependency_flattened = self.get_dependency_flattened(&set_systems);
-
-        // // modify graph with build passes
-        // let mut passes = core::mem::take(&mut self.passes);
-        // for pass in passes.values_mut() {
-        //     pass.build(world, self, &mut dependency_flattened)?;
-        // }
-        // self.passes = passes;
-
-        // // topsort
-        // let mut dependency_flattened_dag = Dag {
-        //     topsort: self.topsort_graph(&dependency_flattened, ReportCycles::Dependency)?,
-        //     graph: dependency_flattened,
-        // };
-
-        // let flat_results = check_graph(
-        //     &dependency_flattened_dag.graph,
-        //     &dependency_flattened_dag.topsort,
-        // );
-
-        // // remove redundant edges
-        // dependency_flattened_dag.graph = flat_results.transitive_reduction;
-
-        // // flatten: combine `in_set` with `ambiguous_with` information
-        // let ambiguous_with_flattened = self.get_ambiguous_with_flattened(&set_systems);
-
-        // // check for conflicts
-        // let conflicting_systems = self.get_conflicting_systems(
-        //     &flat_results.disconnected,
-        //     &ambiguous_with_flattened,
-        //     ignored_ambiguities,
-        // );
-        // self.optionally_check_conflicts(&conflicting_systems, world.components(), schedule_label)?;
-        // self.conflicting_systems = conflicting_systems;
-
-        // // build the schedule
-        // Ok(self.build_schedule_inner(dependency_flattened_dag, hier_results.reachable))
-    }
-
-    fn dot(&self) {
-        println!(
-            "{:?}",
-            Dot::with_attr_getters(
-                &self.hierarchy.graph,
-                &[],
-                &|g, edge| { String::new() },
-                &|g, node| { format!(r#"label = "{}""#, self.get_node_name(&node.0)) }
-            )
-        );
-
-        println!(
-            "{:?}",
-            Dot::with_attr_getters(
-                &self.dependency.graph,
-                &[],
-                &|g, edge| { String::new() },
-                &|g, node| { format!(r#"label = "{}""#, self.get_node_name(&node.0)) }
-            )
-        );
-    }
-}
-
-enum Node {
-    Task(TaskNode),
-    TaskSet(TaskSetNode),
-}
-
-/// A [`TaskSet`] with metadata, stored in a [`ScheduleGraph`].
-struct TaskSetNode {
-    inner: InternedTaskSet,
-}
-
-impl TaskSetNode {
-    pub fn new(set: InternedTaskSet) -> Self {
-        Self { inner: set }
-    }
-
-    pub fn name(&self) -> String {
-        format!("{:?}", &self.inner)
-    }
-
-    pub fn is_task_type(&self) -> bool {
-        self.inner.task_type().is_some()
-    }
-
-    pub fn is_anonymous(&self) -> bool {
-        self.inner.is_anonymous()
-    }
-}
-
-pub struct TaskNode {
-    inner: Option<ScheduleTask>,
-}
-
-impl TaskNode {
-    /// Create a new [`TaskNode`]
-    pub fn new(task: ScheduleTask) -> Self {
-        Self { inner: Some(task) }
-    }
-
-    /// Obtain a reference to the [`ScheduleTask`] represented by this node.
-    pub fn get(&self) -> Option<&ScheduleTask> {
-        self.inner.as_ref()
-    }
-
-    /// Obtain a mutable reference to the [`ScheduleTask`] represented by this node.
-    pub fn get_mut(&mut self) -> Option<&mut ScheduleTask> {
-        self.inner.as_mut()
-    }
-}
-
-type DiGraph = DiGraphMap<NodeId, ()>;
-
-#[derive(Default)]
-struct Dag {
-    graph: DiGraph,
-    topsort: Vec<NodeId>,
-}
-
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, PartialOrd, Ord)]
-pub enum NodeId {
-    Task(usize),
-    Set(usize),
-}
-
-impl NodeId {
-    /// Returns the internal integer value.
-    pub const fn index(&self) -> usize {
-        match self {
-            NodeId::Task(index) | NodeId::Set(index) => *index,
+        SystemSchedule {
+            systems: Vec::with_capacity(sys_count),
+            system_conditions: Vec::with_capacity(sys_count),
+            set_conditions: Vec::with_capacity(set_with_conditions_count),
+            system_ids: dg_system_ids,
+            set_ids: hg_set_ids,
+            system_dependencies,
+            system_dependents,
+            sets_with_conditions_of_systems,
+            systems_in_sets_with_conditions,
         }
     }
+    // fn dot(&self) {
+    //     println!(
+    //         "{:?}",
+    //         Dot::with_attr_getters(
+    //             &self.hierarchy.graph,
+    //             &[],
+    //             &|g, edge| { String::new() },
+    //             &|g, node| { format!(r#"label = "{}""#, self.get_node_name(&node.0)) }
+    //         )
+    //     );
 
-    /// Returns `true` if the identified node is a task.
-    pub const fn is_task(&self) -> bool {
-        matches!(self, NodeId::Task(_))
-    }
-
-    /// Returns `true` if the identified node is a system set.
-    pub const fn is_set(&self) -> bool {
-        matches!(self, NodeId::Set(_))
-    }
-
-    /// Compare this [`NodeId`] with another.
-    pub const fn cmp(&self, other: &Self) -> core::cmp::Ordering {
-        use NodeId::{Set, Task};
-        use core::cmp::Ordering::{Equal, Greater, Less};
-
-        match (self, other) {
-            (Task(a), Task(b)) | (Set(a), Set(b)) => match a.checked_sub(*b) {
-                None => Less,
-                Some(0) => Equal,
-                Some(_) => Greater,
-            },
-            (Task(_), Set(_)) => Less,
-            (Set(_), Task(_)) => Greater,
-        }
-    }
+    //     println!(
+    //         "{:?}",
+    //         Dot::with_attr_getters(
+    //             &self.dependency.graph,
+    //             &[],
+    //             &|g, edge| { String::new() },
+    //             &|g, node| { format!(r#"label = "{}""#, self.get_node_name(&node.0)) }
+    //         )
+    //     );
+    // }
 }
 
 /// Values returned by [`ScheduleGraph::process_configs`]

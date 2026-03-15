@@ -1,41 +1,74 @@
+use std::fmt;
+
 use snafu::prelude::*;
 
-/// Category of errors encountered during schedule construction.
-#[derive(Snafu, Debug)]
+use super::{
+    dag::{DagCrossDependencyError, DagOverlappingGroupError, DiGraphToposortError},
+    node::{NodeId, TaskKey},
+};
+
+/// Category of errors encountered during [`Schedule::initialize`](crate::schedule::Schedule::initialize).
 #[non_exhaustive]
+#[derive(Snafu, Debug)]
 pub enum ScheduleBuildError {
-    /// A task set contains itself.
-    #[snafu(display("Task set `{task_set}` contains itself."))]
-    HierarchyLoop { task_set: String },
-    /// The hierarchy of system sets contains a cycle.
-    #[snafu(display("Task set hierarchy contains cycle(s).\n{node}"))]
-    HierarchyCycle { node: String },
-    // /// The hierarchy of system sets contains redundant edges.
-    // ///
-    // /// This error is disabled by default, but can be opted-in using [`ScheduleBuildSettings`].
-    // #[snafu("System set hierarchy contains redundant edges.\n{0}")]
-    // HierarchyRedundancy(String),
-    // /// A system (set) has been told to run before itself.
-    #[snafu(display("Task set `{task_set}` depends on itself."))]
-    DependencyLoop { task_set: String },
-    /// The dependency graph contains a cycle.
-    #[snafu(display("Task dependencies contain cycle(s).\n{node}"))]
-    DependencyCycle { node: String },
-    // /// Tried to order a system (set) relative to a system set it belongs to.
-    // #[snafu("`{0}` and `{1}` have both `in_set` and `before`-`after` relationships (these might be transitive). This combination is unsolvable as a system cannot run before or after a set it belongs to.")]
-    // CrossDependency(String, String),
-    // /// Tried to order system sets that share systems.
-    // #[snafu("`{0}` and `{1}` have a `before`-`after` relationship (which may be transitive) but share systems.")]
-    // SetsHaveOrderButIntersect(String, String),
-    // /// Tried to order a system (set) relative to all instances of some system function.
-    // #[snafu("Tried to order against `{0}` in a schedule that has more than one `{0}` instance. `{0}` is a `SystemTypeSet` and cannot be used for ordering if ambiguous. Use a different set without this restriction.")]
-    // SystemTypeSetAmbiguity(String),
-    // /// Systems with conflicting access have indeterminate run order.
-    // ///
-    // /// This error is disabled by default, but can be opted-in using [`ScheduleBuildSettings`].
-    // #[snafu("Systems with conflicting access have indeterminate run order.\n{0}")]
-    // Ambiguity(String),
-    // /// Tried to run a schedule before all of its systems have been initialized.
-    // #[snafu("Systems in schedule have not been initialized.")]
-    // Uninitialized,
+    /// Tried to topologically sort the hierarchy of task sets.
+    #[snafu(display("Failed to topologically sort the hierarchy of task sets"))]
+    HierarchySort {
+        source: DiGraphToposortError<NodeId>,
+    },
+    /// Tried to topologically sort the dependency graph.
+    #[snafu(display("Failed to topologically sort the dependency graph"))]
+    DependencySort {
+        source: DiGraphToposortError<NodeId>,
+    },
+    /// Tried to topologically sort the flattened dependency graph.
+    #[snafu(display("Failed to topologically sort the flattened dependency graph"))]
+    FlatDependencySort {
+        source: DiGraphToposortError<TaskKey>,
+    },
+    /// Tried to order a task (set) relative to a task set it belongs to.
+    #[snafu(display("`{:?}` and `{:?}` have both `in_set` and `before`-`after` relationships (these might be transitive). This combination is unsolvable as a task cannot run before or after a set it belongs to.", source.a, source.b))]
+    CrossDependency {
+        source: DagCrossDependencyError<NodeId>,
+    },
+    /// Tried to order task sets that share tasks.
+    #[snafu(display("`{:?}` and `{:?}` have a `before`-`after` relationship (which may be transitive) but share tasks.", source.a_key, source.b_key))]
+    SetsHaveOrderButIntersect{
+        source: DagOverlappingGroupError<TaskSetKey>,
+    },
+    /// Tried to order a task (set) relative to all instances of some task function.
+    TaskTypeSetAmbiguity{
+        source: TaskTypeSetAmbiguityError,
+    },
+    /// A warning that was elevated to an error.
+    Elevated{source: ScheduleBuildWarning},
+}
+
+
+/// Category of warnings encountered during [`Schedule::initialize`](crate::schedule::Schedule::initialize).
+#[non_exhaustive]
+#[derive(Snafu, Debug)]
+pub enum ScheduleBuildWarning {
+    /// The hierarchy of system sets contains redundant edges.
+    ///
+    /// This warning is **enabled** by default, but can be disabled by setting
+    /// [`ScheduleBuildSettings::hierarchy_detection`] to [`LogLevel::Ignore`]
+    /// or upgraded to a [`ScheduleBuildError`] by setting it to [`LogLevel::Error`].
+    ///
+    /// [`ScheduleBuildSettings::hierarchy_detection`]: crate::schedule::ScheduleBuildSettings::hierarchy_detection
+    /// [`LogLevel::Ignore`]: crate::schedule::LogLevel::Ignore
+    /// [`LogLevel::Error`]: crate::schedule::LogLevel::Error
+    // #[snafu("The hierarchy of system sets contains redundant edges: {0:?}")]
+    // HierarchyRedundancy(#[from] DagRedundancyError<NodeId>),
+    /// Systems with conflicting access have indeterminate run order.
+    ///
+    /// This warning is **disabled** by default, but can be enabled by setting
+    /// [`ScheduleBuildSettings::ambiguity_detection`] to [`LogLevel::Warn`]
+    /// or upgraded to a [`ScheduleBuildError`] by setting it to [`LogLevel::Error`].
+    ///
+    /// [`ScheduleBuildSettings::ambiguity_detection`]: crate::schedule::ScheduleBuildSettings::ambiguity_detection
+    /// [`LogLevel::Warn`]: crate::schedule::LogLevel::Warn
+    /// [`LogLevel::Error`]: crate::schedule::LogLevel::Error
+    // #[error(transparent)]
+    // Ambiguity(#[from] AmbiguousSystemConflictsWarning),
 }
